@@ -1,0 +1,195 @@
+/*
+ * ScalaFile.cpp
+ *
+ *  Created on: 24 juil. 2015
+ *      Author: xavier
+ */
+
+#include <math.h>
+#include "ScalaFile.h"
+#include "MixerState.h"
+
+// store scalaScaleFrequencies in ITCMRAM
+__attribute__((section(".instruction_ram")))  float scalaFrequency[6][128];
+__attribute__((section(".ram_d2b"))) struct PFM3File scalaScaleFileAlloc[NUMBEROFSCALASCALEFILES];
+
+
+extern char lineBuffer[512];
+extern float diatonicScaleFrequency[];
+
+
+ScalaFile::ScalaFile() {
+	this->numberOfFilesMax = NUMBEROFSCALASCALEFILES;
+	this->scalaScaleFile = scalaScaleFileAlloc;
+	this->myFiles = scalaScaleFile;
+}
+
+ScalaFile::~ScalaFile() {
+	// TODO Auto-generated destructor stub
+}
+
+const char* ScalaFile::getFolderName() {
+	return SCALA_DIR;
+}
+
+
+
+float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
+    if (mixerState->instrumentState[instrumentNumber].scalaEnable == 0) {
+        return diatonicScaleFrequency;
+    }
+    // propertyFiles is a 4096 char array
+    char* scalaBuffer = storageBuffer;
+    char *line = lineBuffer;
+
+    const PFM3File* scaleFile = getFile(mixerState->instrumentState[instrumentNumber].scaleScaleNumber);
+
+    if (fsu->str_cmp(mixerState->instrumentState[instrumentNumber].scalaScaleFileName, scaleFile->name) == 0) {
+        // Name don't feet, new scales have been updated
+        int newNumber = getFileIndex(mixerState->instrumentState[instrumentNumber].scalaScaleFileName);
+        if (newNumber == -1) {
+            return (float*)0;
+        }
+        scaleFile = getFile(newNumber);
+        mixerState->instrumentState[instrumentNumber].scaleScaleNumber = newNumber;
+    }
+
+    int size;
+    if ((size = load(getFullName(scaleFile->name), 0,  (void*)scalaBuffer, 0)) == 0) {
+        return (float*)0;
+    }
+
+    int loop = 0;
+    char *readProperties = scalaBuffer;
+    int state = 0;
+
+    numberOfDegrees[instrumentNumber] = 0;
+    for (int i=0; i< 24; i++) {
+    	interval[instrumentNumber][i] = 0.0f;
+    }
+    while (loop !=-1 && (readProperties - scalaBuffer) < size) {
+    	loop = fsu->getLine(readProperties, line);
+    	if (line[0] != '!') {
+            switch (state) {
+                case 0:
+                    // line contains short description
+                    break;
+                case 1:
+                    // line contains number of degrees
+                	numberOfDegrees[instrumentNumber] = fsu->toInt(line);
+                	if (numberOfDegrees[instrumentNumber] > MAX_NUMBER_OF_INTERVALS) {
+                		numberOfDegrees[instrumentNumber] = MAX_NUMBER_OF_INTERVALS;
+                	}
+                    break;
+                default:
+                    // contains the frequencey (state-2)
+                	if ((state -2) < MAX_NUMBER_OF_INTERVALS) {
+                		interval[instrumentNumber][state -2] = getScalaIntervale(line);
+                	}
+                    break;
+            }
+            state ++;
+    	}
+    	readProperties += loop;
+    }
+    if (numberOfDegrees[instrumentNumber] == 0) {
+        return diatonicScaleFrequency;
+    }
+    return applyScalaScale(mixerState, instrumentNumber);
+}
+
+float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) {
+    if (mixerState->instrumentState[instrumentNumber].scalaEnable == 0) {
+        return diatonicScaleFrequency;
+    }
+
+    float *instrumentScalaFrequency = scalaFrequency[instrumentNumber];
+
+	float octaveRatio = interval[instrumentNumber][numberOfDegrees[instrumentNumber]-1];
+	int octaveDegree = numberOfDegrees[instrumentNumber];
+	if (mixerState->instrumentState[instrumentNumber].scalaMapping == SCALA_MAPPING_KEYB) {
+		octaveDegree = ((numberOfDegrees[instrumentNumber] + 11) / 12) * 12;
+	}
+
+	// Fill middle C with 262.626 Hz.
+	// Global tuning is applied when note are pressed
+	float defaultFreq = 261.626f;
+	instrumentScalaFrequency[60] = defaultFreq;
+
+	// Fill all C
+	int firstC = 0;
+	int lastNote = 127;
+	for (int n = 60 - octaveDegree; n >=0; n = n - octaveDegree) {
+	    instrumentScalaFrequency[n] = instrumentScalaFrequency[n + octaveDegree]  / octaveRatio;
+		firstC = n;
+	}
+	for (int n = 60 + octaveDegree; n <=127; n = n + octaveDegree) {
+	    instrumentScalaFrequency[n] = instrumentScalaFrequency[n - octaveDegree]  * octaveRatio;
+	}
+
+	// init unusable last 8 notes
+	for (int n = 0; n < firstC; n++) {
+	    instrumentScalaFrequency[n] = defaultFreq;
+	}
+
+	// Fill all notes
+	for (int octave = firstC ; octave <= 127; octave += octaveDegree) {
+		for (int n = 1; n < numberOfDegrees[instrumentNumber]; n++) {
+			if (octave + n <= 127) {
+			    instrumentScalaFrequency[octave + n] = instrumentScalaFrequency[octave] * interval[instrumentNumber][n-1];
+				lastNote = octave + n;
+			}
+		}
+		// Same scalaFrequency for all remaining notes
+		for (int nn = numberOfDegrees[instrumentNumber] ; nn < octaveDegree; nn++) {
+			if (octave + nn <= 127) {
+			    instrumentScalaFrequency[octave + nn] = instrumentScalaFrequency[octave] * octaveRatio;
+				lastNote = octave + nn;
+			}
+		}
+	}
+	for (int n = lastNote; n < 128; n++) {
+	    instrumentScalaFrequency[n] = defaultFreq;
+	}
+    return instrumentScalaFrequency;
+}
+
+
+
+float ScalaFile::getScalaIntervale(const char* line) {
+    int slashPos = fsu->getPositionOfSlash(line);
+    if (slashPos != -1) {
+        float num = fsu->toFloat(line);
+        float den = fsu->toFloat(line + slashPos + 1);
+        return num/den;
+    } else {
+        return pow(2.0f, fsu->toFloat(line) / 1200.0f);
+    }
+}
+
+
+bool ScalaFile::isCorrectFile(char *name, int size)  {
+	// scalaScale Dump sysex size is 4104
+	if (size >= 2048) {
+		return false;
+	}
+
+	int pointPos = -1;
+    for (int k=1; k<9 && pointPos == -1; k++) {
+        if (name[k] == '.') {
+            pointPos = k;
+        }
+    }
+    if (pointPos == -1) return false;
+    if (name[pointPos+1] != 's' && name[pointPos+1] != 'S') return false;
+    if (name[pointPos+2] != 'c' && name[pointPos+2] != 'C') return false;
+    if (name[pointPos+3] != 'l' && name[pointPos+3] != 'L') return false;
+
+    return true;
+}
+
+
+void ScalaFile::updateScale(MixerState* mixerState, int instrumentNumber) {
+
+}
+

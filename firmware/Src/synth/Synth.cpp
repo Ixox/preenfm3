@@ -1,0 +1,730 @@
+/*
+ * Copyright 2013 Xavier Hosxe
+ *
+ * Author: Xavier Hosxe (xavier . hosxe (at) gmail . com)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <stdlib.h>
+#include "stm32h7xx_hal.h"
+#include "Synth.h"
+#include "Menu.h"
+#include "Sequencer.h"
+
+
+extern RNG_HandleTypeDef hrng;
+extern float noise[32];
+
+Synth::Synth(void) {
+}
+
+Synth::~Synth(void) {
+}
+
+void Synth::init(SynthState* synthState) {
+    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+        for (uint16_t k = 0; k < (sizeof(struct OneSynthParams)/sizeof(float)); k++) {
+            ((float*)&timbres[t].params)[k] = ((float*)&preenMainPreset)[k];
+        }
+        timbres[t].init(synthState, t);
+        for (int v=0; v<MAX_NUMBER_OF_VOICES; v++) {
+            timbres[t].initVoicePointer(v, &voices[v]);
+        }
+    }
+
+    newTimbre(0);
+    this->writeCursor = 0;
+    this->readCursor = 0;
+    for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
+        voices[k].init();
+    }
+    rebuidVoiceTimbre();
+    // Here synthState is already initialized
+    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+        timbres[t].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[t].numberOfVoices);
+    }
+    updateNumberOfActiveTimbres();
+
+    isInPause = false;
+
+    // Cpu usage
+    cptCpuUsage = 0;
+    totalCyclesUsedInSynth = 0;
+    numberOfPlayingVoices = 0;
+    cpuUsage = 0.0f;
+    totalNumberofCyclesInv = 1 / (SystemCoreClock * 32.0f * PREENFM_FREQUENCY_INVERSED);
+}
+
+void Synth::noteOn(int timbre, char note, char velocity) {
+    sequencer->insertNote(timbre, note, velocity);
+    timbres[timbre].noteOn(note, velocity);
+
+}
+
+void Synth::noteOff(int timbre, char note) {
+    sequencer->insertNote(timbre, note, 0);
+    timbres[timbre].noteOff(note);
+}
+
+void Synth::noteOnFromSequencer(int timbre, char note, char velocity) {
+    timbres[timbre].noteOn(note, velocity);
+}
+
+void Synth::noteOffFromSequencer(int timbre, char note) {
+    timbres[timbre].noteOff(note);
+}
+
+void Synth::midiClockContinue(int songPosition) {
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        timbres[t].midiClockContinue(songPosition);
+    }
+    sequencer->onMidiContinue(songPosition);
+}
+
+
+void Synth::midiClockStart() {
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        timbres[t].midiClockStart();
+    }
+    sequencer->onMidiStart();
+}
+
+void Synth::midiClockStop() {
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        timbres[t].midiClockStop();
+    }
+    sequencer->onMidiStop();
+}
+
+void Synth::midiTick() {
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        timbres[t].OnMidiClock();
+    }
+    sequencer->onMidiClock();
+}
+
+void Synth::midiClockSetSongPosition(int songPosition) {
+    sequencer->midiClockSetSongPosition(songPosition);
+}
+
+void Synth::setHoldPedal(int timbre, int value) {
+    timbres[timbre].setHoldPedal(value);
+}
+
+void Synth::allNoteOff(int timbre) {
+    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    for (int k = 0; k < numberOfVoices; k++) {
+        // voice number k of timbre
+        int n = timbres[timbre].voiceNumber[k];
+        if (voices[n].isPlaying() && !voices[n].isReleased()) {
+            voices[n].noteOff();
+        }
+    }
+}
+
+void Synth::allSoundOff(int timbre) {
+    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    for (int k = 0; k < numberOfVoices; k++) {
+        // voice number k of timbre
+        int n = timbres[timbre].voiceNumber[k];
+        voices[n].killNow();
+    }
+}
+
+void Synth::allSoundOff() {
+    for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
+        voices[k].killNow();
+    }
+}
+
+bool Synth::isPlaying() {
+    for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
+        if (voices[k].isPlaying()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+
+void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
+	CYCLE_MEASURE_START(cycles_all);
+
+	if (isInPause) {
+		// Other buffer ? Stereo => should go up to 64 ????
+	    buffer1[0] = buffer1[31];
+	    for (int s = 1; s < 32; s++) {
+	        buffer1[s] = buffer1[s - 1] * .96f;
+	    }
+	    return;
+	}
+
+
+    // We consider the random number is always ready here...
+	uint32_t random32bit;
+	if (unlikely(HAL_RNG_GenerateRandomNumber(&hrng, &random32bit) != HAL_OK)) {
+	    // Recreate on rnd from previous pass
+	    random32bit = noise[31] *  0x7fffffff;
+	}
+
+	noise[0] =  (random32bit & 0xffff) * .000030518f - 1.0f; // value between -1 and 1.
+    noise[1] = (random32bit >> 16) * .000030518f - 1.0f; // value between -1 and 1.
+    for (int noiseIndex = 2; noiseIndex < 32; ) {
+        random32bit = 214013 * random32bit + 2531011;
+        noise[noiseIndex++] =  (random32bit & 0xffff) * .000030518f - 1.0f; // value between -1 and 1.
+        noise[noiseIndex++] = (random32bit >> 16) * .000030518f - 1.0f; // value between -1 and 1.
+    }
+
+    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+        timbres[t].cleanNextBlock();
+        if (likely(this->synthState->mixerState.instrumentState[t].numberOfVoices > 0)) {
+            timbres[t].updateArpegiatorInternalClock();
+            // eventually glide
+            if (timbres[t].voiceNumber[0] != -1 && this->voices[timbres[t].voiceNumber[0]].isGliding()) {
+                this->voices[timbres[t].voiceNumber[0]].glide();
+            }
+        }
+        timbres[t].prepareMatrixForNewBlock();
+    }
+
+    // render all voices in their own sample block...
+    numberOfPlayingVoices = 0;
+    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
+        if (likely(this->voices[v].isPlaying())) {
+            this->voices[v].nextBlock();
+            this->voices[v].fxAfterBlock();
+            numberOfPlayingVoices++;
+        } else {
+            this->voices[v].emptyBuffer();
+        }
+    }
+
+
+
+
+
+	// Dispatch the timbres ont the different out !!
+
+    int32_t *cb1 = buffer1;
+    int32_t *endcb1 = buffer1 + 64;
+    int32_t *cb2 = buffer2;
+    int32_t *endcb2 = buffer2 + 64;
+    int32_t *cb3 = buffer3;
+    int32_t *endcb3 = buffer3 + 64;
+
+    while (cb1 < endcb1) {
+        *cb1++ = 0;
+        *cb1++ = 0;
+        *cb2++ = 0;
+        *cb2++ = 0;
+        *cb3++ = 0;
+        *cb3++ = 0;
+    }
+
+
+    for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
+    	if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices == 0) {
+    		continue;
+    	}
+        //Gate and mixer are per timbre
+    	float sampleMultipler = (float)0x7fffffff;
+    	if (abs(filteredVolume[timbre] - synthState->mixerState.instrumentState[timbre].volume) < .0005f)  {
+    	    filteredVolume[timbre] = synthState->mixerState.instrumentState[timbre].volume;
+    	} else {
+    	    filteredVolume[timbre] = filteredVolume[timbre] * .9f + synthState->mixerState.instrumentState[timbre].volume * .1f;
+    	}
+    	sampleMultipler *= ratioTimbre[timbre] * filteredVolume[timbre];
+        timbres[timbre].voicesToTimbre();
+        timbres[timbre].gateFx();
+
+        float *sampleFromTimbre = timbres[timbre].getSampleBlock();
+        switch (synthState->mixerState.instrumentState[timbre].out) {
+        // 0 => out1+out2, 1 => out1, 2=> out2
+        // 3 => out3+out4, 4 => out3, 5=> out4
+        // 6 => out5+out6, 7 => out5, 8=> out8
+        case 0:
+            cb1 = buffer1;
+            while (cb1 < endcb1) {
+                *cb1++ += (int32_t)((*sampleFromTimbre++ + *sampleFromTimbre++) * .5f * sampleMultipler);
+                cb1++;
+            }
+        	break;
+        case 1:
+            cb1 = buffer1;
+            while (cb1 < endcb1) {
+                *cb1++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
+                *cb1++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
+            }
+        	break;
+        case 2:
+            cb1 = buffer1;
+            while (cb1 < endcb1) {
+                cb1++;
+                *cb1++ += (int32_t)((*sampleFromTimbre++ + *sampleFromTimbre++) * .5f * sampleMultipler);
+            }
+        	break;
+        case 3:
+            cb2 = buffer2;
+            while (cb2 < endcb2) {
+                *cb2++ += (int32_t)((*sampleFromTimbre++ + *sampleFromTimbre++) * .5f * sampleMultipler);
+                cb2++;
+            }
+        	break;
+        case 4:
+            cb2 = buffer2;
+            while (cb2 < endcb2) {
+                *cb2++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
+                *cb2++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
+            }
+        	break;
+        case 5:
+            cb2 = buffer2;
+            while (cb2 < endcb2) {
+                cb2++;
+                *cb2++ += (int32_t)((*sampleFromTimbre++ + *sampleFromTimbre++) * .5f * sampleMultipler);
+            }
+        	break;
+        case 6:
+            cb3 = buffer3;
+            while (cb3 < endcb3) {
+                *cb3++ += (int32_t)((*sampleFromTimbre++ + *sampleFromTimbre++) * .5f * sampleMultipler);
+                cb3++;
+            }
+        	break;
+        case 7:
+            cb3 = buffer3;
+            while (cb3 < endcb3) {
+                *cb3++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
+                *cb3++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
+            }
+        	break;
+        case 8:
+            cb3 = buffer3;
+            while (cb3 < endcb3) {
+                cb3++;
+                *cb3++ += (int32_t)((*sampleFromTimbre++ + *sampleFromTimbre++) * .5f  * sampleMultipler);
+            }
+        	break;
+        }
+
+    }
+
+
+    CYCLE_MEASURE_END();
+
+    // Take 100 of them to have a 0-100 percent value
+    totalCyclesUsedInSynth += cycles_all.remove();
+    if (cptCpuUsage++ == 100) {
+        cpuUsage = totalNumberofCyclesInv * ((float)totalCyclesUsedInSynth);
+        cptCpuUsage = 0;
+        totalCyclesUsedInSynth = 0;
+    }
+}
+
+void Synth::beforeNewParamsLoad(int timbre) {
+
+	isInPause = true;
+
+    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+        timbres[t].resetArpeggiator();
+        for (int v=0; v< MAX_NUMBER_OF_VOICES; v++) {
+            timbres[t].setVoiceNumber(v, -1);
+        }
+    }
+    // Stop all voices
+    allSoundOff();
+};
+
+
+int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
+    int maxNumberOfFreeVoice = 0;
+    for (int t=0 ; t< NUMBER_OF_TIMBRES; t++) {
+        if (t != timbre) {
+            maxNumberOfFreeVoice += this->synthState->mixerState.instrumentState[t].numberOfVoices;
+        }
+    }
+    return MAX_NUMBER_OF_VOICES - maxNumberOfFreeVoice;
+
+}
+
+void Synth::afterNewParamsLoad(int timbre) {
+    // Reset to 0 the number of voice then try to set the right value
+	if (timbres[timbre].params.engine1.polyMono == 1) {
+	    int numberOfVoice = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+	    int voicesMax = getNumberOfFreeVoicesForThisTimbre(timbre);
+	    this->synthState->mixerState.instrumentState[timbre].numberOfVoices = numberOfVoice < voicesMax ? numberOfVoice : voicesMax;
+	} else {
+	    this->synthState->mixerState.instrumentState[timbre].numberOfVoices = 1;
+	}
+
+    rebuidVoiceTimbre();
+    updateNumberOfActiveTimbres();
+
+    timbres[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+    timbres[timbre].afterNewParamsLoad();
+    // values to force check lfo used
+    timbres[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
+
+	isInPause = false;
+}
+
+void Synth::afterNewMixerLoad() {
+
+    rebuidVoiceTimbre();
+    updateNumberOfActiveTimbres();
+
+    for (int timbre = 0; timbre < NUMBER_OF_TIMBRES ; timbre++) {
+        synthState->scalaSettingsChanged(timbre);
+        timbres[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+        timbres[timbre].afterNewParamsLoad();
+        // values to force check lfo used
+        timbres[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
+        //
+    }
+}
+
+void Synth::updateNumberOfActiveTimbres() {
+	float timbrePerOutput[NUMBER_OF_TIMBRES] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+		int output = this->synthState->mixerState.instrumentState[t].out / 3;
+		timbrePerOutput[output] += 1.0f;
+	}
+	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+		int output = this->synthState->mixerState.instrumentState[t].out / 3;
+		ratioTimbre[t] =  1.0f / timbrePerOutput[output];
+	}
+}
+
+int Synth::getFreeVoice() {
+    // Loop on all voices
+    for (int voice=0; voice< MAX_NUMBER_OF_VOICES; voice++) {
+        bool used = false;
+
+        for (int t=0; t< NUMBER_OF_TIMBRES && !used; t++) {
+            // Must be different from 0 and -1
+            int interVoice = -10;
+            for (int v=0;  v < MAX_NUMBER_OF_VOICES  && !used; v++) {
+                interVoice = timbres[t].voiceNumber[v];
+                if (interVoice == -1) {
+                    break;
+                }
+                if (interVoice == voice) {
+                    used = true;
+                }
+            }
+        }
+
+        if (!used) {
+            return voice;
+        }
+    }
+    return -1;
+}
+
+
+void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
+    switch (currentRow) {
+    case ROW_ARPEGGIATOR1:
+        switch (encoder) {
+        case ENCODER_ARPEGGIATOR_CLOCK:
+            allNoteOff(timbre);
+            timbres[timbre].setArpeggiatorClock((uint8_t) newValue);
+            break;
+        case ENCODER_ARPEGGIATOR_BPM:
+            timbres[timbre].setNewBPMValue((uint8_t) newValue);
+            break;
+        case ENCODER_ARPEGGIATOR_DIRECTION:
+            timbres[timbre].setDirection((uint8_t) newValue);
+            break;
+        }
+        break;
+    case ROW_ARPEGGIATOR2:
+        if (unlikely(encoder == ENCODER_ARPEGGIATOR_LATCH)) {
+            timbres[timbre].setLatchMode((uint8_t) newValue);
+        }
+        break;
+    case ROW_ARPEGGIATOR3:
+        break;
+    case ROW_EFFECT:
+        timbres[timbre].setNewEffecParam(encoder);
+        break;
+    case ROW_ENV1a:
+        timbres[timbre].env1.reloadADSR(encoder);
+        break;
+    case ROW_ENV1b:
+        timbres[timbre].env1.reloadADSR(encoder + 4);
+        break;
+    case ROW_ENV2a:
+        timbres[timbre].env2.reloadADSR(encoder);
+        break;
+    case ROW_ENV2b:
+        timbres[timbre].env2.reloadADSR(encoder + 4);
+        break;
+    case ROW_ENV3a:
+        timbres[timbre].env3.reloadADSR(encoder);
+        break;
+    case ROW_ENV3b:
+        timbres[timbre].env3.reloadADSR(encoder + 4);
+        break;
+    case ROW_ENV4a:
+        timbres[timbre].env4.reloadADSR(encoder);
+        break;
+    case ROW_ENV4b:
+        timbres[timbre].env4.reloadADSR(encoder + 4);
+        break;
+    case ROW_ENV5a:
+        timbres[timbre].env5.reloadADSR(encoder);
+        break;
+    case ROW_ENV5b:
+        timbres[timbre].env5.reloadADSR(encoder + 4);
+        break;
+    case ROW_ENV6a:
+        timbres[timbre].env6.reloadADSR(encoder);
+        break;
+    case ROW_ENV6b:
+        timbres[timbre].env6.reloadADSR(encoder + 4);
+        break;
+    case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
+        timbres[timbre].verifyLfoUsed(encoder, oldValue, newValue);
+        if (encoder == ENCODER_MATRIX_DEST1 || encoder == ENCODER_MATRIX_DEST2) {
+            // Reset old destination
+            timbres[timbre].resetMatrixDestination(oldValue);
+        }
+        break;
+    case ROW_LFOOSC1 ... ROW_LFOOSC3:
+    case ROW_LFOENV1 ... ROW_LFOENV2:
+    case ROW_LFOSEQ1 ... ROW_LFOSEQ2:
+        // timbres[timbre].lfo[currentRow - ROW_LFOOSC1]->valueChanged(encoder);
+        timbres[timbre].lfoValueChange(currentRow, encoder, newValue);
+        break;
+    case ROW_PERFORMANCE1:
+        timbres[timbre].setMatrixSource((enum SourceEnum)(MATRIX_SOURCE_CC1 + encoder), newValue);
+        break;
+    case ROW_MIDINOTE1CURVE:
+        timbres[timbre].updateMidiNoteScale(0);
+        break;
+    case ROW_MIDINOTE2CURVE:
+        timbres[timbre].updateMidiNoteScale(1);
+        break;
+    }
+}
+
+
+// synth is the only one who knows timbres
+void Synth::newTimbre(int timbre)  {
+    this->synthState->setParamsAndTimbre(&timbres[timbre].params, timbre);
+}
+
+void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
+    switch (valueType) {
+        case  MIXER_VALUE_NUMBER_OF_VOICES:
+            if (newValue == oldValue) {
+                return;
+            } else if (newValue > oldValue) {
+                for (int v=(int)oldValue; v < (int)newValue; v++) {
+                    timbres[timbre].setVoiceNumber(v, getFreeVoice());
+                }
+            } else {
+                for (int v=(int)newValue; v < (int)oldValue; v++) {
+                    voices[timbres[timbre].voiceNumber[v]].killNow();
+                    timbres[timbre].setVoiceNumber(v, -1);
+                }
+            }
+            if (newValue == 0.0f || oldValue == 0.0f) {
+                updateNumberOfActiveTimbres();
+            }
+            timbres[timbre].numberOfVoicesChanged(newValue);
+            break;
+		case MIXER_VALUE_OUT:
+            updateNumberOfActiveTimbres();
+            break;
+    }
+
+}
+
+
+
+
+void Synth::rebuidVoiceTimbre() {
+    int voices = 0;
+
+    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+        int nv = this->synthState->mixerState.instrumentState[t].numberOfVoices;
+
+        for (int v=0; v < nv; v++) {
+            timbres[t].setVoiceNumber(v, voices++);
+        }
+        for (int v=nv; v < MAX_NUMBER_OF_VOICES;  v++) {
+            timbres[t].setVoiceNumber(v, -1);
+        }
+    }
+}
+
+
+void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
+    this->synthState->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, &timbres[timbre].params);
+}
+
+
+void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
+    struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
+    int index = row * NUMBER_OF_ENCODERS + encoder;
+    float oldValue = ((float*)this->timbres[timbre].getParamRaw())[index];
+
+    this->timbres[timbre].setNewValue(index, param, newValue);
+    float newNewValue = ((float*)this->timbres[timbre].getParamRaw())[index];
+    if (oldValue != newNewValue) {
+        this->synthState->propagateNewParamValueFromExternal(timbre, row, encoder, param, oldValue, newNewValue);
+    }
+}
+
+
+void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue) {
+    switch (mixerValue) {
+        case MIXER_VALUE_VOLUME:
+            float oldValue = this->synthState->mixerState.instrumentState[timbre].volume;
+            this->synthState->mixerState.instrumentState[timbre].volume = newValue;
+            if (oldValue != newValue) {
+
+                this->synthState->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
+            }
+            break;
+    }
+}
+
+void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int newValue) {
+
+    if (whichStepSeq < 0 || whichStepSeq > 1 || step < 0 || step > 15 || newValue < 0 || newValue > 15) {
+        return;
+    }
+
+    int oldValue = this->timbres[timbre].getSeqStepValue(whichStepSeq, step);
+
+    if (oldValue !=  newValue) {
+        int oldStep = this->synthState->stepSelect[whichStepSeq];
+        this->synthState->stepSelect[whichStepSeq] = step;
+        if (oldStep != step) {
+            this->synthState->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep, step);
+        }
+        this->timbres[timbre].setSeqStepValue(whichStepSeq, step, newValue);
+        int newNewValue = this->timbres[timbre].getSeqStepValue(whichStepSeq, step);
+        if (oldValue != newNewValue) {
+            this->synthState->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue, newValue);
+        }
+    }
+}
+
+
+
+void Synth::setNewSymbolInPresetName(int timbre, int index, int value) {
+    this->timbres[timbre].getParamRaw()->presetName[index] = value;
+}
+
+
+void Synth::setScalaEnable(bool enable) {
+    this->synthState->setScalaEnable(enable);
+}
+
+void Synth::setScalaScale(int scaleNumber) {
+    this->synthState->setScalaScale(scaleNumber);    
+}
+
+void Synth::setCurrentInstrument(int value) {
+    if (value >=1 && value <= (NUMBER_OF_TIMBRES + 1)) {
+        this->synthState->setCurrentInstrument(value);
+    }
+}
+
+
+#ifdef DEBUG__KO
+
+// ========================== DEBUG ========================
+void Synth::debugVoice() {
+
+    lcd.setRealTimeAction(true);
+    lcd.clearActions();
+    lcd.clear();
+    int numberOfVoices = timbres[0].params.engine1.numberOfVoice;
+    // HARDFAULT !!! :-)
+    //    for (int k = 0; k <10000; k++) {
+    //    	numberOfVoices += timbres[k].params.engine1.numberOfVoice;
+    //    	timbres[k].params.engine1.numberOfVoice = 100;
+    //    }
+
+    for (int k = 0; k < numberOfVoices && k < 4; k++) {
+
+        // voice number k of timbre
+        int n = timbres[0].voiceNumber[k];
+
+        lcd.setCursor(0, k);
+        lcd.print((int)voices[n].getNote());
+
+        lcd.setCursor(4, k);
+        lcd.print((int)voices[n].getNextPendingNote());
+
+        lcd.setCursor(8, k);
+        lcd.print(n);
+
+        lcd.setCursor(12, k);
+        lcd.print((int)voices[n].getIndex());
+
+        lcd.setCursor(18, k);
+        lcd.print((int) voices[n].isReleased());
+        lcd.print((int) voices[n].isPlaying());
+    }
+    lcd.setRealTimeAction(false);
+}
+
+void Synth::showCycles() {
+    lcd.setRealTimeAction(true);
+    lcd.clearActions();
+    lcd.clear();
+
+    float max = SystemCoreClock * 32.0f * PREENFM_FREQUENCY_INVERSED;
+    int cycles = cycles_all.remove();
+    float percent = (float)cycles * 100.0f / max;
+    lcd.setCursor(10, 0);
+    lcd.print('>');
+    lcd.print(cycles);
+    lcd.print('<');
+    lcd.setCursor(10, 1);
+    lcd.print('>');
+    lcd.print(percent);
+    lcd.print('%');
+    lcd.print('<');
+
+    /*
+    lcd.setCursor( 0, 0 );
+    lcd.print( "RNG: " );
+    lcd.print( cycles_rng.remove() );
+
+    lcd.setCursor( 0, 1 );
+    lcd.print( "VOI: " );  lcd.print( cycles_voices1.remove() );
+    lcd.print( " " ); lcd.print( cycles_voices2.remove() );
+
+    lcd.setCursor( 0, 2 );
+    lcd.print( "FX : " );
+    lcd.print( cycles_fx.remove() );
+
+    lcd.setCursor( 0, 3 );
+    lcd.print( "TIM: " );
+    lcd.print( cycles_timbres.remove() );
+
+    lcd.setRealTimeAction(false);
+     */
+}
+
+#endif

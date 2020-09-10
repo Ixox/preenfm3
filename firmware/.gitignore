@@ -1,0 +1,6 @@
+*.KO
+*-bak
+Debug*/**
+Release*/**
+*/Backup/
+*.zip
