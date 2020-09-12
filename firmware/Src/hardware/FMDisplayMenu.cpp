@@ -903,11 +903,11 @@ void FMDisplayMenu::newMenuSelect(FullState* fullState) {
     case MENU_DONE:
         tft->setCharColor(COLOR_YELLOW);
         displayStateMessage:
-        length = getLength(fullState->currentMenuItem->name);
         tft->setCharBackgroundColor(COLOR_BLACK);
         tft->setCharColor(COLOR_YELLOW);
-        tft->setCursor(10 - (length >> 1), 12);
+        tft->setCursor(8, 12);
         tft->print(fullState->currentMenuItem->name);
+        tft->print("   ");
         break;
     case MENU_PRESET_SAVE_SELECT:
         displayBankSelect(fullState->preenFMBankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY),

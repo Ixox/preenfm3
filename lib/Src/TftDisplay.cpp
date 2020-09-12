@@ -1,9 +1,21 @@
 /*
- * TftDisplay.cpp
+ * Copyright 2020 Xavier Hosxe
  *
- *  Created on: May 26, 2019
- *      Author: xavier Hosxe
+ * Author: Xavier Hosxe (xavier <dot> hosxe (at) g m a i l <dot> com)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+
 
 #include <string.h>
 #include "stm32h7xx_hal.h"
@@ -389,7 +401,7 @@ void TftDisplay::tic() {
         }
         break;
     case TFT_DRAW_OSCILLO:
-        // 1 steps
+        // 2 steps
         // 0 : copy oscillo+background => tftMemory
         // 1 : copy back background=>oscillo
         switch (currentAction.param3) {
@@ -956,6 +968,8 @@ void TftDisplay::oscilloRrefresh() {
         newAction.param3 = 0;
         tftActions.insert(newAction);
     }
+    // We can start filling again the oscillo buffer
+	oscilloDataWritePtr = 0;
 }
 
 void TftDisplay::fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height, uint8_t color) {
@@ -981,7 +995,6 @@ void TftDisplay::oscilloNewLowerFrequency(float lf) {
     int divInt = oscilloPhaseIndex / oscilloSamplePeriod;
 
     oscilloPhaseIndexToUse = oscilloPhaseIndex - divInt * oscilloSamplePeriod;
-    oscilloDataWritePtr = 0;
 }
 
 void TftDisplay::oscilloRecord32Samples(float *samples) {

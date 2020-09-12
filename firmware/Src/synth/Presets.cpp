@@ -164,5 +164,5 @@ const struct OneSynthParams preenMainPreset  = {
         { MIDI_NOTE_CURVE_M_LINEAR, 60, MIDI_NOTE_CURVE_LINEAR, 0},
 		{{ 0,7,15,15,15,0,15,15,  0,15,15,15,0,15,15,15}} ,
 		{{ 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0}} ,
-		"Preset"
+		"Sound"
 };

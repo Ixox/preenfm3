@@ -181,7 +181,7 @@ void preenfm3Loop() {
             oscilloMillis = currentMillis;
             tft.oscilloRrefresh();
             float lf = synth.getLowerNoteFrequency(synthState.getCurrentTimbre());
-            tft.oscilloNewLowerFrequency(lf);
+			tft.oscilloNewLowerFrequency(lf);
             timbreSamples = synth.getTimbre(synthState.getCurrentTimbre())->getSampleBlock();
         }
     } else {

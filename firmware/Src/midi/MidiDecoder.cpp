@@ -358,10 +358,10 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         this->songPosition = 0;
         break;
     case CC_SCALA_ENABLE:
-        this->synth->setScalaEnable(midiEvent.value[1] > 0);
+        // this->synth->setScalaEnable(midiEvent.value[1] > 0);
         break;
     case CC_SCALA_SCALE:
-        this->synth->setScalaScale(midiEvent.value[1]);
+        // this->synth->setScalaScale(midiEvent.value[1]);
         break;
     case CC_CURRENT_INSTRUMENT:
         this->synth->setCurrentInstrument(midiEvent.value[1]);

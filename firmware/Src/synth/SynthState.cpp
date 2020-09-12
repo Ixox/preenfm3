@@ -31,10 +31,6 @@ extern RNG_HandleTypeDef hrng;
 extern float diatonicScaleFrequency[];
 
 
-// FLASH :  __attribute__ ((section (".USER_FLASH")))
-// Ex : const char* nullNames [] __attribute__ ((section (".USER_FLASH")))= {};
-// DISPLAY structures
-
 
 SynthState::SynthState() {
     engineRow = ROW_ENGINE;
@@ -239,20 +235,33 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
         case BUTTON_PFM3_6:
             propagateNoteOn(-10);
             break;
-        case BUTTON_PFM3_SEQUENCER:
-            propagateNoteOff();
-            propagateBeforeNewParamsLoad(currentTimbre);
-            propagateAfterNewMixerLoad();
-            break;
         }
         break;
+        case BUTTON_NEXT_INSTRUMENT:
+        	if (button2 == BUTTON_PREVIOUS_INSTRUMENT) {
+                propagateNoteOff();
+                propagateBeforeNewParamsLoad(currentTimbre);
+                propagateAfterNewParamsLoad(currentTimbre);
+        	}
+        	break;
+        case BUTTON_PREVIOUS_INSTRUMENT:
+        	if (button2 == BUTTON_NEXT_INSTRUMENT) {
+                propagateNoteOff();
+                propagateBeforeNewParamsLoad(currentTimbre);
+                propagateAfterNewParamsLoad(currentTimbre);
+        	}
+        	break;
     }
 
+
+
+#ifdef PPMIMAGE_ENABLE
     // Screenshot !!
     if (button1 == BUTTON_PFM3_MENU && button2 == BUTTON_PFM3_SEQUENCER) {
         storage->getPPMImage()->saveImage();
+        propagateNewPfm3Page();
     }
-
+#endif
 
 #ifdef DEBUG__KO
     if (button1 == BUTTON_LFO) {
@@ -334,23 +343,6 @@ void SynthState::encoderTurned(int encoder, int ticks) {
         break;
     }
     }
-}
-
-void SynthState::setScalaEnable(bool enable) {
-//    fullState.scalaScaleConfig.scalaEnabled = enable;
-//    if (!enable) {
-//        storage->getScalaFile()->clearScalaScale();
-//    } else if (fullState.scalaScaleConfig.scalaFile->fileType != FILE_EMPTY) {
-//        storage->getScalaFile()->loadScalaScale(&fullState.scalaScaleConfig);
-//    }
-}
-
-void SynthState::setScalaScale(int scaleNumber) {
-//    fullState.scalaScaleConfig.scalaFile = storage->getScalaFile()->getFile(scaleNumber);
-//
-//    if (fullState.scalaScaleConfig.scalaFile->fileType != FILE_EMPTY && fullState.scalaScaleConfig.scalaEnabled) {
-//        storage->getScalaFile()->loadScalaScale(&fullState.scalaScaleConfig);
-//    }
 }
 
 void SynthState::savePreset() {

@@ -15,18 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fatfs.h"
+
 #include <PPMImage.h>
+
+#ifdef PPMIMAGE_ENABLE
+#include "TftDisplay.h"
+#include "fatfs.h"
+
+extern TftDisplay tft;
 
 
 __attribute__((section(".ram_d2"))) char imagePPM[6400 * 3];
-static char imageTitle[] = "0:/pfm3/img_####.ppm";
-
 extern uint16_t tftMemory[240 * 320];
 
 
 PPMImage::PPMImage() {
     cptImage = 0;
+
+    char imageTitlePattern[] = "0:/PPM/img_####.ppm";
+    for (int i = 0; i < 32; i++) {
+    	imageTitle[i] = 0;
+    }
+    for (int i = 0; imageTitlePattern[i] != 0; i++) {
+    	imageTitle[i] = imageTitlePattern[i];
+    }
 }
 
 PPMImage::~PPMImage() {
@@ -37,7 +49,16 @@ void PPMImage::init() {
     FILINFO fileInfo;
     FRESULT fresult = FR_OK;
 
+    // Calculcate sharpIndexInName once
+    sharpIndexInName = 0;
+    while (imageTitle[sharpIndexInName] != '#'
+			&& imageTitle[sharpIndexInName] != 0
+			&& sharpIndexInName < 50) {
+    	sharpIndexInName++;
+    }
 
+    // We don't care about the result and we call this only once in the init() method
+    f_mkdir("0:/PPM");
 
     do {
         cpt++;
@@ -49,28 +70,33 @@ void PPMImage::init() {
 }
 
 void PPMImage::updateImageName(int cpt) {
-    imageTitle[12] = '0' + ((cpt % 10000) / 1000);
-    imageTitle[13] = '0' + ((cpt % 1000) / 100);
-    imageTitle[14] = '0' + ((cpt % 100) / 10);
-    imageTitle[15] = '0' + (cpt % 10);
+	imageTitle[sharpIndexInName] = '0' + ((cpt % 10000) / 1000);
+	imageTitle[sharpIndexInName+1] = '0' + ((cpt % 1000) / 100);
+	imageTitle[sharpIndexInName+2] = '0' + ((cpt % 100) / 10);
+	imageTitle[sharpIndexInName+3] = '0' + (cpt % 10);
 }
 
 void PPMImage::saveImage() {
 
-    if (!isInitialized) {
+
+	if (!isInitialized) {
         isInitialized = true;
         init();
     }
 
     FIL imageFile;
     UINT byteWriten;
-
+    int errorNumber = 0;
     updateImageName(cptImage);
-    cptImage = (cptImage + 1) % 10000;
 
+    if (f_open(&imageFile, imageTitle, FA_OPEN_ALWAYS | FA_WRITE) != FR_OK) {
+    	errorNumber = 1;
+    }
+    if (f_write(&imageFile, "P6\n240 320\n255\n", 15, &byteWriten)) {
+    	errorNumber = 2;
 
-    f_open(&imageFile, imageTitle, FA_OPEN_ALWAYS | FA_WRITE);
-    f_write(&imageFile, "P6\n240 320\n255\n", 15, &byteWriten);
+    }
+
 
     for (int j = 0; j < 320; ++j) {
         for (int i = 0; i < 240; ++i) {
@@ -82,10 +108,34 @@ void PPMImage::saveImage() {
             imagePPM[iIndex * 3 + 2] = (uint8_t) ((pixel & 0x001F) << 3); /* blue  */
             UINT byteWriten;
             if (iIndex == 6399) {
-                f_write(&imageFile, imagePPM, 6400 * 3, &byteWriten);
+                FRESULT fres = f_write(&imageFile, imagePPM, 6400 * 3, &byteWriten);
+                if (fres != FR_OK || byteWriten != 6400* 3) {
+                	errorNumber = 3;
+                }
             }
         }
     }
-    (void) f_close(&imageFile);
 
+
+    if ( f_close(&imageFile) != FR_OK) {
+    	errorNumber = 4;
+    }
+
+	tft.fillArea(22, 0, 240, 320-22, COLOR_BLACK);
+	tft.setCharBackgroundColor(COLOR_BLACK);
+    if (errorNumber == 0) {
+		tft.setCharColor(COLOR_WHITE);
+    } else {
+		tft.setCharColor(COLOR_RED);
+	    tft.setCursor(5, 4);
+	    tft.print("##ERROR : ");
+	    tft.print(errorNumber);
+    }
+    tft.setCursor(4, 6);
+	tft.print(imageTitle + 12);
+
+	HAL_Delay(1000);
+
+    cptImage = (cptImage + 1) % 10000;
 }
+#endif

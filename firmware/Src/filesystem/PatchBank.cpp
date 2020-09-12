@@ -73,13 +73,11 @@ void PatchBank::createPatchBank(const char* name) {
     if (bankFile.err > 0) {
         return;
     }
-    for (uint32_t p = 0; p < PFM_PATCH_SIZE; p++) {
-        storageBuffer[p] = ((char*)&preenMainPreset)[p];
-    }
 
     for (uint32_t s = PFM_PATCH_SIZE; s < ALIGNED_PATCH_SIZE; s++) {
         storageBuffer[s] = 0;
     }
+    convertParamsToFlash(&preenMainPreset, (struct FlashSynthParams*)storageBuffer, *arpeggiatorPartOfThePreset > 0);
     *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
 
     for (int k = 0; k < 128; k++) {
@@ -147,7 +145,9 @@ void PatchBank::savePatch(const struct PFM3File* bank, int patchNumber, const st
     for (int p = PFM_PATCH_SIZE; p < ALIGNED_PATCH_SIZE; p++) {
         storageBuffer[p] = 0;
     }
+    convertParamsToFlash(params, (struct FlashSynthParams*)storageBuffer, *arpeggiatorPartOfThePreset > 0);
     *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
+
     // Save patch
     save(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);
 }

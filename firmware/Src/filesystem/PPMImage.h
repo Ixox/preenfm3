@@ -15,8 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+#define PPMIMAGE_ENABLE 1
+
+#ifdef PPMIMAGE_ENABLE
+
 #ifndef FILESYSTEM_PPMIMAGE_H_
 #define FILESYSTEM_PPMIMAGE_H_
+
 
 class PPMImage {
 public:
@@ -27,8 +33,11 @@ public:
 private:
     void init();
     void updateImageName(int cpt);
-    uint16_t cptImage;
+    int cptImage;
+    int sharpIndexInName;
     bool isInitialized;
+    char imageTitle[32];
 };
 
+#endif
 #endif

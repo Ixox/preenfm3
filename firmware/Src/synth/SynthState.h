@@ -568,9 +568,6 @@ public:
     void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct OneSynthParams* params);
     void savePreset();
 
-    void setScalaEnable(bool enable);
-    void setScalaScale(int scaleNumber);
-
     bool newRandomizerValue(int encoder, int ticks);
     void randomizePreset();
 

@@ -164,10 +164,10 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
 
 	if (isInPause) {
 		// Other buffer ? Stereo => should go up to 64 ????
-	    buffer1[0] = buffer1[31];
-	    for (int s = 1; s < 32; s++) {
-	        buffer1[s] = buffer1[s - 1] * .96f;
-	    }
+//	    buffer1[0] = buffer1[33];
+//	    for (int s = 1; s < 32; s++) {
+//	        buffer1[s] = buffer1[s - 1] * .96f;
+//	    }
 	    return;
 	}
 
@@ -634,13 +634,6 @@ void Synth::setNewSymbolInPresetName(int timbre, int index, int value) {
 }
 
 
-void Synth::setScalaEnable(bool enable) {
-    this->synthState->setScalaEnable(enable);
-}
-
-void Synth::setScalaScale(int scaleNumber) {
-    this->synthState->setScalaScale(scaleNumber);    
-}
 
 void Synth::setCurrentInstrument(int value) {
     if (value >=1 && value <= (NUMBER_OF_TIMBRES + 1)) {
