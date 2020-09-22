@@ -1,0 +1,12 @@
+(module FM_USBInvisible (layer F.Cu) (tedit 52DBE22C)
+  (descr "Connecteurs 2 pins")
+  (tags "CONN DEV")
+  (fp_text reference K3 (at 0 -2.54) (layer F.SilkS) hide
+    (effects (font (size 1.72974 1.08712) (thickness 0.27178)))
+  )
+  (fp_text value USB (at 0 -2.54) (layer F.SilkS) hide
+    (effects (font (size 1.524 1.016) (thickness 0.254)))
+  )
+  (pad 1 thru_hole rect (at -1.27 0) (size 1.397 1.397) (drill 0.8128) (layers *.Cu *.Mask F.SilkS))
+  (pad 2 thru_hole circle (at 1.27 0) (size 1.397 1.397) (drill 0.8128) (layers *.Cu *.Mask F.SilkS))
+)

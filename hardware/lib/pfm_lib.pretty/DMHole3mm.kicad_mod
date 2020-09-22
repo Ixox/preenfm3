@@ -1,0 +1,11 @@
+(module DMHole3mm (layer F.Cu) (tedit 4DEBDDD5)
+  (fp_text reference Ref** (at 0 -5.08) (layer F.SilkS) hide
+    (effects (font (thickness 0.3048)))
+  )
+  (fp_text value Val** (at 0 5.08) (layer F.SilkS) hide
+    (effects (font (thickness 0.3048)))
+  )
+  (fp_arc (start 0 0) (end 0 -2.54) (angle 90) (layer F.SilkS) (width 0.381))
+  (fp_arc (start 0 0) (end 0 2.54) (angle 90) (layer F.SilkS) (width 0.381))
+  (pad "" thru_hole circle (at 0 0) (size 3.50012 3.50012) (drill 3.50012) (layers *.Cu *.Mask F.SilkS))
+)

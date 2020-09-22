@@ -1,0 +1,17 @@
+(module FMButton_no_drawing (layer F.Cu) (tedit 5EE1D8FE)
+  (fp_text reference Reset (at -0.254 -0.635) (layer F.SilkS)
+    (effects (font (size 1.524 1.524) (thickness 0.3048)))
+  )
+  (fp_text value SW_Reset (at 0.127 -4.953) (layer F.SilkS) hide
+    (effects (font (size 1.524 1.524) (thickness 0.3048)))
+  )
+  (pad 2 thru_hole oval (at -6.25094 2.49936) (size 2.99974 1.99898) (drill 1.30048) (layers *.Cu *.Mask))
+  (pad 2 thru_hole oval (at 6.25094 2.49936) (size 2.99974 1.99898) (drill 1.30048) (layers *.Cu *.Mask))
+  (pad 1 thru_hole oval (at 6.25094 -2.49936) (size 2.99974 1.99898) (drill 1.30048) (layers *.Cu *.Mask))
+  (pad 1 thru_hole oval (at -6.25094 -2.49936) (size 2.99974 1.99898) (drill 1.30048) (layers *.Cu *.Mask))
+  (model ${KICAD_USER_TEMPLATE_DIR}/TactilePushButtonTHT12x12mm.stp
+    (at (xyz 0 0 0))
+    (scale (xyz 1 1 1))
+    (rotate (xyz 0 0 0))
+  )
+)

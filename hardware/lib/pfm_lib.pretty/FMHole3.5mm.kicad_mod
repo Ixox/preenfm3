@@ -1,0 +1,9 @@
+(module FMHole3.5mm (layer F.Cu) (tedit 5DE1904C)
+  (fp_text reference h (at 0 -1.27) (layer F.SilkS) hide
+    (effects (font (size 0.50038 0.50038) (thickness 0.0508)))
+  )
+  (fp_text value VAL** (at 0 1.27) (layer F.SilkS) hide
+    (effects (font (size 0.50038 0.50038) (thickness 0.0508)))
+  )
+  (pad "" thru_hole circle (at 0 0) (size 3.5 3.5) (drill 3.5) (layers *.Cu *.Mask F.SilkS))
+)
