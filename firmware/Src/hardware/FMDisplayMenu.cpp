@@ -131,7 +131,6 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
                 return;
             }
             break;
-
         case MENUTYPE_ENTERNAME:
             switch (button) {
             case 0:
@@ -186,8 +185,27 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
             break;
         }
 
-        // Default Empty button
-        tft->drawButton("", 270, 29, button, 0, 1, COLOR_DARK_RED);
+        if (button == 5) {
+        	switch (this->synthState->fullState.currentMenuItem->menuState) {
+        	case MAIN_MENU:
+        	case MENU_MIXER:
+        	case MENU_SEQUENCER:
+        	case MENU_PRESET:
+        	case MENU_DEFAULT: {
+                const char* name = MenuItemUtil::getMenuItem(
+                    this->synthState->fullState.currentMenuItem->subMenu[this->synthState->fullState.previousChoice])->name;
+                tft->drawSimpleBorderButton(name, 270, 29, button, COLOR_WHITE, COLOR_DARK_RED);
+                break;
+        	}
+        	default:
+                // Default Empty button
+                tft->drawSimpleButton("", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+        		break;
+        	}
+        } else {
+            // Default Empty button
+        	tft->drawButton("", 270, 29, button, 0, 1, COLOR_DARK_RED);
+        }
 
         break;
     }
@@ -388,6 +406,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
         if (fullState->currentMenuItem->menuState != MAIN_MENU) {
             const MenuItem* oldMenuItem = fullState->currentMenuItem;
             fullState->currentMenuItem = getMenuBack(currentTimbre);
+            updatePreviousChoice(fullState->currentMenuItem->menuState);
             synthState->propagateMenuBack(oldMenuItem);
         }
         return;
@@ -425,7 +444,53 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
 
     // Next menu
     MenuState oldMenu = fullState->currentMenuItem->menuState;
+    // Save previous choice
+    if (button < 5) {
+		switch (oldMenu) {
+			case MAIN_MENU:
+				fullState->previousMenuChoice.main = button;
+				break;
+			case MENU_MIXER:
+				fullState->previousMenuChoice.mixer = button;
+				break;
+			case MENU_PRESET:
+				fullState->previousMenuChoice.preset = button;
+				break;
+			case MENU_SEQUENCER:
+				fullState->previousMenuChoice.sequencer = button;
+				break;
+			case MENU_DEFAULT:
+				fullState->previousMenuChoice.deflt = button;
+				break;
+			default:
+				break;
+		}
+    } else {
+        // Save previous choice, menu = 5 select previous choice
+		switch (oldMenu) {
+			case MAIN_MENU:
+				button = fullState->previousMenuChoice.main;
+				break;
+			case MENU_MIXER:
+				button = fullState->previousMenuChoice.mixer;
+				break;
+			case MENU_PRESET:
+				button = fullState->previousMenuChoice.preset;
+				break;
+			case MENU_SEQUENCER:
+				button = fullState->previousMenuChoice.sequencer;
+				break;
+			case MENU_DEFAULT:
+				button = fullState->previousMenuChoice.deflt;
+				break;
+			default:
+				break;
+		}
+    }
+
     const MenuItem* nextMenu = MenuItemUtil::getMenuItem(fullState->currentMenuItem->subMenu[button]);
+
+
 
     // If Previous state was the following we have some action to do
     if (nextMenu->menuState == MENU_DONE) {
@@ -552,6 +617,8 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
     }
 
     // Action depending on Next menu
+    updatePreviousChoice(nextMenu->menuState);
+
     switch (nextMenu->menuState) {
     case MENU_PRESET_LOAD_SELECT:
         copySynthParams((char*) synthState->params, (char*) &synthState->backupParams);
@@ -637,6 +704,32 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
 
 }
 
+void FMDisplayMenu::updatePreviousChoice(uint8_t menuState) {
+    struct FullState* fullState = &this->synthState->fullState;
+
+	switch (menuState) {
+	case MAIN_MENU:
+		fullState->previousChoice = fullState->previousMenuChoice.main;
+		break;
+	case MENU_MIXER:
+		fullState->previousChoice = fullState->previousMenuChoice.mixer;
+		break;
+	case MENU_PRESET:
+		fullState->previousChoice = fullState->previousMenuChoice.preset;
+		break;
+	case MENU_SEQUENCER:
+		fullState->previousChoice = fullState->previousMenuChoice.sequencer;
+		break;
+	case MENU_DEFAULT:
+		fullState->previousChoice = fullState->previousMenuChoice.deflt;
+		break;
+	default:
+		break;
+	}
+}
+
+
+
 const MenuItem* FMDisplayMenu::getMenuBack(int currentTimbre) {
     struct FullState* fullState = &this->synthState->fullState;
 
@@ -646,15 +739,6 @@ const MenuItem* FMDisplayMenu::getMenuBack(int currentTimbre) {
     fullState->menuSelect = 0; // MenuItemUtil::getParentMenuSelect(fullState->currentMenuItem->menuState);
 
     switch (fullState->currentMenuItem->menuState) {
-    case MENU_SD_RENAME_PRESET_SELECT_FILE:
-        fullState->menuSelect = fullState->preenFMBankNumber;
-        break;
-    case MENU_SD_RENAME_SEQUENCE_SELECT_FILE:
-        fullState->menuSelect = fullState->preenFMSeqBankNumber;
-        break;
-    case MENU_SD_RENAME_MIXER_SELECT_FILE:
-        fullState->menuSelect = fullState->preenFMMixerNumber;
-        break;
     case MENU_PRESET_RANDOMIZER:
         // Put back original preset
         synthState->propagateNoteOff();
@@ -666,6 +750,7 @@ const MenuItem* FMDisplayMenu::getMenuBack(int currentTimbre) {
     case MENU_PRESET_LOAD_SELECT_DX7_BANK:
         synthState->propagateNoteOff();
         synthState->propagateBeforeNewParamsLoad(currentTimbre);
+        // Put back original preset
         copySynthParams((char*) &synthState->backupParams, (char*) synthState->params);
         synthState->propagateAfterNewParamsLoad(currentTimbre);
         break;

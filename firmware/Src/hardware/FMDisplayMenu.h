@@ -31,6 +31,7 @@ public:
     void refreshMenuByStep(int currentTimbre, int refreshStatus, int menuRow);
     void encoderTurned(int currentTimbre, int encoder, int ticks);
     void buttonPressed(int currentTimbre, int button);
+    void updatePreviousChoice(uint8_t menuState);
     void newMenuState(FullState* fullState);
     void displayMenuState(FullState* fullState);
     void newMenuSelect(FullState* fullState);

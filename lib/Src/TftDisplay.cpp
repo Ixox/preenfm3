@@ -1127,7 +1127,27 @@ void TftDisplay::drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2
     setCursorInPixel(x, y);
     print(label);
     setCharBackgroundColor(COLOR_BLACK);
+}
 
+void TftDisplay::drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
+        TFT_COLOR background) {
+
+    uint8_t x = (buttonNumber % 3) * 80 + 40; // 40 / 120 / 200
+    y += buttonNumber > 2 ? dyLine2 : 0;
+    fillArea(x - BUTTON_WIDTH/2, y, BUTTON_WIDTH, 21, background);
+    fillArea(x - BUTTON_WIDTH/2 + 1, y + 1, BUTTON_WIDTH - 2, 21 - 2, COLOR_BLACK);
+    setCharBackgroundColor(COLOR_BLACK);
+
+    int len = -1;
+    while (label[++len] != 0)
+        ;
+
+    x = x  - len * TFT_BIG_CHAR_WIDTH / 2;
+    y = y + 1;
+
+    setCharColor(color);
+    setCursorInPixel(x, y);
+    print(label);
 }
 
 void TftDisplay::printValueWithSpace(int value) {

@@ -131,6 +131,16 @@ struct Randomizer {
     int8_t Modl;
 };
 
+
+struct PreviousMenuChoice {
+    uint8_t main;
+    uint8_t mixer;
+    uint8_t deflt;
+    uint8_t preset;
+    uint8_t sequencer;
+    uint8_t dx7;
+};
+
 struct FullState {
     SynthEditMode synthMode;
     SynthEditMode synthModeBeforeMenu;
@@ -139,11 +149,8 @@ struct FullState {
     const MenuItem* currentMenuItem;
     char name[13];
 
-    uint8_t firstMenu;
-    uint8_t loadWhat;
-    uint8_t saveWhat;
-    uint8_t toolsWhat;
-    uint8_t scalaWhat;
+    uint8_t previousChoice;
+    struct PreviousMenuChoice previousMenuChoice;
     uint8_t midiConfigValue[MIDICONFIG_SIZE + 1];
 
     uint8_t preenFMBankNumber;

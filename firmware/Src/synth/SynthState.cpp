@@ -55,10 +55,6 @@ SynthState::SynthState() {
 
     // https://en.wikipedia.org/wiki/C_(musical_note)
     // Frequency of note 60 C4 :
-    fullState.loadWhat = 0;
-    fullState.saveWhat = 0;
-    fullState.toolsWhat = 0;
-    fullState.scalaWhat = 0;
     fullState.midiConfigValue[MIDICONFIG_USB] = 2;
     fullState.midiConfigValue[MIDICONFIG_RECEIVES] = 3;
     fullState.midiConfigValue[MIDICONFIG_SENDS] = 1;
@@ -71,7 +67,6 @@ SynthState::SynthState() {
     fullState.midiConfigValue[MIDICONFIG_BOOT_SOUND] = 0;
     fullState.midiConfigValue[MIDICONFIG_CPU_USAGE] = 0;
     fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT] = 100;
-    fullState.firstMenu = 0;
     // Init randomizer values to 1
     fullState.randomizer.Oper = 1;
     fullState.randomizer.EnvT = 1;
@@ -375,33 +370,41 @@ void SynthState::loadMixer(PFM3File const *bank, int patchNumber) {
     propagateAfterNewMixerLoad();
 }
 
-void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct OneSynthParams* params) {
-    switch (bank) {
-    case 0: {
-        PFM3File const *bank = storage->getPatchBank()->getFile(bankLSB);
-        if (bank->fileType != FILE_EMPTY) {
-            loadPreset(timbre, bank, patchNumber, params);
-        }
-    }
-        break;
-    case 1: {
-        PFM3File const *bank = storage->getMixerBank()->getFile(bankLSB);
-        if (bank->fileType != FILE_EMPTY) {
-            loadMixer(bank, patchNumber);
-        }
-    }
-        break;
-    case 2:
-    case 3:
-    case 4: {
-        int dx7bank = bank - 2;
-        PFM3File const *bank = storage->getDX7SysexFile()->getFile(bankLSB + dx7bank * 128);
-        if (bank->fileType != FILE_EMPTY) {
-            loadDx7Patch(timbre, bank, patchNumber, params);
-        }
-    }
-        break;
-    }
+void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB,
+		int patchNumber, struct OneSynthParams *params) {
+	switch (bank) {
+	case 0: {
+		PFM3File const *bank = storage->getPatchBank()->getFile(bankLSB);
+		if (bank->fileType != FILE_EMPTY) {
+			fullState.preenFMBankNumber = bankLSB;
+			fullState.preenFMPresetNumber = patchNumber;
+			loadPreset(timbre, bank, patchNumber, params);
+		}
+		break;
+	}
+	case 1: {
+		PFM3File const *bank = storage->getMixerBank()->getFile(bankLSB);
+		if (bank->fileType != FILE_EMPTY) {
+			fullState.preenFMMixerNumber = bankLSB;
+			fullState.preenFMMixerPresetNumber = patchNumber;
+			loadMixer(bank, patchNumber);
+		}
+		break;
+	}
+	case 2:
+	case 3:
+	case 4: {
+		int dx7bank = bank - 2;
+		PFM3File const *bank = storage->getDX7SysexFile()->getFile(
+				bankLSB + dx7bank * 128);
+		if (bank->fileType != FILE_EMPTY) {
+			fullState.dx7BankNumber = bankLSB;
+			fullState.dx7PresetNumber = patchNumber;
+			loadDx7Patch(timbre, bank, patchNumber, params);
+		}
+		break;
+	}
+	}
 }
 
 
@@ -424,19 +427,20 @@ void SynthState::setCurrentInstrument(int value) {
 
 void SynthState::buttonLongPressed(int button) {
 
+	// Uncomment to debug
     // Enter sequencer mode
-    if (button == BUTTON_PFM3_MENU) {
-        // Turn off the backlight
-        TIM1->CCR2 = 0;
-        // reinit TFT + redisplay full page
-        ILI9341_Init();
-        propagateNewPfm3Page();
-        // Wait for the page to be ready
-        HAL_Delay(500);
-        // Turn on the backlight
-        uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
-        TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
-    }
+	//    if (button == BUTTON_PFM3_MENU) {
+	//        // Turn off the backlight
+	//        TIM1->CCR2 = 0;
+	//        // reinit TFT + redisplay full page
+	//        ILI9341_Init();
+	//        propagateNewPfm3Page();
+	//        // Wait for the page to be ready
+	//        HAL_Delay(500);
+	//        // Turn on the backlight
+	//        uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
+	//        TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+	//    }
 
     if (fullState.synthMode == SYNTH_MODE_SEQUENCER) {
         displaySequencer->buttonLongPressed(currentTimbre, button);
@@ -487,7 +491,7 @@ void SynthState::buttonPressed(int button) {
             // Make sure to propagate synth mode
             oldSynthMode = SYNTH_MODE_EDIT_PFM3;
             fullState.synthMode = SYNTH_MODE_MENU;
-            fullState.menuSelect = fullState.firstMenu;
+            fullState.previousChoice = fullState.previousMenuChoice.main;
             fullState.currentMenuItem = MenuItemUtil::getMenuItem(MAIN_MENU);
             propagateNewSynthMode();
             return;
