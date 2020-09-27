@@ -177,7 +177,8 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
             break;
         case MENUTYPE_CONFIRM:
             if (button == 0) {
-                tft->drawButton("Sure?", 270, 29, button, 0, 1, COLOR_DARK_RED);
+                // Default Empty button
+                tft->drawSimpleButton("Sure?", 270, 29, button, COLOR_YELLOW, COLOR_DARK_RED);
                 return;
             }
             break;
@@ -444,29 +445,9 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
 
     // Next menu
     MenuState oldMenu = fullState->currentMenuItem->menuState;
-    // Save previous choice
-    if (button < 5) {
-		switch (oldMenu) {
-			case MAIN_MENU:
-				fullState->previousMenuChoice.main = button;
-				break;
-			case MENU_MIXER:
-				fullState->previousMenuChoice.mixer = button;
-				break;
-			case MENU_PRESET:
-				fullState->previousMenuChoice.preset = button;
-				break;
-			case MENU_SEQUENCER:
-				fullState->previousMenuChoice.sequencer = button;
-				break;
-			case MENU_DEFAULT:
-				fullState->previousMenuChoice.deflt = button;
-				break;
-			default:
-				break;
-		}
-    } else {
-        // Save previous choice, menu = 5 select previous choice
+
+    if (button == 5) {
+        // restore previous choice
 		switch (oldMenu) {
 			case MAIN_MENU:
 				button = fullState->previousMenuChoice.main;
@@ -488,8 +469,35 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
 		}
     }
 
-    const MenuItem* nextMenu = MenuItemUtil::getMenuItem(fullState->currentMenuItem->subMenu[button]);
+    // Don't do anything if no button
+    if (button > (fullState->currentMenuItem->maxValue - 1)) {
+    	return;
+    }
 
+    if (button < 5) {
+        // store previous choice
+        switch (oldMenu) {
+            case MAIN_MENU:
+                fullState->previousMenuChoice.main = button;
+                break;
+            case MENU_MIXER:
+                fullState->previousMenuChoice.mixer = button;
+                break;
+            case MENU_PRESET:
+                fullState->previousMenuChoice.preset = button;
+                break;
+            case MENU_SEQUENCER:
+                fullState->previousMenuChoice.sequencer = button;
+                break;
+            case MENU_DEFAULT:
+                fullState->previousMenuChoice.deflt = button;
+                break;
+            default:
+                break;
+        }
+    }
+
+    const MenuItem* nextMenu = MenuItemUtil::getMenuItem(fullState->currentMenuItem->subMenu[button]);
 
 
     // If Previous state was the following we have some action to do

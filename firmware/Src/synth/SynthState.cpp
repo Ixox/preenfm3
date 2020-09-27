@@ -370,41 +370,39 @@ void SynthState::loadMixer(PFM3File const *bank, int patchNumber) {
     propagateAfterNewMixerLoad();
 }
 
-void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB,
-		int patchNumber, struct OneSynthParams *params) {
-	switch (bank) {
-	case 0: {
-		PFM3File const *bank = storage->getPatchBank()->getFile(bankLSB);
-		if (bank->fileType != FILE_EMPTY) {
-			fullState.preenFMBankNumber = bankLSB;
-			fullState.preenFMPresetNumber = patchNumber;
-			loadPreset(timbre, bank, patchNumber, params);
-		}
-		break;
-	}
-	case 1: {
-		PFM3File const *bank = storage->getMixerBank()->getFile(bankLSB);
-		if (bank->fileType != FILE_EMPTY) {
-			fullState.preenFMMixerNumber = bankLSB;
-			fullState.preenFMMixerPresetNumber = patchNumber;
-			loadMixer(bank, patchNumber);
-		}
-		break;
-	}
-	case 2:
-	case 3:
-	case 4: {
-		int dx7bank = bank - 2;
-		PFM3File const *bank = storage->getDX7SysexFile()->getFile(
-				bankLSB + dx7bank * 128);
-		if (bank->fileType != FILE_EMPTY) {
-			fullState.dx7BankNumber = bankLSB;
-			fullState.dx7PresetNumber = patchNumber;
-			loadDx7Patch(timbre, bank, patchNumber, params);
-		}
-		break;
-	}
-	}
+void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct OneSynthParams *params) {
+    switch (bank) {
+        case 0: {
+            PFM3File const *bank = storage->getPatchBank()->getFile(bankLSB);
+            if (bank->fileType != FILE_EMPTY) {
+                fullState.preenFMBankNumber = bankLSB;
+                fullState.preenFMPresetNumber = patchNumber;
+                loadPreset(timbre, bank, patchNumber, params);
+            }
+            break;
+        }
+        case 1: {
+            PFM3File const *bank = storage->getMixerBank()->getFile(bankLSB);
+            if (bank->fileType != FILE_EMPTY) {
+                fullState.preenFMMixerNumber = bankLSB;
+                fullState.preenFMMixerPresetNumber = patchNumber;
+                loadMixer(bank, patchNumber);
+            }
+            break;
+        }
+        case 2:
+        case 3:
+        case 4: {
+            int dx7bank = bank - 2;
+            PFM3File const *bank = storage->getDX7SysexFile()->getFile(bankLSB + dx7bank * 128);
+            if (bank->fileType != FILE_EMPTY) {
+                fullState.dx7BankNumber = bankLSB;
+                fullState.dx7PresetNumber = patchNumber;
+                loadDx7Patch(timbre, bank, patchNumber, params);
+            }
+            break;
+        }
+    }
 }
 
 

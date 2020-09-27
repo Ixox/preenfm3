@@ -176,21 +176,21 @@ const struct MenuItem allMenus[]  = {
                 MENU_DEFAULT_SAVE,
                 "Save",
                 MENUTYPE_CONFIRM,
-                0,
+                1,
                 {MENU_DONE}
         },
         {
                 MENU_DEFAULT_LOAD,
                 "Load",
                 MENUTYPE_CONFIRM,
-                0,
+                1,
                 {MENU_DONE}
         },
         {
                 MENU_DEFAULT_DELETE,
                 "Clear",
                 MENUTYPE_CONFIRM,
-                0,
+                1,
                 {MENU_DONE}
         },
         // ==  SD
