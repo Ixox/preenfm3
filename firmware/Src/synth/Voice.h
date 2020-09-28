@@ -48,7 +48,6 @@ public:
     ~Voice(void);
 
     void init();
-    bool isUsed() { return currentTimbre != 0; }
     void nextBlock();
     void emptyBuffer();
     void fxAfterBlock();

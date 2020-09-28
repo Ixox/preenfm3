@@ -432,27 +432,26 @@ void Synth::updateNumberOfActiveTimbres() {
 
 int Synth::getFreeVoice() {
     // Loop on all voices
-    for (int voice=0; voice< MAX_NUMBER_OF_VOICES; voice++) {
-        bool used = false;
+    bool used[MAX_NUMBER_OF_VOICES];
+    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
+        used[v] = false;
+    }
 
-        for (int t=0; t< NUMBER_OF_TIMBRES && !used; t++) {
-            // Must be different from 0 and -1
-            int interVoice = -10;
-            for (int v=0;  v < MAX_NUMBER_OF_VOICES  && !used; v++) {
-                interVoice = timbres[t].voiceNumber[v];
-                if (interVoice == -1) {
-                    break;
-                }
-                if (interVoice == voice) {
-                    used = true;
-                }
-            }
-        }
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        // Must be different from 0 and -1
+        int nv = this->synthState->mixerState.instrumentState[t].numberOfVoices;
 
-        if (!used) {
-            return voice;
+        for (int v = 0; v < nv; v++) {
+            used[timbres[t].voiceNumber[v]] = true;
         }
     }
+
+    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
+        if (!used[v]) {
+            return v;
+        }
+    }
+
     return -1;
 }
 
@@ -552,15 +551,15 @@ void Synth::newTimbre(int timbre)  {
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     switch (valueType) {
-        case  MIXER_VALUE_NUMBER_OF_VOICES:
+        case MIXER_VALUE_NUMBER_OF_VOICES:
             if (newValue == oldValue) {
                 return;
             } else if (newValue > oldValue) {
-                for (int v=(int)oldValue; v < (int)newValue; v++) {
+                for (int v = (int) oldValue; v < (int) newValue; v++) {
                     timbres[timbre].setVoiceNumber(v, getFreeVoice());
                 }
             } else {
-                for (int v=(int)newValue; v < (int)oldValue; v++) {
+                for (int v = (int) newValue; v < (int) oldValue; v++) {
                     voices[timbres[timbre].voiceNumber[v]].killNow();
                     timbres[timbre].setVoiceNumber(v, -1);
                 }
@@ -570,7 +569,7 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
             }
             timbres[timbre].numberOfVoicesChanged(newValue);
             break;
-		case MIXER_VALUE_OUT:
+        case MIXER_VALUE_OUT:
             updateNumberOfActiveTimbres();
             break;
     }
@@ -579,22 +578,15 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
 
 
 void Synth::rebuidVoiceTimbre(int timbre) {
-    int voiceNumber = 0;
 
     int nv = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
 
-    for (int v = 0; v < nv; v++) {
-        while (voiceNumber < MAX_NUMBER_OF_VOICES && voices[voiceNumber].isUsed()) {
-            voiceNumber++;
-        }
-        if (voiceNumber >= MAX_NUMBER_OF_VOICES) {
-            nv = v;
-            break;
-        }
-        timbres[timbre].setVoiceNumber(v, voiceNumber);
-    }
-    for (int v = nv; v < MAX_NUMBER_OF_VOICES; v++) {
+    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
         timbres[timbre].setVoiceNumber(v, -1);
+    }
+
+    for (int v = 0; v < nv; v++) {
+        timbres[timbre].setVoiceNumber(v, getFreeVoice());
     }
 }
 
@@ -607,10 +599,11 @@ void Synth::rebuidVoiceAllTimbre() {
         for (int v = 0; v < nv; v++) {
             timbres[t].setVoiceNumber(v, voiceNumber++);
         }
+
         for (int v = nv; v < MAX_NUMBER_OF_VOICES; v++) {
             timbres[t].setVoiceNumber(v, -1);
         }
-    }
+}
 }
 
 

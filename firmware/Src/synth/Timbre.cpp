@@ -234,11 +234,8 @@ void Timbre::setVoiceNumber(int v, int n) {
     this->voiceNumber[v] = n;
     if (n >= 0) {
         voices[n]->setCurrentTimbre(this);
-    } else {
-        voices[n]->setCurrentTimbre(0);
     }
 }
-
 
 void Timbre::initVoicePointer(int n, Voice* voice) {
 	voices[n] = voice;

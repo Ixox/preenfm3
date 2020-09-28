@@ -247,7 +247,7 @@ static HAL_StatusTypeDef SD_IO_WriteReadData(const uint8_t *DataIn, uint8_t *Dat
 
 
 // PFM3 spi2 must work in IT mode to avoid disabling the IRQ
-uint8_t spi2TransferComplete;
+uint8_t spi2TransferComplete = 1;
 
 /**
   * @}
@@ -381,8 +381,8 @@ int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlo
     /* Now look for the data token to signify the start of the data */
     if (SD_WaitData(SD_TOKEN_START_DATA_SINGLE_BLOCK_READ) == BSP_ERROR_NONE)
     {
-      /* Read the SD block data : read NumByteToRead data */
       spi2TransferComplete = 0;
+      /* Read the SD block data : read NumByteToRead data */
       while (SD_IO_WriteReadData_DMA(dummySector, (uint8_t*)pData + offset, BlockSize) == HAL_BUSY) {
           HAL_Delay(1);
       }
@@ -475,9 +475,11 @@ int32_t PFM3_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfB
 
 
 
-    /* Write the block data to SD */
     spi2TransferComplete = 0;
-    SD_IO_WriteReadData_DMA((uint8_t*)pData + offset, dummySector, BlockSize);
+    /* Write the block data to SD */
+    if (SD_IO_WriteReadData_DMA((uint8_t*)pData + offset, dummySector, BlockSize) == HAL_BUSY) {
+        HAL_Delay(1);
+    }
     while (spi2TransferComplete == 0);
 
     /* Set next write address */
@@ -510,142 +512,6 @@ error :
   return retr;
 }
 
-
-/**
-  * @brief  Writes block(s) to a specified address in an SD card, in polling mode.
-  * @param  Instance   SD Instance
-  * @param  pData      Pointer to the buffer that will contain the data to transmit
-  * @param  BlockIdx   Block index from where data is to be written
-  * @param  BlocksNbr  Number of SD blocks to write
-  * @retval BSP status
-  */
-int32_t ADAFRUIT_802_SD_WriteBlocks(uint32_t Instance, uint32_t *pData, uint32_t BlockIdx, uint32_t BlocksNbr)
-{
-  int32_t ret = BSP_ERROR_NONE;
-  uint32_t response, offset = 0, blocks_nbr = BlocksNbr;
-  uint8_t tmp, data_response;
-
-  if(Instance >= SD_INSTANCES_NBR)
-  {
-    ret = BSP_ERROR_WRONG_PARAM;
-  }
-  else
-  {
-    /* Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
-    Check if the SD acknowledged the set block length command: R1 response (0x00: no errors) */
-    response = SD_SendCmd(SD_CMD_SET_BLOCKLEN, ADAFRUIT_SD_BLOCK_SIZE, 0xFF, (uint8_t)SD_ANSWER_R1_EXPECTED);
-    SD_IO_CSState(1);
-    tmp = SD_DUMMY_BYTE;
-    if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-    {
-      ret = BSP_ERROR_PERIPH_FAILURE;
-    }
-    else
-    {
-      if ((uint8_t)(response & 0xFFU) != (uint8_t)SD_R1_NO_ERROR)
-      {
-        /* Send dummy byte: 8 Clock pulses of delay */
-        SD_IO_CSState(1);
-        if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-        {
-          ret = BSP_ERROR_PERIPH_FAILURE;
-        }
-      }
-
-      if(ret == BSP_ERROR_NONE)
-      {
-        /* Data transfer */
-        do
-        {
-          /* Send CMD24 (SD_CMD_WRITE_SINGLE_BLOCK) to write blocks  and
-          Check if the SD acknowledged the write block command: R1 response (0x00: no errors) */
-          response = SD_SendCmd(SD_CMD_WRITE_SINGLE_BLOCK, (BlockIdx) * ((CardType == ADAFRUIT_802_CARD_SDHC) ? 1U : ADAFRUIT_SD_BLOCK_SIZE), 0xFFU, (uint8_t)SD_ANSWER_R1_EXPECTED);
-          if ((uint8_t)(response & 0xFFU) != (uint8_t)SD_R1_NO_ERROR)
-          {
-            /* Send dummy byte: 8 Clock pulses of delay */
-            SD_IO_CSState(1);
-            if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-            {
-              ret = BSP_ERROR_PERIPH_FAILURE;
-            }
-          }
-
-          if(ret == BSP_ERROR_NONE)
-          {
-            /* Send dummy byte for NWR timing : one byte between CMDWRITE and TOKEN */
-            if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-            {
-              ret = BSP_ERROR_PERIPH_FAILURE;
-            }
-            else if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-            {
-              ret = BSP_ERROR_PERIPH_FAILURE;
-            }
-            else
-            {
-              /* Send the data token to signify the start of the data */
-              tmp = SD_TOKEN_START_DATA_SINGLE_BLOCK_WRITE;
-              if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-              {
-                ret = BSP_ERROR_PERIPH_FAILURE;
-              }/* Write the block data to SD */
-              else if(BSP_SPI_Send((uint8_t*)pData + offset, ADAFRUIT_SD_BLOCK_SIZE) != BSP_ERROR_NONE)
-              {
-                ret = BSP_ERROR_PERIPH_FAILURE;
-              }
-              else
-              {
-                /* Set next write address */
-                offset += ADAFRUIT_SD_BLOCK_SIZE;
-                BlockIdx++;
-                blocks_nbr--;
-
-                /* get CRC bytes (not really needed by us, but required by SD) */
-                tmp = SD_DUMMY_BYTE;
-                if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-                {
-                  ret = BSP_ERROR_PERIPH_FAILURE;
-                }
-                else if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-                {
-                  ret = BSP_ERROR_PERIPH_FAILURE;
-                }/* Read data response */
-                else if(SD_GetDataResponse(&data_response) != BSP_ERROR_NONE)
-                {
-                  ret = BSP_ERROR_UNKNOWN_FAILURE;
-                }
-                else
-                {
-                  if (data_response != (uint8_t)SD_DATA_OK)
-                  {
-                    /* Set response value to failure */
-                    /* Send dummy byte: 8 Clock pulses of delay */
-                    SD_IO_CSState(1);
-                    if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-                    {
-                      ret = BSP_ERROR_PERIPH_FAILURE;
-                    }
-                  }
-                }
-              }
-            }
-            if(ret == BSP_ERROR_NONE)
-            {
-              SD_IO_CSState(1);
-              if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-              {
-                ret = BSP_ERROR_PERIPH_FAILURE;
-              }
-            }
-          }
-        }while ((blocks_nbr != 0U) && (ret == BSP_ERROR_NONE));
-      }
-    }
-  }
-
-  /* Return BSP status */
-  return ret;
-}
 
 
 /**
