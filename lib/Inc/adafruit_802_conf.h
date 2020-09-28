@@ -32,11 +32,6 @@
 #include "stm32h7xx_nucleo_bus.h"
 #include "preenfm3_pins.h"
 
-#define BUS_SPIx_Init           BSP_SPI_Init
-#define BUS_SPIx_Recv           BSP_SPI_Recv
-#define BUS_SPIx_Send           BSP_SPI_Send
-#define BUS_SPIx_SendRecv       BSP_SPI_SendRecv
-
 
 #define ADAFRUIT_802_ADCx_RANK                 ADC_REGULAR_RANK_1
 #define ADAFRUIT_802_ADCx_SAMPLETIME           ADC_SAMPLETIME_2CYCLES_5

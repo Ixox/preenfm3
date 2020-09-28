@@ -44,15 +44,7 @@
   * @{
   */ 
 /* Nucleo pin and part number defines */
-#define USE_NUCLEO_144
-#define USE_NUCLEO_H7A3ZI_Q
 
-/* COM define */
-#define USE_COM_LOG                         0U
-#define USE_BSP_COM_FEATURE                 0U
-
-/* IRQ priorities */
-#define BSP_BUTTON_USER_IT_PRIORITY         15U
 
 #define BUS_SPI_BAUDRATE                   15000000
 /**

@@ -32,12 +32,12 @@ Synth::~Synth(void) {
 }
 
 void Synth::init(SynthState* synthState) {
-    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
-        for (uint16_t k = 0; k < (sizeof(struct OneSynthParams)/sizeof(float)); k++) {
-            ((float*)&timbres[t].params)[k] = ((float*)&preenMainPreset)[k];
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        for (uint16_t k = 0; k < (sizeof(struct OneSynthParams) / sizeof(float)); k++) {
+            ((float*) &timbres[t].params)[k] = ((float*) &preenMainPreset)[k];
         }
         timbres[t].init(synthState, t);
-        for (int v=0; v<MAX_NUMBER_OF_VOICES; v++) {
+        for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
             timbres[t].initVoicePointer(v, &voices[v]);
         }
     }
@@ -48,14 +48,13 @@ void Synth::init(SynthState* synthState) {
     for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
         voices[k].init();
     }
-    rebuidVoiceTimbre();
+    rebuidVoiceAllTimbre();
     // Here synthState is already initialized
-    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres[t].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[t].numberOfVoices);
     }
     updateNumberOfActiveTimbres();
 
-    isInPause = false;
 
     // Cpu usage
     cptCpuUsage = 0;
@@ -121,6 +120,17 @@ void Synth::setHoldPedal(int timbre, int value) {
     timbres[timbre].setHoldPedal(value);
 }
 
+void Synth::allNoteOffQuick(int timbre) {
+    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    for (int k = 0; k < numberOfVoices; k++) {
+        // voice number k of timbre
+        int n = timbres[timbre].voiceNumber[k];
+        if (voices[n].isPlaying()) {
+            voices[n].noteOffQuick();
+        }
+    }
+}
+
 void Synth::allNoteOff(int timbre) {
     int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
@@ -162,16 +172,6 @@ bool Synth::isPlaying() {
 void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
 	CYCLE_MEASURE_START(cycles_all);
 
-	if (isInPause) {
-		// Other buffer ? Stereo => should go up to 64 ????
-//	    buffer1[0] = buffer1[33];
-//	    for (int s = 1; s < 32; s++) {
-//	        buffer1[s] = buffer1[s - 1] * .96f;
-//	    }
-	    return;
-	}
-
-
     // We consider the random number is always ready here...
 	uint32_t random32bit;
 	if (unlikely(HAL_RNG_GenerateRandomNumber(&hrng, &random32bit) != HAL_OK)) {
@@ -186,6 +186,9 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
         noise[noiseIndex++] =  (random32bit & 0xffff) * .000030518f - 1.0f; // value between -1 and 1.
         noise[noiseIndex++] = (random32bit >> 16) * .000030518f - 1.0f; // value between -1 and 1.
     }
+
+
+
 
     for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
         timbres[t].cleanNextBlock();
@@ -210,10 +213,6 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             this->voices[v].emptyBuffer();
         }
     }
-
-
-
-
 
 	// Dispatch the timbres ont the different out !!
 
@@ -333,21 +332,6 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
     }
 }
 
-void Synth::beforeNewParamsLoad(int timbre) {
-
-	isInPause = true;
-
-    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
-        timbres[t].resetArpeggiator();
-        for (int v=0; v< MAX_NUMBER_OF_VOICES; v++) {
-            timbres[t].setVoiceNumber(v, -1);
-        }
-    }
-    // Stop all voices
-    allSoundOff();
-};
-
-
 int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
     int maxNumberOfFreeVoice = 0;
     for (int t=0 ; t< NUMBER_OF_TIMBRES; t++) {
@@ -359,30 +343,68 @@ int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
 
 }
 
+
+void Synth::beforeNewParamsLoad(int timbre) {
+
+    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    for (int k = 0; k < NUMBER_OF_STORED_NOT; k++) {
+        noteBeforeNewParalsLoad[k] = 0;
+        velocityBeforeNewParalsLoad[k] = 0;
+    }
+    for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOT; k++) {
+        // voice number k of timbre
+        int n = timbres[timbre].voiceNumber[k];
+        if (voices[n].isPlaying() && !voices[n].isReleased()) {
+            noteBeforeNewParalsLoad[k] = voices[n].getNote();
+            velocityBeforeNewParalsLoad[k] = voices[n].getMidiVelocity();
+        }
+    }
+
+    timbres[timbre].resetArpeggiator();
+    // Stop all voices
+    allNoteOffQuick(timbre);
+    // Let's allow the buffer to catch up
+    // We can do that because we're in the lower priority thread
+    HAL_Delay(2);
+};
+
+
 void Synth::afterNewParamsLoad(int timbre) {
     // Reset to 0 the number of voice then try to set the right value
 	if (timbres[timbre].params.engine1.polyMono == 1) {
-	    int numberOfVoice = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
-	    int voicesMax = getNumberOfFreeVoicesForThisTimbre(timbre);
-	    this->synthState->mixerState.instrumentState[timbre].numberOfVoices = numberOfVoice < voicesMax ? numberOfVoice : voicesMax;
+        if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices == 1) {
+            // Set number of voice from 1 to 3 (or max available)
+            int voicesMax = getNumberOfFreeVoicesForThisTimbre(timbre);
+            this->synthState->mixerState.instrumentState[timbre].numberOfVoices = 3 < voicesMax ? 3 : voicesMax;
+            rebuidVoiceTimbre(timbre);
+            timbres[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+        }
 	} else {
-	    this->synthState->mixerState.instrumentState[timbre].numberOfVoices = 1;
+	    if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices != 1) {
+	        this->synthState->mixerState.instrumentState[timbre].numberOfVoices = 1;
+	        rebuidVoiceTimbre(timbre);
+	        timbres[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+	    }
 	}
 
-    rebuidVoiceTimbre();
-    updateNumberOfActiveTimbres();
-
-    timbres[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
     timbres[timbre].afterNewParamsLoad();
     // values to force check lfo used
     timbres[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
 
-	isInPause = false;
+
+    for (int k = 0; k < NUMBER_OF_STORED_NOT; k++) {
+        if (noteBeforeNewParalsLoad[k] != 0) {
+            timbres[timbre].noteOn(noteBeforeNewParalsLoad[k], velocityBeforeNewParalsLoad[k]);
+            noteBeforeNewParalsLoad[k] = 0;
+        }
+    }
+
+
 }
 
 void Synth::afterNewMixerLoad() {
 
-    rebuidVoiceTimbre();
+    rebuidVoiceAllTimbre();
     updateNumberOfActiveTimbres();
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES ; timbre++) {
@@ -556,18 +578,36 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
 }
 
 
+void Synth::rebuidVoiceTimbre(int timbre) {
+    int voiceNumber = 0;
 
+    int nv = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
 
-void Synth::rebuidVoiceTimbre() {
-    int voices = 0;
+    for (int v = 0; v < nv; v++) {
+        while (voiceNumber < MAX_NUMBER_OF_VOICES && voices[voiceNumber].isUsed()) {
+            voiceNumber++;
+        }
+        if (voiceNumber >= MAX_NUMBER_OF_VOICES) {
+            nv = v;
+            break;
+        }
+        timbres[timbre].setVoiceNumber(v, voiceNumber);
+    }
+    for (int v = nv; v < MAX_NUMBER_OF_VOICES; v++) {
+        timbres[timbre].setVoiceNumber(v, -1);
+    }
+}
 
-    for (int t=0; t<NUMBER_OF_TIMBRES; t++) {
+void Synth::rebuidVoiceAllTimbre() {
+    int voiceNumber = 0;
+
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         int nv = this->synthState->mixerState.instrumentState[t].numberOfVoices;
 
-        for (int v=0; v < nv; v++) {
-            timbres[t].setVoiceNumber(v, voices++);
+        for (int v = 0; v < nv; v++) {
+            timbres[t].setVoiceNumber(v, voiceNumber++);
         }
-        for (int v=nv; v < MAX_NUMBER_OF_VOICES;  v++) {
+        for (int v = nv; v < MAX_NUMBER_OF_VOICES; v++) {
             timbres[t].setVoiceNumber(v, -1);
         }
     }

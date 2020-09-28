@@ -138,8 +138,6 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
     DRESULT res = RES_ERROR;
     uint32_t timeout = 100000;
 
-    __disable_irq();
-
     if (PFM3_SD_ReadBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT) == BSP_ERROR_NONE) {
         /* wait until the Write operation is finished */
         while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
@@ -149,8 +147,6 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
         }
         res = RES_OK;
     }
-
-    __enable_irq();
 
     return res;
 }
@@ -169,8 +165,6 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
     DRESULT res = RES_ERROR;
     uint32_t timeout = 100000;
 
-    __disable_irq();
-
     if (PFM3_SD_WriteBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT) == BSP_ERROR_NONE) {
         /* wait until the Write operation is finished */
         while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
@@ -180,8 +174,6 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
         }
         res = RES_OK;
     }
-
-    __enable_irq();
 
     return res;
 }

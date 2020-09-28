@@ -29,6 +29,7 @@
 #include "dwt.h"
 
 #define UINT_MAX  4294967295
+#define NUMBER_OF_STORED_NOT 6
 
 class Sequencer;
 
@@ -52,6 +53,7 @@ public:
     void noteOnFromSequencer(int timbre, char note, char velocity);
     void noteOffFromSequencer(int timbre, char note);
     void allNoteOff(int timbre);
+    void allNoteOffQuick(int timbre);
     void allSoundOff();
     void allSoundOff(int timbre);
     bool isPlaying();
@@ -83,7 +85,8 @@ public:
 
 
     int getFreeVoice();
-    void rebuidVoiceTimbre();
+    void rebuidVoiceAllTimbre();
+    void rebuidVoiceTimbre(int timbre);
 
     int getNumberOfFreeVoicesForThisTimbre(int timbre);
 
@@ -189,9 +192,6 @@ private:
     // gate
     float currentGate;
 
-    // Pause playing
-    bool isInPause;
-
     // Cpu usage
     uint32_t totalCyclesUsedInSynth;
     uint16_t cptCpuUsage;
@@ -202,6 +202,11 @@ private:
 
     // Sequencer
     Sequencer* sequencer;
+
+    // remember notes before changing timbre
+    char noteBeforeNewParalsLoad[NUMBER_OF_STORED_NOT];
+    char velocityBeforeNewParalsLoad[NUMBER_OF_STORED_NOT];
+
 };
 
 

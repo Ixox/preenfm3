@@ -30,6 +30,7 @@ extern StepSeqValue stepNotes[NUMBER_OF_TIMBRES][256 + 1];
 extern char patch_zeros[ALIGNED_PATCH_ZERO];
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMMixerAlloc[NUMBEROFPREENFMMIXERS];
+__attribute__((section(".ram_d2b"))) static FIL mixerFile;
 
 
 MixerBank::MixerBank() {
@@ -106,7 +107,6 @@ void MixerBank::removeDefaultMixer() {
  */
 bool MixerBank::saveDefaultMixerAndSeq() {
     bool savedOK = true;
-    FIL mixerFile;
     UINT byteWritten;
 
     FRESULT fatFSResult = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_OPEN_ALWAYS | FA_WRITE);
@@ -189,7 +189,6 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
 
 bool MixerBank::loadDefaultMixerAndSeq() {
-    FIL mixerFile;
     UINT byteRead;
     FRESULT result = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_READ);
     if (result == FR_OK) {
@@ -214,7 +213,6 @@ void MixerBank::createMixerBank(const char* name) {
         initFiles();
     }
     uint32_t defaultMixerSize;
-    FIL mixerFile;
     const struct PFM3File * newBank = addEmptyFile(name);
     const char* fullBankName = getFullName(name);
 
@@ -248,7 +246,6 @@ void MixerBank::createMixerBank(const char* name) {
 }
 
 bool MixerBank::loadMixer(const struct PFM3File* mixer, int mixerNumber) {
-    FIL mixerFile;
     const char* fullBankName = getFullName(mixer->name);
 
     FRESULT result = f_open(&mixerFile, fullBankName, FA_READ);
@@ -275,7 +272,6 @@ const char* MixerBank::loadMixerName(const struct PFM3File* mixer, int mixerNumb
 
 bool MixerBank::saveMixer(const struct PFM3File* mixer, int mixerNumber, char* mixerName) {
     const char* fullBankName = getFullName(mixer->name);
-    FIL mixerFile;
 
     fsu->copy(this->mixerState->mixName, mixerName, 12);
 

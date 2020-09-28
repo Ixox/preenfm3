@@ -39,6 +39,7 @@
 
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
+__attribute__((section(".ram_d2b"))) static FIL sequenceFile;
 
 extern SeqMidiAction actions[SEQ_ACTION_SIZE];
 extern StepSeqValue stepNotes[NUMBER_OF_TIMBRES][256 + 1];
@@ -84,17 +85,15 @@ void SequenceBank::loadSequence(const struct PFM3File* bank, int patchNumber) {
     const char* fullSeqBankName = getFullName(bank->name);
     uint32_t bankBersion;
     UINT byteRead;
-    FIL fileToLoad;
-
-    if (f_open(&fileToLoad, fullSeqBankName, FA_READ) == FR_OK) {
-        f_read(&fileToLoad, (void *)&bankBersion, 4, &byteRead);
+    if (f_open(&sequenceFile, fullSeqBankName, FA_READ) == FR_OK) {
+        f_read(&sequenceFile, (void *)&bankBersion, 4, &byteRead);
 
         switch (bankBersion) {
             case SEQUENCE_BANK_VERSION1:
-                loadSequenceVersion1(&fileToLoad, patchNumber);
+                loadSequenceVersion1(&sequenceFile, patchNumber);
                 break;
         }
-        f_close(&fileToLoad);
+        f_close(&sequenceFile);
     }
 }
 
@@ -123,21 +122,20 @@ const char* SequenceBank::loadSequenceName(const struct PFM3File* bank, int patc
     const char* fullSeqBankName = getFullName(bank->name);
     uint32_t bankBersion;
     UINT byteRead;
-    FIL fileToLoad;
 
-    if (f_open(&fileToLoad, fullSeqBankName, FA_READ) == FR_OK) {
-        f_read(&fileToLoad, (void *)&bankBersion, 4, &byteRead);
+    if (f_open(&sequenceFile, fullSeqBankName, FA_READ) == FR_OK) {
+        f_read(&sequenceFile, (void *)&bankBersion, 4, &byteRead);
 
         switch (bankBersion) {
             case SEQUENCE_BANK_VERSION1:
-                f_lseek(&fileToLoad, 4 + (1024 + 28720) * patchNumber);
-                f_read(&fileToLoad, storageBuffer, 20, &byteRead);
+                f_lseek(&sequenceFile, 4 + (1024 + 28720) * patchNumber);
+                f_read(&sequenceFile, storageBuffer, 20, &byteRead);
                 const char* sequenceNameInBuffer = sequencer->getSequenceNameInBuffer(storageBuffer);
                 for (int s = 0; s < 12; s++) {
                     sequenceName[s] = sequenceNameInBuffer[s];
                 }
                 sequenceName[12] = 0;
-                f_close(&fileToLoad);
+                f_close(&sequenceFile);
                 return sequenceName;
                 break;
         }
@@ -152,7 +150,6 @@ void SequenceBank::createSequenceFile(const char* name) {
         initFiles();
     }
 
-    FIL sequenceFile;
     const struct PFM3File * newBank = addEmptyFile(name);
     const char* fullBankName = getFullName(name);
     UINT byteWritten;
@@ -201,7 +198,6 @@ void SequenceBank::saveSequence(const struct PFM3File* sequencePFMFile, int sequ
 
     const char* fullSeqBankName = getFullName(sequencePFMFile->name);
     UINT byteWritten;
-    FIL sequenceFile;
     uint32_t seqStatesize;
 
     for (int i = 0; i < 1024; i++) {

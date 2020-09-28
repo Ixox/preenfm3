@@ -21,6 +21,7 @@
 
 __attribute__((section(".ram_d2b"))) char storageBuffer[PROPERTY_FILE_SIZE];
 __attribute__((section(".ram_d2b"))) char patch_zeros[ALIGNED_PATCH_ZERO];
+__attribute__((section(".ram_d2b"))) static FIL file;
 
 
 PreenFMFileType::PreenFMFileType() {
@@ -76,26 +77,25 @@ int PreenFMFileType::load(FILE_ENUM file, int seek, void* bytes, int size) {
 
 int PreenFMFileType::load(const char* fileName, int seek, void* bytes, int size) {
 
-    FIL fileToLoad;
-    FRESULT fatFSResult = f_open(&fileToLoad, fileName, FA_READ);
+    FRESULT fatFSResult = f_open(&file, fileName, FA_READ);
     if (seek == 0 && size == 0) {
         // read the full file
-        size = fileToLoad.obj.objsize;
+        size = file.obj.objsize;
     }
     int toReturn = 0;
     if (fatFSResult == FR_OK) {
 
         if (seek != 0) {
-            f_lseek(&fileToLoad, seek);
+            f_lseek(&file, seek);
         }
         if (fatFSResult == FR_OK) {
             UINT byteRead;
-            fatFSResult = f_read(&fileToLoad, bytes, size, &byteRead);
+            fatFSResult = f_read(&file, bytes, size, &byteRead);
             if (fatFSResult == FR_OK && byteRead == size) {
                 toReturn = byteRead;
             }
         }
-        fatFSResult = f_close(&fileToLoad);
+        fatFSResult = f_close(&file);
         if (fatFSResult != FR_OK) {
             toReturn = 0;
         }
@@ -104,7 +104,6 @@ int PreenFMFileType::load(const char* fileName, int seek, void* bytes, int size)
 }
 
 FIL PreenFMFileType::createFile(const char* fileName) {
-    FIL file;
     FRESULT fatFSResult = f_open(&file, fileName, FA_OPEN_ALWAYS | FA_WRITE);
     if (fatFSResult != FR_OK) {
         file.err = 1;
@@ -136,7 +135,6 @@ int PreenFMFileType::save(FILE_ENUM file, int seek, void* bytes, int size) {
 }
 
 int PreenFMFileType::save(const char* fileName, int seek, void* bytes, int size) {
-    FIL file;
     FRESULT fatFSResult = f_open(&file, fileName, FA_OPEN_ALWAYS | FA_WRITE);
     int toReturn = 0;
     if (fatFSResult == FR_OK) {
@@ -164,7 +162,6 @@ int PreenFMFileType::checkSize(FILE_ENUM file) {
 }
 
 int PreenFMFileType::checkSize(const char* fileName) {
-    FIL file;
     FRESULT fatFSResult = f_open(&file, fileName, FA_READ);
     int toReturn = -1;
     if (fatFSResult == FR_OK) {

@@ -48,7 +48,7 @@ public:
     ~Voice(void);
 
     void init();
-
+    bool isUsed() { return currentTimbre != 0; }
     void nextBlock();
     void emptyBuffer();
     void fxAfterBlock();
@@ -60,6 +60,7 @@ public:
     void glideToNote(short newNote, float newNoteFrequency);
     void killNow();
     void noteOff();
+    void noteOffQuick();
     void glideFirstNoteOff();
     void glide();
 
@@ -68,6 +69,7 @@ public:
     bool isNewNotePending() { return this->newNotePending; }
     unsigned int getIndex() { return this->index; }
     char getNote() { return this->note; }
+    char getMidiVelocity() { return this->midiVelocity; }
     float getNoteFrequency() { return this->noteFrequency; }
     float getNoteRealFrequencyEstimation(float newNoteFrequency);
     char getNextPendingNote() { return this->pendingNote; }
@@ -381,6 +383,7 @@ private:
     bool isFullOfZero;
     unsigned int index;
     char note;
+    char midiVelocity;
     float noteFrequency;
     float velocity;
     float velIm1, velIm2, velIm3, velIm4, velIm5;

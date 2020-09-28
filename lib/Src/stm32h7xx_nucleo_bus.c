@@ -44,7 +44,7 @@
 /** @defgroup ADAFRUIT_802_BUS_Exported_Variables BUS Exported Variables
   * @{
   */ 
-SPI_HandleTypeDef hbus_spi1;
+SPI_HandleTypeDef sd_spi2;
 /**
   * @}
   */ 
@@ -79,11 +79,11 @@ static uint32_t SPI_GetPrescaler(uint32_t clock_src_freq, uint32_t baudrate_mbps
   */
 int32_t BSP_SPI_Init(void)
 {  
-  if(HAL_SPI_GetState(&hbus_spi1) == HAL_SPI_STATE_RESET)
+  if(HAL_SPI_GetState(&sd_spi2) == HAL_SPI_STATE_RESET)
   {
 #if (USE_HAL_SPI_REGISTER_CALLBACKS == 0)
     /* Init the SPI Msp */
-    SPI_MspInit(&hbus_spi1);
+    SPI_MspInit(&sd_spi2);
 #else
     if(IsSpiMspCbValid == 0U)
     {
@@ -94,7 +94,7 @@ int32_t BSP_SPI_Init(void)
     }
 #endif
     
-    if(MX_SPI_Init(&hbus_spi1, SPI_GetPrescaler(HAL_RCC_GetHCLKFreq(), BUS_SPI_BAUDRATE)) != HAL_OK)
+    if(MX_SPI_Init(&sd_spi2, SPI_GetPrescaler(HAL_RCC_GetHCLKFreq(), BUS_SPI_BAUDRATE)) != HAL_OK)
     {
       return BSP_ERROR_BUS_FAILURE;          
     }
@@ -109,11 +109,11 @@ int32_t BSP_SPI_Init(void)
 int32_t BSP_SPI_DeInit(void)
 {  
 #if (USE_HAL_SPI_REGISTER_CALLBACKS == 0)  
-  SPI_MspDeInit(&hbus_spi1);  
+  SPI_MspDeInit(&sd_spi2);  
 #endif /* (USE_HAL_SPI_REGISTER_CALLBACKS == 0) */
   
   /* Init the SPI */  
-  if (HAL_SPI_DeInit(&hbus_spi1) != HAL_OK)
+  if (HAL_SPI_DeInit(&sd_spi2) != HAL_OK)
   {
     return BSP_ERROR_PERIPH_FAILURE;
   }
@@ -143,7 +143,7 @@ __weak HAL_StatusTypeDef MX_SPI_Init(SPI_HandleTypeDef *phspi, uint32_t baudrate
   phspi->Init.Mode              = SPI_MODE_MASTER;
   phspi->Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE;  /* Recommanded setting to avoid glitches */
 
-  phspi->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_01DATA;
+  phspi->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_08DATA;
   phspi->Init.CRCLength                  = SPI_CRC_LENGTH_8BIT;
   phspi->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
   phspi->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
@@ -167,7 +167,7 @@ int32_t BSP_SPI_Send(uint8_t *pTxData, uint32_t Legnth)
 {
   int32_t ret = BSP_ERROR_NONE;
   
-  if(HAL_SPI_Transmit(&hbus_spi1, pTxData, (uint16_t)Legnth, BUS_SPI_TIMEOUT_MAX) != HAL_OK)
+  if(HAL_SPI_Transmit(&sd_spi2, pTxData, (uint16_t)Legnth, BUS_SPI_TIMEOUT_MAX) != HAL_OK)
   {
     ret = BSP_ERROR_BUS_FAILURE;
   }
@@ -185,7 +185,7 @@ int32_t BSP_SPI_Recv(uint8_t *pRxData, uint32_t Legnth)
 {
   int32_t ret = BSP_ERROR_NONE;
   
-  if(HAL_SPI_Receive(&hbus_spi1, pRxData, (uint16_t)Legnth, BUS_SPI_TIMEOUT_MAX) != HAL_OK)
+  if(HAL_SPI_Receive(&sd_spi2, pRxData, (uint16_t)Legnth, BUS_SPI_TIMEOUT_MAX) != HAL_OK)
   {
     ret = BSP_ERROR_BUS_FAILURE;
   }
@@ -204,12 +204,21 @@ int32_t BSP_SPI_SendRecv(uint8_t *pTxData, uint8_t *pRxData, uint32_t Legnth)
 {
   int32_t ret = BSP_ERROR_NONE;
   
-  if(HAL_SPI_TransmitReceive(&hbus_spi1, pTxData, pRxData, (uint16_t)Legnth, BUS_SPI_TIMEOUT_MAX) != HAL_OK)
+  if(HAL_SPI_TransmitReceive(&sd_spi2, pTxData, pRxData, (uint16_t)Legnth, BUS_SPI_TIMEOUT_MAX) != HAL_OK)
   {
     ret = BSP_ERROR_BUS_FAILURE;
   }
   
   return ret;
+}
+
+HAL_StatusTypeDef BSP_SPI_SendRecv_DMA(uint8_t *pTxData, uint8_t *pRxData, uint32_t Legnth)
+{
+  if (sd_spi2.Lock == HAL_LOCKED) {
+      return HAL_BUSY;
+  }
+  //HAL_SPI_TransmitReceive_IT(&sd_spi2, pTxData, pRxData, (uint16_t)Legnth);
+  return HAL_SPI_TransmitReceive_DMA(&sd_spi2, pTxData, pRxData, (uint16_t)Legnth);
 }
 
 /**
@@ -230,14 +239,14 @@ int32_t BSP_SPI_RegisterDefaultMspCallbacks (void)
 {
   int32_t ret = BSP_ERROR_NONE;
   
-  __HAL_SPI_RESET_HANDLE_STATE(&hbus_spi1);
+  __HAL_SPI_RESET_HANDLE_STATE(&sd_spi2);
   
   /* Register default MspInit/MspDeInit Callback */
-  if(HAL_SPI_RegisterCallback(&hbus_spi1, HAL_SPI_MSPINIT_CB_ID, SPI_MspInit) != HAL_OK)
+  if(HAL_SPI_RegisterCallback(&sd_spi2, HAL_SPI_MSPINIT_CB_ID, SPI_MspInit) != HAL_OK)
   {
     ret = BSP_ERROR_PERIPH_FAILURE;
   }
-  else if(HAL_SPI_RegisterCallback(&hbus_spi1, HAL_SPI_MSPDEINIT_CB_ID, SPI_MspDeInit) != HAL_OK)
+  else if(HAL_SPI_RegisterCallback(&sd_spi2, HAL_SPI_MSPDEINIT_CB_ID, SPI_MspDeInit) != HAL_OK)
   {
     ret = BSP_ERROR_PERIPH_FAILURE;
   }
@@ -259,14 +268,14 @@ int32_t BSP_SPI_RegisterMspCallbacks (BSP_SPI_Cb_t *Callback)
 {
   int32_t ret = BSP_ERROR_NONE;
   
-  __HAL_SPI_RESET_HANDLE_STATE(&hbus_spi1);
+  __HAL_SPI_RESET_HANDLE_STATE(&sd_spi2);
   
   /* Register MspInit/MspDeInit Callbacks */
-  if(HAL_SPI_RegisterCallback(&hbus_spi1, HAL_SPI_MSPINIT_CB_ID, Callback->pMspSpiInitCb) != HAL_OK)
+  if(HAL_SPI_RegisterCallback(&sd_spi2, HAL_SPI_MSPINIT_CB_ID, Callback->pMspSpiInitCb) != HAL_OK)
   {
     ret = BSP_ERROR_PERIPH_FAILURE;
   }
-  else if(HAL_SPI_RegisterCallback(&hbus_spi1, HAL_SPI_MSPDEINIT_CB_ID, Callback->pMspSpiDeInitCb) != HAL_OK)
+  else if(HAL_SPI_RegisterCallback(&sd_spi2, HAL_SPI_MSPDEINIT_CB_ID, Callback->pMspSpiDeInitCb) != HAL_OK)
   {
     ret = BSP_ERROR_PERIPH_FAILURE;
   }

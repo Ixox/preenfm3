@@ -24,8 +24,8 @@
 
 extern TftDisplay tft;
 
-
 __attribute__((section(".ram_d2"))) char imagePPM[6400 * 3];
+__attribute__((section(".ram_d2b"))) static FIL imageFile;
 extern uint16_t tftMemory[240 * 320];
 
 
@@ -84,7 +84,6 @@ void PPMImage::saveImage() {
         init();
     }
 
-    FIL imageFile;
     UINT byteWriten;
     int errorNumber = 0;
     updateImageName(cptImage);

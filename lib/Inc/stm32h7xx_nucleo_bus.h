@@ -85,6 +85,7 @@ int32_t BSP_SPI_RegisterDefaultMspCallbacks(uint32_t Instance);
 int32_t BSP_SPI_Send(uint8_t *pTxData, uint32_t Legnth);
 int32_t BSP_SPI_Recv(uint8_t *pRxData, uint32_t Legnth);
 int32_t BSP_SPI_SendRecv(uint8_t *pTxData, uint8_t *pRxData, uint32_t Legnth);
+void BSP_SPI_SendRecv_IT(uint8_t *pTxData, uint8_t *pRxData, uint32_t Legnth);
 HAL_StatusTypeDef MX_SPI_Init(SPI_HandleTypeDef *phspi, uint32_t baudrate_presc);
 int32_t BSP_GetTick(void);
 /**

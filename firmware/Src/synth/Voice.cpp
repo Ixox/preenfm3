@@ -422,6 +422,7 @@ void Voice::init() {
 	this->isFullOfZero = true;
 	this->newNotePending = false;
 	this->note = 0;
+	this->midiVelocity = 0;
 	this->holdedByPedal = false;
     this->newNotePlayed = false;
 }
@@ -455,6 +456,7 @@ void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short veloci
 	} else {
 		// update note now so that the noteOff is triggered by the new note
 		this->note = newNote;
+		this->midiVelocity = velocity;
         this->noteFrequency = newNoteFrequency;
 		// Quick dead !
 		this->newNotePending = true;
@@ -512,6 +514,7 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsign
 	this->playing = true;
 	this->isFullOfZero = false;
 	this->note = newNote;
+    this->midiVelocity = velocity;
 	this->noteFrequency = newNoteFrequency;
 	this->pendingNote = 0;
 	this->newNotePending = false;
@@ -604,6 +607,32 @@ void Voice::noteOff() {
 		// We receive a note off before the note actually started
 		this->pendingNote = -1;
 	}
+}
+
+// Called when loading new preset
+void Voice::noteOffQuick() {
+
+    if (unlikely(!this->playing)) {
+        return;
+    }
+
+    if (this->newNotePlayed) {
+        // Note hasn't played
+        killNow();
+        return;
+    }
+    this->released = true;
+    this->gliding = false;
+    this->holdedByPedal = false;
+
+    currentTimbre->env1.noteOffQuick(&envState1);
+    currentTimbre->env2.noteOffQuick(&envState2);
+    currentTimbre->env3.noteOffQuick(&envState3);
+    currentTimbre->env4.noteOffQuick(&envState4);
+    currentTimbre->env5.noteOffQuick(&envState5);
+    currentTimbre->env6.noteOffQuick(&envState6);
+
+    lfoNoteOff();
 }
 
 void Voice::killNow() {
@@ -3623,6 +3652,10 @@ void Voice::nextBlock() {
 }
 
 void Voice::setCurrentTimbre(Timbre *timbre) {
+    if (timbre == 0) {
+        this->currentTimbre = 0;
+        return;
+    }
 
     struct LfoParams* lfoParams[] = { &timbre->getParamRaw()->lfoOsc1, &timbre->getParamRaw()->lfoOsc2, &timbre->getParamRaw()->lfoOsc3};
     struct StepSequencerParams* stepseqparams[] = { &timbre->getParamRaw()->lfoSeq1, &timbre->getParamRaw()->lfoSeq2};

@@ -231,10 +231,12 @@ void Timbre::init(SynthState* synthState, int timbreNumber) {
 }
 
 void Timbre::setVoiceNumber(int v, int n) {
-	this->voiceNumber[v] = n;
-	if (n >=0) {
-		voices[n]->setCurrentTimbre(this);
-	}
+    this->voiceNumber[v] = n;
+    if (n >= 0) {
+        voices[n]->setCurrentTimbre(this);
+    } else {
+        voices[n]->setCurrentTimbre(0);
+    }
 }
 
 
