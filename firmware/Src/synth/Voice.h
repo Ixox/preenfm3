@@ -447,7 +447,7 @@ private:
 
     // optimization
     float modulationIndex1, modulationIndex2, modulationIndex3, modulationIndex4, modulationIndex5;
-    float feedbackModulation, fdbLastValue;
+    float feedbackModulation, fdbLastValue[2];
     float mix1, mix2, mix3, mix4, mix5, mix6;
     float pan1Left, pan2Left, pan3Left, pan4Left, pan5Left, pan6Left  ;
     float pan1Right, pan2Right, pan3Right, pan4Right, pan5Right, pan6Right ;

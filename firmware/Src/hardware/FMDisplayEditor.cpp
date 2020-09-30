@@ -3146,12 +3146,14 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     struct ModulationIndex im = modulationIndex[(int) this->synthState->params->engine1.algo][button];
                     if (im.source == 0) {
                         hideParam[button] = true;
-                    } else if (im.source < 5) {
-                        tft->print((int) im.source);
-                        tft->print("-");
-                        tft->print((int) im.destination);
                     } else {
-                        tft->print("Fdbk");
+                        if (button < 5) {
+                            tft->print((int) im.source);
+                            tft->print("-");
+                            tft->print((int) im.destination);
+                        } else {
+                            tft->print("Fdbk");
+                        }
                     }
                 } else if (rowEncoder.row >= ROW_OSC_MIX1 && rowEncoder.row <= ROW_OSC_MIX3) {
                     // Add 1 if encoder >= 2

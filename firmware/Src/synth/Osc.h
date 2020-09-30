@@ -121,7 +121,8 @@ public:
     	return oscValuesToFill;
     };
 
-    float* getNextBlockWithFeedbackAndEnveloppe(struct OscState *oscState, float feedback, float& env, float envInc, float freqMultiplier, float &lastValue) {
+
+    float* getNextBlockWithFeedbackAndEnveloppe(struct OscState *oscState, float feedback, float& env, float envInc, float freqMultiplier, float* lastValue) {
         int shape = (int) oscillator->shape;
         int max = waveTables[shape].max;
         float *wave = waveTables[shape].table;
@@ -129,40 +130,49 @@ public:
         float fIndex = oscState->index;
         int iIndex;
         float* oscValuesToFill = oscValues[4];
-        if (unlikely(feedback == 0.0)) {
-            for (int k=0; k<32; ) {
-                fIndex +=  freq;
-                iIndex = fIndex;
-                fIndex -= iIndex;
-                iIndex &=  max;
-                fIndex += iIndex;
-                oscValuesToFill[k++] = wave[iIndex] * env * freqMultiplier;
-                env += envInc;
-            }
+        float localEnv = env;
+
+        float phaseModulationAmplitude = feedback * ((float) max) * .5f;
+        float localLastValue0 = lastValue[0];
+        float localLastValue1 = lastValue[1];
+
+        // We adjust the coef becasue the "dc" low frequency increase with freq
+        // And we want to cut in the low note AND in the high note with the less parasit noise as possible
+        float filterCoef = .94f;
+        if (likely(freq < 1000)) {
+            filterCoef += freq * .00005f;
         } else {
-            float phaseModulationAmplitude = feedback * ((float) max) * .5f;
-            float localLastValue = lastValue;
-            for (int k = 0; k < 32;) {
-                fIndex += freq;
-                iIndex = fIndex;
-                fIndex -= iIndex;
-                iIndex &= max;
-                fIndex += iIndex;
-
-                float phaseModulationFloat = localLastValue * phaseModulationAmplitude;
-                int index = iIndex + phaseModulationFloat;
-                index &= max;
-
-                localLastValue = wave[index] * env ;
-                env += envInc;
-                oscValuesToFill[k++] = localLastValue * freqMultiplier;
-            }
-            lastValue = localLastValue;
+            filterCoef = .99f;
         }
+
+        for (int k = 0; k < 32;) {
+            fIndex += freq;
+            iIndex = fIndex;
+            fIndex -= iIndex;
+            iIndex &= max;
+            fIndex += iIndex;
+
+            int index =  iIndex + (localLastValue0 * phaseModulationAmplitude);
+            index &= max;
+
+
+            // Get rid of DC offset
+            float newValue = wave[index] * localEnv ;
+            localLastValue0 = newValue - localLastValue1 + filterCoef * localLastValue0;
+            localLastValue1 = newValue;
+
+            oscValuesToFill[k++] = localLastValue0 * freqMultiplier;
+
+            localEnv += envInc;
+        }
+
+        lastValue[0] = localLastValue0;
+        lastValue[1] = localLastValue1;
+
+        env = localEnv;
         oscState->index = fIndex;
         return oscValuesToFill;
     }
-
 
 
    	float* getNextBlockHQ(struct OscState *oscState)  {
