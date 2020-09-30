@@ -27,7 +27,6 @@ extern float sinTable[];
 struct OscState {
     float index;
     float frequency;
-    float phase;
     float mainFrequencyPlusMatrix;
     float mainFrequency;
     float fromFrequency;
@@ -75,45 +74,7 @@ public:
         return waveTable->table[indexInteger];
     }
 
-    inline float getNextSampleHQ(struct OscState *oscState)  {
-        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
 
-        oscState->index +=  oscState->frequency * waveTable->precomputedValue + waveTable->floatToAdd;
-
-        // convert to int;
-        int indexInteger = oscState->index;
-        // keep decimal part;
-        oscState->index -= indexInteger;
-        float fp = oscState->index;
-        // Put it back inside the table
-        indexInteger &= waveTable->max;
-        // Readjust the floating pont inside the table
-        oscState->index += indexInteger;
-
-        return waveTable->table[indexInteger]* (1-fp) + waveTable->table[indexInteger+1] * fp;
-    }
-
-    inline float getNextSampleMP(struct OscState *oscState)  {
-        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
-
-        oscState->index +=  oscState->frequency * waveTable->precomputedValue + waveTable->floatToAdd;
-
-        int phase = oscState->phase * waveTable->max * .014;
-
-        // convert to int;
-        int indexInteger = oscState->index;
-        // keep decimal part;
-        oscState->index -= indexInteger;
-        // Put it back inside the table
-        indexInteger &= waveTable->max;
-        // Readjust the floating pont inside the table
-        oscState->index += indexInteger;
-
-        phase += indexInteger;
-        phase &=  waveTable->max;
-
-        return waveTable->table[phase];
-    }
 
    	float* getNextBlock(struct OscState *oscState)  {
         int shape = (int) oscillator->shape;
@@ -159,6 +120,50 @@ public:
     	oscState->index = fIndex;
     	return oscValuesToFill;
     };
+
+    float* getNextBlockWithFeedbackAndEnveloppe(struct OscState *oscState, float feedback, float& env, float envInc, float freqMultiplier, float &lastValue) {
+        int shape = (int) oscillator->shape;
+        int max = waveTables[shape].max;
+        float *wave = waveTables[shape].table;
+        float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
+        float fIndex = oscState->index;
+        int iIndex;
+        float* oscValuesToFill = oscValues[4];
+        if (unlikely(feedback == 0.0)) {
+            for (int k=0; k<32; ) {
+                fIndex +=  freq;
+                iIndex = fIndex;
+                fIndex -= iIndex;
+                iIndex &=  max;
+                fIndex += iIndex;
+                oscValuesToFill[k++] = wave[iIndex] * env * freqMultiplier;
+                env += envInc;
+            }
+        } else {
+            float phaseModulationAmplitude = feedback * ((float) max) * .5f;
+            float localLastValue = lastValue;
+            for (int k = 0; k < 32;) {
+                fIndex += freq;
+                iIndex = fIndex;
+                fIndex -= iIndex;
+                iIndex &= max;
+                fIndex += iIndex;
+
+                float phaseModulationFloat = localLastValue * phaseModulationAmplitude;
+                int index = iIndex + phaseModulationFloat;
+                index &= max;
+
+                localLastValue = wave[index] * env ;
+                env += envInc;
+                oscValuesToFill[k++] = localLastValue * freqMultiplier;
+            }
+            lastValue = localLastValue;
+        }
+        oscState->index = fIndex;
+        return oscValuesToFill;
+    }
+
+
 
    	float* getNextBlockHQ(struct OscState *oscState)  {
         int shape = (int) oscillator->shape;
@@ -211,7 +216,7 @@ public:
 private:
     DestinationEnum destFreq;
     Matrix* matrix;
-    static float* oscValues[4];
+    static float* oscValues[5];
     static int oscValuesCpt;
     OscillatorParams* oscillator;
 };

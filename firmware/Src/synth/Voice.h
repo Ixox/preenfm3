@@ -80,6 +80,14 @@ public:
 
     void updateAllModulationIndexes() {
         int numberOfIMs = algoInformation[(int)(currentTimbre->getParamRaw()->engine1.algo)].im;
+
+        feedbackModulation = currentTimbre->getParamRaw()->engineIm3.modulationIndex6 + this->velIm6;
+        if (unlikely(feedbackModulation < 0.0f)) {
+            feedbackModulation = 0.0f;
+        } else if (unlikely(feedbackModulation > 1.0f)) {
+            feedbackModulation = 1.0f;
+        }
+
         modulationIndex1 = currentTimbre->getParamRaw()->engineIm1.modulationIndex1 + matrix.getDestination(INDEX_MODULATION1) + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm1;
         if (unlikely(modulationIndex1 < 0.0f)) {
             modulationIndex1 = 0.0f;
@@ -385,7 +393,7 @@ private:
     char midiVelocity;
     float noteFrequency;
     float velocity;
-    float velIm1, velIm2, velIm3, velIm4, velIm5;
+    float velIm1, velIm2, velIm3, velIm4, velIm5, velIm6;
     bool newNotePlayed;
     //
     float freqAi, freqAo;
@@ -439,10 +447,10 @@ private:
 
     // optimization
     float modulationIndex1, modulationIndex2, modulationIndex3, modulationIndex4, modulationIndex5;
+    float feedbackModulation, fdbLastValue;
     float mix1, mix2, mix3, mix4, mix5, mix6;
     float pan1Left, pan2Left, pan3Left, pan4Left, pan5Left, pan6Left  ;
     float pan1Right, pan2Right, pan3Right, pan4Right, pan5Right, pan6Right ;
-
     //
     LfoOsc lfoOsc[NUMBER_OF_LFO_OSC];
     LfoEnv lfoEnv[NUMBER_OF_LFO_ENV];

@@ -58,7 +58,7 @@ private:
 	void drawNumber(int x, int y, int digit);
 	void drawOperator(uint8_t opNum, uint8_t opPosition);
 	void highlightOperator(uint8_t opNum);
-	void drawIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
+	void drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest);
 	void drawMix(uint8_t imNum);
 
 	uint8_t operatorPosition[6];

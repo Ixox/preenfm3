@@ -104,6 +104,7 @@ const uint8_t algo1[] = {
 	IM, 1, 2, 1,
 	IM, 2, 3, 1,
 	IM, 3, 3, 2,
+    IM, 6, 3, 3,
 	END,
 };
 
@@ -115,6 +116,7 @@ const uint8_t algo2[] = {
 	OPERATOR, 3, 5,
 	IM, 1, 3, 1,
 	IM, 2, 3, 2,
+    IM, 6, 3, 3,
 	END,
 };
 
@@ -515,7 +517,8 @@ const uint8_t algo27[] = {
 	OPERATOR, 4, 10,
 	OPERATOR, 5, 11,
 	OPERATOR, 6, 12,
-	END,
+    IM, 6, 6, 6,
+    END,
 };
 
 const uint8_t algo28[] = {
@@ -735,32 +738,31 @@ void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 //	drawNumber(x1 + 3, y1 + 3, opNum);
 }
 
-void TftAlgo::drawIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
-    setColor(RGB565_RED);
+void TftAlgo::drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 
-    int xSource = GETX1(operatorPosition[opSource-1]) + 8;
-    int ySource = GETY1(operatorPosition[opSource-1]) + 17;
+    if (opSource != opDest) {
+        int xSource = GETX1(operatorPosition[opSource-1]) + 8;
+        int ySource = GETY1(operatorPosition[opSource-1]) + 17;
 
-    int xDest = GETX1(operatorPosition[opDest-1]) + 8;
-    int yDest = GETY1(operatorPosition[opDest-1]) - 1;
+        int xDest = GETX1(operatorPosition[opDest-1]) + 8;
+        int yDest = GETY1(operatorPosition[opDest-1]) - 1;
 
-    drawLine(1, xSource, ySource, xDest, yDest);
+        drawLine(mode, xSource, ySource, xDest, yDest);
+    } else {
+        // Feedback
+        int x = GETX1(operatorPosition[opSource-1]) + 8;
+        int y = GETY1(operatorPosition[opSource-1]) + 8;
+
+        drawLine(mode, x + 8, y, x + 10, y);
+        drawLine(mode, x + 10, y, x + 10, y - 10);
+        drawLine(mode, x + 10, y - 10, x, y - 10);
+        drawLine(mode, x, y - 10, x, y - 8);
+    }
 }
 
 // Draw the IM on
 void TftAlgo::highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
-    int xSource = GETX1(operatorPosition[opSource-1]) + 8;
-    int ySource = GETY1(operatorPosition[opSource-1]) + 17;
-
-    int xDest = GETX1(operatorPosition[opDest-1]) + 8;
-    int yDest = GETY1(operatorPosition[opDest-1]) - 1;
-    if (draw) {
-        // mode = 2 => draw
-        drawLine(2, xSource, ySource, xDest, yDest);
-    } else {
-        // mode = 3 => erase
-        drawLine(3, xSource, ySource, xDest, yDest);
-    }
+    drawIM(draw ? 2 : 3, imNum, opSource, opDest);
 }
 
 void TftAlgo::drawMix(uint8_t imNum) {
@@ -794,7 +796,8 @@ void TftAlgo::drawAlgo(int algo) {
         case IM:
             imSource[algoInfo[idx] - 1] = algoInfo[idx + 1];
             imDest[algoInfo[idx] - 1] = algoInfo[idx + 2];
-            drawIM(algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
+            setColor(RGB565_RED);
+            drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
             idx += 3;
             break;
         case MIX:

@@ -26,11 +26,12 @@ float noise[32] ;
 
 
 
-float* Osc::oscValues[4] ;
+float* Osc::oscValues[5] ;
 float oscValues1[32] ;
 float oscValues2[32] ;
 float oscValues3[32] ;
 float oscValues4[32] ;
+float oscValuesFeedback[32];
 int Osc::oscValuesCpt = 1;
 
 // User waveforms
@@ -171,6 +172,7 @@ void Osc::init(SynthState* synthState, struct OscillatorParams *oscParams, Desti
         oscValues[1] = oscValues2;
         oscValues[2] = oscValues3;
         oscValues[3] = oscValues4;
+        oscValues[4] = oscValuesFeedback;
         oscValuesCpt = 0;
     }
 }

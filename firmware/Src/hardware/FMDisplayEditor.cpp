@@ -381,8 +381,8 @@ struct ParameterRowDisplay engineIM3ParameterRow = {
     {
         "IM5 ",
         "IM5v",
-        "IM6 ",
-        "IM6v" },
+        "Fbk ",
+        "Fdkv" },
     {
         {
             0,
@@ -402,16 +402,16 @@ struct ParameterRowDisplay engineIM3ParameterRow = {
             nullNamesOrder },
         {
             0,
-            16,
-            1601,
+            1,
+            101,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
             nullNamesOrder },
         {
             0,
-            16,
-            1601,
+            1,
+            101,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
@@ -1894,8 +1894,8 @@ const struct Pfm3OneButtonState pfm3ButtonIMState = {
             ROW_MODULATION3,
             ENCODER_ENGINE_IM5 },
         {
-            ROW_NONE,
-            ENCODER_NONE } } };
+            ROW_MODULATION3,
+            ENCODER_ENGINE_IM6 } } };
 
 const struct Pfm3OneButtonState pfm3ButtonIMVelocityState = {
     "Velocity",
@@ -1916,8 +1916,8 @@ const struct Pfm3OneButtonState pfm3ButtonIMVelocityState = {
             ROW_MODULATION3,
             ENCODER_ENGINE_IM5_VELOCITY },
         {
-            ROW_NONE,
-            ENCODER_NONE } } };
+            ROW_MODULATION3,
+            ENCODER_ENGINE_IM6_VELOCITY } } };
 
 const struct Pfm3OneButton pfm3ButtonIM = {
     "MI",
@@ -3144,12 +3144,14 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                 const struct ParameterRowDisplay *paramRow = allParameterRows.row[rowEncoder.row];
                 if (rowEncoder.row >= ROW_MODULATION1 && rowEncoder.row <= ROW_MODULATION3) {
                     struct ModulationIndex im = modulationIndex[(int) this->synthState->params->engine1.algo][button];
-                    if (im.source != 0) {
+                    if (im.source == 0) {
+                        hideParam[button] = true;
+                    } else if (im.source < 5) {
                         tft->print((int) im.source);
                         tft->print("-");
                         tft->print((int) im.destination);
                     } else {
-                        hideParam[button] = true;
+                        tft->print("Fdbk");
                     }
                 } else if (rowEncoder.row >= ROW_OSC_MIX1 && rowEncoder.row <= ROW_OSC_MIX3) {
                     // Add 1 if encoder >= 2

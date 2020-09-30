@@ -526,6 +526,7 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsign
 	this->velIm3 = currentTimbre->params.engineIm2.modulationIndexVelo3 * (float)velocity * .0078125f;
 	this->velIm4 = currentTimbre->params.engineIm2.modulationIndexVelo4 * (float)velocity * .0078125f;
 	this->velIm5 = currentTimbre->params.engineIm3.modulationIndexVelo5 * (float)velocity * .0078125f;
+    this->velIm6 = currentTimbre->params.engineIm3.modulationIndexVelo6 * (float)velocity * .0078125f;
 
 	int zeroVelo = (16 - currentTimbre->params.engine1.velocity) * 8;
 	int newVelocity = zeroVelo + ((velocity * (128 - zeroVelo)) >> 7);
@@ -714,7 +715,7 @@ void Voice::nextBlock() {
 				  IM3
 				 <----
 			 .---.  .---.
-			 | 2 |  | 3 |
+			 | 2 |  | 3*|
 			 '---'  '---'
 			   \IM1   /IM2
 				 .---.
@@ -748,14 +749,16 @@ void Voice::nextBlock() {
 
 
 		oscState3.frequency =  oscState3.mainFrequencyPlusMatrix;
-		float* osc3Values = currentTimbre->osc3.getNextBlock(&oscState3);
+		//float* osc3Values = currentTimbre->osc3.getNextBlock(&oscState3);
+        float* osc3Values = currentTimbre->osc3.getNextBlockWithFeedbackAndEnveloppe(&oscState3, feedbackModulation, env3Value, env3Inc,  oscState3.frequency, fdbLastValue);
 
 	    float f2x;
 	    float f2xm1 = freqAi;
 	    float freq2 = freqAo;
 
 		for (int k = 0; k < BLOCK_SIZE; k++) {
-			float freq3 = osc3Values[k] * env3Value * oscState3.frequency;
+            // getNextBlockWithFeedbackAndEnveloppe already applied envelope and multiplier
+			float freq3 = osc3Values[k];
 
 			oscState2.frequency =  freq3 * voiceIm3 + oscState2.mainFrequencyPlusMatrix;
 			f2x = currentTimbre->osc2.getNextSample(&oscState2) * env2Value * oscState2.frequency;
@@ -770,7 +773,6 @@ void Voice::nextBlock() {
 
 			env1Value += env1Inc;
 			env2Value += env2Inc;
-			env3Value += env3Inc;
 		}
 
 		freqAi = f2xm1;
@@ -821,12 +823,14 @@ void Voice::nextBlock() {
 
 
 		oscState3.frequency =  oscState3.mainFrequencyPlusMatrix;
-		float* osc3Values = currentTimbre->osc3.getNextBlock(&oscState3);
+		//float* osc3Values = currentTimbre->osc3.getNextBlock(&oscState3);
+        float* osc3Values = currentTimbre->osc3.getNextBlockWithFeedbackAndEnveloppe(&oscState3, feedbackModulation, env3Value, env3Inc,  oscState3.frequency, fdbLastValue);
 
 		float div2TimesVelocity = this->velocity * .5f;
 
 		for (int k =0; k< BLOCK_SIZE; k++) {
-			float freq3 = osc3Values[k] * env3Value * oscState3.frequency;
+            // getNextBlockWithFeedbackAndEnveloppe already applied envelope and multiplier
+			float freq3 = osc3Values[k];
 
 			oscState2.frequency =  freq3 * voiceIm2 + oscState2.mainFrequencyPlusMatrix;
 			float car2 = currentTimbre->osc2.getNextSample(&oscState2)* env2Value * mix2 * div2TimesVelocity ;
@@ -3464,7 +3468,7 @@ void Voice::nextBlock() {
 		 * DX ALGO 32
 		 *
 			  .---.  .---.  .---.  .---.   .---.   .---.
-			  | 1 |  | 2 |  | 3 |  | 4 |   | 5 |   | 6 |
+			  | 1 |  | 2 |  | 3 |  | 4 |   | 5 |   | 6*|
 			  '---'  '---'  '---'  '---'   '---'   '---'
 				|Mix1  |Mix2  |Mix3  |Mix4   |Mix5   |Mix6
 
@@ -3519,8 +3523,12 @@ void Voice::nextBlock() {
 			oscState4.frequency = oscState4.mainFrequencyPlusMatrix;
 			float* osc4Values = currentTimbre->osc4.getNextBlock(&oscState4);
 
+			// Not enough float arrays for a fifth optimization
 			oscState5.frequency = oscState5.mainFrequencyPlusMatrix;
 			oscState6.frequency = oscState6.mainFrequencyPlusMatrix;
+
+			// Multiplier is 1 because op6 is a carrier
+			float* osc6Values = currentTimbre->osc6.getNextBlockWithFeedbackAndEnveloppe(&oscState6, feedbackModulation, env6Value, env6Inc, 1.0f, fdbLastValue);
 
 			float div6TimesVelocity =   .16f * this->velocity;
 
@@ -3530,9 +3538,10 @@ void Voice::nextBlock() {
 				float car2 = osc2Values[k] * env2Value * mix2;
 				float car3 = osc3Values[k] * env3Value * mix3;
 				float car4 = osc4Values[k] * env4Value * mix4;
+				// getNextBlockWithFeedbackAndEnveloppe already applied envelope
+				float car6 = osc6Values[k] * mix6;
 
 				float car5 = currentTimbre->osc5.getNextSample(&oscState5) * env5Value * mix5;
-				float car6 = currentTimbre->osc6.getNextSample(&oscState6) * env6Value * mix6;
 
 				*sample++  = (car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car4 * pan4Left + car5 * pan5Left + car6 * pan6Left) * div6TimesVelocity;
 				*sample++  = (car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car4 * pan4Right + car5 * pan5Right + car6 * pan6Right) * div6TimesVelocity;
@@ -3542,7 +3551,6 @@ void Voice::nextBlock() {
 				env3Value += env3Inc;
 				env4Value += env4Inc;
 				env5Value += env5Inc;
-				env6Value += env6Inc;
 			}
 			if (unlikely(currentTimbre->env1.isDead(&envState1) && currentTimbre->env2.isDead(&envState2) && currentTimbre->env3.isDead(&envState3)  && currentTimbre->env4.isDead(&envState4) && currentTimbre->env5.isDead(&envState5) && currentTimbre->env6.isDead(&envState6))) {
 				endNoteOrBeginNextOne();

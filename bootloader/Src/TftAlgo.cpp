@@ -34,7 +34,7 @@ void TftAlgo::highlightOperator(uint8_t opPosition) {
 void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 }
 
-void TftAlgo::drawIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
+void TftAlgo::drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 }
 
 // Draw the IM on
