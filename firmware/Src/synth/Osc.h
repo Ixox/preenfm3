@@ -132,42 +132,59 @@ public:
         float* oscValuesToFill = oscValues[4];
         float localEnv = env;
 
-        float phaseModulationAmplitude = feedback * ((float) max) * .5f;
+
         float localLastValue0 = lastValue[0];
         float localLastValue1 = lastValue[1];
 
-        // We adjust the coef becasue the "dc" low frequency increase with freq
-        // And we want to cut in the low note AND in the high note with the less parasit noise as possible
-        float filterCoef = .94f;
-        if (likely(freq < 1000)) {
-            filterCoef += freq * .00005f;
+        if (unlikely(feedback == 0.0f)) {
+            for (int k = 0; k < 32;) {
+                fIndex += freq;
+                iIndex = fIndex;
+                fIndex -= iIndex;
+                iIndex &= max;
+                fIndex += iIndex;
+                oscValuesToFill[k++] = wave[iIndex] * freqMultiplier * localEnv ;
+                localEnv += envInc;
+                // Two times less jump if done twice
+                fIndex += freq;
+                iIndex = fIndex;
+                fIndex -= iIndex;
+                iIndex &= max;
+                fIndex += iIndex;
+                oscValuesToFill[k++] = wave[iIndex] * freqMultiplier * localEnv ;
+                localEnv += envInc;
+            }
+            lastValue[0] = oscValuesToFill[31];
+            lastValue[1] = oscValuesToFill[31];
+            lastValue[2] = 0.0f;
         } else {
-            filterCoef = .99f;
+            float phaseModulationAmplitude = lastValue[2] * ((float) max) * .5f;
+            lastValue[2] = .95f * lastValue[2] + feedback * .05f;
+
+            for (int k = 0; k < 32;) {
+                fIndex += freq;
+                iIndex = fIndex;
+                fIndex -= iIndex;
+                iIndex &= max;
+                fIndex += iIndex;
+
+                int index =  iIndex + (localLastValue0 * phaseModulationAmplitude);
+                index &= max;
+
+
+                // Get rid of DC offset
+                float newValue = wave[index];
+                localLastValue0 = newValue - localLastValue1 + .99525f * localLastValue0;
+                localLastValue1 = newValue;
+
+                oscValuesToFill[k++] = localLastValue0 * freqMultiplier * localEnv ;
+
+                localEnv += envInc;
+            }
+            lastValue[0] = localLastValue0;
+            lastValue[1] = localLastValue1;
         }
 
-        for (int k = 0; k < 32;) {
-            fIndex += freq;
-            iIndex = fIndex;
-            fIndex -= iIndex;
-            iIndex &= max;
-            fIndex += iIndex;
-
-            int index =  iIndex + (localLastValue0 * phaseModulationAmplitude);
-            index &= max;
-
-
-            // Get rid of DC offset
-            float newValue = wave[index] * localEnv ;
-            localLastValue0 = newValue - localLastValue1 + filterCoef * localLastValue0;
-            localLastValue1 = newValue;
-
-            oscValuesToFill[k++] = localLastValue0 * freqMultiplier;
-
-            localEnv += envInc;
-        }
-
-        lastValue[0] = localLastValue0;
-        lastValue[1] = localLastValue1;
 
         env = localEnv;
         oscState->index = fIndex;
