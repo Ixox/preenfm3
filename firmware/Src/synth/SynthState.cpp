@@ -212,26 +212,37 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
     switch (button1) {
     case BUTTON_PFM3_MENU:
         switch (button2) {
-        case BUTTON_PFM3_1:
-            propagateNoteOn(-2);
-            break;
-        case BUTTON_PFM3_2:
-            propagateNoteOn(0);
-            break;
-        case BUTTON_PFM3_3:
-            propagateNoteOn(2);
-            break;
-        case BUTTON_PFM3_4:
-            propagateNoteOn(-14);
-            break;
-        case BUTTON_PFM3_5:
-            propagateNoteOn(-12);
-            break;
-        case BUTTON_PFM3_6:
-            propagateNoteOn(-10);
-            break;
+            case BUTTON_PFM3_1:
+                propagateNoteOn(-2);
+                break;
+            case BUTTON_PFM3_2:
+                propagateNoteOn(0);
+                break;
+            case BUTTON_PFM3_3:
+                propagateNoteOn(2);
+                break;
+            case BUTTON_PFM3_4:
+                propagateNoteOn(-14);
+                break;
+            case BUTTON_PFM3_5:
+                propagateNoteOn(-12);
+                break;
+            case BUTTON_PFM3_6:
+                propagateNoteOn(-10);
+                break;
+            case BUTTON_PREVIOUS_INSTRUMENT:
+                // Turn off the backlight
+                TIM1->CCR2 = 0;
+                // reinit TFT + redisplay full page
+                ILI9341_Init();
+                propagateNewPfm3Page();
+                // Wait for the page to be ready
+                HAL_Delay(500);
+                // Turn on the backlight
+                uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
+                TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+                break;
         }
-        break;
         case BUTTON_NEXT_INSTRUMENT:
         	if (button2 == BUTTON_PREVIOUS_INSTRUMENT) {
                 propagateNoteOff();
@@ -424,21 +435,6 @@ void SynthState::setCurrentInstrument(int value) {
 }
 
 void SynthState::buttonLongPressed(int button) {
-
-	// Uncomment to debug
-    // Enter sequencer mode
-	//    if (button == BUTTON_PFM3_MENU) {
-	//        // Turn off the backlight
-	//        TIM1->CCR2 = 0;
-	//        // reinit TFT + redisplay full page
-	//        ILI9341_Init();
-	//        propagateNewPfm3Page();
-	//        // Wait for the page to be ready
-	//        HAL_Delay(500);
-	//        // Turn on the backlight
-	//        uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
-	//        TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
-	//    }
 
     if (fullState.synthMode == SYNTH_MODE_SEQUENCER) {
         displaySequencer->buttonLongPressed(currentTimbre, button);
