@@ -25,8 +25,9 @@
 /* USER CODE BEGIN Includes */
 // define in lib stm32h7xx_nucleo_bus.c
 extern SPI_HandleTypeDef sd_spi2;
+
 // define in lib adafruit_802_sd.v
-extern uint8_t spi2TransferComplete;
+void spi2TransferComplete();
 
 extern DMA_HandleTypeDef hdma_spi2_rx;
 extern DMA_HandleTypeDef hdma_spi2_tx;
@@ -389,7 +390,7 @@ void DMA2_Stream2_IRQHandler(void)
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
     if (hspi == &sd_spi2) {
-        spi2TransferComplete = 1;
+        spi2TransferComplete();
     }
 
 }
@@ -404,7 +405,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     if (hspi == &sd_spi2) {
       /* Prevent unused argument(s) compilation warning */
-      spi2TransferComplete = 1;
+      spi2TransferComplete();
     }
 }
 

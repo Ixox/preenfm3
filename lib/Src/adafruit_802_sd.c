@@ -247,7 +247,12 @@ static HAL_StatusTypeDef SD_IO_WriteReadData(const uint8_t *DataIn, uint8_t *Dat
 
 
 // PFM3 spi2 must work in IT mode to avoid disabling the IRQ
-uint8_t spi2TransferComplete = 1;
+volatile uint32_t spi2TransferState = 1;
+
+void spi2TransferComplete() {
+    spi2TransferState = 1;
+}
+
 
 /**
   * @}
@@ -383,12 +388,12 @@ int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlo
     {
 
       if (useDMA) {
-          spi2TransferComplete = 0;
+          spi2TransferState = 0;
           /* Read the SD block data : read NumByteToRead data */
           while (SD_IO_WriteReadData_DMA(dummySector, (uint8_t*)pData + offset, BlockSize) == HAL_BUSY) {
               HAL_Delay(1);
           }
-          while (spi2TransferComplete == 0);
+          while (spi2TransferState == 0);
       } else {
           /* Read the SD block data : read NumByteToRead data */
           SD_IO_WriteReadData(dummySector, (uint8_t*)pData + offset, BlockSize);
@@ -480,12 +485,12 @@ int32_t PFM3_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfB
 
 
     if (useDMA) {
-        spi2TransferComplete = 0;
+        spi2TransferState = 0;
         /* Write the block data to SD */
         if (SD_IO_WriteReadData_DMA((uint8_t*)pData + offset, dummySector, BlockSize) == HAL_BUSY) {
             HAL_Delay(1);
         }
-        while (spi2TransferComplete == 0);
+        while (spi2TransferState == 0);
     } else {
         /* Write the block data to SD */
         SD_IO_WriteReadData((uint8_t*)pData + offset, dummySector, BlockSize);
