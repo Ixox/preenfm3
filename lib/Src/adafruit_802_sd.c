@@ -347,7 +347,7 @@ int32_t ADAFRUIT_802_SD_IsDetected(uint32_t Instance)
   * @retval SD status
   */
 
-int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks, uint32_t Timeout)
+int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks, uint32_t Timeout, bool useDMA)
 {
   uint32_t offset = 0;
   uint32_t addr;
@@ -381,12 +381,18 @@ int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlo
     /* Now look for the data token to signify the start of the data */
     if (SD_WaitData(SD_TOKEN_START_DATA_SINGLE_BLOCK_READ) == BSP_ERROR_NONE)
     {
-      spi2TransferComplete = 0;
-      /* Read the SD block data : read NumByteToRead data */
-      while (SD_IO_WriteReadData_DMA(dummySector, (uint8_t*)pData + offset, BlockSize) == HAL_BUSY) {
-          HAL_Delay(1);
+
+      if (useDMA) {
+          spi2TransferComplete = 0;
+          /* Read the SD block data : read NumByteToRead data */
+          while (SD_IO_WriteReadData_DMA(dummySector, (uint8_t*)pData + offset, BlockSize) == HAL_BUSY) {
+              HAL_Delay(1);
+          }
+          while (spi2TransferComplete == 0);
+      } else {
+          /* Read the SD block data : read NumByteToRead data */
+          SD_IO_WriteReadData(dummySector, (uint8_t*)pData + offset, BlockSize);
       }
-      while (spi2TransferComplete == 0);
 
       /* Set next read address*/
       offset += BlockSize;
@@ -419,7 +425,6 @@ error :
 
 
 /**
-/**
   * Xavier Hosxe : this comes from STM32CubeL4
   * moved and modified a little to have it working.
   * This replace the original adafruit methods which are BUGGY !!!!
@@ -433,7 +438,7 @@ error :
   * @retval SD status
   */
 
-int32_t PFM3_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks, uint32_t Timeout)
+int32_t PFM3_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks, uint32_t Timeout, bool useDMA)
 {
   uint32_t offset = 0;
   uint32_t addr;
@@ -474,14 +479,17 @@ int32_t PFM3_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfB
     SD_IO_WriteByte(SD_TOKEN_START_DATA_SINGLE_BLOCK_WRITE);
 
 
-
-    spi2TransferComplete = 0;
-    /* Write the block data to SD */
-    if (SD_IO_WriteReadData_DMA((uint8_t*)pData + offset, dummySector, BlockSize) == HAL_BUSY) {
-        HAL_Delay(1);
+    if (useDMA) {
+        spi2TransferComplete = 0;
+        /* Write the block data to SD */
+        if (SD_IO_WriteReadData_DMA((uint8_t*)pData + offset, dummySector, BlockSize) == HAL_BUSY) {
+            HAL_Delay(1);
+        }
+        while (spi2TransferComplete == 0);
+    } else {
+        /* Write the block data to SD */
+        SD_IO_WriteReadData((uint8_t*)pData + offset, dummySector, BlockSize);
     }
-    while (spi2TransferComplete == 0);
-
     /* Set next write address */
     offset += BlockSize;
     addr = ((flag_SDHC == 1) ? (addr + 1) : (addr + BlockSize));

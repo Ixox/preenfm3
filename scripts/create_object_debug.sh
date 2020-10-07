@@ -5,11 +5,11 @@ OBJCOPY_BIN="/opt/st/stm32cubeide_1.3.0/plugins/com.st.stm32cube.ide.mcu.externa
 
 
 FIRMWARE_DIR=../firmware
-FIRMWARE_RELEASE=Release
+FIRMWARE_RELEASE=DebugLQFP144
 
 
 BOOTLOADER_DIR=../bootloader
-BOOTLOADER_RELEASE=Release
+BOOTLOADER_RELEASE=DebugLQFP144
 
 
 versionFile="./Inc/version.h"
@@ -41,7 +41,6 @@ binFirmwareWithPath="${buildFolder}/${binFirmware}"
 binBootloader="p3_boot_${bootloaderVersion}.bin"
 binBootloaderWithPath="${buildFolder}/${binBootloader}"
 
-echo "Build                : ${FIRMWARE_RELEASE}"
 echo "Firmware version     : ${firmwareVersion}"
 echo "Bootloader version   : ${bootloaderVersion}"
 echo "Build folder         : ${buildFolder}"

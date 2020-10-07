@@ -27,14 +27,14 @@ __attribute__((section(".ram_d2b")))  FATFS USERFatFS;    /* File system object 
 
 /* USER CODE END Variables */    
 
-void MX_FATFS_Init(void) 
+void MX_FATFS_Init(bool userDma)
 {
   /*## FatFS: Link the USER driver ###########################*/
-  retUSER = FATFS_LinkDriver(&SD_Driver, USERPath);
-
-  /* USER CODE BEGIN Init */
-  /* additional user code for init */     
-  /* USER CODE END Init */
+  if (userDma) {
+      FATFS_LinkDriver(&SD_Driver_DMA, USERPath);
+  } else {
+      FATFS_LinkDriver(&SD_Driver, USERPath);
+  }
 }
 
 /**

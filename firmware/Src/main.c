@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
 #include "stdlib.h"
 #include "preenfm3.h"
 #include "preenfm3lib.h"
@@ -154,7 +155,7 @@ int main(void)
   MX_SAI2_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
-  MX_FATFS_Init();
+  MX_FATFS_Init(true);
   MX_USB_DEVICE_Init();
   MX_USART1_UART_Init();
 #if defined(LQFP100) || defined(LQFP100_OLD)

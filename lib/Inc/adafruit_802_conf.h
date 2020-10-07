@@ -26,7 +26,7 @@
  extern "C" {
 #endif
 
-
+#include <stdbool.h>
 #include "stm32h7xx_nucleo_conf.h"
 #include "stm32h7xx_nucleo_errno.h"
 #include "stm32h7xx_nucleo_bus.h"

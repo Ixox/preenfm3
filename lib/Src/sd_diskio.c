@@ -17,6 +17,10 @@
   ******************************************************************************
   */
 
+/*
+ * Xavier Hosxe for Preenfm3 : add a DMA variant
+ */
+
 /* Includes ------------------------------------------------------------------*/
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
@@ -53,26 +57,29 @@ static DSTATUS SD_CheckStatus(BYTE lun);
 DSTATUS SD_initialize (BYTE);
 DSTATUS SD_status (BYTE);
 DRESULT SD_read (BYTE, BYTE*, DWORD, UINT);
-#if _USE_WRITE == 1
-  DRESULT SD_write (BYTE, const BYTE*, DWORD, UINT);
-#endif /* _USE_WRITE == 1 */
-#if _USE_IOCTL == 1
-  DRESULT SD_ioctl (BYTE, BYTE, void*);
-#endif  /* _USE_IOCTL == 1 */
+DRESULT SD_write (BYTE, const BYTE*, DWORD, UINT);
+DRESULT SD_read_DMA (BYTE, BYTE*, DWORD, UINT);
+DRESULT SD_write_DMA (BYTE, const BYTE*, DWORD, UINT);
+DRESULT SD_ioctl (BYTE, BYTE, void*);
 
 const Diskio_drvTypeDef  SD_Driver =
 {
   SD_initialize,
   SD_status,
   SD_read,
-#if  _USE_WRITE == 1
   SD_write,
-#endif /* _USE_WRITE == 1 */
-
-#if  _USE_IOCTL == 1
   SD_ioctl,
-#endif /* _USE_IOCTL == 1 */
 };
+
+const Diskio_drvTypeDef  SD_Driver_DMA =
+{
+  SD_initialize,
+  SD_status,
+  SD_read_DMA,
+  SD_write_DMA,
+  SD_ioctl,
+};
+
 
 /* Private functions ---------------------------------------------------------*/
 static DSTATUS SD_CheckStatus(BYTE lun)
@@ -134,11 +141,11 @@ DSTATUS SD_status(BYTE lun)
  * @param  count: Number of sectors to read (1..128)
  * @retval DRESULT: Operation result
  */
-DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
+DRESULT SD_read_DMA(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
     DRESULT res = RES_ERROR;
     uint32_t timeout = 100000;
 
-    if (PFM3_SD_ReadBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT) == BSP_ERROR_NONE) {
+    if (PFM3_SD_ReadBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT, true) == BSP_ERROR_NONE) {
         /* wait until the Write operation is finished */
         while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
             if (timeout-- == 0) {
@@ -150,7 +157,22 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
 
     return res;
 }
+DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
+    DRESULT res = RES_ERROR;
+    uint32_t timeout = 100000;
 
+    if (PFM3_SD_ReadBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT, false) == BSP_ERROR_NONE) {
+        /* wait until the Write operation is finished */
+        while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
+            if (timeout-- == 0) {
+                return RES_ERROR;
+            }
+        }
+        res = RES_OK;
+    }
+
+    return res;
+}
 
 /**
   * @brief  Writes Sector(s)
@@ -160,12 +182,11 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
   * @param  count: Number of sectors to write (1..128)
   * @retval DRESULT: Operation result
   */
-#if _USE_WRITE == 1
-DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
+DRESULT SD_write_DMA(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
     DRESULT res = RES_ERROR;
     uint32_t timeout = 100000;
 
-    if (PFM3_SD_WriteBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT) == BSP_ERROR_NONE) {
+    if (PFM3_SD_WriteBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT, true) == BSP_ERROR_NONE) {
         /* wait until the Write operation is finished */
         while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
             if (timeout-- == 0) {
@@ -178,7 +199,22 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
     return res;
 }
 
-#endif /* _USE_WRITE == 1 */
+DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
+    DRESULT res = RES_ERROR;
+    uint32_t timeout = 100000;
+
+    if (PFM3_SD_WriteBlocks((uint32_t*) buff, (uint32_t) (sector), count, SD_DATATIMEOUT, false) == BSP_ERROR_NONE) {
+        /* wait until the Write operation is finished */
+        while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
+            if (timeout-- == 0) {
+                return RES_ERROR;
+            }
+        }
+        res = RES_OK;
+    }
+
+    return res;
+}
 
 /**
   * @brief  I/O control operation
@@ -187,7 +223,6 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
   * @param  *buff: Buffer to send/receive control data
   * @retval DRESULT: Operation result
   */
-#if _USE_IOCTL == 1
 DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 {
   DRESULT res = RES_ERROR;
@@ -229,6 +264,5 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 
   return res;
 }
-#endif /* _USE_IOCTL == 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

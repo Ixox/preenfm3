@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
 #include "bootloader.h"
 #include "preenfm3lib.h"
 /* USER CODE END Includes */
@@ -118,7 +119,7 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_DMA2D_Init();
-  MX_FATFS_Init();
+  MX_FATFS_Init(false);
 
   bootloaderInit();
 

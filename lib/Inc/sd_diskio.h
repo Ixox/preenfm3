@@ -23,10 +23,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "adafruit_802_sd.h"
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 extern const Diskio_drvTypeDef  SD_Driver;
+extern const Diskio_drvTypeDef  SD_Driver_DMA;
 
 #endif /* __SD_DISKIO_H */
 
