@@ -230,18 +230,25 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
             case BUTTON_PFM3_6:
                 propagateNoteOn(-10);
                 break;
-            case BUTTON_PREVIOUS_INSTRUMENT:
+            case BUTTON_PREVIOUS_INSTRUMENT: {
+            	SynthEditMode previousMode = fullState.synthMode;
+
                 // Turn off the backlight
                 TIM1->CCR2 = 0;
                 // reinit TFT + redisplay full page
                 ILI9341_Init();
+                fullState.synthMode = SYNTH_MODE_COLORS;
                 propagateNewPfm3Page();
                 // Wait for the page to be ready
-                HAL_Delay(500);
                 // Turn on the backlight
                 uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
                 TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+
+                HAL_Delay(5000);
+                fullState.synthMode = previousMode;
+                propagateNewPfm3Page();
                 break;
+            }
         }
         case BUTTON_NEXT_INSTRUMENT:
         	if (button2 == BUTTON_PREVIOUS_INSTRUMENT) {
@@ -896,6 +903,10 @@ bool SynthState::scalaSettingsChanged(int timbre) {
         }
     }
     return true;
+}
+
+const char* SynthState::getSequenceName() {
+	displaySequencer->getSequenceName();
 }
 
 

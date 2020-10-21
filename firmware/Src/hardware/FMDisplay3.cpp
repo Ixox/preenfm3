@@ -390,9 +390,17 @@ void FMDisplay3::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue
 
 
 void FMDisplay3::newPfm3Page(FullState* fullState) {
-    refreshStatus = 20;
-
-    this->refreshOscilloBG();
+	if (unlikely(fullState->synthMode == SYNTH_MODE_COLORS)) {
+		tft->clear();
+		float h = 320.0f / (NUMBER_OF_TFT_COLORS);
+		for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
+			int y = h * c;
+			tft->fillArea(0, y, 240, h, c + 1);
+		}
+	} else {
+		refreshStatus = 20;
+		this->refreshOscilloBG();
+	}
 }
 
 

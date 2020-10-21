@@ -592,6 +592,8 @@ public:
     char stepSelect[2];
     char patternSelect;
 
+    const char* getSequenceName();
+
 private:
 
     int currentTimbre;
