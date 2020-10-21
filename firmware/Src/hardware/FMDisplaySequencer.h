@@ -98,11 +98,13 @@ public:
         return seqMode;
     }
 
+    const char* getSequenceName();
+
 private:
     void refreshStepSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus);
     bool refreshSequence(int instrument);
     void clearSequence(int start, int end);
-    void newNoteInSequence(int start, int end, bool moreThanOneNote);
+    void newNoteInSequence(int instrument, int start, int end, bool moreThanOneNote);
 
     TftDisplay* tft;
     SynthState* synthState;
@@ -114,6 +116,7 @@ private:
     int stepCursor;
     int stepSize;
     int stepRedrawSequenceIndex;
+    int stepCurrentInstrument;
 };
 
 #endif

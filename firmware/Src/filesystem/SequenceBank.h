@@ -22,10 +22,12 @@
 #include "PreenFMFileType.h"
 
 enum SEQUENCE_BANK_VERSION {
-    SEQUENCE_BANK_VERSION1 = 1
+    SEQUENCE_BANK_VERSION1 = 1,
+    SEQUENCE_BANK_VERSION2,
 };
 
-#define SEQUENCE_BANK_CURRENT_VERSION SEQUENCE_BANK_VERSION1
+#define SEQUENCE_BANK_CURRENT_VERSION SEQUENCE_BANK_VERSION2
+#define NUMBER_OF_STEP_SEQUENCES 12
 
 class Sequencer;
 
@@ -37,9 +39,11 @@ public:
     const char* loadSequenceName(const struct PFM3File* sequenceFile, int sequenceNumber);
     void createSequenceFile(const char* name);
     void saveSequence(const struct PFM3File* mixer, int sequenceNumber, char* sequenceName);
-
+protected:
+    bool isReadOnly(struct PFM3File *file);
 private:
     void loadSequenceVersion1(FIL* sequenceFile, int patchNumber);
+    void loadSequenceVersion2(FIL* sequenceFile, int patchNumber);
     const char* getFolderName();
     bool isCorrectFile(char *name, int size) ;
     char sequenceName[13];

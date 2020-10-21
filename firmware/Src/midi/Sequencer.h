@@ -34,10 +34,11 @@ class FMDisplaySequencer;
 #define MAX_TIME (0xfff)
 
 enum SEQ_VERSION {
-    SEQ_VERSION1 = 1
+    SEQ_VERSION1 = 1,
+    SEQ_VERSION2
 };
 
-#define SEQ_CURRENT_VERSION SEQ_VERSION1
+#define SEQ_CURRENT_VERSION SEQ_VERSION2
 
 enum SeqMidiActionType {
     SEQ_ACTION_NONE = 0,
@@ -169,11 +170,18 @@ public:
     }
     void setSequenceName(const char* newName);
     char* getSequenceNameInBuffer(char* buffer);
+    uint8_t getInstrumentStepSeq(int instrument) {
+    	return instrumentStepSeq[instrument];
+    }
+    void setInstrumentStepSeq(int instrument, int index) {
+    	instrumentStepSeq[instrument] = (uint8_t)index;
+    }
 
 private:
     void processActionBetwen(int instrument, uint16_t startTimer, uint16_t endTimer);
     void resyncNextAction(int instrument, uint16_t newInstrumentTimer);
     void loadStateVersion1(uint8_t* buffer);
+    void loadStateVersion2(uint8_t* buffer);
 
     char sequenceName[13];
     uint16_t lastFreeAction;
@@ -196,7 +204,7 @@ private:
     uint32_t ledTimer;
 
     // Step sequencer
-    int stepCurrentInstrument;
+    int stepCurrentInstrumentNONO;
     bool stepMode;
     int stepNumberOfNotesOn;
 
@@ -214,6 +222,11 @@ private:
     uint16_t lastInstrument16bitTimer[NUMBER_OF_TIMBRES];
     uint8_t instrumentStepIndex[NUMBER_OF_TIMBRES];
     uint8_t instrumentStepLastUnique[NUMBER_OF_TIMBRES];
+    // Each instrument points to its own step seq
+    uint8_t instrumentStepSeq[NUMBER_OF_TIMBRES];
+
+    // Tmp step seq to store current pressed midi keys
+    StepSeqValue tmpStepValue;
 };
 
 #endif /* MIDI_SEQUENCER_H_ */

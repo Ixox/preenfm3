@@ -206,7 +206,7 @@ int PreenFMFileType::initFiles() {
                             myFiles[numberOfFiles].name[k] = fno.fname[k];
                         }
                     }
-                    if (fno.fname[0] == '_') {
+                    if (fno.fname[0] == '_' || isReadOnly(&myFiles[numberOfFiles])) {
                         myFiles[numberOfFiles].fileType = FILE_READ_ONLY;
                     } else {
                         myFiles[numberOfFiles].fileType = FILE_OK;

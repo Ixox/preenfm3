@@ -203,6 +203,10 @@ protected:
     char fullName[40];
     FileSystemUtils* fsu;
     bool isInitialized;
+
+    virtual bool isReadOnly(struct PFM3File *file) {
+    	return false;
+    }
 };
 
 #endif /* PREENFMFILETYPE_H_ */

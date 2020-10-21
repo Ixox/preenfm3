@@ -247,31 +247,39 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
     case 16: {
         tft->pauseRefresh();
         tft->fillArea(2, Y_START_SEQ + 2, 236, 166, COLOR_BLACK);
+        int numberOfBars = sequencer->getNumberOfBars(instrument);
         for (int m = 0; m < 4; m++) {
 
             uint8_t x = X_START_STEP;
             uint16_t y = Y_START_STEP + m * 40;
-
-            tft->fillArea(X_START_STEP, y, 194, 2, COLOR_WHITE);
-            tft->fillArea(X_START_STEP, y - 6, 2, 6, COLOR_GRAY);
+            uint8_t color = m < numberOfBars ? COLOR_WHITE : COLOR_GRAY;
+            tft->fillArea(X_START_STEP, y, 194, 2, color);
 
             //tft->fillArea((uint8_t)(xStart + 200), y - 6, 2, 6, COLOR_WHITE);
-            for (int b = 1; b < 4 ; b++) {
+            for (int b = 0; b < 4 ; b++) {
                 int x2 = x + b * 48;
-                tft->fillArea(x2, y + 2, 2, 4, COLOR_WHITE);
+                tft->fillArea(x2, y + 2, 2, 4, color);
             }
         }
         break;
     }
-    case 15:
+    case 15: {
 
         tft->setCharColor(COLOR_YELLOW);
         tft->setCharBackgroundColor(COLOR_BLACK);
         tft->setCursorInPixel(7, 80);
         tft->print(instrument + 1);
+        // Let's store current instrument here (when it's displayed)
+        stepCurrentInstrument = instrument;
+        tft->setCharColor(COLOR_CYAN);
+        int seqNumber = sequencer->getInstrumentStepSeq(instrument) + 1;
+        tft->setCursorInPixel(7 - (seqNumber >= 10 ? 5 : 0), 100);
+        tft->print(seqNumber);
+
         stepRedrawSequenceIndex = 0;
         break;
-    case 14:{
+    }
+    case 14: {
         // We divide the sequence drawing
         // because it creates up to 512 entries in the tft action buffer
         if (!refreshSequence(instrument)) {
@@ -321,6 +329,7 @@ void FMDisplaySequencer::refreshPlayButton() {
 bool FMDisplaySequencer::refreshSequence(int instrument) {
     StepSeqValue* sequence = sequencer->stepGetSequence(instrument);
     int numberOfBlocks = 0;
+    int numberOfBars = sequencer->getNumberOfBars(instrument);
     while (stepRedrawSequenceIndex < 256 && numberOfBlocks < 10) {
         if ((sequence[stepRedrawSequenceIndex].full & 0xffffff00) == 0l) {
             stepRedrawSequenceIndex++;
@@ -337,8 +346,13 @@ bool FMDisplaySequencer::refreshSequence(int instrument) {
 
             int x = X_START_STEP + (startBlock % 64) * 3 + 1;
             int y = Y_START_STEP + (startBlock / 64) * 40  ;
+
             // Draw block
-            tft->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN : COLOR_BLUE);
+            if ((startBlock / 64) < numberOfBars) {
+            	tft->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN : COLOR_BLUE);
+            } else {
+            	tft->fillArea(x, y - 10, size, 10, COLOR_GRAY);
+            }
             numberOfBlocks ++ ;
         }
     }
@@ -350,17 +364,21 @@ bool FMDisplaySequencer::refreshSequence(int instrument) {
     }
 }
 
-void FMDisplaySequencer::newNoteInSequence(int start, int end, bool moreThanOneNote) {
+void FMDisplaySequencer::newNoteInSequence(int instrument, int start, int end, bool moreThanOneNote) {
     int x = X_START_STEP + (start % 64) * 3 + 1;
     int y = Y_START_STEP + (start / 64) * 40  ;
     int size = (end - start) * 3 - 2;
+    int numberOfBars = sequencer->getNumberOfBars(instrument);
 
+    if ((start / 64) < numberOfBars) {
+        tft->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN : COLOR_BLUE);
+    } else {
+        tft->fillArea(x, y - 10, size, 10, COLOR_GRAY);
+    }
 
-    tft->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN : COLOR_BLUE);
     tft->fillArea(x + size, y - 10, 2, 10, COLOR_BLACK);
     tft->fillArea(x -2, y - 10, 2, 10, COLOR_BLACK);
 }
-
 
 void FMDisplaySequencer::clearSequence(int start, int end) {
     int x = X_START_STEP + (start % 64) * 3;
@@ -370,12 +388,9 @@ void FMDisplaySequencer::clearSequence(int start, int end) {
     tft->fillArea(x, y - 10, size, 10, COLOR_BLACK);
 }
 
-
-
-
 void FMDisplaySequencer::noteOn(int instrument, bool show) {
     if (likely(seqMode != SEQ_MODE_STEP)) {
-        tft->setCursorInPixel(160, 75 + instrument * 27);
+        tft->setCursorInPixel(160, Y_START_SEQ + 7 + instrument * 27);
         if (sequencer->isRecording(instrument)) {
             tft->setCharColor(COLOR_RED);
         } else {
@@ -395,15 +410,15 @@ void FMDisplaySequencer::displayBeat() {
             tft->setCharColor(COLOR_RED);
             measure = precount / 1024;
             beat = (precount - measure * 1024) / 256;
-            tft->fillArea(0,              62, 240, 4, COLOR_DARK_RED);
+            tft->fillArea(0,              62, 240, 4, COLOR_DARK_GRAY);
             tft->fillArea(180- beat * 60, 62,  60, 4, COLOR_RED);
         } else {
             measure = sequencer->getMeasure();
             beat = sequencer->getBeat();
 
-            tft->fillArea(0,               62, 240, 4, COLOR_DARK_BLUE);
-            tft->fillArea(measure * 60,    62, 60, 2, COLOR_CYAN);
-            tft->fillArea((beat - 1) * 60, 64, 60, 2, COLOR_CYAN);
+            tft->fillArea(0,               62, 240, 4, COLOR_DARK_GRAY);
+            tft->fillArea((beat - 1) * 60, 62, 60, 4, COLOR_BLUE);
+            tft->fillArea(measure * 60,    62, 20, 4, COLOR_CYAN);
 
             tft->setCharBackgroundColor(COLOR_BLACK);
             if (sequencer->isRunning()) {
@@ -413,7 +428,7 @@ void FMDisplaySequencer::displayBeat() {
             }
         }
         tft->setCursor(11, 2);
-        tft->print(measure);
+        tft->print(measure + 1);
         tft->print(':');
         tft->print(beat);
     }
@@ -498,6 +513,16 @@ void FMDisplaySequencer::encoderTurned(int instrument, int encoder, int ticks) {
     break;
     case 5:
         if (seqMode == SEQ_MODE_STEP) {
+        	int index = sequencer->getInstrumentStepSeq(instrument) + (ticks > 0 ? 1 : -1);
+        	if (index < 0) {
+        		index = 0;
+        	} else if (index >= NUMBER_OF_STEP_SEQUENCES) {
+        		index = NUMBER_OF_STEP_SEQUENCES - 1;
+        	}
+        	if (index != sequencer->getInstrumentStepSeq(instrument)) {
+        		sequencer->setInstrumentStepSeq(instrument, index);
+                this->refresh(16, 13);
+        	}
         } else {
             int bars = sequencer->getNumberOfBars(instrument);
             int newBars = bars + (ticks > 0 ? 1 : -1);
@@ -641,9 +666,10 @@ void FMDisplaySequencer::buttonPressed(int instrument, int button) {
 }
 
 
-void FMDisplaySequencer::newNoteEntered(int instrument) {
-    bool moreThanOneNote = sequencer->stepRecordNotes(instrument, stepCursor, stepSize);
-    newNoteInSequence(stepCursor, stepCursor + stepSize, moreThanOneNote);
+void FMDisplaySequencer::newNoteEntered(int instrumentNO) {
+	// We use current instrument and not the one we receive
+    bool moreThanOneNote = sequencer->stepRecordNotes(stepCurrentInstrument, stepCursor, stepSize);
+    newNoteInSequence(stepCurrentInstrument, stepCursor, stepCursor + stepSize, moreThanOneNote);
     stepCursor += stepSize;
     if (stepCursor > 255) {
         stepCursor -= 256;
@@ -651,4 +677,7 @@ void FMDisplaySequencer::newNoteEntered(int instrument) {
     refreshStepCursor();
 }
 
+const char* FMDisplaySequencer::getSequenceName() {
+	return sequencer->getSequenceName();
+}
 
