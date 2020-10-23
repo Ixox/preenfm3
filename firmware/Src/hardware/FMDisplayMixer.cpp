@@ -348,11 +348,6 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
             if (mixerValueType != MIXER_VALUE_SCALA_SCALE) {
                 tft->print(synthState->getTimbreName(19 - refreshStatus));
             }
-
-            if (refreshStatus == endRefreshStatus) {
-                endRefreshStatus = 0;
-                refreshStatus = 0;
-            }
         } else {
             int line = 19 - refreshStatus;
             if (line < NUMBER_OF_GLOBAL_SETTINGS) {
@@ -396,6 +391,11 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
 
         break;
     }
+    }
+
+    if (refreshStatus == endRefreshStatus) {
+        endRefreshStatus = 0;
+        refreshStatus = 0;
     }
 }
 

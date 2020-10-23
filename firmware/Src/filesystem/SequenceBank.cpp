@@ -52,7 +52,6 @@
 
 
 #include <SequenceBank.h>
-#include "Sequencer.h"
 
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
@@ -277,7 +276,7 @@ void SequenceBank::saveSequence(const struct PFM3File* sequencePFMFile, int sequ
     sequencer->setSequenceName(sequenceName);
 
     if (f_open(&sequenceFile, fullSeqBankName, FA_WRITE) == FR_OK) {
-        f_lseek(&sequenceFile, 4 + ((1024 + 28720) * sequenceNumber));
+        f_lseek(&sequenceFile, 4 + ((1024 + 16384 + 24576) * sequenceNumber));
 
         // We copy the state to property files
         sequencer->getFullState((uint8_t*)storageBuffer, &seqStatesize);

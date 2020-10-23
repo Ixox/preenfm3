@@ -195,7 +195,7 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
         	case MENU_DEFAULT: {
                 const char* name = MenuItemUtil::getMenuItem(
                     this->synthState->fullState.currentMenuItem->subMenu[this->synthState->fullState.previousChoice])->name;
-                tft->drawSimpleBorderButton(name, 270, 29, button, COLOR_WHITE, COLOR_DARK_RED);
+                tft->drawSimpleBorderButton(name, 270, 29, button, COLOR_LIGHT_GRAY, COLOR_DARK_RED);
                 break;
         	}
         	default:
@@ -508,7 +508,23 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
     }
 
     // Don't do anything if no button
-    if (button > (fullState->currentMenuItem->maxValue - 1)) {
+    int maxButton;
+    switch (fullState->currentMenuItem->menuType) {
+    case MENUTYPE_WITHSUBMENU:
+        maxButton = fullState->currentMenuItem->maxValue - 1;
+        break;
+    case MENUTYPE_RANDOMIZER:
+        maxButton = 1;
+        break;
+    case MENUTYPE_TEMPORARY:
+        maxButton = -1;
+        break;
+    default:
+    	// only button 1
+        maxButton = 0;
+        break;
+    }
+    if (button > maxButton) {
     	return;
     }
 

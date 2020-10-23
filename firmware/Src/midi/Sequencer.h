@@ -25,6 +25,7 @@ class Synth;
 class FMDisplaySequencer;
 
 #define SEQ_ACTION_SIZE 2048
+#define NUMBER_OF_STEP_SEQUENCES 12
 
 #define SEQ_ACTION_SIZE_INV (1.0f/(float)SEQ_ACTION_SIZE)
 #define SEQ_LAST_ACTION_INDEX SEQ_LAST_ACTION_SIZE-1
@@ -118,7 +119,6 @@ public:
         recording[instrument] = !recording[instrument];
     }
     bool setSeqActivated(uint8_t instrument);
-    void setStepActivated(uint8_t instrument);
 
 
     bool isSeqActivated(uint8_t instrument) {
@@ -126,7 +126,8 @@ public:
     }
 
     bool isStepActivated(uint8_t instrument) {
-        return stepActivated[instrument];
+    	int seqNumber = instrumentStepSeq[instrument];
+        return stepActivated[seqNumber];
     }
 
     float getPrecount() {
@@ -211,7 +212,8 @@ private:
     // Per instrument
     uint16_t stepUniqueValue[NUMBER_OF_TIMBRES];
     bool seqActivated[NUMBER_OF_TIMBRES];
-    bool stepActivated[NUMBER_OF_TIMBRES];
+    // Per sequence
+    bool stepActivated[NUMBER_OF_STEP_SEQUENCES];
     uint16_t nextActionIndex[NUMBER_OF_TIMBRES];
     uint16_t previousActionIndex[NUMBER_OF_TIMBRES];
     bool nextActionTimerOutOfSync[NUMBER_OF_TIMBRES];

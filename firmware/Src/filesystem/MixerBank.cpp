@@ -25,7 +25,7 @@
 
 
 extern SeqMidiAction actions[SEQ_ACTION_SIZE];
-extern StepSeqValue stepNotes[NUMBER_OF_TIMBRES][256 + 1];
+extern StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];
 
 extern char patch_zeros[ALIGNED_PATCH_ZERO];
 

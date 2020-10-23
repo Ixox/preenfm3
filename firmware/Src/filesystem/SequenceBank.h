@@ -20,6 +20,7 @@
 #define FILESYSTEM_SEQUENCEBANK_H_
 
 #include "PreenFMFileType.h"
+#include "Sequencer.h"
 
 enum SEQUENCE_BANK_VERSION {
     SEQUENCE_BANK_VERSION1 = 1,
@@ -27,7 +28,6 @@ enum SEQUENCE_BANK_VERSION {
 };
 
 #define SEQUENCE_BANK_CURRENT_VERSION SEQUENCE_BANK_VERSION2
-#define NUMBER_OF_STEP_SEQUENCES 12
 
 class Sequencer;
 

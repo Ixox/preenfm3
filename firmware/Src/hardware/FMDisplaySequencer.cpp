@@ -238,7 +238,6 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
         endRefreshStatus = 0;
         refreshStatus = 0;
     }
-
 }
 
 
@@ -316,6 +315,11 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
     case 1:
         refreshPlayButton();
         break;
+    }
+
+    if (refreshStatus == endRefreshStatus) {
+        endRefreshStatus = 0;
+        refreshStatus = 0;
     }
 }
 
@@ -513,16 +517,17 @@ void FMDisplaySequencer::encoderTurned(int instrument, int encoder, int ticks) {
     break;
     case 5:
         if (seqMode == SEQ_MODE_STEP) {
-        	int index = sequencer->getInstrumentStepSeq(instrument) + (ticks > 0 ? 1 : -1);
-        	if (index < 0) {
-        		index = 0;
-        	} else if (index >= NUMBER_OF_STEP_SEQUENCES) {
-        		index = NUMBER_OF_STEP_SEQUENCES - 1;
-        	}
-        	if (index != sequencer->getInstrumentStepSeq(instrument)) {
-        		sequencer->setInstrumentStepSeq(instrument, index);
-                this->refresh(16, 13);
-        	}
+			int index = sequencer->getInstrumentStepSeq(instrument) + (ticks > 0 ? 1 : -1);
+			if (index < 0) {
+				index = 0;
+			} else if (index >= NUMBER_OF_STEP_SEQUENCES) {
+				index = NUMBER_OF_STEP_SEQUENCES - 1;
+			}
+			if (index != sequencer->getInstrumentStepSeq(instrument)) {
+				sequencer->setInstrumentStepSeq(instrument, index);
+				tft->pauseRefresh();
+				this->refresh(16, 13);
+			}
         } else {
             int bars = sequencer->getNumberOfBars(instrument);
             int newBars = bars + (ticks > 0 ? 1 : -1);

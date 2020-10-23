@@ -3190,10 +3190,10 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
             break;
         }
         }
-        if (refreshStatus == endRefreshStatus) {
-            endRefreshStatus = 0;
-            refreshStatus = 0;
-        }
+    }
+    if (refreshStatus == endRefreshStatus) {
+        endRefreshStatus = 0;
+        refreshStatus = 0;
     }
 
 }
