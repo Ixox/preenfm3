@@ -95,12 +95,17 @@ enum MenuState {
     MENU_IN_PROGRESS,
     MENU_ERROR,
 
-    MENU_DEFAULT,
-    MENU_DEFAULT_LOAD,
-    MENU_DEFAULT_SAVE,
-    MENU_DEFAULT_DELETE,
+    MENU_DEFAULT_MIXER,
+    MENU_DEFAULT_MIXER_LOAD,
+    MENU_DEFAULT_MIXER_SAVE,
+    MENU_DEFAULT_MIXER_DELETE,
 
-    LAST_MENU
+    MENU_DEFAULT_SEQUENCER,
+    MENU_DEFAULT_SEQUENCER_LOAD,
+    MENU_DEFAULT_SEQUENCER_SAVE,
+    MENU_DEFAULT_SEQUENCER_DELETE,
+
+	LAST_MENU
 };
 
 
@@ -136,7 +141,8 @@ struct Randomizer {
 struct PreviousMenuChoice {
     uint8_t main;
     uint8_t mixer;
-    uint8_t deflt;
+    uint8_t defltMix;
+    uint8_t defltSeq;
     uint8_t preset;
     uint8_t sequencer;
     uint8_t dx7;

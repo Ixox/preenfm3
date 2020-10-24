@@ -404,7 +404,8 @@ void dependencyInjection() {
 
     // Load preferences
     sdCard.getConfigurationFile()->loadConfig(synthState.fullState.midiConfigValue);
-    sdCard.getMixerBank()->loadDefaultMixerAndSeq();
+    sdCard.getMixerBank()->loadDefaultMixer();
+    sdCard.getSequenceBank()->loadDefaultSequence();
     sdCard.getUserWaveform()->loadUserWaveforms();
     synthState.propagateAfterNewMixerLoad();
 

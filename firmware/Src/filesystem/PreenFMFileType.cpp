@@ -43,6 +43,8 @@ const char* PreenFMFileType::getFileName(FILE_ENUM file) {
     switch (file) {
     case DEFAULT_MIXER:
         return DEFAULT_MIXER_NAME;
+    case DEFAULT_SEQUENCE:
+        return DEFAULT_SEQUENCE_NAME;
     case PROPERTIES:
         return PROPERTIES_NAME;
     }

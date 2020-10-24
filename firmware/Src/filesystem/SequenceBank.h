@@ -39,11 +39,17 @@ public:
     const char* loadSequenceName(const struct PFM3File* sequenceFile, int sequenceNumber);
     void createSequenceFile(const char* name);
     void saveSequence(const struct PFM3File* mixer, int sequenceNumber, char* sequenceName);
+    bool saveDefaultSequence();
+    bool loadDefaultSequence();
+    void removeDefaultSequence();
+
+
 protected:
     bool isReadOnly(struct PFM3File *file);
 private:
-    void loadSequenceVersion1(FIL* sequenceFile, int patchNumber);
-    void loadSequenceVersion2(FIL* sequenceFile, int patchNumber);
+    bool saveSequencerData(FIL* file);
+    void loadSequenceDataVersion1(FIL* sequenceFile, int patchNumber);
+    void loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber);
     const char* getFolderName();
     bool isCorrectFile(char *name, int size) ;
     char sequenceName[13];

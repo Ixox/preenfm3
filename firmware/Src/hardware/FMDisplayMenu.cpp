@@ -77,42 +77,6 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
         tft->setCursorInPixel(240 - 7 * PFM3_FIRMWARE_VERSION_STRLEN, 25);
         tft->printSmallChars(PFM3_FIRMWARE_VERSION);
         break;
-
-    case 19: {
-
-        switch (this->synthState->fullState.currentMenuItem->menuState) {
-        case MENU_MIXER_SAVE_ENTER_NAME:
-        case MENU_PRESET_SAVE_ENTER_NAME:
-        case MENU_SEQUENCER_SAVE_ENTER_NAME:
-            tft->setCursor(6, menuRow);
-            for (int k = 0; k < 12; k++) {
-                tft->print(this->synthState->fullState.name[k]);
-            }
-            break;
-        case MENU_SD_CREATE_SEQUENCE_FILE:
-        case MENU_SD_CREATE_MIXER_FILE:
-        case MENU_SD_CREATE_PRESET_FILE:
-        case MENU_SD_RENAME_MIXER_ENTER_NAME:
-        case MENU_SD_RENAME_PRESET_ENTER_NAME:
-        case MENU_SD_RENAME_SEQUENCE_ENTER_NAME:
-            tft->setCursor(6, menuRow);
-            for (int k = 0; k < 8; k++) {
-                tft->print(this->synthState->fullState.name[k]);
-            }
-            break;
-        case MENU_DEFAULT_SAVE:
-            tft->setCursor(1, menuRow);
-            tft->print("Save to default ?");
-            break;
-        case MENU_DEFAULT_DELETE:
-            tft->setCursor(1, menuRow);
-            tft->print("Reset default ?");
-            break;
-        default:
-            break;
-        }
-        break;
-    }
     case 6:
     case 5:
     case 4:
@@ -178,7 +142,7 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
         case MENUTYPE_CONFIRM:
             if (button == 0) {
                 // Default Empty button
-                tft->drawSimpleButton("Sure?", 270, 29, button, COLOR_YELLOW, COLOR_DARK_RED);
+                tft->drawSimpleButton("Yes", 270, 29, button, COLOR_YELLOW, COLOR_DARK_RED);
                 return;
             }
             break;
@@ -192,7 +156,8 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
         	case MENU_MIXER:
         	case MENU_SEQUENCER:
         	case MENU_PRESET:
-        	case MENU_DEFAULT: {
+        	case MENU_DEFAULT_SEQUENCER:
+        	case MENU_DEFAULT_MIXER: {
                 const char* name = MenuItemUtil::getMenuItem(
                     this->synthState->fullState.currentMenuItem->subMenu[this->synthState->fullState.previousChoice])->name;
                 tft->drawSimpleBorderButton(name, 270, 29, button, COLOR_LIGHT_GRAY, COLOR_DARK_RED);
@@ -499,8 +464,11 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
 			case MENU_SEQUENCER:
 				button = fullState->previousMenuChoice.sequencer;
 				break;
-			case MENU_DEFAULT:
-				button = fullState->previousMenuChoice.deflt;
+			case MENU_DEFAULT_MIXER:
+				button = fullState->previousMenuChoice.defltMix;
+				break;
+			case MENU_DEFAULT_SEQUENCER:
+				button = fullState->previousMenuChoice.defltSeq;
 				break;
 			default:
 				break;
@@ -543,8 +511,11 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
             case MENU_SEQUENCER:
                 fullState->previousMenuChoice.sequencer = button;
                 break;
-            case MENU_DEFAULT:
-                fullState->previousMenuChoice.deflt = button;
+            case MENU_DEFAULT_MIXER:
+                fullState->previousMenuChoice.defltMix = button;
+                break;
+            case MENU_DEFAULT_SEQUENCER:
+                fullState->previousMenuChoice.defltSeq = button;
                 break;
             default:
                 break;
@@ -663,14 +634,23 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
             }
             break;
             break;
-        case MENU_DEFAULT_SAVE:
-            synthState->getStorage()->getMixerBank()->saveDefaultMixerAndSeq();
+        case MENU_DEFAULT_MIXER_SAVE:
+            synthState->getStorage()->getMixerBank()->saveDefaultMixer();
             break;
-        case MENU_DEFAULT_DELETE:
+        case MENU_DEFAULT_MIXER_DELETE:
             synthState->getStorage()->getMixerBank()->removeDefaultMixer();
             break;
-        case MENU_DEFAULT_LOAD:
-            synthState->getStorage()->getMixerBank()->loadDefaultMixerAndSeq();
+        case MENU_DEFAULT_MIXER_LOAD:
+            synthState->getStorage()->getMixerBank()->loadDefaultMixer();
+            break;
+        case MENU_DEFAULT_SEQUENCER_SAVE:
+            synthState->getStorage()->getSequenceBank()->saveDefaultSequence();
+            break;
+        case MENU_DEFAULT_SEQUENCER_DELETE:
+            synthState->getStorage()->getSequenceBank()->removeDefaultSequence();
+            break;
+        case MENU_DEFAULT_SEQUENCER_LOAD:
+            synthState->getStorage()->getSequenceBank()->loadDefaultSequence();
             break;
         default:
             break;
@@ -780,8 +760,11 @@ void FMDisplayMenu::updatePreviousChoice(uint8_t menuState) {
 	case MENU_SEQUENCER:
 		fullState->previousChoice = fullState->previousMenuChoice.sequencer;
 		break;
-	case MENU_DEFAULT:
-		fullState->previousChoice = fullState->previousMenuChoice.deflt;
+	case MENU_DEFAULT_MIXER:
+		fullState->previousChoice = fullState->previousMenuChoice.defltMix;
+		break;
+	case MENU_DEFAULT_SEQUENCER:
+		fullState->previousChoice = fullState->previousMenuChoice.defltSeq;
 		break;
 	default:
 		break;
@@ -894,6 +877,39 @@ void FMDisplayMenu::newMenuState(FullState* fullState) {
         tft->print(" ");
         tft->print(this->synthState->params->presetName);
         break;
+
+    case MENU_DEFAULT_MIXER_LOAD:
+    	tft->setCharColor(COLOR_LIGHT_GRAY);
+        tft->setCursor(0, 12);
+        tft->print("Load default Mixer");
+        break;
+    case MENU_DEFAULT_MIXER_SAVE:
+    	tft->setCharColor(COLOR_LIGHT_GRAY);
+        tft->setCursor(0, 12);
+        tft->print("Save default Mixer");
+        break;
+    case MENU_DEFAULT_MIXER_DELETE:
+    	tft->setCharColor(COLOR_LIGHT_GRAY);
+        tft->setCursor(0, 12);
+        tft->print("Clear default Mixer");
+        break;
+    case MENU_DEFAULT_SEQUENCER_LOAD:
+    	tft->setCharColor(COLOR_LIGHT_GRAY);
+        tft->setCursor(0, 12);
+        tft->print("Load default Sequencer");
+        break;
+    case MENU_DEFAULT_SEQUENCER_SAVE:
+    	tft->setCharColor(COLOR_LIGHT_GRAY);
+        tft->setCursor(0, 12);
+        tft->print("Save default Sequencer");
+        break;
+    case MENU_DEFAULT_SEQUENCER_DELETE:
+    	tft->setCharColor(COLOR_LIGHT_GRAY);
+        tft->setCursor(0, 12);
+        tft->print("Clear deflt Sequencer");
+        break;
+
+
     default:
         break;
     }
@@ -1048,11 +1064,11 @@ void FMDisplayMenu::newMenuSelect(FullState* fullState) {
     case MENU_DONE:
         tft->setCharColor(COLOR_YELLOW);
         displayStateMessage:
+		tft->fillArea(0, 12 * TFT_BIG_CHAR_HEIGHT, 240, TFT_BIG_CHAR_HEIGHT, COLOR_BLACK);
         tft->setCharBackgroundColor(COLOR_BLACK);
         tft->setCharColor(COLOR_YELLOW);
         tft->setCursor(8, 12);
         tft->print(fullState->currentMenuItem->name);
-        tft->print("   ");
         break;
     case MENU_PRESET_SAVE_SELECT:
         displayBankSelect(fullState->preenFMBankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY),

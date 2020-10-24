@@ -28,10 +28,12 @@
 enum FILE_ENUM {
     DEFAULT_MIXER = 0,
     PROPERTIES,
-    FIRMWARE
+    FIRMWARE,
+	DEFAULT_SEQUENCE
 };
 
-#define DEFAULT_MIXER_NAME       "0:/pfm3/default.mix"
+#define DEFAULT_MIXER_NAME       "0:/pfm3/mix.dfl"
+#define DEFAULT_SEQUENCE_NAME    "0:/pfm3/seq.dfl"
 #define PROPERTIES_NAME          "0:/pfm3/Settings.txt"
 #define SCALA_CONFIG_NAME        "0:/pfm3/ScalaCfg.txt"
 

@@ -22,11 +22,6 @@
 #include "Sequencer.h"
 #include "MixerState.h"
 
-
-
-extern SeqMidiAction actions[SEQ_ACTION_SIZE];
-extern StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];
-
 extern char patch_zeros[ALIGNED_PATCH_ZERO];
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMMixerAlloc[NUMBEROFPREENFMMIXERS];
@@ -105,7 +100,7 @@ void MixerBank::removeDefaultMixer() {
 /*
  * Default mixer also save the current sequence
  */
-bool MixerBank::saveDefaultMixerAndSeq() {
+bool MixerBank::saveDefaultMixer() {
     bool savedOK = true;
     UINT byteWritten;
 
@@ -114,17 +109,6 @@ bool MixerBank::saveDefaultMixerAndSeq() {
         uint32_t seqStatesize;
         f_lseek(&mixerFile, 0);
         savedOK = saveMixerData(&mixerFile, 0, this->mixerState);
-
-        for (int i = 0; i < PROPERTY_FILE_SIZE; i++) {
-            storageBuffer[i] = 0;
-        }
-
-        sequencer->getFullState((uint8_t*)storageBuffer, &seqStatesize);
-        // We save 1024 bytes for sequencer fullstate
-        f_write(&mixerFile, storageBuffer, 1024, &byteWritten);
-
-        f_write(&mixerFile, actions, sizeof(actions), &byteWritten);
-        f_write(&mixerFile, stepNotes, sizeof(stepNotes), &byteWritten);
 
         f_close(&mixerFile);
     } else {
@@ -186,21 +170,13 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
     return true;
 }
 
-
-
-bool MixerBank::loadDefaultMixerAndSeq() {
+bool MixerBank::loadDefaultMixer() {
     UINT byteRead;
+    uint32_t mixerVersion;
+
     FRESULT result = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_READ);
     if (result == FR_OK) {
-        loadMixerData(&mixerFile, 0);
-        f_lseek(&mixerFile, ALIGNED_MIXER_SIZE + ALIGNED_PATCH_SIZE * NUMBER_OF_TIMBRES);
-
-        // We load 1024 bytes for sequencer fullstate
-        f_read(&mixerFile, storageBuffer, 1024, &byteRead);
-        sequencer->setFullState((uint8_t*)storageBuffer);
-
-        f_read(&mixerFile, actions, sizeof(actions), &byteRead);
-        f_read(&mixerFile, stepNotes, sizeof(stepNotes), &byteRead);
+		loadMixerData(&mixerFile, 0);
         f_close(&mixerFile);
     } else {
         return false;

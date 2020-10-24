@@ -122,17 +122,17 @@ void SequenceBank::loadSequence(const struct PFM3File* bank, int patchNumber) {
 
         switch (bankVersion) {
             case SEQUENCE_BANK_VERSION1:
-                loadSequenceVersion1(&sequenceFile, patchNumber);
+                loadSequenceDataVersion1(&sequenceFile, patchNumber);
                 break;
             case SEQUENCE_BANK_VERSION2:
-                loadSequenceVersion2(&sequenceFile, patchNumber);
+                loadSequenceDataVersion2(&sequenceFile, patchNumber);
                 break;
         }
         f_close(&sequenceFile);
     }
 }
 
-void SequenceBank::loadSequenceVersion1(FIL* sequenceFile, int patchNumber) {
+void SequenceBank::loadSequenceDataVersion1(FIL* sequenceFile, int patchNumber) {
     UINT byteRead;
     f_lseek(sequenceFile, 4 + ((1024 + 16384 + 12336) * patchNumber));
 
@@ -148,7 +148,7 @@ void SequenceBank::loadSequenceVersion1(FIL* sequenceFile, int patchNumber) {
     f_read(sequenceFile, stepNotes, 12336, &byteRead);
 }
 
-void SequenceBank::loadSequenceVersion2(FIL* sequenceFile, int patchNumber) {
+void SequenceBank::loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber) {
     UINT byteRead;
     f_lseek(sequenceFile, 4 + ((1024 + 16384 + 24576) * patchNumber));
 
@@ -266,29 +266,80 @@ void SequenceBank::saveSequence(const struct PFM3File* sequencePFMFile, int sequ
     }
 
     const char* fullSeqBankName = getFullName(sequencePFMFile->name);
-    UINT byteWritten;
-    uint32_t seqStatesize;
-
-    for (int i = 0; i < 1024; i++) {
-        storageBuffer[i] = 0;
-    }
 
     sequencer->setSequenceName(sequenceName);
 
     if (f_open(&sequenceFile, fullSeqBankName, FA_WRITE) == FR_OK) {
         f_lseek(&sequenceFile, 4 + ((1024 + 16384 + 24576) * sequenceNumber));
 
-        // We copy the state to property files
-        sequencer->getFullState((uint8_t*)storageBuffer, &seqStatesize);
+        saveSequencerData(&sequenceFile);
+        f_close(&sequenceFile);
+    }
+}
 
+bool SequenceBank::saveDefaultSequence() {
+    bool savedOK = true;
+    UINT byteWritten;
 
-        // and save 1024 chars
-        f_write(&sequenceFile, storageBuffer, 1024, &byteWritten);
+    FRESULT fatFSResult = f_open(&sequenceFile, getFileName(DEFAULT_SEQUENCE), FA_OPEN_ALWAYS | FA_WRITE);
+    if (fatFSResult == FR_OK) {
+        uint32_t bankVersion = (uint32_t)SEQUENCE_BANK_CURRENT_VERSION;
+        f_write(&sequenceFile, (void *)&bankVersion, 4, &byteWritten);
 
-        f_write(&sequenceFile, actions, 16384, &byteWritten);
-        f_write(&sequenceFile, stepNotes, 24576, &byteWritten);
+        savedOK = saveSequencerData(&sequenceFile);
 
+        f_close(&sequenceFile);
+    } else {
+        savedOK = false;
+    }
+
+    return savedOK;
+}
+
+bool SequenceBank::loadDefaultSequence() {
+	uint32_t bankVersion;
+    UINT byteRead;
+
+    if (f_open(&sequenceFile, getFileName(DEFAULT_SEQUENCE), FA_READ) == FR_OK) {
+        f_read(&sequenceFile, (void *)&bankVersion, 4, &byteRead);
+
+        switch (bankVersion) {
+            case SEQUENCE_BANK_VERSION1:
+                loadSequenceDataVersion1(&sequenceFile, 0);
+                break;
+            case SEQUENCE_BANK_VERSION2:
+                loadSequenceDataVersion2(&sequenceFile, 0);
+                break;
+        }
         f_close(&sequenceFile);
     }
 
+	return true;
 }
+
+void SequenceBank::removeDefaultSequence() {
+    remove(DEFAULT_SEQUENCE);
+}
+
+
+bool SequenceBank::saveSequencerData(FIL* file) {
+	uint32_t seqStateSize;
+	UINT byteWritten;
+
+    for (int i = 0; i < 1024; i++) {
+        storageBuffer[i] = 0;
+    }
+
+    // We copy the state to property files
+    sequencer->getFullState((uint8_t*)storageBuffer, &seqStateSize);
+
+    // and save 1024 chars
+    f_write(&sequenceFile, storageBuffer, 1024, &byteWritten);
+
+    f_write(&sequenceFile, actions, 16384, &byteWritten);
+    f_write(&sequenceFile, stepNotes, 24576, &byteWritten);
+
+    return true;
+}
+
+

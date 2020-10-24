@@ -68,7 +68,7 @@ const struct MenuItem allMenus[]  = {
                 "Mixer",
                 MENUTYPE_WITHSUBMENU,
                 3,
-                { MENU_MIXER_LOAD_SELECT, MENU_MIXER_SAVE_SELECT, MENU_DEFAULT }
+                { MENU_MIXER_LOAD_SELECT, MENU_MIXER_SAVE_SELECT, MENU_DEFAULT_MIXER }
         },
         {
                 MENU_MIXER_SAVE_SELECT,
@@ -141,7 +141,7 @@ const struct MenuItem allMenus[]  = {
                 "Seq",
                 MENUTYPE_WITHSUBMENU,
                 3,
-                { MENU_SEQUENCER_LOAD_SELECT, MENU_SEQUENCER_SAVE_SELECT, MENU_DEFAULT}
+                { MENU_SEQUENCER_LOAD_SELECT, MENU_SEQUENCER_SAVE_SELECT, MENU_DEFAULT_SEQUENCER}
         },
         {
                 MENU_SEQUENCER_SAVE_SELECT,
@@ -164,30 +164,59 @@ const struct MenuItem allMenus[]  = {
                 NUMBEROFPREENFMSEQUENCES,
                 {MENU_DONE}
         },
-        // == DEFAULT
+        // == DEFAULT MIXER
         {
-                MENU_DEFAULT,
+                MENU_DEFAULT_MIXER,
                 "Defl",
 				MENUTYPE_WITHSUBMENU,
                 3,
-                {MENU_DEFAULT_LOAD, MENU_DEFAULT_SAVE, MENU_DEFAULT_DELETE}
+                {MENU_DEFAULT_MIXER_LOAD, MENU_DEFAULT_MIXER_SAVE, MENU_DEFAULT_MIXER_DELETE}
         },
         {
-                MENU_DEFAULT_SAVE,
+                MENU_DEFAULT_MIXER_SAVE,
                 "Save",
                 MENUTYPE_CONFIRM,
                 1,
                 {MENU_DONE}
         },
         {
-                MENU_DEFAULT_LOAD,
+                MENU_DEFAULT_MIXER_LOAD,
                 "Load",
                 MENUTYPE_CONFIRM,
                 1,
                 {MENU_DONE}
         },
         {
-                MENU_DEFAULT_DELETE,
+                MENU_DEFAULT_MIXER_DELETE,
+                "Clear",
+                MENUTYPE_CONFIRM,
+                1,
+                {MENU_DONE}
+        },
+        // == DEFAULT SEQUENCER
+        {
+                MENU_DEFAULT_SEQUENCER,
+                "Defl",
+				MENUTYPE_WITHSUBMENU,
+                3,
+                {MENU_DEFAULT_SEQUENCER_LOAD, MENU_DEFAULT_SEQUENCER_SAVE, MENU_DEFAULT_SEQUENCER_DELETE}
+        },
+        {
+                MENU_DEFAULT_SEQUENCER_SAVE,
+                "Save",
+                MENUTYPE_CONFIRM,
+                1,
+                {MENU_DONE}
+        },
+        {
+                MENU_DEFAULT_SEQUENCER_LOAD,
+                "Load",
+                MENUTYPE_CONFIRM,
+                1,
+                {MENU_DONE}
+        },
+        {
+                MENU_DEFAULT_SEQUENCER_DELETE,
                 "Clear",
                 MENUTYPE_CONFIRM,
                 1,

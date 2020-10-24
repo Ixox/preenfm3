@@ -36,8 +36,8 @@ public:
     void setSequencer(Sequencer* sequencer);
     void setScalaFile(ScalaFile* scalaFile);
 
-    bool saveDefaultMixerAndSeq();
-    bool loadDefaultMixerAndSeq();
+    bool saveDefaultMixer();
+    bool loadDefaultMixer();
     void removeDefaultMixer();
     void createMixerBank(const char* name);
 
@@ -49,7 +49,7 @@ protected:
     const char* getFolderName();
 	bool isCorrectFile(char *name, int size);
     struct OneSynthParams* timbre[NUMBER_OF_TIMBRES];
-    bool saveMixerData(FIL* file,  uint8_t mixerNumber, MixerState* mixerStateToSave);
+    bool saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerStateToSave);
     bool loadMixerData(FIL* file, uint8_t mixerNumber);
 
 private:
