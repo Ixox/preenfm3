@@ -21,14 +21,14 @@ read -r firmwareVersionLine < "${FIRMWARE_DIR}/${versionFile}"
 read -r bootloaderVersionLine < "${BOOTLOADER_DIR}/${versionFile}"
 
 # firmware has a v
-regexFirmware='\"v([0-9\.]+)\"'
-regexBootloader='\"([0-9\.]+)\"'
+regexFirmware='\"v([0-9])\.([0-9]*)\"'
+regexBootloader='\"([0-9])\.([0-9]*)\"'
 
 [[ $firmwareVersionLine =~ $regexFirmware ]]
-firmwareVersion=${BASH_REMATCH[1]}
+firmwareVersion=${BASH_REMATCH[1]}_${BASH_REMATCH[2]}
 
 [[ $bootloaderVersionLine =~ $regexBootloader ]]
-bootloaderVersion=${BASH_REMATCH[1]}
+bootloaderVersion=${BASH_REMATCH[1]}_${BASH_REMATCH[2]}
 
 
 buildFolder="pfm3_firmware_${firmwareVersion}"
