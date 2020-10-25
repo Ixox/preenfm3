@@ -167,22 +167,21 @@ void bootloaderLoop() {
         tft.printSmallChars("FLASH");
         HAL_Delay(25);
 
-        tft.setCursorSmallChar(11, 9);
+        tft.setCursorSmallChar(8, 9);
         tft.setCharColor(COLOR_LIGHT_GRAY);
-        tft.printSmallChars("Mixer : ");
+        tft.printSmallChars("Button 2 : ");
         tft.setCharColor(COLOR_WHITE);
         tft.printSmallChars("DFU Mode");
         HAL_Delay(25);
 
-        tft.setCursorSmallChar(12, 10);
+        tft.setCursorSmallChar(8, 10);
         tft.setCharColor(COLOR_LIGHT_GRAY);
-        tft.printSmallChars("Menu : ");
+        tft.printSmallChars("Button 3 : ");
         tft.setCharColor(COLOR_WHITE);
         tft.printSmallChars("REBOOT");
         HAL_Delay(25);
 
-
-        tft.setCursorSmallChar(7, 12);
+        tft.setCursorSmallChar(7, 13);
         tft.setCharColor(COLOR_LIGHT_GRAY);
         tft.printSmallChars("Firmware to flash");
         HAL_Delay(25);
@@ -218,10 +217,12 @@ void bootloaderLoop() {
                 formatFlash(firmwares.getFile(fileSelect)->size);
                 flashFirmware(firmwares.getFile(fileSelect));
                 break;
-            case 9:
+            case 1:
+                // Button 2
                 jumpToBootloader();
                 break;
-            case 11:
+            case 2:
+                // Button 3
                 reboot();
                 break;
             }
