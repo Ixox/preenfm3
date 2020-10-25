@@ -76,6 +76,12 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus, int 
         tft->setCharColor(COLOR_LIGHT_GRAY);
         tft->setCursorInPixel(240 - 7 * PFM3_FIRMWARE_VERSION_STRLEN, 25);
         tft->printSmallChars(PFM3_FIRMWARE_VERSION);
+
+#ifdef DEBUG
+        tft->setCharColor(COLOR_RED);
+        tft->setCursorInPixel(5, 25);
+        tft->printSmallChars("DEBUG");
+#endif
         break;
     case 6:
     case 5:

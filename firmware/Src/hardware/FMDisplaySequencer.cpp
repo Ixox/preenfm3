@@ -24,7 +24,8 @@
 #define Y_START_SEQ  72
 
 #define X_START_STEP   28
-#define Y_START_STEP  (Y_START_SEQ+30)
+#define Y_START_STEP  (Y_START_SEQ + 55)
+#define Y_HEIGHT 30
 
 
 const char* buttonLabel[SEQ_MOD_LAST]= {
@@ -250,7 +251,7 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
         for (int m = 0; m < 4; m++) {
 
             uint8_t x = X_START_STEP;
-            uint16_t y = Y_START_STEP + m * 40;
+            uint16_t y = Y_START_STEP + m * Y_HEIGHT;
             uint8_t color = m < numberOfBars ? COLOR_WHITE : COLOR_GRAY;
             tft->fillArea(X_START_STEP, y, 194, 2, color);
 
@@ -266,13 +267,13 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
 
         tft->setCharColor(COLOR_YELLOW);
         tft->setCharBackgroundColor(COLOR_BLACK);
-        tft->setCursorInPixel(7, 80);
+        tft->setCursorInPixel(X_START_STEP, Y_START_SEQ + 10);
         tft->print(instrument + 1);
         // Let's store current instrument here (when it's displayed)
         stepCurrentInstrument = instrument;
         tft->setCharColor(COLOR_CYAN);
         int seqNumber = sequencer->getInstrumentStepSeq(instrument) + 1;
-        tft->setCursorInPixel(7 - (seqNumber >= 10 ? 5 : 0), 100);
+        tft->setCursorInPixel(200 + (seqNumber < 10 ? TFT_BIG_CHAR_WIDTH : 0), Y_START_SEQ + 10);
         tft->print(seqNumber);
 
         stepRedrawSequenceIndex = 0;
@@ -289,10 +290,10 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
     }
     case 13: {
         for (int m = 0; m < 4; m++) {
-            tft->fillArea(X_START_STEP, Y_START_STEP + m * 40 - 15, 194, 4, COLOR_BLACK);
+            tft->fillArea(X_START_STEP, Y_START_STEP + m * Y_HEIGHT - 15, 194, 4, COLOR_BLACK);
         }
         int x = X_START_STEP + (stepCursor % 64) * 3 + 1;
-        int y = Y_START_STEP + (stepCursor / 64) * 40  ;
+        int y = Y_START_STEP + (stepCursor / 64) * Y_HEIGHT  ;
         // Draw cursor
         tft->fillArea(x, y - 15, stepSize * 3, 4, COLOR_YELLOW);
         break;
@@ -349,7 +350,7 @@ bool FMDisplaySequencer::refreshSequence(int instrument) {
             size -=2;
 
             int x = X_START_STEP + (startBlock % 64) * 3 + 1;
-            int y = Y_START_STEP + (startBlock / 64) * 40  ;
+            int y = Y_START_STEP + (startBlock / 64) * Y_HEIGHT  ;
 
             // Draw block
             if ((startBlock / 64) < numberOfBars) {
@@ -370,7 +371,7 @@ bool FMDisplaySequencer::refreshSequence(int instrument) {
 
 void FMDisplaySequencer::newNoteInSequence(int instrument, int start, int end, bool moreThanOneNote) {
     int x = X_START_STEP + (start % 64) * 3 + 1;
-    int y = Y_START_STEP + (start / 64) * 40  ;
+    int y = Y_START_STEP + (start / 64) * Y_HEIGHT  ;
     int size = (end - start) * 3 - 2;
     int numberOfBars = sequencer->getNumberOfBars(instrument);
 
@@ -386,7 +387,7 @@ void FMDisplaySequencer::newNoteInSequence(int instrument, int start, int end, b
 
 void FMDisplaySequencer::clearSequence(int start, int end) {
     int x = X_START_STEP + (start % 64) * 3;
-    int y = Y_START_STEP + (start / 64) * 40  ;
+    int y = Y_START_STEP + (start / 64) * Y_HEIGHT  ;
     int size = (end - start) * 3;
 
     tft->fillArea(x, y - 10, size, 10, COLOR_BLACK);
