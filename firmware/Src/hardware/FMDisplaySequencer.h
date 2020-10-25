@@ -87,7 +87,7 @@ public:
     }
 
     void refreshStepCursor() {
-        this->refresh(7, 7);
+        this->refresh(13, 13);
     }
 
     void refreshPlayButton();

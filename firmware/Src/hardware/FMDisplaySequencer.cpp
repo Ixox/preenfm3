@@ -287,7 +287,7 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
         }
         break;
     }
-    case 7: {
+    case 13: {
         for (int m = 0; m < 4; m++) {
             tft->fillArea(X_START_STEP, Y_START_STEP + m * 40 - 15, 194, 4, COLOR_BLACK);
         }
