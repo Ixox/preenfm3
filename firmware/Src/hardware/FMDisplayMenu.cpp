@@ -1165,7 +1165,7 @@ void FMDisplayMenu::newMenuSelect(FullState* fullState) {
 
             tft->setCursor(1, 9);
             tft->setCharColor(COLOR_GRAY);
-            tft->printSmallChar('2');
+            tft->printSmallChar('4');
         } else {
             tft->fillArea(30, 180, 210, 20, COLOR_BLACK);
         }
