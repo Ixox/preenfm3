@@ -53,9 +53,7 @@
    You may modify these timeout values depending on CPU frequency and application
    conditions (interrupts routines ...). */   
 #define BUS_SPI_TIMEOUT_MAX                        1000U
-#ifndef BUS_SPI_BAUDRATE
- #define BUS_SPI_BAUDRATE                              12500000 /* baud rate of SPI1 = 12.5 Mbps*/
-#endif
+#define BUS_SPI_BAUDRATE                           12500000 /* baud rate of SPI1 = 12.5 Mbps*/
    
 /** @defgroup STM32H7XX_NUCLEO_144_BUS_Exported_Types BUS Exported Types
   * @{

@@ -46,7 +46,6 @@
 /* Nucleo pin and part number defines */
 
 
-#define BUS_SPI_BAUDRATE                   15000000
 /**
   * @}
   */
