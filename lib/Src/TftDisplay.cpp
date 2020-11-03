@@ -86,6 +86,8 @@ uint16_t convertTo565(uint32_t x) {
 }
 
 TftDisplay::TftDisplay() {
+    tftReady = true;
+
     tftDirtyBits = TFT_PART_ALL_BITS;
 
     areaY[TFT_PART_HEADER] = 0;
@@ -133,8 +135,6 @@ TftDisplay::TftDisplay() {
     charColor = COLOR_GREEN;
     charBackgroundColor = COLOR_BLACK;
     tftRefreshing = true;
-    tftDirtyLastPart = 0;
-    tftDirtyLastY = 500;
     fgAlgoDirty = true;
     oscilloIsClean = true;
     flatOscilloAlreadyDisplayed = true;
@@ -277,37 +277,22 @@ void TftDisplay::initWaveFormExt(int index, float* waveform, int size) {
 
 void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
 
-    // No need to calculate it if we still ask for same y and the part is still dirty
-    // Ex : many chars on the same line !
-    // Note : potential problem, if y is the same but heigh different : should not happen !
-    if ((tftDirtyBits == TFT_PART_ALL_BITS) || (y == tftDirtyLastY && ((tftDirtyBits & (1 << tftDirtyLastPart)) > 0))) {
-        return;
-    }
-
     uint16_t yBottom = y + height;
 
-    if (y < 40) {
+    if (unlikely(y < 40)) {
         tftDirtyBits |= 0b1;
-        tftDirtyLastPart = 0;
-        tftDirtyLastY = y;
     }
 
-    if (y < 160 && yBottom >= 40) {
+    if (unlikely(y < 160 && yBottom >= 40)) {
         tftDirtyBits |= 0b10;
-        tftDirtyLastPart = 1;
-        tftDirtyLastY = y;
     }
 
-    if (y < 270 && yBottom >= 160) {
+    if (unlikely(y < 270 && yBottom >= 160)) {
         tftDirtyBits |= 0b100;
-        tftDirtyLastPart = 2;
-        tftDirtyLastY = y;
     }
 
-    if (y > 270) {
+    if (unlikely(yBottom >= 270)) {
         tftDirtyBits |= 0b1000;
-        tftDirtyLastPart = 3;
-        tftDirtyLastY = y;
     }
 }
 
@@ -315,13 +300,13 @@ void TftDisplay::tic() {
     static uint32_t offset;
 
 
-    // 12 seems to be the minimum to let area being pushed to tft with DMA (prescaller 2)
-    // Let's use 15
+
     uint32_t currentMillis = HAL_GetTick();
-    if (unlikely((currentMillis - tftPushMillis) > 15)) {
+    if (tftReady && unlikely((currentMillis - tftPushMillis) > 30)) {
+        // we only try every 30 ms (33Hz)
+        tftPushMillis = currentMillis;
         if (pushToTft()) {
            // a part have been pushed
-           tftPushMillis = currentMillis;
            return;
         }
     }
@@ -430,7 +415,6 @@ void TftDisplay::tic() {
                 WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgOscillo));
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
                 PFM_START_DMA2D();
-                tftDirtyBits |= TFT_PART_OSCILLO_BITS;
                 currentAction.param3 = 1;
             }
             break;
@@ -446,6 +430,7 @@ void TftDisplay::tic() {
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgOscillo));
                 PFM_START_DMA2D();
                 currentAction.actionType = 0;
+                tftDirtyBits |= TFT_PART_OSCILLO_BITS;
             }
             break;
         }
@@ -649,30 +634,29 @@ bool TftDisplay::pushToTft() {
         return false;
     }
 
-    uint8_t startPart = part;
-    bool partUpdated = false;
-    do {
+    // 4 max - can break before
+    for (int p = 0; p < 4 ; p++) {
         if ((tftDirtyBits & (1UL << part)) > 0) {
             // Update TFT part
             uint16_t height = areaHeight[part];
             uint16_t y = areaY[part];
+
 
             ILI9341_Select();
             ILI9341_SetAddressWindow(0, y, 239, y + height - 1);
             PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
 
             if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
-                partUpdated = true;
+                tftReady = false;
                 tftDirtyBits &= ~(1UL << part);
-            } else {
-                partUpdated = false;
             }
+            part = (part + 1) % TFT_NUMBER_OF_PARTS;
+            break;
         }
-
         part = (part + 1) % TFT_NUMBER_OF_PARTS;
-    } while ((part != startPart) && !partUpdated);
+    }
 
-    return partUpdated;
+    return true;
 }
 
 

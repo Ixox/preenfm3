@@ -175,6 +175,8 @@ public:
     bool hasJustBeenCleared() { return bHasJustBeenCleared; }
     void resetHasJustBeenCleared() { bHasJustBeenCleared = false; }
 
+    bool tftReady;
+
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
     void oscilloBgDrawEnvelope();
@@ -217,8 +219,6 @@ private:
     uint8_t tftDirtyBits;
     uint16_t areaHeight[TFT_NUMBER_OF_PARTS];
     uint16_t areaY[TFT_NUMBER_OF_PARTS];
-    uint8_t tftDirtyLastPart;
-    uint16_t tftDirtyLastY;
 
 
     WaveFormExt waveForm[TFT_NUMBER_OF_WAVEFORM_EXT];

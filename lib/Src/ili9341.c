@@ -39,12 +39,13 @@ void ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1
         ILI9341_WriteData(data, 4);
     }
     // row address set
-    if (y0 != windowLastY) {
-        windowLastY = y0;
-        ILI9341_WriteCommand(0x2B); // RASET
-        uint8_t data[] = { (y0 >> 8) & 0xFF, y0 & 0xFF, (y1 >> 8) & 0xFF, y1 & 0xFF };
-        ILI9341_WriteData(data, 4);
-    }
+    // Optimization removed to fix a button refresh problem
+    //    if (y0 != windowLastY) {
+    //     windowLastY = y0;
+    ILI9341_WriteCommand(0x2B); // RASET
+    uint8_t data[] = { (y0 >> 8) & 0xFF, y0 & 0xFF, (y1 >> 8) & 0xFF, y1 & 0xFF };
+    ILI9341_WriteData(data, 4);
+    //    }
 
     // write to RAM
     ILI9341_WriteCommand(0x2C); // RAMWR

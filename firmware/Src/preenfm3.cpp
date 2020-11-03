@@ -126,11 +126,7 @@ void preenfm3Init() {
         tft.print("SD CARD ERROR");
     }
     // For tft.tic
-    HAL_Delay(200);
-    for (int p = 0; p < 4; p++) {
-        tft.pushToTft();
-        HAL_Delay(30);
-    }
+    HAL_Delay(400);
 
     // the TFT should be ready, we can turn on the led backlight
     uint8_t tft_bl =  synthState.fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
@@ -176,8 +172,8 @@ void preenfm3Loop() {
     }
 
     if (synthState.fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
-        // Oscillo refreqh : 10 Hz = 100ms
-        if (unlikely((currentMillis - oscilloMillis) >= 100)) {
+        // Oscillo refreqh : 8 Hz = 125 ms
+        if (unlikely((currentMillis - oscilloMillis) >= 125)) {
             oscilloMillis = currentMillis;
             tft.oscilloRrefresh();
             float lf = synth.getLowerNoteFrequency(synthState.getCurrentTimbre());
@@ -297,6 +293,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Unselect TFT as soon as the transfer is finished to avoid noise on data line
     if (hspi == &hspi1) {
+        tft.tftReady = true;
         ILI9341_Unselect();
     }
 }
