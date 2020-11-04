@@ -121,7 +121,7 @@ void bootloaderInit() {
     // Let's start main loop
     readyForTFT = true;
 
-    HAL_Delay(200);
+    HAL_Delay(400);
 
     preenfm3ForceTftBacklight();
 }
@@ -436,6 +436,22 @@ void reboot() {
     NVIC_SystemReset();
     while (1);
 }
+
+
+/**
+  * @brief Tx Transfer completed callback.
+  * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
+  *               the configuration information for SPI module.
+  * @retval None
+  */
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+    // Unselect TFT as soon as the transfer is finished to avoid noise on data line
+    if (hspi == &hspi1) {
+        tft.tftReady = true;
+        ILI9341_Unselect();
+    }
+}
+
 
 #ifdef __cplusplus
 }
