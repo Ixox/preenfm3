@@ -2838,6 +2838,7 @@ FMDisplayEditor::FMDisplayEditor() {
         valueChangedCounter[k] = 0;
         presetModifed[k] = false;
     }
+    multipleEdition = false;
 }
 
 void FMDisplayEditor::newTimbre(int timbre) {
@@ -3004,7 +3005,11 @@ ParameterDisplay *param, float oldValue, float newValue) {
         }
 
         tft->setCharBackgroundColor(COLOR_BLACK);
-        tft->setCharColor(COLOR_YELLOW);
+        if (!multipleEdition) {
+            tft->setCharColor(COLOR_YELLOW);
+        } else {
+            tft->setCharColor(COLOR_GREEN);
+        }
         valueChangedCounter[encoder6] = 4;
         updateEncoderValueWithoutCursor(currentRow, encoder, param, newValue);
     }
@@ -3632,6 +3637,10 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
     }
     case BUTTON_PFM3_EDIT:
     {
+
+        // All update must be in green
+        multipleEdition = true;
+
         // Convert to legacy preenfm2 encoder and row
         const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
         const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
@@ -3693,6 +3702,10 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
                 }
             }
         }
+
+        // End of multiple edition
+        multipleEdition = false;
+
         break;
     }
     }

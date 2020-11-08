@@ -96,6 +96,7 @@ private:
     uint8_t valueChangedCounter[NUMBER_OF_ENCODERS_PFM3];
     uint8_t imChangedCounter[NUMBER_OF_ENCODERS_PFM3];
     int currentTimbre;
+    bool multipleEdition;
 };
 
 #endif
