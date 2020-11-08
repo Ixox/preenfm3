@@ -52,6 +52,9 @@ void Synth::init(SynthState* synthState) {
     // Here synthState is already initialized
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres[t].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[t].numberOfVoices);
+        smoothVolume[t] = 0.0f;
+        smoothPan[t] = 0.0f;
+
     }
     updateNumberOfActiveTimbres();
 
@@ -167,6 +170,45 @@ bool Synth::isPlaying() {
 }
 
 
+void Synth::mixAndPan(int32_t *dest, float* source, float &pan, float sampleMultipler) {
+    float sampleR, sampleL;
+    if (likely(pan == 0)) {
+        for (int s = 0 ; s < BLOCK_SIZE ; s++) {
+            sampleL = *(source++);
+            sampleR = *(source++);
+
+            *dest++ += sampleR * sampleMultipler;
+            *dest++ += sampleL * sampleMultipler;
+        }
+        // No need for final calcul
+        return;
+    } else if (likely(pan > 0)) {
+        float oneMinusPan = 1 - pan;
+        for (int s = 0 ; s < BLOCK_SIZE ; s++) {
+            sampleL = *(source++);
+            sampleR = *(source++);
+
+            *dest++ += (sampleR + sampleL * pan) * sampleMultipler;
+            *dest++ += sampleL * oneMinusPan * sampleMultipler;
+        }
+    } else if (pan < 0) {
+        float onePlusPan = 1 + pan;
+        float minusPan = - pan;
+        for (int s = 0 ; s < BLOCK_SIZE  ; s++) {
+            sampleL = *(source++);
+            sampleR = *(source++);
+            *dest++ += sampleR * onePlusPan * sampleMultipler;
+            *dest++ += (sampleL + sampleR * minusPan) * sampleMultipler;
+        }
+    }
+    //     final calcul
+    //     pan never become null because of smoothing
+    int closeToZero = pan * 100000;
+    if (closeToZero == 0) {
+        pan = 0.0f;
+    }
+}
+
 
 
 void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
@@ -248,6 +290,12 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
         timbres[timbre].voicesToTimbre();
         timbres[timbre].gateFx();
 
+        /*
+         * Smooth pan and volume
+         */
+        smoothVolume[timbre] = smoothVolume[timbre] * .95f + sampleMultipler * .05f;
+        smoothPan[timbre] = smoothPan[timbre] * .95f + ((float)synthState->mixerState.instrumentState[timbre].pan / 63.0f) * .05f;
+
         float *sampleFromTimbre = timbres[timbre].getSampleBlock();
         switch (synthState->mixerState.instrumentState[timbre].out) {
         // 0 => out1+out2, 1 => out1, 2=> out2
@@ -261,11 +309,7 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             }
         	break;
         case 1:
-            cb1 = buffer1;
-            while (cb1 < endcb1) {
-                *cb1++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
-                *cb1++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
-            }
+            mixAndPan(buffer1, sampleFromTimbre, smoothPan[timbre], smoothVolume[timbre]);
         	break;
         case 2:
             cb1 = buffer1;
@@ -282,11 +326,7 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             }
         	break;
         case 4:
-            cb2 = buffer2;
-            while (cb2 < endcb2) {
-                *cb2++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
-                *cb2++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
-            }
+            mixAndPan(buffer2, sampleFromTimbre, smoothPan[timbre], smoothVolume[timbre]);
         	break;
         case 5:
             cb2 = buffer2;
@@ -303,11 +343,7 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             }
         	break;
         case 7:
-            cb3 = buffer3;
-            while (cb3 < endcb3) {
-                *cb3++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
-                *cb3++ += (int32_t)((*sampleFromTimbre++) * sampleMultipler);
-            }
+            mixAndPan(buffer3, sampleFromTimbre, smoothPan[timbre], smoothVolume[timbre]);
         	break;
         case 8:
             cb3 = buffer3;
@@ -573,7 +609,6 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
             updateNumberOfActiveTimbres();
             break;
     }
-
 }
 
 
@@ -627,14 +662,26 @@ void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue
 
 void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue) {
     switch (mixerValue) {
-        case MIXER_VALUE_VOLUME:
+        case MIXER_VALUE_VOLUME: {
             float oldValue = this->synthState->mixerState.instrumentState[timbre].volume;
             this->synthState->mixerState.instrumentState[timbre].volume = newValue;
             if (oldValue != newValue) {
-
                 this->synthState->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
             }
             break;
+        }
+        case MIXER_VALUE_PAN: {
+            float oldValue = this->synthState->mixerState.instrumentState[timbre].pan;
+            // Can be 64
+            if (newValue > 63.0f) {
+                newValue = 63.0f;
+            }
+            this->synthState->mixerState.instrumentState[timbre].pan = newValue;
+            if (oldValue != newValue) {
+                this->synthState->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
+            }
+            break;
+        }
     }
 }
 

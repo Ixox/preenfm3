@@ -2935,6 +2935,9 @@ ParameterDisplay *param, float oldValue, float newValue) {
         case ROW_MODULATION1:
         case ROW_MODULATION3:
         case ROW_MODULATION2: {
+            if (hideParam[encoder6]) {
+                return;
+            }
             struct ModulationIndex im = modulationIndex[(int) this->synthState->params->engine1.algo][encoder6];
             tft->highlightIM(encoder6, im.source, im.destination);
             imChangedCounter[encoder6] = 4;
@@ -3589,10 +3592,11 @@ void FMDisplayEditor::encoderTurned(int currentRow, int encoder, int ticks) {
 
 void FMDisplayEditor::encoderTurnedWhileButtonPressed(int currentRow, int encoder, int ticks, int button) {
 
+    // SYNTH_MODE_EDIT
+
+    int oldCurrentRow = currentRow;
+
     switch (button) {
-    case BUTTON_NEXT_INSTRUMENT:
-        encoderTurned(currentRow, encoder, ticks * 10);
-        break;
     case BUTTON_PREVIOUS_INSTRUMENT: {
         // Convert to legacy preenfm2 encoder and row
         const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
@@ -3617,6 +3621,76 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int currentRow, int encode
 
         synthState->propagateNewParamValue(currentTimbre, rowEncoder.row, rowEncoder.encoder, param, oldValue,
             newValue);
+        break;
+    }
+    case BUTTON_PFM3_EDIT:
+    {
+        // Convert to legacy preenfm2 encoder and row
+        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
+        const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+        struct RowEncoder rowEncoder =
+            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
+
+        // Operator is a special case for row
+        if (unlikely(this->synthState->fullState.mainPage == 1)) {
+            int multiplier = this->synthState->fullState.editPage == 0 ? 1 : 2;
+            rowEncoder.row += this->synthState->fullState.operatorNumber * multiplier;
+        }
+
+        int currentRowOld = rowEncoder.row;
+        int encoderOld = rowEncoder.encoder;
+
+
+        // Modify param of all operator of same types.
+        if (currentRowOld >= ROW_ENV1a && currentRowOld <= ROW_ENV6b) {
+            int firstRow = ROW_ENV1a;
+            int envBBit = ROW_ENV1b & 0x1;
+            if ((currentRowOld & 0x1) == envBBit) {
+                firstRow = ROW_ENV1b;
+            }
+            int currentAlgo = (int)this->synthState->params->engine1.algo;
+            int currentOpType = algoOpInformation[currentAlgo][(currentRowOld - ROW_ENV1a) >> 1];
+
+            for (int op = 0; op < NUMBER_OF_OPERATORS; op++) {
+                currentRowOld = firstRow + op*2;
+                if (currentOpType == algoOpInformation[currentAlgo][op]) {
+                    // Same operator type : carrier or modulation
+                    encoderTurned(currentRowOld, encoderOld, ticks);
+                }
+            }
+            // Put back current row
+            currentRowOld = oldCurrentRow;
+        } else if (currentRowOld >= ROW_MODULATION1 && currentRowOld <= ROW_MODULATION3) {
+            int imMax = algoInformation[(int)this->synthState->params->engine1.algo].im;
+            // Im or v ?
+            if ((encoderOld & 0x1) == 0) {
+                for (int m = 0; m < imMax; m++) {
+                    currentRowOld = ROW_MODULATION1 + (m >> 1);
+                    encoderTurned(currentRowOld, ENCODER_ENGINE_IM1 + (m & 0x1) * 2, ticks);
+                }
+            } else {
+                for (int m = 0; m < imMax; m++) {
+                    currentRowOld = ROW_MODULATION1 + (m >> 1);
+                    encoderTurned(currentRowOld, ENCODER_ENGINE_IM1_VELOCITY + (m & 0x1) * 2, ticks);
+                }
+            }
+            currentRowOld = oldCurrentRow;
+        } else if (currentRowOld >= ROW_OSC_MIX1 && currentRowOld <= ROW_OSC_MIX3) {
+            int mixMax = algoInformation[(int)this->synthState->params->engine1.algo].mix;
+            // Mix or Pan ?
+            if ((encoderOld & 0x1) == 0) {
+                for (int m = 0; m < mixMax; m++) {
+                    currentRowOld = ROW_OSC_MIX1 + (m >> 1);
+                    encoderTurned(currentRowOld, ENCODER_ENGINE_MIX1 + (m & 0x1) * 2, ticks);
+                }
+            } else {
+                for (int m = 0; m < mixMax; m++) {
+                    currentRowOld = ROW_OSC_MIX1 + (m >> 1);
+                    encoderTurned(currentRowOld, ENCODER_ENGINE_PAN1 + (m & 0x1) * 2, ticks);
+                }
+            }
+            currentRowOld = oldCurrentRow;
+        }
         break;
     }
     }

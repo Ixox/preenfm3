@@ -35,17 +35,23 @@ const struct Pfm3MixerButtonState volumeButtonState = {
         {0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames},
 };
 
+const struct Pfm3MixerButtonState panButtonState = {
+      "Stereo pan", MIXER_VALUE_PAN,
+      {-63, 63, 127, DISPLAY_TYPE_INT, nullNames }
+};
+
 
 const struct Pfm3MixerButton volumeButton = {
-  "Volume",
-  1,
-  { &volumeButtonState,  }
+  "Mix",
+  2,
+  { &volumeButtonState, &panButtonState }
 };
 
 const struct Pfm3MixerButtonState outButtonState = {
-      "Audio output", MIXER_VALUE_OUT,
+      "Jack output", MIXER_VALUE_OUT,
         {0, 8, 9, DISPLAY_TYPE_STRINGS, outDisplay }
 };
+
 
 const struct Pfm3MixerButton outButton = {
   "Out",
@@ -150,7 +156,7 @@ const struct Pfm3MixerButton globalButton = {
 // =
 
 const struct PfmMixerMenu mixerMenu = {
-      { &volumeButton, &voiceButton, &outButton, &midiButton, &scalaButton, &globalButton }
+      { &volumeButton, &outButton, &voiceButton, &midiButton, &scalaButton, &globalButton }
 };
 
 
@@ -167,6 +173,9 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
     switch (valueType) {
     case MIXER_VALUE_OUT:
         valueP = (void *) &this->synthState->mixerState.instrumentState[encoder].out;
+        break;
+    case MIXER_VALUE_PAN:
+        valueP = (void *) &this->synthState->mixerState.instrumentState[encoder].pan;
         break;
     case MIXER_VALUE_VOLUME:
         valueP = (void *) &this->synthState->mixerState.instrumentState[encoder].volume;
@@ -264,6 +273,7 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
         return;
     }
 
+
     switch (buttonStateParam->displayType) {
     case DISPLAY_TYPE_SCALA_SCALE: {
         // displayMixerValueInteger(timbre, 18, (*((uint8_t*)valueP)));
@@ -283,6 +293,20 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
         break;
     }
     case DISPLAY_TYPE_INT:
+
+        if (unlikely(mixerValueType == MIXER_VALUE_PAN)) {
+            // Stereo is 1,4,7
+            int out = this->synthState->mixerState.instrumentState[timbre].out;
+            out--;
+            if ((out % 3) != 0) {
+                // Mono, no panning
+                tft->setCharColor(COLOR_GRAY);
+                tft->setCursorInPixel(20 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+                tft->print('-');
+                return;
+            }
+        }
+
         displayMixerValueInteger(timbre, 18, (*((int8_t*)valueP)));
         break;
     case DISPLAY_TYPE_STRINGS: {
@@ -440,8 +464,9 @@ void FMDisplayMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float old
 
 void FMDisplayMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[this->synthState->fullState.mixerCurrentEdit];
-    // Only display value if we're on the correct page
-    if (currentButton->state[0]->mixerValueType == valueType) {
+    int buttonState = this->synthState->fullState.buttonState[BUTTONID_MIXER_FIRST_BUTTON + this->synthState->fullState.mixerCurrentEdit];
+
+    if (currentButton->state[buttonState]->mixerValueType == valueType) {
         newMixerValue(valueType, timbre, oldValue, newValue);
     }
 }

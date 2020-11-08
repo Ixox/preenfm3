@@ -102,11 +102,9 @@ void MixerBank::removeDefaultMixer() {
  */
 bool MixerBank::saveDefaultMixer() {
     bool savedOK = true;
-    UINT byteWritten;
 
     FRESULT fatFSResult = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_OPEN_ALWAYS | FA_WRITE);
     if (fatFSResult == FR_OK) {
-        uint32_t seqStatesize;
         f_lseek(&mixerFile, 0);
         savedOK = saveMixerData(&mixerFile, 0, this->mixerState);
 
@@ -149,7 +147,7 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
     f_lseek(file, mixerNumber * FULL_MIXER_SIZE);
     f_read(file, storageBuffer, MIXER_SIZE, &byteRead);
-    mixerState->setFullState(storageBuffer);
+    mixerState->restoreFullState(storageBuffer);
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         f_lseek(file, mixerNumber * FULL_MIXER_SIZE + ALIGNED_MIXER_SIZE + t * ALIGNED_PATCH_SIZE);
@@ -171,9 +169,6 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 }
 
 bool MixerBank::loadDefaultMixer() {
-    UINT byteRead;
-    uint32_t mixerVersion;
-
     FRESULT result = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_READ);
     if (result == FR_OK) {
 		loadMixerData(&mixerFile, 0);

@@ -177,7 +177,7 @@ public:
 private:
     // Called by setSynthState
     void init(SynthState* synthState);
-
+    void mixAndPan(int32_t *dest, float* source, float &pan, float sampleMultipler);
     float ratioTimbre[NUMBER_OF_TIMBRES];
     float filteredVolume[NUMBER_OF_TIMBRES];
     Voice voices[MAX_NUMBER_OF_VOICES];
@@ -206,6 +206,9 @@ private:
     // remember notes before changing timbre
     char noteBeforeNewParalsLoad[NUMBER_OF_STORED_NOT];
     char velocityBeforeNewParalsLoad[NUMBER_OF_STORED_NOT];
+
+    float smoothPan[NUMBER_OF_TIMBRES];
+    float smoothVolume[NUMBER_OF_TIMBRES];
 
 };
 

@@ -40,7 +40,6 @@
 
 #define BUTTON_PFM3_MENU 6
 
-
 #define BUTTON_SYNTH  0
 #define BUTTON_OSC    1
 #define BUTTON_ENV    2

@@ -61,10 +61,8 @@
 									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.466821813" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/App}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
+									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/midipal}&quot;"/>
 									<listOptionValue builtIn="false" value="../Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc"/>
@@ -73,6 +71,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/STM32H7xx_HAL_Driver/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
 									<listOptionValue builtIn="false" value="Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/CMSIS/Device/ST/STM32H7xx/Include"/>
@@ -87,6 +86,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Class/MIDI/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Device/ST/STM32H7xx/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/filesystem}&quot;"/>
@@ -110,10 +110,8 @@
 									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths.1087237683" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/App}&quot;"/>
+									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/midipal}&quot;"/>
 									<listOptionValue builtIn="false" value="../Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc"/>
@@ -122,6 +120,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/STM32H7xx_HAL_Driver/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
 									<listOptionValue builtIn="false" value="Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/CMSIS/Device/ST/STM32H7xx/Include"/>
@@ -136,6 +135,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Class/MIDI/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Device/ST/STM32H7xx/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/filesystem}&quot;"/>
@@ -208,7 +208,7 @@
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.fpu.15900369" name="Floating-point unit" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.fpu" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.fpu.value.fpv5-d16" valueType="enumerated"/>
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.floatabi.1530647043" name="Floating-point ABI" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.floatabi" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.floatabi.value.hard" valueType="enumerated"/>
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.target_board.1197049690" name="Board" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.target_board" useByScannerDiscovery="false" value="genericBoard" valueType="string"/>
-							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.defaults.1823690300" name="Defaults" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.defaults" useByScannerDiscovery="false" value="com.st.stm32cube.ide.common.services.build.inputs.revA.1.0.3 || DebugLQFP144 || true || Executable || com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.gnu-tools-for-stm32 || STM32H753VITx || 0 || 0 || arm-none-eabi- || ${gnu_tools_for_stm32_compiler_path} || Drivers/CMSIS/Include | ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy | ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc | Drivers/STM32H7xx_HAL_Driver/Inc | Middlewares/Third_Party/FatFs/src | Drivers/STM32H7xx_HAL_Driver/Inc/Legacy | ../Inc | ../Drivers/CMSIS/Include | Middlewares/ST/STM32_USB_Device_Library/Core/Inc | Drivers/CMSIS/Device/ST/STM32H7xx/Include | ../Drivers/CMSIS/Device/ST/STM32H7xx/Include | ../Middlewares/Third_Party/FatFs/src | ../Middlewares/ST/STM32_USB_Device_Library/Class/AUDIO/Inc | ../Drivers/STM32H7xx_HAL_Driver/Inc | Inc | Middlewares/ST/STM32_USB_Device_Library/Class/AUDIO/Inc || ../ ||  || USE_HAL_DRIVER | STM32H753xx ||  || Drivers | Src | Middlewares | Startup ||  ||  || ${workspace_loc:/${ProjName}/STM32H753VITX_FLASH.ld} || true || NonSecure ||  || secure_nsclib.o || " valueType="string"/>
+							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.defaults.1823690300" name="Defaults" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.defaults" useByScannerDiscovery="false" value="com.st.stm32cube.ide.common.services.build.inputs.revA.1.0.3 || Release || true || Executable || com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.gnu-tools-for-stm32 || STM32H753VITx || 0 || 0 || arm-none-eabi- || ${gnu_tools_for_stm32_compiler_path} || Drivers/CMSIS/Include | ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy | ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc | Drivers/STM32H7xx_HAL_Driver/Inc | Middlewares/Third_Party/FatFs/src | Drivers/STM32H7xx_HAL_Driver/Inc/Legacy | ../Inc | ../Drivers/CMSIS/Include | Middlewares/ST/STM32_USB_Device_Library/Core/Inc | Drivers/CMSIS/Device/ST/STM32H7xx/Include | ../Drivers/CMSIS/Device/ST/STM32H7xx/Include | ../Middlewares/Third_Party/FatFs/src | ../Middlewares/ST/STM32_USB_Device_Library/Class/AUDIO/Inc | ../Drivers/STM32H7xx_HAL_Driver/Inc | Inc | Middlewares/ST/STM32_USB_Device_Library/Class/AUDIO/Inc || ../ ||  || USE_HAL_DRIVER | STM32H753xx ||  || Drivers | Src | Middlewares | Startup ||  ||  || ${workspace_loc:/${ProjName}/STM32H753VITX_FLASH.ld} || true || NonSecure ||  || secure_nsclib.o || " valueType="string"/>
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.convertbinary.13014442" name="Convert to binary file (-O binary)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.convertbinary" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.targetplatform.1074690934" isAbstract="false" osList="all" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.targetplatform"/>
 							<builder buildPath="${workspace_loc:/preenfm3}/Debug" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.builder.265824229" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.builder"/>
@@ -242,12 +242,11 @@
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="LQFP144"/>
 									<listOptionValue builtIn="false" value="STM32H753xx"/>
+									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.140125654" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/App}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
+									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/midipal}&quot;"/>
 									<listOptionValue builtIn="false" value="../Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc"/>
@@ -256,6 +255,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/STM32H7xx_HAL_Driver/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
 									<listOptionValue builtIn="false" value="Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/CMSIS/Device/ST/STM32H7xx/Include"/>
@@ -270,6 +270,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Class/MIDI/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Device/ST/STM32H7xx/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/filesystem}&quot;"/>
@@ -291,12 +292,11 @@
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="LQFP144"/>
 									<listOptionValue builtIn="false" value="STM32H753xx"/>
+									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths.294938293" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/App}&quot;"/>
+									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/midipal}&quot;"/>
 									<listOptionValue builtIn="false" value="../Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc"/>
@@ -305,6 +305,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/STM32H7xx_HAL_Driver/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/STM32H7xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/Target}&quot;"/>
 									<listOptionValue builtIn="false" value="Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/CMSIS/Device/ST/STM32H7xx/Include"/>
@@ -319,6 +320,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Class/MIDI/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/Middlewares/Third_Party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Drivers/CMSIS/Device/ST/STM32H7xx/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/filesystem}&quot;"/>
