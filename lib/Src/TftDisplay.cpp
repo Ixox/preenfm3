@@ -60,6 +60,7 @@ enum {
     TFT_CLEAR_ALGO_FG,
     TFT_DRAW_FILL_AREA,
     TFT_RESTART_REFRESH,
+    TFT_PAUSE_REFRESH,
     TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM
 };
 
@@ -86,7 +87,7 @@ uint16_t convertTo565(uint32_t x) {
 }
 
 TftDisplay::TftDisplay() {
-    tftReady = true;
+    pushToTftInProgress = false;
 
     tftDirtyBits = TFT_PART_ALL_BITS;
 
@@ -139,6 +140,7 @@ TftDisplay::TftDisplay() {
     oscilloIsClean = true;
     flatOscilloAlreadyDisplayed = true;
     tftPushMillis = 0;
+    part = 0;
 }
 
 TftDisplay::~TftDisplay() {
@@ -280,15 +282,15 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
     uint16_t yBottom = y + height;
 
     if (unlikely(y < 40)) {
-        tftDirtyBits |= 0b1;
+        tftDirtyBits |= 0b0001;
     }
 
     if (unlikely(y < 160 && yBottom >= 40)) {
-        tftDirtyBits |= 0b10;
+        tftDirtyBits |= 0b0010;
     }
 
     if (unlikely(y < 270 && yBottom >= 160)) {
-        tftDirtyBits |= 0b100;
+        tftDirtyBits |= 0b0100;
     }
 
     if (unlikely(yBottom >= 270)) {
@@ -297,14 +299,12 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
 }
 
 void TftDisplay::tic() {
-    static uint32_t offset;
+    static uint32_t pushTftCpt = 1;
+    uint32_t offset;
 
-
-
-    uint32_t currentMillis = HAL_GetTick();
-    if (tftReady && unlikely((currentMillis - tftPushMillis) > 30)) {
+    if (!pushToTftInProgress && (pushTftCpt++ >= 30) && PFM_IS_DMA2D_READY()) {
         // we only try every 30 ms (33Hz)
-        tftPushMillis = currentMillis;
+        pushTftCpt = 0;
         if (pushToTft()) {
            // a part have been pushed
            return;
@@ -590,6 +590,10 @@ void TftDisplay::tic() {
         tftRefreshing = true;
         currentAction.actionType = 0;
         break;
+    case TFT_PAUSE_REFRESH:
+        tftRefreshing = false;
+        currentAction.actionType = 0;
+        break;
     case TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM:
         switch (currentAction.param3) {
         case 0:
@@ -628,36 +632,41 @@ void TftDisplay::tic() {
  * Screen is divided into UPDATE_NUMBER_OF_PARTS parts, and only at a time is pushed.
  */
 bool TftDisplay::pushToTft() {
-    static uint8_t part = 0;
-
     if (tftDirtyBits == 0 || !tftRefreshing) {
         return false;
     }
 
     // 4 max - can break before
-    for (int p = 0; p < 4 ; p++) {
+    int p;
+    for (p = 0; p < 4 ; p++) {
+        part = (part + 1) % TFT_NUMBER_OF_PARTS;
+
         if ((tftDirtyBits & (1UL << part)) > 0) {
             // Update TFT part
+            ILI9341_Select();
+
             uint16_t height = areaHeight[part];
             uint16_t y = areaY[part];
 
-
-            ILI9341_Select();
             ILI9341_SetAddressWindow(0, y, 239, y + height - 1);
             PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
 
             if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
-                tftReady = false;
                 tftDirtyBits &= ~(1UL << part);
+                pushToTftInProgress = true;
             }
-            part = (part + 1) % TFT_NUMBER_OF_PARTS;
             break;
         }
-        part = (part + 1) % TFT_NUMBER_OF_PARTS;
     }
 
     return true;
 }
+
+void TftDisplay::pushToTftFinished() {
+    pushToTftInProgress = false;
+    ILI9341_Unselect();
+}
+
 
 
 void TftDisplay::setCursor(uint8_t x, uint16_t y) {
@@ -1030,6 +1039,12 @@ void TftDisplay::eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDes
 void TftDisplay::restartRefreshTft() {
     TFTAction newAction;
     newAction.actionType = TFT_RESTART_REFRESH;
+    tftActions.insert(newAction);
+}
+
+void TftDisplay::pauseRefresh() {
+    TFTAction newAction;
+    newAction.actionType = TFT_PAUSE_REFRESH;
     tftActions.insert(newAction);
 }
 

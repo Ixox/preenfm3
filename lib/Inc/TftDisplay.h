@@ -103,13 +103,12 @@ public:
 
     void tic();
     bool pushToTft();
+    void pushToTftFinished();
 
     void setCursor(uint8_t x, uint16_t y);
     void setCursorSmallChar(uint8_t x, uint16_t y);
     void setCursorInPixel(uint8_t x, uint16_t y);
-    void pauseRefresh() {
-        tftRefreshing = false;
-    }
+    void pauseRefresh();
     void restartRefreshTft();
 
     void print(const char* str);
@@ -175,7 +174,6 @@ public:
     bool hasJustBeenCleared() { return bHasJustBeenCleared; }
     void resetHasJustBeenCleared() { bHasJustBeenCleared = false; }
 
-    bool tftReady;
 
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
@@ -216,10 +214,8 @@ private:
 
     // TFT refresh
     bool tftRefreshing;
-    uint8_t tftDirtyBits;
     uint16_t areaHeight[TFT_NUMBER_OF_PARTS];
     uint16_t areaY[TFT_NUMBER_OF_PARTS];
-
 
     WaveFormExt waveForm[TFT_NUMBER_OF_WAVEFORM_EXT];
     float oscilParams1[6];
@@ -227,6 +223,10 @@ private:
 
     bool flatOscilloAlreadyDisplayed;
     bool bHasJustBeenCleared;
+
+    bool pushToTftInProgress;
+    uint32_t tftDirtyBits;
+    uint8_t part;
 };
 
 #endif /* HARDWARE_TFTDISPLAY_H_ */
