@@ -83,7 +83,6 @@ SynthState::SynthState() {
 
     // edit with timbre 0
     currentTimbre = 0;
-    currentRow = 0;
     stepSelect[0] = 0;
     stepSelect[1] = 0;
     patternSelect = 0;
@@ -105,7 +104,7 @@ SynthState::SynthState() {
     char mixerStateChars[sizeof(mixerState)];
     uint32_t size;
     mixerState.getFullDefaultState(mixerStateChars, &size);
-    mixerState.setFullState(mixerStateChars);
+    mixerState.restoreFullState(mixerStateChars);
 
     for (int b = 0; b < NUMBER_OF_BUTTONIDS; b++) {
         fullState.buttonState[b] = 0;
@@ -182,7 +181,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         const uint16_t oldMask = ARP_PATTERN_GETMASK(pattern);
         uint16_t newMask = oldMask;
 
-        uint16_t bitsToModify;
+        uint16_t bitsToModify = 0;
         switch (encoder) {
         case 1:
             bitsToModify = 0x1 << patternSelect;
@@ -244,7 +243,7 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
                 uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
                 TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
 
-                HAL_Delay(5000);
+                HAL_Delay(1500);
                 fullState.synthMode = previousMode;
                 propagateNewPfm3Page();
                 break;
@@ -293,9 +292,13 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
 }
 
 void SynthState::encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
+    if (button == BUTTON_NEXT_INSTRUMENT) {
+        encoderTurned(encoder, ticks * 10);
+        return;
+    }
 
     if (fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
-        displayEditor->encoderTurnedWhileButtonPressed(currentRow, encoder, ticks, button);
+        displayEditor->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     }
 }
 
@@ -340,7 +343,7 @@ bool SynthState::newRandomizerValue(int encoder, int ticks) {
 void SynthState::encoderTurned(int encoder, int ticks) {
     switch (fullState.synthMode) {
     case SYNTH_MODE_EDIT_PFM3:
-        displayEditor->encoderTurned(currentRow, encoder, ticks);
+        displayEditor->encoderTurnedPfm3(encoder, ticks);
         break;
     case SYNTH_MODE_MENU:
         displayMenu->encoderTurned(currentTimbre, encoder, ticks);
@@ -450,7 +453,6 @@ void SynthState::buttonLongPressed(int button) {
 
 void SynthState::buttonPressed(int button) {
     SynthEditMode oldSynthMode = fullState.synthMode;
-    int oldCurrentRow = currentRow;
 
     bool swithToMenuIfBackButtonPressed = true;
 
@@ -459,7 +461,7 @@ void SynthState::buttonPressed(int button) {
             // Back must not go to MENU mode if not in the main page
             swithToMenuIfBackButtonPressed = false;
         }
-        displayEditor->buttonPressed(currentRow, button);
+        displayEditor->buttonPressed(button);
     } else if (fullState.synthMode == SYNTH_MODE_MENU) {
         displayMenu->buttonPressed(currentTimbre, button);
         swithToMenuIfBackButtonPressed = false;
@@ -515,9 +517,6 @@ void SynthState::buttonPressed(int button) {
     if (oldSynthMode != fullState.synthMode) {
         propagateNewSynthMode();
         return;
-    }
-    if (oldCurrentRow != currentRow) {
-        propagateNewCurrentRow(currentRow);
     }
 }
 

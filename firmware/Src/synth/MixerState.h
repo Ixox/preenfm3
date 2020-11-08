@@ -21,10 +21,12 @@
 #include "Common.h"
 
 enum MIXER_BANK_VERSION {
-    MIXER_BANK_VERSION1 = 1
+    MIXER_BANK_VERSION1 = 1,
+    // Pan
+    MIXER_BANK_VERSION2
 };
 
-#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION1
+#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION2
 
 
 
@@ -41,6 +43,7 @@ struct MixerInstrumentState {
     char scalaScaleFileName[13];
     float volume;
     float *scaleFrequencies;
+    int8_t pan;
 };
 
 
@@ -52,7 +55,7 @@ public:
 
     void getFullState(char* buffer, uint32_t *size);
     void getFullDefaultState(char* buffer, uint32_t *size);
-    void setFullState(char* buffer);
+    void restoreFullState(char* buffer);
     static char* getMixNameFromFile(char* buffer);
 
     char mixName[13];
@@ -63,7 +66,8 @@ public:
     struct MixerInstrumentState instrumentState[NUMBER_OF_TIMBRES];
 
 private :
-    void setFullStateVersion1(char* buffer);
+    void restoreFullStateVersion1(char* buffer);
+    void restoreFullStateVersion2(char* buffer);
 };
 
 #endif /* SYNTH_MIXERSTATE_H_ */

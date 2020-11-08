@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=/home/xavier/git/preenfm3/Inc
+HeaderPath=/home/xavier/git/preenfm3/firmware/Inc
 HeaderFiles=ffconf.h;user_diskio.h;fatfs.h;usb_device.h;usbd_conf.h;usbd_desc.h;usbd_audio_if.h;stm32h7xx_it.h;stm32h7xx_hal_conf.h;main.h;
-SourcePath=/home/xavier/git/preenfm3/Src
+SourcePath=/home/xavier/git/preenfm3/firmware/Src
 SourceFiles=user_diskio.c;fatfs.c;usb_device.c;usbd_conf.c;usbd_desc.c;usbd_audio_if.c;stm32h7xx_it.c;stm32h7xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]

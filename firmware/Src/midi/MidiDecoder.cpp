@@ -385,8 +385,12 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                     (float) midiEvent.value[1] * .1f);
             break;
         case CC_IM5:
-            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION3, ENCODER_ENGINE_IM5 + (midiEvent.value[0] - CC_IM5),
+            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION3, ENCODER_ENGINE_IM5,
                     (float) midiEvent.value[1] * .1f);
+            break;
+        case CC_IM_FEEDBACK:
+            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION3, ENCODER_ENGINE_IM6,
+                    (float) midiEvent.value[1] * INV127);
             break;
         case CC_MIX1:
         case CC_MIX2:
@@ -543,6 +547,9 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             break;
         case CC_MIXER_VOLUME:
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_VOLUME, (float) midiEvent.value[1] * INV127);
+            break;
+        case CC_MIXER_PAN:
+            this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
             break;
         }
     }

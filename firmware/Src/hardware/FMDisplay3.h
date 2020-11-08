@@ -89,7 +89,6 @@ public:
     void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
     void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
-    void newcurrentRow(int timbre, int newcurrentRow);
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton);
 
@@ -114,7 +113,6 @@ private:
     TftDisplay* tft;
     int refreshStatus;
     int endRefreshStatus;
-    int displayedRow;
 
     int menuRow;
     // Local value preset modified to know whether it's currently showing up

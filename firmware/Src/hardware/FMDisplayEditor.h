@@ -72,9 +72,10 @@ public:
     void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
     void displayPreset();
 
-    void encoderTurned(int currentRow, int encoder, int ticks);
-    void encoderTurnedWhileButtonPressed(int currentRow, int encoder, int ticks, int button);
-    void buttonPressed(int currentRow, int button);
+    void encoderTurnedPfm3(int encoder, int ticks);
+    void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
+    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
+    void buttonPressed(int button);
     void newTimbre(int timbre);
 
     void refreshOscillatorOperatorShape();
@@ -95,6 +96,7 @@ private:
     uint8_t valueChangedCounter[NUMBER_OF_ENCODERS_PFM3];
     uint8_t imChangedCounter[NUMBER_OF_ENCODERS_PFM3];
     int currentTimbre;
+    bool multipleEdition;
 };
 
 #endif

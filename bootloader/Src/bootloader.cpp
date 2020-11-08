@@ -447,8 +447,7 @@ void reboot() {
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Unselect TFT as soon as the transfer is finished to avoid noise on data line
     if (hspi == &hspi1) {
-        tft.tftReady = true;
-        ILI9341_Unselect();
+        tft.pushToTftFinished();
     }
 }
 

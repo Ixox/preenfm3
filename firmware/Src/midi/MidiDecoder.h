@@ -43,6 +43,8 @@ enum AllControlChange {
     CC_BANK_SELECT = 0,
     CC_MODWHEEL = 1,
     CC_BREATH = 2,
+    CC_MIXER_VOLUME = 7,
+    CC_MIXER_PAN = 10,
     CC_SCALA_ENABLE = 12,
     CC_SCALA_SCALE,
     CC_ALGO = 16,
@@ -59,8 +61,8 @@ enum AllControlChange {
     CC_PAN3,
     CC_MIX4,
     CC_PAN4,
+    CC_IM_FEEDBACK = 30,
     CC_BANK_SELECT_LSB = 32,
-    CC_MIXER_VOLUME = 33,
     CC_MATRIXROW1_MUL = 46,
     CC_MATRIXROW2_MUL,
     CC_MATRIXROW3_MUL,
@@ -153,8 +155,6 @@ public:
     void newParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
     void newParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
-    void newcurrentRow(int timbre, int newcurrentRow) {
-    }
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     }
     void newMixerEdit(int oldButton, int newButton) {

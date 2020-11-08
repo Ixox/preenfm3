@@ -188,18 +188,22 @@ void preenfm3Loop() {
     }
 
     if (synthState.fullState.midiConfigValue[MIDICONFIG_CPU_USAGE]) {
-        if (unlikely((currentMillis - cpuUsageMillis) > 503)) {
+        if (unlikely((currentMillis - cpuUsageMillis) > 1000)) {
             cpuUsageMillis = currentMillis;
-            int cpuUsage = (int)synth.getCpuUsage();
+            int cpuUsage = (int)(synth.getCpuUsage() * 10.0f);
             uint8_t numberOfPlayingVoices = synth.getNumberOfPlayingVoices();
             if (cpuUsage != previousCpuUsage) {
                 previousCpuUsage = cpuUsage;
                 tft.setCharBackgroundColor(COLOR_BLACK);
                 tft.setCharColor(COLOR_GRAY);
-                tft.setCursorInPixel(100,25);
+                tft.setCursorInPixel(90,25);
                 if (cpuUsage < 10) {
                     tft.printSmallChar(' ');
                 }
+                int  cpuUsage10 = cpuUsage / 10;
+                tft.printSmallChar(cpuUsage10);
+                tft.printSmallChar('.');
+                cpuUsage -= cpuUsage10 * 10.0f;
                 tft.printSmallChar((int)cpuUsage);
                 tft.printSmallChar('%');
             }
@@ -208,7 +212,7 @@ void preenfm3Loop() {
                 tft.setCharBackgroundColor(COLOR_BLACK);
                 tft.setCharColor(COLOR_GRAY);
                 previousNumberOfPlayingVoices = numberOfPlayingVoices;
-                tft.setCursorInPixel(140, 25);
+                tft.setCursorInPixel(150, 25);
                 if (numberOfPlayingVoices < 10) {
                     tft.printSmallChar(' ');
                 }
@@ -293,8 +297,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Unselect TFT as soon as the transfer is finished to avoid noise on data line
     if (hspi == &hspi1) {
-        tft.tftReady = true;
-        ILI9341_Unselect();
+        tft.pushToTftFinished();
     }
 }
 

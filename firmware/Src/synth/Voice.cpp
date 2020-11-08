@@ -3856,7 +3856,6 @@ void Voice::fxAfterBlock() {
             }
         } else if (pan > 0) {
             float oneMinusPan = 1 - pan;
-            float adjustedmixerGain = (pan * .5) * mixerGain;
             for (int k=0 ; k < BLOCK_SIZE ; k++) {
                 sampleL = *(sp);
                 sampleR = *(sp + 1);

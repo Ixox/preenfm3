@@ -40,7 +40,6 @@
 
 #define BUTTON_PFM3_MENU 6
 
-
 #define BUTTON_SYNTH  0
 #define BUTTON_OSC    1
 #define BUTTON_ENV    2
@@ -394,10 +393,6 @@ public:
 
     const MenuItem* getMenuBack();
 
-    int getCurrentRow() {
-        return currentRow;
-    }
-
     void setCurrentInstrument(int currentTimbre);
 
     void insertParamListener(SynthParamListener *listener) {
@@ -480,12 +475,6 @@ public:
     void propagateNewMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
         for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
             listener->newMixerValueFromExternal(timbre, mixerValueType, oldValue, newValue);
-        }
-    }
-
-    void propagateNewCurrentRow(int newCurrentRow) {
-        for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
-            listener->newcurrentRow(currentTimbre, newCurrentRow);
         }
     }
 
@@ -599,7 +588,6 @@ private:
     int currentTimbre;
     char engineRow, oscillatorRow, envelopeRow, matrixRow, lfoRow;
     char operatorNumber, operatorView;
-    char currentRow;
 
     bool isPlayingNote;
     char playingNote;
