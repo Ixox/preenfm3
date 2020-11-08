@@ -155,8 +155,6 @@ public:
     void newParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
     void newParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
-    void newcurrentRow(int timbre, int newcurrentRow) {
-    }
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     }
     void newMixerEdit(int oldButton, int newButton) {

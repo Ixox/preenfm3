@@ -221,14 +221,6 @@ void FMDisplay3::newMixerValueFromExternal(int timbre, int mixerValueType, float
     }
 }
 
-
-
-void FMDisplay3::newcurrentRow(int timbre, int newcurrentRow) {
-
-    this->displayedRow = newcurrentRow;
-    refreshStatus = 12;
-}
-
 /*
  * Menu Listener
  */

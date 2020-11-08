@@ -90,9 +90,6 @@ public:
 
     int getNumberOfFreeVoicesForThisTimbre(int timbre);
 
-    void newcurrentRow(int timbre, int newcurrentRow)  {
-        // Nothing to do
-    }
     void newTimbre(int timbre);
 
     void beforeNewParamsLoad(int timbre);

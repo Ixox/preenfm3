@@ -3473,7 +3473,7 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
 
 }
 
-void FMDisplayEditor::encoderTurned(int currentRow, int encoder, int ticks) {
+void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
     struct FullState *fullState = &(synthState->fullState);
 
     if (unlikely(fullState->mainPage == -1)) {
@@ -3484,39 +3484,49 @@ void FMDisplayEditor::encoderTurned(int currentRow, int encoder, int ticks) {
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
     const struct RowEncoder rowEncoder =
-        page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
-    int row = currentRow;
-    int encoder6 = encoder;
+        page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
-    encoder = rowEncoder.encoder;
-    row = rowEncoder.row;
-    if (row == ROW_NONE) {
-        return;
-    }
+    int encoder4 = rowEncoder.encoder;
+    int row = rowEncoder.row;
+
     // Step sequencer special case
     if (unlikely(row == ROW_LFOSEQ1 || row == ROW_LFOSEQ2)) {
-        if (encoder >= 2) {
-            synthState->encoderTurnedForStepSequencer(row, encoder, encoder6, ticks);
+        if (encoder4 >= 2) {
+            synthState->encoderTurnedForStepSequencer(row, encoder4, encoder6, ticks);
             return;
         }
     };
+
+    encoderTurnedPfm2(row, encoder4, ticks);
+}
+
+
+/*
+ * In some case we want to shortcut the Operator row calculation case
+ * so we need  specialOpCase = false
+ */
+void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase) {
+
+    if (row == ROW_NONE) {
+        return;
+    }
     if (unlikely(row == ROW_ARPEGGIATOR3)) {
-        synthState->encoderTurnedForArpPattern(row, encoder, ticks);
+        synthState->encoderTurnedForArpPattern(row, encoder4, ticks);
         return;
     }
 
     //
     int num;
     struct ParameterDisplay *param;
-    if (unlikely(this->synthState->fullState.mainPage == 1)) {
+    if (unlikely(this->synthState->fullState.mainPage == 1) && specialOpCase) {
         int multiplier = this->synthState->fullState.editPage == 0 ? 1 : 2;
         // operator is a bit different with PFM3
-        num = encoder + (row + this->synthState->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS;
-        param = &(allParameterRows.row[row + this->synthState->fullState.operatorNumber * multiplier]->params[encoder]);
+        num = encoder4 + (row + this->synthState->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS;
+        param = &(allParameterRows.row[row + this->synthState->fullState.operatorNumber * multiplier]->params[encoder4]);
         row += this->synthState->fullState.operatorNumber * multiplier;
     } else {
-        num = encoder + row * NUMBER_OF_ENCODERS;
-        param = &(allParameterRows.row[row]->params[encoder]);
+        num = encoder4 + row * NUMBER_OF_ENCODERS;
+        param = &(allParameterRows.row[row]->params[encoder4]);
     }
     float newValue;
     float oldValue;
@@ -3585,24 +3595,21 @@ void FMDisplayEditor::encoderTurned(int currentRow, int encoder, int ticks) {
         (*value) = (float) newValue;
     }
     if (newValue != oldValue) {
-        synthState->propagateNewParamValue(currentTimbre, row, encoder, param, oldValue, newValue);
+        synthState->propagateNewParamValue(currentTimbre, row, encoder4, param, oldValue, newValue);
     }
 
 }
 
-void FMDisplayEditor::encoderTurnedWhileButtonPressed(int currentRow, int encoder, int ticks, int button) {
+void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
 
     // SYNTH_MODE_EDIT
-
-    int oldCurrentRow = currentRow;
-
     switch (button) {
     case BUTTON_PREVIOUS_INSTRUMENT: {
         // Convert to legacy preenfm2 encoder and row
         const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
         const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
         struct RowEncoder rowEncoder =
-            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
+            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
         // Operator is a special case for row
         if (unlikely(this->synthState->fullState.mainPage == 1)) {
@@ -3628,8 +3635,9 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int currentRow, int encode
         // Convert to legacy preenfm2 encoder and row
         const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
         const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+
         struct RowEncoder rowEncoder =
-            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
+            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
         // Operator is a special case for row
         if (unlikely(this->synthState->fullState.mainPage == 1)) {
@@ -3637,59 +3645,53 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int currentRow, int encode
             rowEncoder.row += this->synthState->fullState.operatorNumber * multiplier;
         }
 
-        int currentRowOld = rowEncoder.row;
-        int encoderOld = rowEncoder.encoder;
-
+        int row = rowEncoder.row;
+        int encoder4 = rowEncoder.encoder;
 
         // Modify param of all operator of same types.
-        if (currentRowOld >= ROW_ENV1a && currentRowOld <= ROW_ENV6b) {
+        if (row >= ROW_ENV1a && row <= ROW_ENV6b) {
             int firstRow = ROW_ENV1a;
             int envBBit = ROW_ENV1b & 0x1;
-            if ((currentRowOld & 0x1) == envBBit) {
+            if ((row & 0x1) == envBBit) {
                 firstRow = ROW_ENV1b;
             }
             int currentAlgo = (int)this->synthState->params->engine1.algo;
-            int currentOpType = algoOpInformation[currentAlgo][(currentRowOld - ROW_ENV1a) >> 1];
+            int currentOpType = algoOpInformation[currentAlgo][(row - ROW_ENV1a) >> 1];
 
             for (int op = 0; op < NUMBER_OF_OPERATORS; op++) {
-                currentRowOld = firstRow + op*2;
                 if (currentOpType == algoOpInformation[currentAlgo][op]) {
                     // Same operator type : carrier or modulation
-                    encoderTurned(currentRowOld, encoderOld, ticks);
+                    encoderTurnedPfm2(firstRow + op*2, encoder4, ticks, false);
                 }
             }
-            // Put back current row
-            currentRowOld = oldCurrentRow;
-        } else if (currentRowOld >= ROW_MODULATION1 && currentRowOld <= ROW_MODULATION3) {
+        } else if (row >= ROW_MODULATION1 && row <= ROW_MODULATION3) {
             int imMax = algoInformation[(int)this->synthState->params->engine1.algo].im;
             // Im or v ?
-            if ((encoderOld & 0x1) == 0) {
+            if ((encoder4 & 0x1) == 0) {
                 for (int m = 0; m < imMax; m++) {
-                    currentRowOld = ROW_MODULATION1 + (m >> 1);
-                    encoderTurned(currentRowOld, ENCODER_ENGINE_IM1 + (m & 0x1) * 2, ticks);
+                    encoderTurnedPfm2(ROW_MODULATION1 + (m >> 1), ENCODER_ENGINE_IM1 + (m & 0x1) * 2, ticks);
                 }
             } else {
                 for (int m = 0; m < imMax; m++) {
-                    currentRowOld = ROW_MODULATION1 + (m >> 1);
-                    encoderTurned(currentRowOld, ENCODER_ENGINE_IM1_VELOCITY + (m & 0x1) * 2, ticks);
+                    encoderTurnedPfm2(ROW_MODULATION1 + (m >> 1), ENCODER_ENGINE_IM1_VELOCITY + (m & 0x1) * 2, ticks);
                 }
             }
-            currentRowOld = oldCurrentRow;
-        } else if (currentRowOld >= ROW_OSC_MIX1 && currentRowOld <= ROW_OSC_MIX3) {
-            int mixMax = algoInformation[(int)this->synthState->params->engine1.algo].mix;
+        } else if (row >= ROW_OSC_MIX1 && row <= ROW_OSC_MIX3) {
             // Mix or Pan ?
-            if ((encoderOld & 0x1) == 0) {
-                for (int m = 0; m < mixMax; m++) {
-                    currentRowOld = ROW_OSC_MIX1 + (m >> 1);
-                    encoderTurned(currentRowOld, ENCODER_ENGINE_MIX1 + (m & 0x1) * 2, ticks);
+            int algoNumber = (int)this->synthState->params->engine1.algo;
+            if ((encoder4 & 0x1) == 0) {
+                for (int m = 0; m < NUMBER_OF_OPERATORS; m++) {
+                    if (algoOpInformation[algoNumber][m] == 1) {
+                        encoderTurnedPfm2(ROW_OSC_MIX1 + (m >> 1), ENCODER_ENGINE_MIX1 + (m & 0x1) * 2, ticks);
+                    }
                 }
             } else {
-                for (int m = 0; m < mixMax; m++) {
-                    currentRowOld = ROW_OSC_MIX1 + (m >> 1);
-                    encoderTurned(currentRowOld, ENCODER_ENGINE_PAN1 + (m & 0x1) * 2, ticks);
+                for (int m = 0; m < NUMBER_OF_OPERATORS; m++) {
+                    if (algoOpInformation[algoNumber][m] == 1) {
+                        encoderTurnedPfm2(ROW_OSC_MIX1 + (m >> 1), ENCODER_ENGINE_PAN1 + (m & 0x1) * 2, ticks);
+                    }
                 }
             }
-            currentRowOld = oldCurrentRow;
         }
         break;
     }
@@ -3697,11 +3699,10 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int currentRow, int encode
 
 }
 
-void FMDisplayEditor::buttonPressed(int currentRow, int button) {
+void FMDisplayEditor::buttonPressed(int button) {
     struct FullState *fullState = &synthState->fullState;
 
     SynthEditMode oldSynthMode = this->synthState->fullState.synthMode;
-    int oldCurrentRow = currentRow;
     MenuState oldMenuState = this->synthState->fullState.currentMenuItem->menuState;
 
     if (this->synthState->fullState.mainPage == -1) {
@@ -3751,7 +3752,6 @@ void FMDisplayEditor::buttonPressed(int currentRow, int button) {
     }
 
     synthState->propagateNewPfm3Page();
-
 }
 
 void FMDisplayEditor::refreshOscillatorOperatorShape() {
