@@ -21,7 +21,7 @@
 
 
 const struct OneSynthParams defaultPreset  = {
-        { ALGO7, 14, 3, 4} ,
+        { ALGO7, 14, 1, 4} ,
         { 0.0, 0.0, 0.0, 0.0} ,
         { 0.0, 0.0, 0.0, 0.0} ,
         { 0.0, 0.0, 0.0, 0.0} ,

@@ -382,17 +382,29 @@ int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
 
 void Synth::beforeNewParamsLoad(int timbre) {
 
-    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
     for (int k = 0; k < NUMBER_OF_STORED_NOT; k++) {
         noteBeforeNewParalsLoad[k] = 0;
         velocityBeforeNewParalsLoad[k] = 0;
     }
-    for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOT; k++) {
-        // voice number k of timbre
-        int n = timbres[timbre].voiceNumber[k];
-        if (voices[n].isPlaying() && !voices[n].isReleased()) {
-            noteBeforeNewParalsLoad[k] = voices[n].getNote();
-            velocityBeforeNewParalsLoad[k] = voices[n].getMidiVelocity();
+
+
+    if (this->synthState->params->engineArp1.clock > 0) {
+        // Arpegiator : we store pressed key
+        int numberOfPressedNote = timbres[timbre].note_stack.size();
+        for (int k = 0; k < numberOfPressedNote && k < NUMBER_OF_STORED_NOT; k++) {
+            const NoteEntry &noteEntry = timbres[timbre].note_stack.played_note(k);
+            noteBeforeNewParalsLoad[k] = noteEntry.note;
+            velocityBeforeNewParalsLoad[k] = noteEntry.velocity;
+        }
+    } else {
+        int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+        for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOT; k++) {
+            // voice number k of timbre
+            int n = timbres[timbre].voiceNumber[k];
+            if (voices[n].isPlaying() && !voices[n].isReleased()) {
+                noteBeforeNewParalsLoad[k] = voices[n].getNote();
+                velocityBeforeNewParalsLoad[k] = voices[n].getMidiVelocity();
+            }
         }
     }
 

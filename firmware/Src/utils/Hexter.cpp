@@ -309,10 +309,10 @@ float Hexter::getRounded(float r) {
  */
 void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
 {
-
     for (int k=0; k<sizeof(struct OneSynthParams)/sizeof(float); k++) {
-    	if ((*arpeggiatorPartOfThePreset) == 0 && (k >> 2) == ROW_ARPEGGIATOR1 || (k >> 2) == ROW_ARPEGGIATOR2) {
-    		// Don't override the arpeggiator
+        int row = k >> 2;
+        if (row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ENGINE) {
+            // Don't override the arpeggiator neither the ENGINE
     	} else {
     		((float*)params)[k] = ((float*)&defaultPreset)[k];
     	}
@@ -952,13 +952,6 @@ void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
 	params->matrixRowState12.source = MATRIX_SOURCE_PITCHBEND;
 	params->matrixRowState12.mul = .5f;
 	params->matrixRowState12.dest1 = ALL_OSC_FREQ_HARM;
-
-    // for preenfm3
-    if (params->engine1.polyMono > 1) {
-    	params->engine1.polyMono = 0;
-    } else {
-    	params->engine1.polyMono = 1;
-    }
 }
 
 

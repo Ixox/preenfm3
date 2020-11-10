@@ -670,12 +670,7 @@ void SynthState::randomizePreset() {
         params->engineMix3.panOsc6 = getRandomFloat(-0.7f, 0.7f);
 
         params->engine1.algo = getRandomInt(ALGO_END);
-        if (getRandomInt(6) == 0) {
-            params->engine1.polyMono = 1;
-            params->engine1.glide = 6;
-        } else {
-            params->engine1.polyMono = 0;
-        }
+
         for (int o = 0; o < 6; o++) {
             struct OscillatorParams* currentOsc = &((struct OscillatorParams*) &params->osc1)[o];
             currentOsc->shape = getRandomShape(operatorRandom);
