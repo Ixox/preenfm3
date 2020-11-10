@@ -2854,8 +2854,8 @@ uint8_t FMDisplayEditor::getX(int encoder) {
 }
 
 void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+    ParameterDisplay *param, float oldValue, float newValue) {
 
-ParameterDisplay *param, float oldValue, float newValue) {
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
     uint8_t buttonState = this->synthState->fullState.buttonState[page->buttonId];
@@ -2906,7 +2906,13 @@ ParameterDisplay *param, float oldValue, float newValue) {
         switch (currentRow) {
         case ROW_ENGINE:
             if (encoder == ENCODER_ENGINE_ALGO) {
-                // displayAlgo(newValue);
+                int numberOfOsc = algoInformation[(int)this->synthState->params->engine1.algo].osc - 1;
+
+                // If lower number of Osc, adjust current selected one so that it shows up on screen
+                // when going to operator page
+                if (this->synthState->fullState.operatorNumber > numberOfOsc) {
+                    this->synthState->fullState.operatorNumber = numberOfOsc;
+                }
                 tft->drawAlgo(newValue);
             }
             break;
@@ -3751,10 +3757,19 @@ void FMDisplayEditor::buttonPressed(int button) {
                     this->synthState->fullState.editPage = button;
                 } else {
                     if (this->synthState->fullState.mainPage == 1) {
-                        if (button == 3 && this->synthState->fullState.operatorNumber > 0) {
-                            this->synthState->fullState.operatorNumber--;
-                        } else if (button == 5 && this->synthState->fullState.operatorNumber < 5) {
-                            this->synthState->fullState.operatorNumber++;
+                        int numberOfOsc = algoInformation[(int)this->synthState->params->engine1.algo].osc - 1;
+                        if (button ==  BUTTON_PFM3_4) {
+                            if (this->synthState->fullState.operatorNumber > 0) {
+                                this->synthState->fullState.operatorNumber--;
+                            } else {
+                                this->synthState->fullState.operatorNumber = numberOfOsc;
+                            }
+                        } else if (button == BUTTON_PFM3_6) {
+                            if (this->synthState->fullState.operatorNumber < numberOfOsc) {
+                                this->synthState->fullState.operatorNumber++;
+                            } else {
+                                this->synthState->fullState.operatorNumber = 0;
+                            }
                         }
                     }
                 }
