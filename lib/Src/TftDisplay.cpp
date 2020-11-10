@@ -299,17 +299,18 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
 }
 
 void TftDisplay::tic() {
-    static uint32_t pushTftCpt = 1;
     uint32_t offset;
 
-    if (!pushToTftInProgress && (pushTftCpt++ >= 30) && PFM_IS_DMA2D_READY()) {
-        // we only try every 30 ms (33Hz)
-        pushTftCpt = 0;
+
+    uint32_t currentMillis = HAL_GetTick();
+    if (unlikely((currentMillis - tftPushMillis) > 15)) {
         if (pushToTft()) {
            // a part have been pushed
+           tftPushMillis = currentMillis;
            return;
         }
     }
+
 
     // If doing nothing try to take next action
     if ((currentAction.actionType == 0) && (tftActions.getCount() > 0)) {
@@ -588,6 +589,8 @@ void TftDisplay::tic() {
         break;
     case TFT_RESTART_REFRESH:
         tftRefreshing = true;
+        // start from the top
+        part = 0;
         currentAction.actionType = 0;
         break;
     case TFT_PAUSE_REFRESH:
@@ -639,25 +642,28 @@ bool TftDisplay::pushToTft() {
     // 4 max - can break before
     int p;
     for (p = 0; p < 4 ; p++) {
-        part = (part + 1) % TFT_NUMBER_OF_PARTS;
-
         if ((tftDirtyBits & (1UL << part)) > 0) {
             // Update TFT part
             ILI9341_Select();
 
+
             uint16_t height = areaHeight[part];
             uint16_t y = areaY[part];
 
-            ILI9341_SetAddressWindow(0, y, 239, y + height - 1);
-            PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
+            if (ILI9341_SetAddressWindow(0, y, 239, y + height - 1) == HAL_OK) {
+                PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
 
-            if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
-                tftDirtyBits &= ~(1UL << part);
-                pushToTftInProgress = true;
+                if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
+                    tftDirtyBits &= ~(1UL << part);
+                    pushToTftInProgress = true;
+                }
             }
+            part = (part + 1) % TFT_NUMBER_OF_PARTS;
             break;
         }
+        part = (part + 1) % TFT_NUMBER_OF_PARTS;
     }
+
 
     return true;
 }

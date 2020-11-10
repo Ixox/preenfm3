@@ -18,19 +18,19 @@ static void ILI9341_Reset() {
     HAL_GPIO_WritePin(ILI9341_RES_GPIO_Port, ILI9341_RES_Pin, GPIO_PIN_SET);
 }
 
-static void ILI9341_WriteCommand(uint8_t cmd) {
+static HAL_StatusTypeDef ILI9341_WriteCommand(uint8_t cmd) {
     PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin) ;
-    HAL_SPI_Transmit(&ILI9341_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
+    return HAL_SPI_Transmit(&ILI9341_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
 }
 
-static inline void ILI9341_WriteData(uint8_t* buff, size_t buff_size) {
+static HAL_StatusTypeDef  ILI9341_WriteData(uint8_t* buff, size_t buff_size) {
     PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin) ;
     // buff_size must be < 64K
-    HAL_SPI_Transmit(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
+    return HAL_SPI_Transmit(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
 }
 
 
-void ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
     // column address set
     if (x0 != windowLastX) {
         windowLastX = x0;
@@ -41,14 +41,22 @@ void ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1
     // row address set
     // Optimization removed to fix a button refresh problem
     if (y0 != windowLastY) {
-        windowLastY = y0;
-        ILI9341_WriteCommand(0x2B); // RASET
-        uint8_t data2[] = { (y0 >> 8) & 0xFF, y0 & 0xFF, (y1 >> 8) & 0xFF, y1 & 0xFF };
-        ILI9341_WriteData(data2, 4);
+        HAL_StatusTypeDef ret;
+        ret = ILI9341_WriteCommand(0x2B);
+        if (ret == HAL_OK) {
+            uint8_t data2[] = { (y0 >> 8) & 0xFF, y0 & 0xFF, (y1 >> 8) & 0xFF, y1 & 0xFF };
+            ret = ILI9341_WriteData(data2, 4);
+            if (ret != HAL_OK) {
+                return ret;
+            }
+            windowLastY = y0;
+        } else {
+            return ret;
+        }
     }
 
     // write to RAM
-    ILI9341_WriteCommand(0x2C); // RAMWR
+    return ILI9341_WriteCommand(0x2C); // RAMWR
 }
 
 void ILI9341_Init() {
