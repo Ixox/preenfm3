@@ -5,8 +5,8 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 1
 Title "preenfm3"
-Date "2020-06-20"
-Rev "v1.1"
+Date "2020-11-10"
+Rev "v1.2"
 Comp "Xavier Hosxe"
 Comment1 ""
 Comment2 ""

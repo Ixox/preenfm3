@@ -1,4 +1,4 @@
-17071906149841155
+17081532821044155
 A_PFM3
 74HC165
 16-lead though-hole mounted DIP package, row spacing 7.62 mm (300 mils), Socket, LongPads
@@ -287,6 +287,13 @@ FMJACK2
 6
 2
 A_PFM3
+FMJACK3_TRS
+
+
+0
+6
+6
+A_PFM3
 FMLCD4x20
 
 
@@ -511,6 +518,13 @@ JLCJLCJLCJLC
 0
 0
 A_PFM3
+Jumper_SMD
+Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+A_PFM3
 Maple
 
 
@@ -543,8 +557,8 @@ NRJ4HF_pfm3
 
 
 0
-4
-4
+6
+6
 A_PFM3
 NRJ6HF
 
@@ -559,6 +573,20 @@ Through hole pin header THT 1x05 2.54mm single row
 0
 5
 5
+A_PFM3
+PinHeader_1x01_Simple
+Through hole straight pin header, 1x01, 2.54mm pitch, single row
+Through hole pin header THT 1x01 2.54mm single row
+0
+1
+1
+A_PFM3
+PinHeader_1x02_P2.54mm_NoSilk
+Through hole straight pin header, 1x02, 2.54mm pitch, single row
+Through hole pin header THT 1x02 2.54mm single row
+0
+2
+2
 A_PFM3
 PinHeader_1x03_P2.54mm_Vertical
 Through hole straight pin header, 1x03, 2.54mm pitch, single row
@@ -643,6 +671,20 @@ D2PAK DDPAK TO-263 D2PAK-3 TO-263-3 SOT-404
 0
 7
 3
+A_PFM3
+ToMix
+Through hole straight pin header, 2x03, 2.54mm pitch, double rows
+Through hole pin header THT 2x03 2.54mm double row
+0
+6
+6
+A_PFM3
+ToMix4
+Through hole straight pin header, 2x03, 2.54mm pitch, double rows
+Through hole pin header THT 2x03 2.54mm double row
+0
+4
+4
 A_PFM3
 USB_B
 
