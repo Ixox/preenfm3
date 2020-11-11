@@ -30,7 +30,7 @@ Sequencer::Sequencer() {
     uint32_t stateSize;
     uint8_t* actionBuffer =  (uint8_t*)actions;
     // Use actions as a temporary buffer
-    getFullDefaultState(actionBuffer, &stateSize);
+    getFullDefaultState(actionBuffer, &stateSize, 0);
     setFullState((uint8_t*)actions);
 
     for (uint32_t i = 0; i < sizeof(actions); i++) {
@@ -573,11 +573,15 @@ void Sequencer::stepClearAll(int instrument) {
 /*
  * Used to create empty bank
  */
-void Sequencer::getFullDefaultState(uint8_t* buffer, uint32_t *size) {
+void Sequencer::getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seqNumber) {
     int index = 0;
     buffer[index++] = (uint8_t)SEQ_CURRENT_VERSION;
     // sequenceName
-    const char defautSequenceName[13] = "First Seq\0\0\0";
+    char defautSequenceName[13] = "Seq \0\0\0\0\0\0\0";
+    uint8_t dizaine = seqNumber / 10;
+    defautSequenceName[4] = (char)('0' + dizaine);
+    defautSequenceName[5] = (char)('0' + (seqNumber - dizaine * 10));
+
     for (int s = 0; s < 12; s++) {
         buffer[index++] = defautSequenceName[s];
     }

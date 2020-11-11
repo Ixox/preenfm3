@@ -52,6 +52,9 @@
 
 
 #include <SequenceBank.h>
+#include "TftDisplay.h"
+
+extern TftDisplay tft;
 
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
@@ -236,22 +239,25 @@ void SequenceBank::createSequenceFile(const char* name) {
         storageBuffer[i] = 0;
     }
 
-    sequencer->getFullDefaultState((uint8_t*)storageBuffer, &seqStatesize);
-    char* sequenceNameInBuffer = sequencer->getSequenceNameInBuffer(storageBuffer);
-    fsu->copy(sequenceNameInBuffer, "Sequence \0\0\0\0", 12);
     for (int s = 0; s < NUMBER_OF_SEQUENCES_PER_BANK; s++) {
-        // Name
-        fsu->addNumber(sequenceNameInBuffer, 9, s + 1);
 
+        tft.setCharColor(COLOR_GRAY);
+        tft.setCursor(15, 12);
+        tft.print(s + 1);
+        tft.print("/");
+        tft.print(NUMBER_OF_SEQUENCES_PER_BANK);
+
+        sequencer->getFullDefaultState((uint8_t*)storageBuffer, &seqStatesize, s + 1);
         // We save 1024 bytes for sequencer fullstate
         f_write(&sequenceFile, storageBuffer, 1024, &byteWritten);
 
         // we save the sizes of the current version
         int numberOfZeros = sizeof(actions) + sizeof(stepNotes);
         while (numberOfZeros > 0) {
-            UINT toWrite = numberOfZeros > 4096 ? 4096 : numberOfZeros;
+            UINT toWrite = numberOfZeros > 1024 ? 1024 : numberOfZeros;
             f_write(&sequenceFile, storageBuffer + 1024, toWrite, &byteWritten);
             numberOfZeros -= byteWritten;
+            HAL_Delay(1);
         }
     }
     f_close(&sequenceFile);

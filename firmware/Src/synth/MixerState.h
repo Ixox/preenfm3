@@ -54,7 +54,7 @@ public:
     virtual ~MixerState();
 
     void getFullState(char* buffer, uint32_t *size);
-    void getFullDefaultState(char* buffer, uint32_t *size);
+    void getFullDefaultState(char* buffer, uint32_t *size, uint8_t mixNumber);
     void restoreFullState(char* buffer);
     static char* getMixNameFromFile(char* buffer);
 

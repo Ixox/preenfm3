@@ -69,9 +69,15 @@ void MixerState::getFullState(char* buffer, uint32_t *size) {
     *size = index;
 }
 
-void MixerState::getFullDefaultState(char * buffer, uint32_t *size) {
+void MixerState::getFullDefaultState(char * buffer, uint32_t *size, uint8_t mixNumber) {
     // == Default mixer for new bank
-    char defaultMixName[13] = "First Mix\0\0\0";
+    char defaultMixName[13] = "Mix \0\0\0\0\0\0\0\0";
+    if (mixNumber > 99) {
+        mixNumber = 99;
+    }
+    uint8_t dizaine = mixNumber / 10;
+    defaultMixName[4] = (char)('0' + dizaine);
+    defaultMixName[5] = (char)('0' + (mixNumber - dizaine * 10));
     uint32_t index = 0;
     buffer[index++] = MIXER_BANK_CURRENT_VERSION;
     for (int i = 0; i < 12; i++) {
@@ -214,6 +220,8 @@ char* MixerState::getMixNameFromFile(char* buffer) {
     uint8_t version = buffer[0];
     switch (version) {
         case MIXER_BANK_VERSION1:
+            return buffer + 1;
+        case MIXER_BANK_VERSION2:
             return buffer + 1;
     }
 }

@@ -73,7 +73,7 @@ public:
     void setDisplaySequencer(FMDisplaySequencer* displaySequencer);
 
     void getFullState(uint8_t* buffer, uint32_t *size);
-    void getFullDefaultState(uint8_t* buffer, uint32_t *size);
+    void getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seqNumber);
     void setFullState(uint8_t* buffer);
 
     void setTempo(float newTempo);

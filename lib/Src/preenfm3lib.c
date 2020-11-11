@@ -178,9 +178,10 @@ void preenfm3ForceTftBacklight() {
 
 uint32_t preenfm3LibInitSD() {
     uint32_t sdReturn = ADAFRUIT_802_SD_Init(0);
+    uint32_t sdReturn2  = 0;
     if (sdReturn == 0) {
-        f_mount(&USERFatFS, USERPath, 1);
+        sdReturn2 = f_mount(&USERFatFS, USERPath, 1);
     }
-    return sdReturn;
+    return sdReturn + sdReturn2 * 1000;
 }
 

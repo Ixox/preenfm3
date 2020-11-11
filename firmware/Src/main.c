@@ -87,6 +87,9 @@ static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 static void MX_TIM1_Init(void);
 void MPU_RegionConfig();
+
+#define USE_DMA_FOR_SD_ACCESS true
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -155,7 +158,7 @@ int main(void)
   MX_SAI2_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
-  MX_FATFS_Init(true);
+  MX_FATFS_Init(USE_DMA_FOR_SD_ACCESS);
   MX_USB_DEVICE_Init();
   MX_USART1_UART_Init();
 #if defined(LQFP100) || defined(LQFP100_OLD)

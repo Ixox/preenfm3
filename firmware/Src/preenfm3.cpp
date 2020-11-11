@@ -124,6 +124,10 @@ void preenfm3Init() {
         tft.setCharColor(COLOR_RED);
         tft.setCursor(5, 7);
         tft.print("SD CARD ERROR");
+        tft.setCursor(8, 8);
+        tft.print("#");
+        tft.print((int)erreurSD);
+        tft.print("#");
     }
     // For tft.tic
     HAL_Delay(400);

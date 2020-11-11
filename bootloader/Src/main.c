@@ -68,7 +68,7 @@ static void MX_DMA2D_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+#define USE_DMA_FOR_SD_ACCESS false
 /* USER CODE END 0 */
 
 /**
@@ -120,7 +120,7 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_DMA2D_Init();
-  MX_FATFS_Init(false);
+  MX_FATFS_Init(USE_DMA_FOR_SD_ACCESS);
 
   bootloaderInit();
 

@@ -103,7 +103,7 @@ SynthState::SynthState() {
     // Init mixer state with default values
     char mixerStateChars[sizeof(mixerState)];
     uint32_t size;
-    mixerState.getFullDefaultState(mixerStateChars, &size);
+    mixerState.getFullDefaultState(mixerStateChars, &size, 0);
     mixerState.restoreFullState(mixerStateChars);
 
     for (int b = 0; b < NUMBER_OF_BUTTONIDS; b++) {

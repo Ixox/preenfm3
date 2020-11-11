@@ -21,6 +21,9 @@
 #include <ScalaFile.h>
 #include "Sequencer.h"
 #include "MixerState.h"
+#include "TftDisplay.h"
+
+extern TftDisplay tft;
 
 extern char patch_zeros[ALIGNED_PATCH_ZERO];
 
@@ -200,17 +203,23 @@ void MixerBank::createMixerBank(const char* name) {
         storageBuffer[i] = 0;
     }
 
-    mixerState->getFullDefaultState(storageBuffer, &defaultMixerSize);
-    fsu->copy(mixerState->mixName, "Mixer \0\0\0\0\0\0", 12);
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         FlashSynthParams *toSave = (FlashSynthParams *)(storageBuffer + ALIGNED_PATCH_SIZE * t + ALIGNED_MIXER_SIZE);
         convertParamsToFlash(&preenMainPreset, toSave, true);
     }
 
+    UINT byteWritten;
     for (int mixerNumber = 0; mixerNumber < NUMBER_OF_MIXERS_PER_BANK; mixerNumber++) {
-        UINT byteWritten;
-        fsu->addNumber(mixerState->mixName, 6, mixerNumber + 1);
+
+        tft.setCharColor(COLOR_GRAY);
+        tft.setCursor(15, 12);
+        tft.print(mixerNumber + 1);
+        tft.print("/");
+        tft.print(NUMBER_OF_MIXERS_PER_BANK);
+
+
+        mixerState->getFullDefaultState(storageBuffer, &defaultMixerSize, mixerNumber + 1);
         f_write(&mixerFile, (void*) storageBuffer, ALIGNED_MIXER_SIZE + ALIGNED_PATCH_SIZE * NUMBER_OF_TIMBRES, &byteWritten);
     }
     f_close(&mixerFile);

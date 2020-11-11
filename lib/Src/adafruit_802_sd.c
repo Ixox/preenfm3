@@ -369,6 +369,15 @@ int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlo
   {
      goto error;
   }
+
+  // Xavier's note : Very important
+  // On some SD card, we need output to be HIGH when reading the input
+  // without this, the SD card turns into a bad state and does not work
+  uint32_t* dummySector32 = (uint32_t*)dummySector;
+  for (int s = 0; s < 128; s++) {
+      dummySector32[s] = 0xFFFFFFFF;
+  }
+
   /* Initialize the address */
   addr = (ReadAddr * ((flag_SDHC == 1) ? 1 : BlockSize));
 
@@ -390,6 +399,7 @@ int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlo
       if (useDMA) {
           spi2TransferState = 0;
           /* Read the SD block data : read NumByteToRead data */
+
           while (SD_IO_WriteReadData_DMA(dummySector, (uint8_t*)pData + offset, BlockSize) == HAL_BUSY) {
               HAL_Delay(1);
           }
