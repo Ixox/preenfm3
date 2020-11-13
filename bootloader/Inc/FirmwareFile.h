@@ -42,6 +42,7 @@ public:
     const struct FirmwarePFM3File* getFile(uint32_t fileNumber);
     uint32_t getNumberOfFiles() { return numberOfFiles; };
     const char* getFullName(const char* fileName);
+    void reset() { isInitialized = false; }
 
 protected:
     int initFiles();

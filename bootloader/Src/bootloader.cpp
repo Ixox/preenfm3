@@ -23,6 +23,7 @@
 #include "ili9341.h"
 #include "Encoders.h"
 #include "FirmwareFile.h"
+#include "usb_device.h"
 
 Encoders encoders;
 TftDisplay tft;
@@ -33,6 +34,10 @@ FirmwareFile firmwares;
 #define BLOCK_SIZE_UINT8 (BLOCK_SIZE_UINT32 * 4)
 __attribute__((section(".ram_d2"))) uint32_t d2Buffer[BLOCK_SIZE_UINT32];
 
+
+char sdAccessAnimation[4] = {'-', '\\', '|', '/' };
+uint32_t writeAnimationIndex = 0;
+uint32_t readAnimationIndex = 0;
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,6 +66,11 @@ uint32_t fileSelect = 0;
 int32_t button = -1;
 uint32_t sdError = 0;
 
+extern int32_t readDisplayCounter;
+int32_t readDisplayCounterAnim = 0;
+extern int32_t writeDisplayCounter;
+int32_t writeDisplayCounterAnim = 0;
+
 
 class BootloaderEncoderListener : public EncodersListener {
     void buttonPressed(int button);
@@ -80,6 +90,7 @@ void flashFirmware(const FirmwarePFM3File *pfm2File);
 void formatFlash(int firmwareSize);
 void jumpToBootloader();
 void reboot();
+void SDCardAccess();
 
 
 void resetButtonPressed() {
@@ -103,6 +114,8 @@ uint32_t getButtonPressed() {
 void bootloaderInit() {
 
     sdError = preenfm3LibInitSD();
+
+    MX_USB_DEVICE_Init();
 
     tft.init(&dummyAlgo); // Dummy value is OK, we won't use algo
     ILI9341_Init();
@@ -130,21 +143,16 @@ void bootloaderInit() {
 void displayFile(int fileNumber) {
 
     if (sdError == 0) {
-        const char* name = firmwares.getFile(fileNumber)->name;
-        int len;
-        for (len = 0; len < 1000 && name[len] != 0; len++);
-
-        len = len >> 1;
-        tft.fillArea(0, 160, 240, 20, COLOR_BLACK);
+        tft.fillArea(0, 100, 240, 20, COLOR_BLACK);
         tft.setCharBackgroundColor(COLOR_BLACK);
         tft.setCharColor(COLOR_CYAN);
-        tft.setCursor(10 - len, 8);
+        tft.setCursor(5, 5);
         tft.print(firmwares.getFile(fileNumber)->name);
     } else {
-        tft.fillArea(0, 158, 240, 22, COLOR_RED);
+        tft.fillArea(0, 98, 240, 22, COLOR_RED);
         tft.setCharBackgroundColor(COLOR_RED);
         tft.setCharColor(COLOR_BLACK);
-        tft.setCursor(5, 8);
+        tft.setCursor(5, 5);
         tft.print("SD CARD ERROR");
         tft.setCharBackgroundColor(COLOR_BLACK);
     }
@@ -153,38 +161,52 @@ void displayFile(int fileNumber) {
 void bootloaderLoop() {
     switch (state) {
     case STATE_INIT:
-        tft.setCharColor(COLOR_LIGHT_GRAY);
-        tft.setCursorSmallChar(11, 6);
+        tft.fillArea(0, 24, 240, 320-24, COLOR_BLACK);
+
+        tft.setCharColor(COLOR_YELLOW);
+        tft.setCursorSmallChar(11, 5);
         tft.printSmallChars("- / + : ");
         tft.setCharColor(COLOR_WHITE);
         tft.printSmallChars("SELECT");
         HAL_Delay(25);
 
-        tft.setCharColor(COLOR_LIGHT_GRAY);
-        tft.setCursorSmallChar(8, 7);
+        tft.setCharColor(COLOR_YELLOW);
+        tft.setCursorSmallChar(8, 6);
         tft.printSmallChars("Button 1 : ");
         tft.setCharColor(COLOR_WHITE);
         tft.printSmallChars("FLASH");
         HAL_Delay(25);
 
-        tft.setCursorSmallChar(8, 9);
         tft.setCharColor(COLOR_LIGHT_GRAY);
+        tft.setCursorSmallChar(8, 8);
+        tft.printSmallChars("Firmware to flash");
+        HAL_Delay(25);
+
+
+
+
+        tft.setCursorSmallChar(8, 14);
+        tft.setCharColor(COLOR_YELLOW);
         tft.printSmallChars("Button 2 : ");
         tft.setCharColor(COLOR_WHITE);
         tft.printSmallChars("DFU Mode");
         HAL_Delay(25);
 
-        tft.setCursorSmallChar(8, 10);
-        tft.setCharColor(COLOR_LIGHT_GRAY);
+        tft.setCursorSmallChar(8, 16);
+        tft.setCharColor(COLOR_YELLOW);
         tft.printSmallChars("Button 3 : ");
+        tft.setCharColor(COLOR_WHITE);
+        tft.printSmallChars("SD card access");
+        HAL_Delay(25);
+
+        tft.setCursorSmallChar(8, 18);
+        tft.setCharColor(COLOR_YELLOW);
+        tft.printSmallChars("Button 6 : ");
         tft.setCharColor(COLOR_WHITE);
         tft.printSmallChars("REBOOT");
         HAL_Delay(25);
 
-        tft.setCursorSmallChar(7, 13);
-        tft.setCharColor(COLOR_LIGHT_GRAY);
-        tft.printSmallChars("Firmware to flash");
-        HAL_Delay(25);
+
         displayFile(fileSelect);
         HAL_Delay(25);
         state = STATE_MAIN_LOOP;
@@ -223,6 +245,10 @@ void bootloaderLoop() {
                 break;
             case 2:
                 // Button 3
+                SDCardAccess();
+                break;
+            case 5:
+                // Button 4
                 reboot();
                 break;
             }
@@ -435,6 +461,78 @@ void reboot() {
     __set_MSP(*(__IO uint32_t*) 0x08000000);
     NVIC_SystemReset();
     while (1);
+}
+
+void SDCardAccess() {
+    tft.fillArea(0, 24, 240, 320-24, COLOR_BLACK);
+
+    tft.setCharColor(COLOR_WHITE);
+    tft.setCursor(4, 3);
+    tft.print("SD CARD ACCESS");
+
+    tft.setCharColor(COLOR_WHITE);
+    tft.setCursorSmallChar(4, 14);
+    tft.printSmallChars("Unmount the drive on your");
+    tft.setCursorSmallChar(4, 15);
+    tft.printSmallChars("computer before exiting.");
+
+    tft.setCharColor(COLOR_YELLOW);
+    tft.setCursor(2, 14);
+    tft.print("Press MENU to exit");
+
+    MX_USB_DEVICE_Start();
+
+    tft.setCharColor(COLOR_GRAY);
+
+    // Exit when MENU button is pressed
+    while (getButtonPressed() != 6) {
+
+
+        HAL_Delay(2);
+
+        // Animation while displaying R and W
+        if (readDisplayCounter > 0) {
+            if ((readDisplayCounterAnim % 50) == 0) {
+                tft.setCharColor(COLOR_GREEN);
+                tft.setCursor(9, 5);
+                tft.print("R");
+                readAnimationIndex  = (readAnimationIndex + 1) % 4;
+                tft.print((char)sdAccessAnimation[readAnimationIndex]);
+            }
+            readDisplayCounterAnim++;
+            readDisplayCounter--;
+        } else if (readDisplayCounter == 0) {
+            tft.setCursor(9, 5);
+            tft.print("  ");
+            // Last one not to enter any tft.print
+            readDisplayCounter--;
+            readDisplayCounterAnim = 0;
+        }
+
+        if (writeDisplayCounter > 0) {
+            if ((writeDisplayCounterAnim % 50) == 0) {
+                tft.setCharColor(COLOR_RED);
+                tft.setCursor(11, 5);
+                tft.print("W");
+                writeAnimationIndex  = (writeAnimationIndex + 1) % 4;
+                tft.print((char)sdAccessAnimation[writeAnimationIndex]);
+            }
+            writeDisplayCounterAnim++;
+            writeDisplayCounter--;
+        } else if (writeDisplayCounter == 0) {
+            tft.setCursor(11, 5);
+            tft.print("  ");
+            writeDisplayCounter--;
+            writeDisplayCounterAnim = 0;
+        }
+    }
+
+    MX_USB_DEVICE_Stop();
+
+    fileSelect = 0;
+    firmwares.reset();
+
+    state = STATE_INIT;
 }
 
 

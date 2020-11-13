@@ -68,7 +68,9 @@ MEMORY
     DTCMRAM	(xrw)	: ORIGIN = 0x20000000,	LENGTH = 128K
     ITCMRAM	(xrw)	: ORIGIN = 0x00000000,	LENGTH = 64K
     RAM_D1	(xrw)	: ORIGIN = 0x24000000,	LENGTH = 512K
-    RAM_D2	(xrw)	: ORIGIN = 0x30000000,	LENGTH = 288K
+    RAM_D2	(xrw)	: ORIGIN = 0x30000000,	LENGTH = 128K
+    RAM_D2B (xrw)      : ORIGIN = 0x30020000, LENGTH = 128K
+    RAM_D2C (xrw)      : ORIGIN = 0x30040000, LENGTH = 32K   
     RAM_D3	(xrw)	: ORIGIN = 0x38000000,	LENGTH = 64K
     FLASH	(rx)	: ORIGIN = 0x8000000,	LENGTH = 128K
 }
@@ -195,6 +197,11 @@ SECTIONS
   {
     *(.ram_d2)
   } >RAM_D2
+  
+  .ram_d2b : 
+  {
+    *(.ram_d2b)
+  } >RAM_D2B
   
   /* User_heap_stack section, used to check that there is enough "RAM_D1" Ram  type memory left */
   ._user_heap_stack :
