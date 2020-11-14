@@ -453,7 +453,6 @@ void Synth::afterNewParamsLoad(int timbre) {
 void Synth::afterNewMixerLoad() {
 
     rebuidVoiceAllTimbre();
-    updateNumberOfActiveTimbres();
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES ; timbre++) {
         synthState->scalaSettingsChanged(timbre);
@@ -463,6 +462,8 @@ void Synth::afterNewMixerLoad() {
         timbres[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
         //
     }
+
+    updateNumberOfActiveTimbres();
 }
 
 void Synth::updateNumberOfActiveTimbres() {
@@ -470,7 +471,9 @@ void Synth::updateNumberOfActiveTimbres() {
 
 	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
 		int output = this->synthState->mixerState.instrumentState[t].out / 3;
-		timbrePerOutput[output] += 1.0f;
+		if (this->synthState->mixerState.instrumentState[t].numberOfVoices > 0) {
+		    timbrePerOutput[output] += 1.0f;
+		}
 	}
 	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
 		int output = this->synthState->mixerState.instrumentState[t].out / 3;
@@ -612,10 +615,10 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
                     timbres[timbre].setVoiceNumber(v, -1);
                 }
             }
+            timbres[timbre].numberOfVoicesChanged(newValue);
             if (newValue == 0.0f || oldValue == 0.0f) {
                 updateNumberOfActiveTimbres();
             }
-            timbres[timbre].numberOfVoicesChanged(newValue);
             break;
         case MIXER_VALUE_OUT:
             updateNumberOfActiveTimbres();

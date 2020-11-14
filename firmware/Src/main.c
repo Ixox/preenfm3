@@ -73,7 +73,6 @@ MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_MDMA_Init(void);
 static void MX_DMA2D_Init(void);
@@ -276,9 +275,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Enable USB Voltage detector 
-  */
-  HAL_PWREx_EnableUSBVoltageDetector();
 }
 
 /**
@@ -722,42 +718,6 @@ static void MX_MDMA_Init(void)
 
 }
 
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, HC165_CLK_Pin|HC165_LOAD_Pin|SD_CS_Pin|TFT_CS_Pin 
-                          |TFT_DC_Pin|TFT_RESET_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : HC165_CLK_Pin HC165_LOAD_Pin SD_CS_Pin TFT_CS_Pin 
-                           TFT_DC_Pin TFT_RESET_Pin */
-  GPIO_InitStruct.Pin = HC165_CLK_Pin|HC165_LOAD_Pin|SD_CS_Pin|TFT_CS_Pin 
-                          |TFT_DC_Pin|TFT_RESET_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : HC165_DATA_Pin */
-  GPIO_InitStruct.Pin = HC165_DATA_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(HC165_DATA_GPIO_Port, &GPIO_InitStruct);
-
-}
 
 /* USER CODE BEGIN 4 */
 
