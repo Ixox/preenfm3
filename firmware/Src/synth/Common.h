@@ -213,6 +213,7 @@ enum {
 
 extern const struct OneSynthParams preenMainPreset;
 extern const struct OneSynthParams defaultPreset;
+extern const struct OneSynthParams newPresetParams;
 
 extern struct AlgoInformation algoInformation[];
 

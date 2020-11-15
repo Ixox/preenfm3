@@ -205,6 +205,7 @@ private:
     float oscilloPhaseIndex;
     uint32_t oscilloPhaseIndexToUse;
     bool oscilloIsClean;
+    float olscilloYScale;
 
     float oscilloFullPeriodSampl[OSCILLO_BUFFER_SIZE];
     TftAlgo *tftAlgo;

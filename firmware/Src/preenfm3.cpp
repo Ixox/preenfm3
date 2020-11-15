@@ -59,6 +59,9 @@ Synth synth;
 Storage sdCard;
 Hexter hexter;
 Sequencer sequencer;
+uint8_t saturatedOutput = 0;
+uint8_t saturatedOutputMem = 0;
+bool saturatedOutputDisplayed = 0;
 
 RingBuffer<uint8_t, 64> usbMidi;
 
@@ -77,6 +80,9 @@ uint32_t tftPushMillis = 1;
 uint32_t encoderMillis = 1;
 uint32_t oscilloMillis = 1;
 uint32_t cpuUsageMillis = 1;
+uint32_t saturatedOutputMillis = 0;
+
+
 uint32_t ledCpt = 0;;
 float *timbreSamples;
 int previousCpuUsage = 101;
@@ -156,6 +162,35 @@ void preenfm3Loop() {
     uint32_t currentMillis = HAL_GetTick();
 
     bool tftHasJustBeenCleared = tft.hasJustBeenCleared();
+
+
+    if (unlikely(saturatedOutput > 0)) {
+        saturatedOutputMillis = currentMillis + 500;
+        saturatedOutputMem = saturatedOutput;
+        saturatedOutput = 0;
+    }
+    if (unlikely(saturatedOutputMillis > currentMillis)) {
+        if (unlikely(!saturatedOutputDisplayed)) {
+            tft.fillArea(0, 20, 240, 20, COLOR_RED);
+
+            tft.setCharBackgroundColor(COLOR_RED);
+            tft.setCharColor(COLOR_BLACK);
+
+            tft.setCursor(6, 1);
+            tft.print("CLIPPING ");
+            for (int o = 0; o < 3; o++) {
+                if ((saturatedOutputMem & (1 << o)) > 0) {
+                    tft.print(o + 1);
+                }
+            }
+            saturatedOutputDisplayed = true;
+        }
+    } else {
+        if (unlikely(saturatedOutputDisplayed)) {
+            tft.fillArea(0, 20, 240, 20, COLOR_BLACK);
+            saturatedOutputDisplayed = false;
+        }
+    }
 
     if (unlikely(tftHasJustBeenCleared))  {
         tft.resetHasJustBeenCleared();
@@ -272,7 +307,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai) {
     if (hsai == &hsai_BlockA1) {
         preenfm3DecodeMidiIn();
 
-        synth.buildNewSampleBlock(&waveform1[64], &waveform2[64], &waveform3[64]);
+        saturatedOutput |= synth.buildNewSampleBlock(&waveform1[64], &waveform2[64], &waveform3[64]);
         tft.oscilloRecord32Samples(timbreSamples);
     }
 }
@@ -287,7 +322,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
     if (hsai == &hsai_BlockA1) {
         preenfm3DecodeMidiIn();
 
-        synth.buildNewSampleBlock(waveform1, waveform2, waveform3);
+        saturatedOutput |= synth.buildNewSampleBlock(waveform1, waveform2, waveform3);
         tft.oscilloRecord32Samples(timbreSamples);
     }
 }

@@ -32,7 +32,7 @@ const char* midiWithAll [] = { "All", "1", "2", "3", "4", "5", "6", "7", "8", "9
 
 const struct Pfm3MixerButtonState volumeButtonState = {
       "Volume", MIXER_VALUE_VOLUME,
-        {0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames},
+        {0, 4, 401, DISPLAY_TYPE_FLOAT, nullNames},
 };
 
 const struct Pfm3MixerButtonState panButtonState = {

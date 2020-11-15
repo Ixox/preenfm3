@@ -26,7 +26,11 @@
 float midiNoteScale[2][NUMBER_OF_TIMBRES][128] __attribute__((section(".ram_d1")));
 
 
-static const float calledPerSecond = PREENFM_FREQUENCY / 32.0f;
+#define CALLED_PER_SECOND (PREENFM_FREQUENCY / 32.0f)
+
+// Static to all 4 timbres
+uint8_t Timbre::voiceIndex;
+
 
 /*
 #include "LiquidCrystal.h"
@@ -167,8 +171,6 @@ float panTable[]  = {
 
 
 
-// Static to all 4 timbres
-unsigned int voiceIndex;
 
 
 Timbre::Timbre() {
@@ -425,7 +427,7 @@ void Timbre::setHoldPedal(int value) {
 
 void Timbre::setNewBPMValue(float bpm) {
 	ticksPerSecond = bpm * 24.0f / 60.0f;
-	ticksEveryNCalls = calledPerSecond / ticksPerSecond;
+	ticksEveryNCalls = CALLED_PER_SECOND / ticksPerSecond;
 	ticksEveyNCallsInteger = (int)ticksEveryNCalls;
 }
 
@@ -494,9 +496,9 @@ void Timbre::voicesToTimbre() {
 		} else if (k == numberOfVoices - 1) {
 			// Let's apply the * numberOfVoiceInverse to divide by the number of voices
 			for (int s = 0 ; s < BLOCK_SIZE ; s++) {
-				*timbreBlock = (*timbreBlock + *voiceBlock++) * numberOfVoiceInverse;
+				*timbreBlock = (*timbreBlock + *voiceBlock++);
 				timbreBlock++;
-				*timbreBlock = (*timbreBlock + *voiceBlock++) * numberOfVoiceInverse;
+				*timbreBlock = (*timbreBlock + *voiceBlock++);
 				timbreBlock++;
 			}
 		} else {

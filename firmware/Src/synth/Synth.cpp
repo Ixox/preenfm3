@@ -31,6 +31,17 @@ Synth::Synth(void) {
 Synth::~Synth(void) {
 }
 
+
+/*
+ * ????????????????????? USEUL
+ */
+#define ASM_SSAT_24(ARG1,ARG2) \
+({                          \
+  uint32_t __RES, __ARG1 = (ARG1); \
+  asm ("ssat %0, %1, %2, LSL #8" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) ); \
+  __RES; \
+ })
+
 void Synth::init(SynthState* synthState) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         for (uint16_t k = 0; k < (sizeof(struct OneSynthParams) / sizeof(float)); k++) {
@@ -56,8 +67,6 @@ void Synth::init(SynthState* synthState) {
         smoothPan[t] = 0.0f;
 
     }
-    updateNumberOfActiveTimbres();
-
 
     // Cpu usage
     cptCpuUsage = 0;
@@ -210,8 +219,13 @@ void Synth::mixAndPan(int32_t *dest, float* source, float &pan, float sampleMult
 }
 
 
+/**
+ * return : outputSaturated bit field
+ */
 
-void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
+uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
+    uint8_t outputSaturated = 0;
+
 	CYCLE_MEASURE_START(cycles_all);
 
     // We consider the random number is always ready here...
@@ -280,13 +294,14 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
     		continue;
     	}
         //Gate and mixer are per timbre
-    	float sampleMultipler = (float)0x7fffffff;
     	if (abs(filteredVolume[timbre] - synthState->mixerState.instrumentState[timbre].volume) < .0005f)  {
     	    filteredVolume[timbre] = synthState->mixerState.instrumentState[timbre].volume;
     	} else {
     	    filteredVolume[timbre] = filteredVolume[timbre] * .9f + synthState->mixerState.instrumentState[timbre].volume * .1f;
     	}
-    	sampleMultipler *= ratioTimbre[timbre] * filteredVolume[timbre];
+        // Max is 0x7fffff * [-1:1]
+        // We divide by 4 to have headroom
+        float sampleMultipler = (float)0x7fffff *  filteredVolume[timbre] *.25f;
         timbres[timbre].voicesToTimbre();
         timbres[timbre].gateFx();
 
@@ -357,6 +372,49 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
     }
 
 
+    /*
+     * Let's check the clipping
+     */
+    cb1 = buffer1;
+    cb2 = buffer2;
+    cb3 = buffer3;
+
+    int32_t sValue;
+    while (cb1 < endcb1) {
+        if (unlikely(*cb1 > 0x7FFFFF)) {
+            *cb1 = 0x7FFFFF;
+            outputSaturated |= 0b001;
+        }
+        if (unlikely(*cb1 < -0x7FFFFF)) {
+            *cb1 = -0x7FFFFF;
+            outputSaturated |= 0b001;
+        }
+        *cb1 <<= 8;
+        cb1++;
+
+        if (unlikely(*cb2 > 0x7FFFFF)) {
+            *cb2 = 0x7FFFFF;
+            outputSaturated |= 0b010;
+        }
+        if (unlikely(*cb2 < -0x7FFFFF)) {
+            *cb2 = -0x7FFFFF;
+            outputSaturated |= 0b010;
+        }
+        *cb2 <<= 8;
+        cb2++;
+
+        if (unlikely(*cb3 > 0x7FFFFF)) {
+            *cb3 = 0x7FFFFF;
+            outputSaturated |= 0b100;
+        }
+        if (unlikely(*cb3 < -0x7FFFFF)) {
+            *cb3 = -0x7FFFFF;
+            outputSaturated |= 0b100;
+        }
+        *cb3 <<= 8;
+        cb3++;
+    }
+
     CYCLE_MEASURE_END();
 
     // Take 100 of them to have a 0-100 percent value
@@ -366,6 +424,8 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
         cptCpuUsage = 0;
         totalCyclesUsedInSynth = 0;
     }
+
+    return outputSaturated;
 }
 
 int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
@@ -463,23 +523,8 @@ void Synth::afterNewMixerLoad() {
         //
     }
 
-    updateNumberOfActiveTimbres();
 }
 
-void Synth::updateNumberOfActiveTimbres() {
-	float timbrePerOutput[NUMBER_OF_TIMBRES] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
-	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-		int output = this->synthState->mixerState.instrumentState[t].out / 3;
-		if (this->synthState->mixerState.instrumentState[t].numberOfVoices > 0) {
-		    timbrePerOutput[output] += 1.0f;
-		}
-	}
-	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-		int output = this->synthState->mixerState.instrumentState[t].out / 3;
-		ratioTimbre[t] =  1.0f / timbrePerOutput[output];
-	}
-}
 
 int Synth::getFreeVoice() {
     // Loop on all voices
@@ -616,12 +661,6 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
                 }
             }
             timbres[timbre].numberOfVoicesChanged(newValue);
-            if (newValue == 0.0f || oldValue == 0.0f) {
-                updateNumberOfActiveTimbres();
-            }
-            break;
-        case MIXER_VALUE_OUT:
-            updateNumberOfActiveTimbres();
             break;
     }
 }

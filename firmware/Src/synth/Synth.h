@@ -57,7 +57,7 @@ public:
     void allSoundOff();
     void allSoundOff(int timbre);
     bool isPlaying();
-    void buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3);
+    uint8_t buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3);
 
 
     // Overide SynthParamListener
@@ -95,7 +95,6 @@ public:
     void beforeNewParamsLoad(int timbre);
     void afterNewParamsLoad(int timbre);
     void afterNewMixerLoad();
-    void updateNumberOfActiveTimbres();
     void showAlgo() { }
     void showIMInformation() {}
 
@@ -175,7 +174,6 @@ private:
     // Called by setSynthState
     void init(SynthState* synthState);
     void mixAndPan(int32_t *dest, float* source, float &pan, float sampleMultipler);
-    float ratioTimbre[NUMBER_OF_TIMBRES];
     float filteredVolume[NUMBER_OF_TIMBRES];
     Voice voices[MAX_NUMBER_OF_VOICES];
     Timbre timbres[NUMBER_OF_TIMBRES];

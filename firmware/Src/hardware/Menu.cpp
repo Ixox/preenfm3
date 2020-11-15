@@ -96,8 +96,8 @@ const struct MenuItem allMenus[]  = {
                 MENU_PRESET,
                 "Preset",
                 MENUTYPE_WITHSUBMENU,
-                4,
-                { MENU_PRESET_LOAD_SELECT, MENU_PRESET_SAVE_SELECT, MENU_PRESET_LOAD_SELECT_DX7_BANK, MENU_PRESET_RANDOMIZER }
+                5,
+                { MENU_PRESET_LOAD_SELECT, MENU_PRESET_SAVE_SELECT, MENU_PRESET_LOAD_SELECT_DX7_BANK, MENU_PRESET_RANDOMIZER, MENU_PRESET_NEW }
         },
         {
                 MENU_PRESET_SAVE_SELECT,
@@ -133,6 +133,13 @@ const struct MenuItem allMenus[]  = {
                 "Rand",
                 MENUTYPE_RANDOMIZER,
                 4,
+                {MENU_DONE}
+        },
+        {
+                MENU_PRESET_NEW,
+                "New",
+                MENUTYPE_CONFIRM,
+                1,
                 {MENU_DONE}
         },
         // == SEQUENCER
