@@ -502,13 +502,16 @@ void FMDisplayMixer::tempoClick() {
             if (volume != lastVolume[timbre] || gr != lastGainReduction[timbre]) {
                 // gr is negative
                 int pixelPerDb = 5;
+                int height = 3;
+                int YOffset = 21;
                 float maxX = 240 + (volume + gr) * pixelPerDb;
                 if (maxX < 0) {
                     maxX = 0;
                 }
-                tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 240 , 5 , COLOR_BLACK);
-                uint8_t visuColo = COLOR_GREEN;
-                uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN;
+                // Erase
+                tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, 240 , height , COLOR_BLACK);
+                uint8_t visuColo = COLOR_LIGHT_GREEN;
+                uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN2;
 
                 if (this->synthState->mixerState.instrumentState[timbre].compressorType > 0) {
                     // Saturation ?
@@ -526,19 +529,19 @@ void FMDisplayMixer::tempoClick() {
                         afterThresh = (maxX - threshInPixel);
                         maxX = threshInPixel;
                     }
-                    tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, maxX , 5 , visuColo);
+                    tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, maxX , height , visuColo);
                     if (afterThresh > 0) {
-                        tft->fillArea(threshInPixel +1 , Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, afterThresh , 5 , visuColorAfterThresh);
-                        tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_BLACK);
+                        tft->fillArea(threshInPixel +1 , Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, afterThresh , height , visuColorAfterThresh);
+                        tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, 1,  height , COLOR_BLACK);
                     } else {
                         if (maxX > 0) {
-                            tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_LIGHT_GRAY);
+                            tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, 1,  height , COLOR_LIGHT_GRAY);
                         }
                     }
 
                     if (gr < -.5) {
-                        tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, - gr * 3 , 5 , COLOR_ORANGE);
-                        tft->fillArea(- gr * 3 + 1, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1 , 5 , COLOR_BLACK);
+                        tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, - gr * pixelPerDb , height , COLOR_ORANGE);
+                        tft->fillArea(- gr * pixelPerDb + 1, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, 1 , height , COLOR_BLACK);
                     }
                 } else {
                     // Without compressor
@@ -546,7 +549,7 @@ void FMDisplayMixer::tempoClick() {
                         maxX = 240;
                         visuColo = COLOR_RED;
                     }
-                    tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, maxX , 5 , visuColo);
+                    tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, maxX , height , visuColo);
                 }
             }
 
