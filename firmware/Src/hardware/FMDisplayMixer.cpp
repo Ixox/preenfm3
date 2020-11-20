@@ -375,9 +375,6 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
         tft->print(20 - refreshStatus);
         tft->setCharColor(COLOR_GRAY);
 
-        // volume metter
-        tft->fillArea(0, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE + 20, 240 , 5 , COLOR_DARK_GRAY);
-
         if (!isGlobalSettings) {
             tft->print('-');
             tft->setCharColor(COLOR_GREEN);
@@ -504,11 +501,12 @@ void FMDisplayMixer::tempoClick() {
 
             if (volume != lastVolume[timbre] || gr != lastGainReduction[timbre]) {
                 // gr is negative
-                float maxX = 240 + (volume + gr) * 3;
+                int pixelPerDb = 5;
+                float maxX = 240 + (volume + gr) * pixelPerDb;
                 if (maxX < 0) {
                     maxX = 0;
                 }
-                tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 240 , 5 , COLOR_DARK_GRAY);
+                tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 240 , 5 , COLOR_BLACK);
                 uint8_t visuColo = COLOR_GREEN;
                 uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN;
 
@@ -523,7 +521,7 @@ void FMDisplayMixer::tempoClick() {
                     // With compressor
                     int afterThresh = 0;
                     int threashold = 12;
-                    int threshInPixel = 240 - threashold * 3;
+                    int threshInPixel = 240 - threashold * pixelPerDb;
                     if (maxX > threshInPixel) {
                         afterThresh = (maxX - threshInPixel);
                         maxX = threshInPixel;
@@ -533,7 +531,9 @@ void FMDisplayMixer::tempoClick() {
                         tft->fillArea(threshInPixel +1 , Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, afterThresh , 5 , visuColorAfterThresh);
                         tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_BLACK);
                     } else {
-                        tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_LIGHT_GRAY);
+                        if (maxX > 0) {
+                            tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_LIGHT_GRAY);
+                        }
                     }
 
                     if (gr < -.5) {
