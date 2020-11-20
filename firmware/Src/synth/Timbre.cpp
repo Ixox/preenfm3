@@ -482,24 +482,28 @@ void Timbre::prepareMatrixForNewBlock() {
 
 
 
-void Timbre::voicesToTimbre() {
+void Timbre::voicesToTimbre(float volumeGain) {
 
     for (int k = 0; k < numberOfVoices; k++) {
 		float* timbreBlock= this->sampleBlock;
 		const float* voiceBlock = voices[voiceNumber[k]]->getSampleBlock();
 
 		if (unlikely(k == 0)) {
-            for (int s = 0 ; s < BLOCK_SIZE ; s++) {
-                *timbreBlock++ = *voiceBlock++;
-                *timbreBlock++ = *voiceBlock++;
-            }
+		    if (unlikely(numberOfVoices == 1.0f)) {
+                for (int s = 0 ; s < BLOCK_SIZE ; s++) {
+                    *timbreBlock++ = *voiceBlock++ * volumeGain;
+                    *timbreBlock++ = *voiceBlock++ * volumeGain;
+                }
+		    } else {
+                for (int s = 0 ; s < BLOCK_SIZE ; s++) {
+                    *timbreBlock++ = *voiceBlock++;
+                    *timbreBlock++ = *voiceBlock++;
+                }
+		    }
 		} else if (k == numberOfVoices - 1) {
-			// Let's apply the * numberOfVoiceInverse to divide by the number of voices
 			for (int s = 0 ; s < BLOCK_SIZE ; s++) {
-				*timbreBlock = (*timbreBlock + *voiceBlock++);
-				timbreBlock++;
-				*timbreBlock = (*timbreBlock + *voiceBlock++);
-				timbreBlock++;
+				*timbreBlock++ = (*timbreBlock + *voiceBlock++) * volumeGain;
+				*timbreBlock++ = (*timbreBlock + *voiceBlock++) * volumeGain;
 			}
 		} else {
 			for (int s = 0 ; s < BLOCK_SIZE ; s++) {

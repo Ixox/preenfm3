@@ -78,7 +78,8 @@ private:
     TftDisplay* tft;
     SynthState* synthState;
     uint8_t valueChangedCounter[NUMBER_OF_ENCODERS_PFM3];
-
+    float lastVolume[NUMBER_OF_TIMBRES];
+    float lastGainReduction[NUMBER_OF_TIMBRES];
 };
 
 #endif

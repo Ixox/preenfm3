@@ -16,6 +16,9 @@
  */
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 void preenfm3Loop();
@@ -25,3 +28,9 @@ void preenfm3_USART();
 void preenfm3_usbDataReceive(uint8_t *buffer);
 void preenfm3StartSai();
 
+float getCompInstrumentVolume(int t);
+float getCompInstrumentGainReduction(int t);
+
+#ifdef __cplusplus
+}
+#endif

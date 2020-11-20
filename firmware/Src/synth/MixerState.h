@@ -32,6 +32,7 @@ enum MIXER_BANK_VERSION {
 
 struct MixerInstrumentState {
     uint8_t out;
+    uint8_t compressorType;
     uint8_t midiChannel;
     uint8_t firstNote, lastNote;
     int8_t shiftNote;

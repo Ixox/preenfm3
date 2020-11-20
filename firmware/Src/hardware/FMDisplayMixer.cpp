@@ -19,7 +19,11 @@
 #include "TftDisplay.h"
 #include "TftAlgo.h"
 
+// To access comp values
+#include "preenfm3.h"
+
 const char* outDisplay[] = { "1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6" };
+const char* compDisplay[]= { "No", "Slow", "Medi", "Fast"};
 const char* enableNames[] = { "Off", "On" };
 const char* scalaMapNames[] = { "Keyb", "Cont" };
 static const char* nullNames[] = { };
@@ -47,6 +51,12 @@ const struct Pfm3MixerButton volumeButton = {
   { &volumeButtonState, &panButtonState }
 };
 
+const struct Pfm3MixerButtonState compButtonState = {
+      "Compressor", MIXER_VALUE_COMPRESSOR,
+        {0, 3, 4, DISPLAY_TYPE_STRINGS, compDisplay }
+};
+
+
 const struct Pfm3MixerButtonState outButtonState = {
       "Jack output", MIXER_VALUE_OUT,
         {0, 8, 9, DISPLAY_TYPE_STRINGS, outDisplay }
@@ -55,8 +65,8 @@ const struct Pfm3MixerButtonState outButtonState = {
 
 const struct Pfm3MixerButton outButton = {
   "Out",
-  1,
-  { &outButtonState }
+  2,
+  { &compButtonState, &outButtonState }
 };
 
 
@@ -173,6 +183,9 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
     switch (valueType) {
     case MIXER_VALUE_OUT:
         valueP = (void *) &this->synthState->mixerState.instrumentState[encoder].out;
+        break;
+    case MIXER_VALUE_COMPRESSOR:
+        valueP = (void *) &this->synthState->mixerState.instrumentState[encoder].compressorType;
         break;
     case MIXER_VALUE_PAN:
         valueP = (void *) &this->synthState->mixerState.instrumentState[encoder].pan;
@@ -362,6 +375,8 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
         tft->print(20 - refreshStatus);
         tft->setCharColor(COLOR_GRAY);
 
+        // volume metter
+        tft->fillArea(0, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE + 20, 240 , 5 , COLOR_DARK_GRAY);
 
         if (!isGlobalSettings) {
             tft->print('-');
@@ -481,6 +496,63 @@ void FMDisplayMixer::tempoClick() {
                 tft->setCharColor(COLOR_WHITE);
                 displayMixerValue(timbre);
             }
+        }
+
+        if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices > 0) {
+            float volume = getCompInstrumentVolume(timbre);
+            float gr = getCompInstrumentGainReduction(timbre);
+
+            if (volume != lastVolume[timbre] || gr != lastGainReduction[timbre]) {
+                // gr is negative
+                float maxX = 240 + (volume + gr) * 3;
+                if (maxX < 0) {
+                    maxX = 0;
+                }
+                tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 240 , 5 , COLOR_DARK_GRAY);
+                uint8_t visuColo = COLOR_GREEN;
+                uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN;
+
+                if (this->synthState->mixerState.instrumentState[timbre].compressorType > 0) {
+                    // Saturation ?
+                    if (maxX > 240) {
+                        maxX = 240;
+                        visuColo = COLOR_RED;
+                        visuColorAfterThresh  = COLOR_RED ;
+                    }
+
+                    // With compressor
+                    int afterThresh = 0;
+                    int threashold = 12;
+                    int threshInPixel = 240 - threashold * 3;
+                    if (maxX > threshInPixel) {
+                        afterThresh = (maxX - threshInPixel);
+                        maxX = threshInPixel;
+                    }
+                    tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, maxX , 5 , visuColo);
+                    if (afterThresh > 0) {
+                        tft->fillArea(threshInPixel +1 , Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, afterThresh , 5 , visuColorAfterThresh);
+                        tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_BLACK);
+                    } else {
+                        tft->fillArea(threshInPixel, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1,  5, COLOR_LIGHT_GRAY);
+                    }
+
+                    if (gr < -.5) {
+                        tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, - gr * 3 , 5 , COLOR_ORANGE);
+                        tft->fillArea(- gr * 3 + 1, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, 1 , 5 , COLOR_BLACK);
+                    }
+                } else {
+                    // Without compressor
+                    if (maxX > 240) {
+                        maxX = 240;
+                        visuColo = COLOR_RED;
+                    }
+                    tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 20, maxX , 5 , visuColo);
+                }
+            }
+
+            lastVolume[timbre] = volume;
+            lastGainReduction[timbre] = gr;
+
         }
     }
 }

@@ -236,10 +236,10 @@ void preenfm3Loop() {
                 tft.setCharBackgroundColor(COLOR_BLACK);
                 tft.setCharColor(COLOR_GRAY);
                 tft.setCursorInPixel(90,25);
-                if (cpuUsage < 10) {
-                    tft.printSmallChar(' ');
-                }
                 int  cpuUsage10 = cpuUsage / 10;
+                if (cpuUsage10 < 10) {
+                    tft.printSmallChar('0');
+                }
                 tft.printSmallChar(cpuUsage10);
                 tft.printSmallChar('.');
                 cpuUsage -= cpuUsage10 * 10.0f;
@@ -508,6 +508,16 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
     }
 }
 
+float getCompInstrumentVolume(int t) {
+    return synth.getCompInstrument(t).getCurrentVolume();
+}
+
+float getCompInstrumentGainReduction(int t) {
+    return synth.getCompInstrument(t).getCurrentGainReduction();
+}
+
+
 #ifdef __cplusplus
 }
 #endif
+

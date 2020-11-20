@@ -28,6 +28,8 @@
 #include "SynthStateAware.h"
 #include "dwt.h"
 
+#include "SimpleComp.h"
+
 #define UINT_MAX  4294967295
 #define NUMBER_OF_STORED_NOT 6
 
@@ -169,12 +171,14 @@ public:
         return cpuUsage;
     }
 
+    chunkware_simple::SimpleComp& getCompInstrument(int t) {
+        return compInstrument[t];
+    }
 
 private:
     // Called by setSynthState
     void init(SynthState* synthState);
     void mixAndPan(int32_t *dest, float* source, float &pan, float sampleMultipler);
-    float filteredVolume[NUMBER_OF_TIMBRES];
     Voice voices[MAX_NUMBER_OF_VOICES];
     Timbre timbres[NUMBER_OF_TIMBRES];
 
@@ -204,6 +208,8 @@ private:
 
     float smoothPan[NUMBER_OF_TIMBRES];
     float smoothVolume[NUMBER_OF_TIMBRES];
+
+    chunkware_simple::SimpleComp compInstrument[NUMBER_OF_TIMBRES];
 
 };
 

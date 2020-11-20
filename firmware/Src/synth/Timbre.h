@@ -54,7 +54,7 @@ public:
     void updateArpegiatorInternalClock();
     void cleanNextBlock();
     void prepareMatrixForNewBlock();
-    void voicesToTimbre();
+    void voicesToTimbre(float volumeGain);
     void gateFx();
     void afterNewParamsLoad();
     void setNewValue(int index, struct ParameterDisplay* param, float newValue);
