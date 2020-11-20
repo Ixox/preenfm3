@@ -524,9 +524,9 @@ void Synth::afterNewMixerLoad() {
         timbres[timbre].afterNewParamsLoad();
         // values to force check lfo used
         timbres[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
-        //
+        // Update compressor
+        newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, -1, this->synthState->mixerState.instrumentState[timbre].compressorType);
     }
-
 }
 
 
