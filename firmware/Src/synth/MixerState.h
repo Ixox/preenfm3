@@ -23,10 +23,13 @@
 enum MIXER_BANK_VERSION {
     MIXER_BANK_VERSION1 = 1,
     // Pan
-    MIXER_BANK_VERSION2
+    MIXER_BANK_VERSION2,
+    // Compressor
+    MIXER_BANK_VERSION3
+
 };
 
-#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION2
+#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION3
 
 
 
@@ -69,6 +72,8 @@ public:
 private :
     void restoreFullStateVersion1(char* buffer);
     void restoreFullStateVersion2(char* buffer);
+    void restoreFullStateVersion3(char* buffer);
+    void setDefaultValues();
 };
 
 #endif /* SYNTH_MIXERSTATE_H_ */
