@@ -124,10 +124,12 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_DARK_RED] = reducedColor(0x401000);
     tftPalette[COLOR_GREEN] = reducedColor(0x40ff40);
     tftPalette[COLOR_DARK_GREEN] = reducedColor(0x004000);
+    tftPalette[COLOR_LIGHT_GREEN] = reducedColor(0x90FF90);
     tftPalette[COLOR_LIGHT_GRAY] = reducedColor(0x808080);
     tftPalette[COLOR_GRAY] = reducedColor(0x606060);
     tftPalette[COLOR_DARK_GRAY] = reducedColor(0x101010);
     tftPalette[COLOR_CYAN] = reducedColor(0x76dfef);
+    tftPalette[COLOR_ORANGE] = reducedColor(0xff7f00);
 
     for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
         tftPalette565[c] = convertTo565(tftPalette[c]);
