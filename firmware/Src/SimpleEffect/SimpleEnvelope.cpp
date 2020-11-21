@@ -63,7 +63,7 @@ namespace chunkware_simple
 	//-------------------------------------------------------------
 	void EnvelopeDetector::setCoef( void )
 	{
-		coef_ = exp( -1000.0 / ( ms_ * sampleRate_ ) );
+		coef_ = expf( -1000.0 / ( ms_ * sampleRate_ ) );
 	}
 
 	//-------------------------------------------------------------

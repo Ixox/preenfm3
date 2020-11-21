@@ -120,8 +120,8 @@ void MixerState::getFullDefaultState(char * buffer, uint32_t *size, uint8_t mixN
         buffer[index++] = volumeUint8[3];
         // Pan
         buffer[index++] = 0;
-        // Compressor
-        buffer[index++] = 0;
+        // Compressor (instrument 0 has a medium default comp)
+        buffer[index++] = (t == 0 ? 2 : 0);
     }
 
     *size = index;
@@ -149,6 +149,8 @@ void MixerState::setDefaultValues() {
         instrumentState[t].pan = 0;
         instrumentState[t].compressorType = 0;
     }
+    // Let's set instrument 1 to Medium comp by default
+    instrumentState[0].compressorType = 2;
 }
 
 void MixerState::restoreFullStateVersion1(char* buffer) {
@@ -273,7 +275,8 @@ void MixerState::restoreFullStateVersion3(char* buffer) {
         volumeUint8[3] = buffer[index++];
         instrumentState[t].pan = buffer[index++];
         instrumentState[t].compressorType = buffer[index++];
-    }}
+    }
+}
 
 
 char* MixerState::getMixNameFromFile(char* buffer) {

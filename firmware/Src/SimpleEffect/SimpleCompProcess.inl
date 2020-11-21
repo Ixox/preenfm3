@@ -56,7 +56,7 @@ namespace chunkware_simple
 	    float gain = getGain(maxAbsSample);
 	    // Let's slowly (linearly) reach  the new gain
 	    float incGain = (gain - previousGain_) * INV32;
-        if (gain != 1.0f) {
+        if (gain < (1.0f - DC_OFFSET)) {
             inStereo = startBuffer;
             for (int s = 0; s < 32; s++) {
                 previousGain_ += incGain;
@@ -71,9 +71,7 @@ namespace chunkware_simple
     //-------------------------------------------------------------
     INLINE float SimpleComp::getGain(float sample )
     {
-
         // convert key to dB
-        sample += DC_OFFSET;             // add DC offset to avoid log( 0 )
         float keydB = lin2dB( sample );  // convert linear -> dB
 
         // Let's keep the max during 127 calls.
@@ -104,16 +102,9 @@ namespace chunkware_simple
             overdB = 0.0;
 
         // attack/release
-
         AttRelEnvelope::run( overdB, envdB_ );  // run attack/release envelope
-        overdB = envdB_;
 
-        /* REGARDING THE DC OFFSET: In this case, since the offset is added before
-         * the attack/release processes, the envelope will never fall below the offset,
-         * thereby avoiding denormals. However, to prevent the offset from causing
-         * constant gain reduction, we must subtract it from the envelope, yielding
-         * a minimum value of 0dB.
-         */
+        overdB = envdB_;
 
         // transfer function
         gr_ = overdB * ( ratio_ - 1.0 );   // gain reduction (dB)

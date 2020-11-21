@@ -35,19 +35,18 @@
 
 class Sequencer;
 
-class Synth : public SynthParamListener, public SynthStateAware
-{
+class Synth: public SynthParamListener, public SynthStateAware {
 public:
     Synth(void);
     virtual ~Synth(void);
 
-    void setSynthState(SynthState* synthState) {
+    void setSynthState(SynthState *synthState) {
         SynthStateAware::setSynthState(synthState);
         init(synthState);
     }
 
-    void setSequencer(Sequencer* sequencer) {
-        this->sequencer = sequencer;
+    void setSequencer(Sequencer *sequencer) {
+        this->sequencer_ = sequencer;
     }
 
     void noteOn(int timbre, char note, char velocity);
@@ -61,7 +60,6 @@ public:
     bool isPlaying();
     uint8_t buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3);
 
-
     // Overide SynthParamListener
     void playNote(int timbreNumber, char note, char velocity) {
         noteOn(timbreNumber, note, velocity);
@@ -72,8 +70,8 @@ public:
         }
     }
 
-
-    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
+    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
+        float newValue) {
         newParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
     }
 
@@ -81,10 +79,11 @@ public:
         newMixerValue(mixerValueType, timbre, oldValue, newValue);
     }
 
-    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
+    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
+        float newValue);
     void newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue);
-    void newMixerEdit(int oldButton, int newButton) {};
-
+    void newMixerEdit(int oldButton, int newButton) {
+    }
 
     int getFreeVoice();
     void rebuidVoiceAllTimbre();
@@ -97,8 +96,10 @@ public:
     void beforeNewParamsLoad(int timbre);
     void afterNewParamsLoad(int timbre);
     void afterNewMixerLoad();
-    void showAlgo() { }
-    void showIMInformation() {}
+    void showAlgo() {
+    }
+    void showIMInformation() {
+    }
 
     void midiClockSetSongPosition(int songPosition);
     void midiClockContinue(int songPosition);
@@ -108,36 +109,16 @@ public:
 
     void midiClockSongPositionStep(int songPosition) {
         for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-            timbres[t].midiClockSongPositionStep(songPosition);
-        }
-    }
-
-    inline int leftSampleAtReadCursor() const {
-        return this->samples[this->readCursor];
-    }
-
-    inline int rightSampleAtReadCursor() const {
-        return this->samples[this->readCursor + 1];
-    }
-
-    void incReadCursor() {
-        this->readCursor = (this->readCursor + 2) & 255;
-    }
-
-    inline int getSampleCount() {
-        if (this->readCursor > this->writeCursor) {
-            return this->writeCursor - this->readCursor + 256;
-        } else {
-            return this->writeCursor - this->readCursor;
+            timbres_[t].midiClockSongPositionStep(songPosition);
         }
     }
 
     Timbre* getTimbre(int timbre) {
-        return &timbres[timbre];
+        return &timbres_[timbre];
     }
 
     Timbre* getTimbres() {
-        return timbres;
+        return timbres_;
     }
 
     void setNewValueFromMidi(int timbre, int row, int encoder, float newValue);
@@ -149,71 +130,55 @@ public:
 
     void setCurrentInstrument(int value);
 
-#ifdef DEBUG
-    void debugVoice();
-    void showCycles();
-#endif
-
     // For Oscilloscope to sync refresh
     uint8_t getLowerNote(int t) {
-    	return this->timbres[t].getLowerNote();
+        return this->timbres_[t].getLowerNote();
     }
 
     float getLowerNoteFrequency(int t) {
-        return this->timbres[t].getLowerNoteFrequency();
+        return this->timbres_[t].getLowerNoteFrequency();
     }
 
     uint8_t getNumberOfPlayingVoices() {
-        return numberOfPlayingVoices;
+        return numberOfPlayingVoices_;
     }
 
     float getCpuUsage() {
-        return cpuUsage;
+        return cpuUsage_;
     }
 
     chunkware_simple::SimpleComp& getCompInstrument(int t) {
-        return compInstrument[t];
+        return instrumentCompressor_[t];
     }
 
 private:
     // Called by setSynthState
-    void init(SynthState* synthState);
-    void mixAndPan(int32_t *dest, float* source, float &pan, float sampleMultipler);
-    Voice voices[MAX_NUMBER_OF_VOICES];
-    Timbre timbres[NUMBER_OF_TIMBRES];
+    void init(SynthState *synthState);
+    void mixAndPan(int32_t *dest, float *source, float &pan, float sampleMultipler);
 
-    // 4 buffer or 32 stero int = 64*4 = 256
-    // sample Buffer
-    volatile int readCursor;
-    volatile int writeCursor;
-    int samples[256];
-
-    // gate
-    float currentGate;
+    Voice voices_[MAX_NUMBER_OF_VOICES];
+    Timbre timbres_[NUMBER_OF_TIMBRES];
 
     // Cpu usage
-    uint32_t totalCyclesUsedInSynth;
-    uint16_t cptCpuUsage;
-    uint8_t numberOfPlayingVoices;
-    float cpuUsage;
-    CYCCNT_buffer cycles_all;
-    float totalNumberofCyclesInv;
+    uint32_t totalCyclesUsedInSynth_;
+    uint16_t cptCpuUsage_;
+    uint8_t numberOfPlayingVoices_;
+    float cpuUsage_;
+    float totalNumberofCyclesInv_;
+    CYCCNT_buffer cycles_all_;
 
     // Sequencer
-    Sequencer* sequencer;
+    Sequencer *sequencer_;
 
     // remember notes before changing timbre
-    char noteBeforeNewParalsLoad[NUMBER_OF_STORED_NOT];
-    char velocityBeforeNewParalsLoad[NUMBER_OF_STORED_NOT];
+    char noteBeforeNewParalsLoad_[NUMBER_OF_STORED_NOT];
+    char velocityBeforeNewParalsLoad_[NUMBER_OF_STORED_NOT];
 
-    float smoothPan[NUMBER_OF_TIMBRES];
-    float smoothVolume[NUMBER_OF_TIMBRES];
+    float smoothPan_[NUMBER_OF_TIMBRES];
+    float smoothVolume_[NUMBER_OF_TIMBRES];
 
-    chunkware_simple::SimpleComp compInstrument[NUMBER_OF_TIMBRES];
-
+    chunkware_simple::SimpleComp instrumentCompressor_[NUMBER_OF_TIMBRES];
 };
-
-
 
 #endif
 

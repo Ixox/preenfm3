@@ -498,10 +498,19 @@ void FMDisplayMixer::tempoClick() {
         if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices > 0) {
             float volume = getCompInstrumentVolume(timbre);
             float gr = getCompInstrumentGainReduction(timbre);
+            int pixelPerDb = 5;
+            // gr tend to slower reach 0
+            // Let'as accelerate when we don't want to draw the metter anymore
+            if (gr > -.1f) {
+                gr = 0;
+            }
+            if ((volume != lastVolume[timbre] || gr != lastGainReduction[timbre])) {
 
-            if (volume != lastVolume[timbre] || gr != lastGainReduction[timbre]) {
+                lastVolume[timbre] = volume;
+                lastGainReduction[timbre] = gr;
+
+
                 // gr is negative
-                int pixelPerDb = 5;
                 int height = 3;
                 int YOffset = 21;
                 float maxX = 240 + (volume + gr) * pixelPerDb;
@@ -510,6 +519,7 @@ void FMDisplayMixer::tempoClick() {
                 }
                 // Erase
                 tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, 240 , height , COLOR_BLACK);
+
                 uint8_t visuColo = COLOR_LIGHT_GREEN;
                 uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN2;
 
@@ -552,10 +562,6 @@ void FMDisplayMixer::tempoClick() {
                     tft->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE + YOffset, maxX , height , visuColo);
                 }
             }
-
-            lastVolume[timbre] = volume;
-            lastGainReduction[timbre] = gr;
-
         }
     }
 }
