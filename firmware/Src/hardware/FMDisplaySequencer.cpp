@@ -117,7 +117,7 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
             tft_->setCharBackgroundColor(COLOR_BLACK);
 
             for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
-                tft_->setCursorInPixel(44, Y_START_SEQ + 7 + i * 27);
+                tft_->setCursorInPixel(8, Y_START_SEQ + 7 + i * 27);
 
                 if (sequencer_->isSeqActivated(i) || sequencer_->isStepActivated(i)) {
                     if (!sequencer_->isSeqActivated(i)) {
@@ -142,21 +142,16 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
             uint8_t inst = 14 - refreshStatus;
 
             tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCursorInPixel(15, Y_START_SEQ + 7 + inst * 27);
             if (inst == instrument) {
                 tft_->setCharColor(COLOR_YELLOW);
-                tft_->print('>');
             } else {
-                tft_->setCharColor(COLOR_WHITE);
-                tft_->print(' ');
+                tft_->setCharColor(COLOR_LIGHT_GRAY);
             }
-            tft_->setCursorInPixel(30, Y_START_SEQ + 7 + inst * 27);
+            tft_->setCursorInPixel(26, Y_START_SEQ + 7 + inst * 27);
             tft_->print(inst + 1);
 
-            tft_->setCursorInPixel(60, Y_START_SEQ + 7 + inst * 27);
-            if (!tft_->print(synthState_->getTimbreName(inst), 6)) {
-                tft_->print('.');
-            }
+            tft_->setCursorInPixel(50, Y_START_SEQ + 7 + inst * 27);
+            tft_->print(synthState_->getTimbreName(inst), 8);
 
             tft_->setCursorInPixel(160, Y_START_SEQ + 7 + inst * 27);
             tft_->setCharColor(sequencer_->isRecording(inst) ? COLOR_RED : COLOR_GRAY);
@@ -702,7 +697,7 @@ void FMDisplaySequencer::tempoClick() {
                     lastGainReduction[timbre] = gr;
 
                     bool isCompressed = synthState_->mixerState.instrumentState_[timbre].compressorType > 0;
-                    tft_->drawLevelMetter(30, Y_START_SEQ + 7 + timbre * 27 + 20, 208, 3, 5, volume, isCompressed, gr);
+                    tft_->drawLevelMetter(26, Y_START_SEQ + 7 + timbre * 27 + 20, 212, 3, 5, volume, isCompressed, gr);
                 }
             }
         }

@@ -372,19 +372,16 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
         case 14:
             // Display row : timbre number + preset name
             tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCursorInPixel(0, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
-            if ((currentTimbre != (19 - refreshStatus)) || isGlobalSettings) {
-                tft_->setCharColor(COLOR_GRAY);
+            tft_->setCursorInPixel(2, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
+            if (currentTimbre != (19 - refreshStatus)) {
+                tft_->setCharColor(COLOR_LIGHT_GRAY);
             } else {
                 tft_->setCharColor(COLOR_YELLOW);
             }
             tft_->print(20 - refreshStatus);
-            tft_->setCharColor(COLOR_GRAY);
 
+            tft_->setCursorInPixel(22, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
             if (!isGlobalSettings) {
-                tft_->print('-');
-                tft_->setCharColor(COLOR_GREEN);
-
                 // scala scale file is a particular case
                 // We don't display preset name to display scala scales
                 if (mixerValueType != MIXER_VALUE_SCALA_SCALE) {
@@ -440,8 +437,7 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
 }
 
 void FMDisplayMixer::refreshMixerRowGlobalOptions(int row) {
-    tft_->setCharColor(COLOR_GRAY);
-    tft_->print(' ');
+    tft_->setCharColor(COLOR_LIGHT_GRAY);
 
     switch (row) {
         case 0:
@@ -594,6 +590,11 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
             float oldValue = *((float*) valueP);
             float inc = (buttonStateParam->maxValue - buttonStateParam->minValue) / (buttonStateParam->numberOfValues - 1);
             float newValue = oldValue + ticks * inc;
+
+            // Round to next hundredth
+            int newValueInt =  newValue * 1000 + 3;
+            newValueInt /= 10;
+            newValue = (float)newValueInt / 100.0f;
 
             if (unlikely(newValue > buttonStateParam->maxValue)) {
                 newValue = buttonStateParam->maxValue;
