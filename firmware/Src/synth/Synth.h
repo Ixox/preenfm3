@@ -70,8 +70,7 @@ public:
         }
     }
 
-    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
-        float newValue) {
+    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
         newParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
     }
 
@@ -79,8 +78,7 @@ public:
         newMixerValue(mixerValueType, timbre, oldValue, newValue);
     }
 
-    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
-        float newValue);
+    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
     void newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton) {
     }

@@ -26,78 +26,81 @@ MixerState::~MixerState() {
     // TODO Auto-generated destructor stub
 }
 
-void MixerState::getFullState(char* buffer, uint32_t *size) {
+void MixerState::getFullState(char *buffer, uint32_t *size) {
     uint32_t index = 0;
 
     buffer[index++] = MIXER_BANK_CURRENT_VERSION;
     for (int i = 0; i < 12; i++) {
-        buffer[index++] = mixName[i];
+        buffer[index++] = mixName_[i];
     }
-    buffer[index++] = currentChannel;
-    buffer[index++] = globalChannel;
-    buffer[index++] = midiThru;
+    buffer[index++] = currentChannel_;
+    buffer[index++] = globalChannel_;
+    buffer[index++] = midiThru_;
 
-    uint8_t *tuningUint8 = (uint8_t*)&tuning;
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
     buffer[index++] = tuningUint8[0];
     buffer[index++] = tuningUint8[1];
     buffer[index++] = tuningUint8[2];
     buffer[index++] = tuningUint8[3];
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        buffer[index++] = instrumentState[t].out;
-        buffer[index++] = instrumentState[t].midiChannel;
-        buffer[index++] = instrumentState[t].firstNote;
-        buffer[index++] = instrumentState[t].lastNote;
-        buffer[index++] = instrumentState[t].shiftNote;
-        buffer[index++] = instrumentState[t].numberOfVoices;
-        buffer[index++] = instrumentState[t].scalaEnable;
-        buffer[index++] = instrumentState[t].scalaMapping;
-        buffer[index++] = instrumentState[t].scaleScaleNumber >> 8;
-        buffer[index++] = (instrumentState[t].scaleScaleNumber & 0xff);
+        buffer[index++] = instrumentState_[t].out;
+        buffer[index++] = instrumentState_[t].midiChannel;
+        buffer[index++] = instrumentState_[t].firstNote;
+        buffer[index++] = instrumentState_[t].lastNote;
+        buffer[index++] = instrumentState_[t].shiftNote;
+        buffer[index++] = instrumentState_[t].numberOfVoices;
+        buffer[index++] = instrumentState_[t].scalaEnable;
+        buffer[index++] = instrumentState_[t].scalaMapping;
+        buffer[index++] = instrumentState_[t].scaleScaleNumber >> 8;
+        buffer[index++] = (instrumentState_[t].scaleScaleNumber & 0xff);
         for (int s = 0; s < 12; s++) {
-            buffer[index++] = instrumentState[t].scalaScaleFileName[s];
+            buffer[index++] = instrumentState_[t].scalaScaleFileName[s];
         }
-        uint8_t *volumeUint8 = (uint8_t*)&instrumentState[t].volume;
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
         buffer[index++] = volumeUint8[0];
         buffer[index++] = volumeUint8[1];
         buffer[index++] = volumeUint8[2];
         buffer[index++] = volumeUint8[3];
         // Pan
-        buffer[index++] = instrumentState[t].pan;
+        buffer[index++] = instrumentState_[t].pan;
         // Compressor
-        buffer[index++] = instrumentState[t].compressorType;
+        buffer[index++] = instrumentState_[t].compressorType;
     }
+
+    // levelMetter: default mixer only
+    buffer[index++] = levelMeterWhere_;
 
     *size = index;
 }
 
-void MixerState::getFullDefaultState(char * buffer, uint32_t *size, uint8_t mixNumber) {
+void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNumber) {
     // == Default mixer for new bank
     char defaultMixName[13] = "Mix \0\0\0\0\0\0\0\0";
     if (mixNumber > 99) {
         mixNumber = 99;
     }
     uint8_t dizaine = mixNumber / 10;
-    defaultMixName[4] = (char)('0' + dizaine);
-    defaultMixName[5] = (char)('0' + (mixNumber - dizaine * 10));
+    defaultMixName[4] = (char) ('0' + dizaine);
+    defaultMixName[5] = (char) ('0' + (mixNumber - dizaine * 10));
     uint32_t index = 0;
     buffer[index++] = MIXER_BANK_CURRENT_VERSION;
     for (int i = 0; i < 12; i++) {
         buffer[index++] = defaultMixName[i];
     }
-    buffer[index++] = currentChannel;
-    buffer[index++] = globalChannel;
-    buffer[index++] = midiThru;
+    buffer[index++] = currentChannel_;
+    buffer[index++] = globalChannel_;
+    buffer[index++] = midiThru_;
 
     float defaultTuning = 440.0f;
-    uint8_t *tuningUint8 = (uint8_t*)&defaultTuning;
+    uint8_t *tuningUint8 = (uint8_t*) &defaultTuning;
     buffer[index++] = tuningUint8[0];
     buffer[index++] = tuningUint8[1];
     buffer[index++] = tuningUint8[2];
     buffer[index++] = tuningUint8[3];
 
     uint8_t outs[] = { 1, 1, 4, 4, 6, 8 };
-    int numberOfVoices[]= { 3, 3, 3, 2, 1, 1 };
+    int numberOfVoices[] = { 3, 3, 3, 2, 1, 1 };
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         buffer[index++] = outs[t];
         buffer[index++] = 1 + t;
@@ -113,7 +116,7 @@ void MixerState::getFullDefaultState(char * buffer, uint32_t *size, uint8_t mixN
             buffer[index++] = 0;
         }
         float defaultVolume = 1.0f;
-        uint8_t *volumeUint8 = (uint8_t*)&defaultVolume;
+        uint8_t *volumeUint8 = (uint8_t*) &defaultVolume;
         buffer[index++] = volumeUint8[0];
         buffer[index++] = volumeUint8[1];
         buffer[index++] = volumeUint8[2];
@@ -123,11 +126,13 @@ void MixerState::getFullDefaultState(char * buffer, uint32_t *size, uint8_t mixN
         // Compressor (instrument 0 has a medium default comp)
         buffer[index++] = (t == 0 ? 2 : 0);
     }
+    // levelMetter: default mixer only
+    buffer[index++] = 1;
 
     *size = index;
 }
 
-void MixerState::restoreFullState(char* buffer) {
+void MixerState::restoreFullState(char *buffer) {
     uint8_t version = buffer[0];
     setDefaultValues();
     switch (version) {
@@ -143,51 +148,51 @@ void MixerState::restoreFullState(char* buffer) {
     }
 }
 
-
 void MixerState::setDefaultValues() {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        instrumentState[t].pan = 0;
-        instrumentState[t].compressorType = 0;
+        instrumentState_[t].pan = 0;
+        instrumentState_[t].compressorType = 0;
     }
     // Let's set instrument 1 to Medium comp by default
-    instrumentState[0].compressorType = 2;
+    instrumentState_[0].compressorType = 2;
+    levelMeterWhere_ = 1;
 }
 
-void MixerState::restoreFullStateVersion1(char* buffer) {
+void MixerState::restoreFullStateVersion1(char *buffer) {
     int index = 0;
     index++; // version
 
     for (int i = 0; i < 12; i++) {
-        mixName[i] = buffer[index++] ;
+        mixName_[i] = buffer[index++];
     }
-    currentChannel = buffer[index++];
-    globalChannel = buffer[index++];
-    midiThru = buffer[index++];
+    currentChannel_ = buffer[index++];
+    globalChannel_ = buffer[index++];
+    midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*)&tuning;
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
     tuningUint8[3] = buffer[index++];
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        instrumentState[t].out = buffer[index++];
-        instrumentState[t].midiChannel = buffer[index++];
-        instrumentState[t].firstNote = buffer[index++];
-        instrumentState[t].lastNote = buffer[index++];
-        instrumentState[t].shiftNote = buffer[index++];
-        instrumentState[t].numberOfVoices = buffer[index++];
-        instrumentState[t].scalaEnable = buffer[index++];
-        instrumentState[t].scalaMapping = buffer[index++];
-        instrumentState[t].scaleScaleNumber = buffer[index++] << 8;
-        instrumentState[t].scaleScaleNumber += buffer[index++];
+        instrumentState_[t].out = buffer[index++];
+        instrumentState_[t].midiChannel = buffer[index++];
+        instrumentState_[t].firstNote = buffer[index++];
+        instrumentState_[t].lastNote = buffer[index++];
+        instrumentState_[t].shiftNote = buffer[index++];
+        instrumentState_[t].numberOfVoices = buffer[index++];
+        instrumentState_[t].scalaEnable = buffer[index++];
+        instrumentState_[t].scalaMapping = buffer[index++];
+        instrumentState_[t].scaleScaleNumber = buffer[index++] << 8;
+        instrumentState_[t].scaleScaleNumber += buffer[index++];
         for (int s = 0; s < 12; s++) {
-            instrumentState[t].scalaScaleFileName[s] = buffer[index++] ;
+            instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*)&instrumentState[t].volume;
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
-        volumeUint8[2]= buffer[index++];
+        volumeUint8[2] = buffer[index++];
         volumeUint8[3] = buffer[index++];
     }
 }
@@ -195,91 +200,93 @@ void MixerState::restoreFullStateVersion1(char* buffer) {
 /*
  * Version 2 has pan
  */
-void MixerState::restoreFullStateVersion2(char* buffer) {
+void MixerState::restoreFullStateVersion2(char *buffer) {
     int index = 0;
     index++; // version
 
     for (int i = 0; i < 12; i++) {
-        mixName[i] = buffer[index++] ;
+        mixName_[i] = buffer[index++];
     }
-    currentChannel = buffer[index++];
-    globalChannel = buffer[index++];
-    midiThru = buffer[index++];
+    currentChannel_ = buffer[index++];
+    globalChannel_ = buffer[index++];
+    midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*)&tuning;
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
     tuningUint8[3] = buffer[index++];
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        instrumentState[t].out = buffer[index++];
-        instrumentState[t].midiChannel = buffer[index++];
-        instrumentState[t].firstNote = buffer[index++];
-        instrumentState[t].lastNote = buffer[index++];
-        instrumentState[t].shiftNote = buffer[index++];
-        instrumentState[t].numberOfVoices = buffer[index++];
-        instrumentState[t].scalaEnable = buffer[index++];
-        instrumentState[t].scalaMapping = buffer[index++];
-        instrumentState[t].scaleScaleNumber = buffer[index++] << 8;
-        instrumentState[t].scaleScaleNumber += buffer[index++];
+        instrumentState_[t].out = buffer[index++];
+        instrumentState_[t].midiChannel = buffer[index++];
+        instrumentState_[t].firstNote = buffer[index++];
+        instrumentState_[t].lastNote = buffer[index++];
+        instrumentState_[t].shiftNote = buffer[index++];
+        instrumentState_[t].numberOfVoices = buffer[index++];
+        instrumentState_[t].scalaEnable = buffer[index++];
+        instrumentState_[t].scalaMapping = buffer[index++];
+        instrumentState_[t].scaleScaleNumber = buffer[index++] << 8;
+        instrumentState_[t].scaleScaleNumber += buffer[index++];
         for (int s = 0; s < 12; s++) {
-            instrumentState[t].scalaScaleFileName[s] = buffer[index++] ;
+            instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*)&instrumentState[t].volume;
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
-        volumeUint8[2]= buffer[index++];
+        volumeUint8[2] = buffer[index++];
         volumeUint8[3] = buffer[index++];
-        instrumentState[t].pan = buffer[index++];
-    }}
+        instrumentState_[t].pan = buffer[index++];
+    }
+}
 
 /*
  * Version 2 has compressor
  */
-void MixerState::restoreFullStateVersion3(char* buffer) {
+void MixerState::restoreFullStateVersion3(char *buffer) {
     int index = 0;
     index++; // version
 
     for (int i = 0; i < 12; i++) {
-        mixName[i] = buffer[index++] ;
+        mixName_[i] = buffer[index++];
     }
-    currentChannel = buffer[index++];
-    globalChannel = buffer[index++];
-    midiThru = buffer[index++];
+    currentChannel_ = buffer[index++];
+    globalChannel_ = buffer[index++];
+    midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*)&tuning;
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
     tuningUint8[3] = buffer[index++];
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        instrumentState[t].out = buffer[index++];
-        instrumentState[t].midiChannel = buffer[index++];
-        instrumentState[t].firstNote = buffer[index++];
-        instrumentState[t].lastNote = buffer[index++];
-        instrumentState[t].shiftNote = buffer[index++];
-        instrumentState[t].numberOfVoices = buffer[index++];
-        instrumentState[t].scalaEnable = buffer[index++];
-        instrumentState[t].scalaMapping = buffer[index++];
-        instrumentState[t].scaleScaleNumber = buffer[index++] << 8;
-        instrumentState[t].scaleScaleNumber += buffer[index++];
+        instrumentState_[t].out = buffer[index++];
+        instrumentState_[t].midiChannel = buffer[index++];
+        instrumentState_[t].firstNote = buffer[index++];
+        instrumentState_[t].lastNote = buffer[index++];
+        instrumentState_[t].shiftNote = buffer[index++];
+        instrumentState_[t].numberOfVoices = buffer[index++];
+        instrumentState_[t].scalaEnable = buffer[index++];
+        instrumentState_[t].scalaMapping = buffer[index++];
+        instrumentState_[t].scaleScaleNumber = buffer[index++] << 8;
+        instrumentState_[t].scaleScaleNumber += buffer[index++];
         for (int s = 0; s < 12; s++) {
-            instrumentState[t].scalaScaleFileName[s] = buffer[index++] ;
+            instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*)&instrumentState[t].volume;
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
-        volumeUint8[2]= buffer[index++];
+        volumeUint8[2] = buffer[index++];
         volumeUint8[3] = buffer[index++];
-        instrumentState[t].pan = buffer[index++];
-        instrumentState[t].compressorType = buffer[index++];
+        instrumentState_[t].pan = buffer[index++];
+        instrumentState_[t].compressorType = buffer[index++];
     }
+
+    levelMeterWhere_ = buffer[index++];
 }
 
-
-char* MixerState::getMixNameFromFile(char* buffer) {
+char* MixerState::getMixNameFromFile(char *buffer) {
     uint8_t version = buffer[0];
     switch (version) {
         case MIXER_BANK_VERSION1:

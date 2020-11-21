@@ -1564,7 +1564,7 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
     fillArea(x, y, width, height, COLOR_BLACK);
 
     uint8_t visuColo = COLOR_LIGHT_GREEN;
-    uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN2;
+    uint8_t visuColorAfterThresh = COLOR_WHITE;
 
     if (isComp) {
         // Saturation ?
@@ -1584,7 +1584,7 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
         }
         fillArea(x, y, maxX, height, visuColo);
         if (afterThresh > 0) {
-            fillArea(x + threshInPixel + 1, y, afterThresh, height, visuColorAfterThresh);
+            fillArea(x + threshInPixel, y, afterThresh, height, visuColorAfterThresh);
             fillArea(x + threshInPixel, y, 1, height, COLOR_ORANGE);
         }
 

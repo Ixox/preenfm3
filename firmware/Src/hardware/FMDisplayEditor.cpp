@@ -2836,14 +2836,14 @@ struct PfmMainMenu mainMenu = {
 
 FMDisplayEditor::FMDisplayEditor() {
     for (int k = 0; k < NUMBER_OF_TIMBRES; k++) {
-        valueChangedCounter[k] = 0;
-        presetModifed[k] = false;
+        valueChangedCounter_[k] = 0;
+        presetModifed_[k] = false;
     }
-    multipleEdition = false;
+    multipleEdition_ = false;
 }
 
 void FMDisplayEditor::newTimbre(int timbre) {
-    this->currentTimbre = timbre;
+    currentTimbre_ = timbre;
 }
 
 uint8_t FMDisplayEditor::getX(int encoder) {
@@ -2857,15 +2857,15 @@ uint8_t FMDisplayEditor::getX(int encoder) {
 void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
 
-    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-    const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
-    uint8_t buttonState = this->synthState->fullState.buttonState[page->buttonId];
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
+    uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
 
     int encoder6 = -1;
     for (int enc = 0; (enc < 6) && (encoder6 == -1); enc++) {
         const struct RowEncoder rowEncoder = page->states[buttonState]->rowEncoder[enc];
         int rowToTest = currentRow;
-        if (unlikely(this->synthState->fullState.mainPage == 1)) {
+        if (unlikely(synthState_->fullState.mainPage == 1)) {
             switch (currentRow) {
             case ROW_OSC2:
             case ROW_OSC3:
@@ -2899,7 +2899,7 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
     if (encoder6 != -1) {
         uint8_t x = getX(encoder6);
 
-        tft->setCursor(x, encoder6 > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
+        tft_->setCursor(x, encoder6 > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
 
         struct ParameterDisplay *param = &allParameterRows.row[currentRow]->params[encoder];
 
@@ -2907,14 +2907,14 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
         switch (currentRow) {
         case ROW_ENGINE:
             if (encoder == ENCODER_ENGINE_ALGO) {
-                int numberOfOsc = algoInformation[(int)this->synthState->params->engine1.algo].osc - 1;
+                int numberOfOsc = algoInformation[(int)synthState_->params->engine1.algo].osc - 1;
 
                 // If lower number of Osc, adjust current selected one so that it shows up on screen
                 // when going to operator page
-                if (this->synthState->fullState.operatorNumber > numberOfOsc) {
-                    this->synthState->fullState.operatorNumber = numberOfOsc;
+                if (synthState_->fullState.operatorNumber > numberOfOsc) {
+                    synthState_->fullState.operatorNumber = numberOfOsc;
                 }
-                tft->drawAlgo(newValue);
+                tft_->drawAlgo(newValue);
             }
             break;
         case ROW_LFOSEQ1:
@@ -2943,12 +2943,12 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
         case ROW_MODULATION1:
         case ROW_MODULATION3:
         case ROW_MODULATION2: {
-            if (hideParam[encoder6]) {
+            if (hideParam_[encoder6]) {
                 return;
             }
-            struct ModulationIndex im = modulationIndex[(int) this->synthState->params->engine1.algo][encoder6];
-            tft->highlightIM(encoder6, im.source, im.destination);
-            imChangedCounter[encoder6] = 4;
+            struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][encoder6];
+            tft_->highlightIM(encoder6, im.source, im.destination);
+            imChangedCounter_[encoder6] = 4;
             break;
         }
         case ROW_OSC1:
@@ -2967,16 +2967,16 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
                 break;
             case ENCODER_OSC_FREQ: {
                 // Refresh Fine Tune
-                struct OscillatorParams *opParams = &this->synthState->params->osc1;
-                if (opParams[this->synthState->fullState.operatorNumber].frequencyType == OSC_FT_FIXE) {
+                struct OscillatorParams *opParams = &synthState_->params->osc1;
+                if (opParams[synthState_->fullState.operatorNumber].frequencyType == OSC_FT_FIXE) {
                     refreshStatus = 9;
                 }
                 break;
             }
             case ENCODER_OSC_FTUNE: {
                 // Refresh Fine Tune
-                struct OscillatorParams *opParams = &this->synthState->params->osc1;
-                if (opParams[this->synthState->fullState.operatorNumber].frequencyType == OSC_FT_FIXE) {
+                struct OscillatorParams *opParams = &synthState_->params->osc1;
+                if (opParams[synthState_->fullState.operatorNumber].frequencyType == OSC_FT_FIXE) {
                     refreshStatus = 10;
                 }
                 break;
@@ -3011,61 +3011,61 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             break;
         }
 
-        tft->setCharBackgroundColor(COLOR_BLACK);
-        if (!multipleEdition) {
-            tft->setCharColor(COLOR_YELLOW);
+        tft_->setCharBackgroundColor(COLOR_BLACK);
+        if (!multipleEdition_) {
+            tft_->setCharColor(COLOR_YELLOW);
         } else {
-            tft->setCharColor(COLOR_GREEN);
+            tft_->setCharColor(COLOR_GREEN);
         }
-        valueChangedCounter[encoder6] = 4;
+        valueChangedCounter_[encoder6] = 4;
         updateEncoderValueWithoutCursor(currentRow, encoder, param, newValue);
     }
 
 }
 
 void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
-    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-    const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
     const struct RowEncoder rowEncoder =
-        page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
+        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
 
     uint8_t x = getX(encoder);
 
-    tft->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
+    tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
 
-    if (rowEncoder.row != ROW_NONE && !hideParam[encoder]) {
+    if (rowEncoder.row != ROW_NONE && !hideParam_[encoder]) {
         int row = rowEncoder.row;
         // Operator page
-        if (this->synthState->fullState.mainPage == 1) {
-            if (this->synthState->fullState.editPage == 0) {
-                row += this->synthState->fullState.operatorNumber;
+        if (synthState_->fullState.mainPage == 1) {
+            if (synthState_->fullState.editPage == 0) {
+                row += synthState_->fullState.operatorNumber;
             } else {
-                row += this->synthState->fullState.operatorNumber * 2;
+                row += synthState_->fullState.operatorNumber * 2;
             }
         }
 
         struct ParameterDisplay *param = &allParameterRows.row[row]->params[rowEncoder.encoder];
-        float newValue = ((float*) this->synthState->params)[row * NUMBER_OF_ENCODERS + rowEncoder.encoder];
+        float newValue = ((float*) synthState_->params)[row * NUMBER_OF_ENCODERS + rowEncoder.encoder];
 
-        tft->setCharBackgroundColor(COLOR_BLACK);
-        tft->setCharColor(color);
+        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharColor(color);
         updateEncoderValueWithoutCursor(row, rowEncoder.encoder, param, newValue);
     } else {
         if (rowEncoder.encoder != ENCODER_INVISIBLE) {
-            tft->print("     ");
+            tft_->print("     ");
         }
     }
 }
 
 void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) {
 
-    if (this->synthState->fullState.mainPage == -1) {
+    if (synthState_->fullState.mainPage == -1) {
         switch (refreshStatus) {
         case 20:
-            tft->pauseRefresh();
-            tft->clear();
+            tft_->pauseRefresh();
+            tft_->clear();
             displayPreset();
-            tft->oscilloForceNextDisplay();
+            tft_->oscilloForceNextDisplay();
             break;
         case 19:
         case 18:
@@ -3074,12 +3074,12 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         case 15:
         case 14: {
             int button = 19 - refreshStatus;
-            tft->drawButton(mainMenu.editMenu[button]->mainMenuName, 270, 29, button, 0, 1);
+            tft_->drawButton(mainMenu.editMenu[button]->mainMenuName, 270, 29, button, 0, 1);
             break;
         }
         case 13:
-            tft->setCursorInPixel(54, 60);
-            tft->print("E d i t o r", COLOR_DARK_BLUE, COLOR_BLACK);
+            tft_->setCursorInPixel(54, 60);
+            tft_->print("E d i t o r", COLOR_DARK_BLUE, COLOR_BLACK);
             break;
 
         case 11:
@@ -3087,39 +3087,39 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
 //          tft->print("Choose button bellow", COLOR_DARK_BLUE, COLOR_BLACK);
             break;
         case 10:
-            tft->drawAlgo(this->synthState->params->engine1.algo);
+            tft_->drawAlgo(synthState_->params->engine1.algo);
             break;
         }
     } else {
-        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-        const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+        const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 
         switch (refreshStatus) {
         case 21:
             // 21 only when comming from newSynthMode...
-            tft->pauseRefresh();
-            tft->clear();
+            tft_->pauseRefresh();
+            tft_->clear();
             displayPreset();
-            tft->oscilloForceNextDisplay();
-            tft->drawAlgo(this->synthState->params->engine1.algo);
+            tft_->oscilloForceNextDisplay();
+            tft_->drawAlgo(synthState_->params->engine1.algo);
             break;
         case 20:
-            tft->pauseRefresh();
-            tft->fillArea(0, 40, 240, 120, COLOR_BLACK);
-            tft->fillArea(0, 270, 240, 30, COLOR_BLACK);
-            tft->setCursor(0, 2);
-            tft->setCharBackgroundColor(COLOR_BLACK);
-            tft->setCharColor(COLOR_DARK_BLUE);
+            tft_->pauseRefresh();
+            tft_->fillArea(0, 40, 240, 120, COLOR_BLACK);
+            tft_->fillArea(0, 270, 240, 30, COLOR_BLACK);
+            tft_->setCursor(0, 2);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharColor(COLOR_DARK_BLUE);
             // OPerator page
-            if (this->synthState->fullState.mainPage == 1) {
-                tft->print("Op ");
-                tft->print(this->synthState->fullState.operatorNumber + 1);
-                tft->print(" ");
+            if (synthState_->fullState.mainPage == 1) {
+                tft_->print("Op ");
+                tft_->print(synthState_->fullState.operatorNumber + 1);
+                tft_->print(" ");
                 // Highlight operator in the algo schema
-                tft->highlightOperator(this->synthState->params->engine1.algo,
-                    this->synthState->fullState.operatorNumber);
+                tft_->highlightOperator(synthState_->params->engine1.algo,
+                    synthState_->fullState.operatorNumber);
             }
-            tft->print(page->states[this->synthState->fullState.buttonState[page->buttonId]]->stateLabel);
+            tft_->print(page->states[synthState_->fullState.buttonState[page->buttonId]]->stateLabel);
             resetHideParams();
             break;
         case 18:
@@ -3133,11 +3133,11 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
 
             if (button < editMenu->numberOfButtons) {
                 const struct Pfm3OneButton *buttonPage = editMenu->pages[button];
-                tft->drawButton(editMenu->pages[button]->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
-                    this->synthState->fullState.editPage == button ?
-                        this->synthState->fullState.buttonState[page->buttonId] + 1 : 0);
+                tft_->drawButton(editMenu->pages[button]->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
+                    synthState_->fullState.editPage == button ?
+                        synthState_->fullState.buttonState[page->buttonId] + 1 : 0);
             } else {
-                tft->drawButton("", 270, 29, button, 0, 0);
+                tft_->drawButton("", 270, 29, button, 0, 0);
             }
             break;
         }
@@ -3149,25 +3149,25 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         case 7: {
             int button = 12 - refreshStatus;
             const struct RowEncoder rowEncoder =
-                page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[button];
+                page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[button];
             uint8_t x = getX(button);
 
-            tft->setCharColor(COLOR_GRAY);
-            tft->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
+            tft_->setCharColor(COLOR_GRAY);
+            tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
             if (rowEncoder.row != ROW_NONE) {
                 const struct ParameterRowDisplay *paramRow = allParameterRows.row[rowEncoder.row];
                 if (rowEncoder.row >= ROW_MODULATION1 && rowEncoder.row <= ROW_MODULATION3) {
-                    struct ModulationIndex im = modulationIndex[(int) this->synthState->params->engine1.algo][button];
+                    struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][button];
                     if (im.source == 0) {
-                        hideParam[button] = true;
+                        hideParam_[button] = true;
                     } else {
                         if (button < 5) {
-                            tft->print((int) im.source);
-                            tft->print("-");
-                            tft->print((int) im.destination);
+                            tft_->print((int) im.source);
+                            tft_->print("-");
+                            tft_->print((int) im.destination);
                         } else {
-                            tft->print("Fdbk");
+                            tft_->print("Fdbk");
                         }
                     }
                 } else if (rowEncoder.row >= ROW_OSC_MIX1 && rowEncoder.row <= ROW_OSC_MIX3) {
@@ -3175,22 +3175,22 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     int mixNumber = (rowEncoder.row - ROW_OSC_MIX1) * 2 + ((rowEncoder.encoder & 0x2) >> 1);
 
                     // Let's hide modulator operator in the MIX page
-                    if (!carrierOperator[(int) this->synthState->params->engine1.algo][mixNumber]) {
-                        tft->setCharColor(COLOR_DARK_GRAY);
-                        hideParam[button] = true;
+                    if (!carrierOperator[(int) synthState_->params->engine1.algo][mixNumber]) {
+                        tft_->setCharColor(COLOR_DARK_GRAY);
+                        hideParam_[button] = true;
                     }
-                    tft->print(paramRow->paramName[rowEncoder.encoder]);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
 
                 } else if (rowEncoder.row == ROW_EFFECT && rowEncoder.encoder > 0) {
-                    int effect = this->synthState->params->effect.type;
+                    int effect = synthState_->params->effect.type;
                     if (filterRowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
-                        tft->print(filterRowDisplay[effect].paramName[rowEncoder.encoder - 1]);
+                        tft_->print(filterRowDisplay[effect].paramName[rowEncoder.encoder - 1]);
                     } else {
-                        hideParam[button] = true;
-                        tft->print("    ");
+                        hideParam_[button] = true;
+                        tft_->print("    ");
                     }
                 } else {
-                    tft->print(paramRow->paramName[rowEncoder.encoder]);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 }
             }
             break;
@@ -3215,7 +3215,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
 
 void FMDisplayEditor::resetHideParams() {
     for (int h = 0; h < 6; h++) {
-        hideParam[h] = false;
+        hideParam_[h] = false;
     }
 }
 
@@ -3223,125 +3223,126 @@ void FMDisplayEditor::tempoClick() {
     static float lastVolume, lastGainReduction;
 
     for (int e = 0; e < NUMBER_OF_ENCODERS_PFM3; e++) {
-        if (valueChangedCounter[e] > 0) {
-            valueChangedCounter[e]--;
-            if (valueChangedCounter[e] == 0) {
-                if (this->synthState->fullState.mainPage != -1) {
-                    tft->setCharBackgroundColor(COLOR_BLACK);
+        if (valueChangedCounter_[e] > 0) {
+            valueChangedCounter_[e]--;
+            if (valueChangedCounter_[e] == 0) {
+                if (synthState_->fullState.mainPage != -1) {
+                    tft_->setCharBackgroundColor(COLOR_BLACK);
                     displayParamValue(e, COLOR_WHITE);
                 }
             }
         }
-        if (imChangedCounter[e] > 0) {
-            imChangedCounter[e]--;
-            if (imChangedCounter[e] == 0) {
-                struct ModulationIndex im = modulationIndex[(int) this->synthState->params->engine1.algo][e];
-                tft->eraseHighlightIM(e, im.source, im.destination);
+        if (imChangedCounter_[e] > 0) {
+            imChangedCounter_[e]--;
+            if (imChangedCounter_[e] == 0) {
+                struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][e];
+                tft_->eraseHighlightIM(e, im.source, im.destination);
             }
         }
     }
 
+    if (synthState_->mixerState.levelMeterWhere_ == 2) {
+        float volume = getCompInstrumentVolume(currentTimbre_);
+        float gr = getCompInstrumentGainReduction(currentTimbre_);
+        // gr tend to slower reach 0
+        // Let'as accelerate when we don't want to draw the metter anymore
+        if (gr > -.1f) {
+            gr = 0;
+        }
+        if (volume != lastVolume || gr != lastGainReduction) {
+            lastVolume = volume;
+            lastGainReduction = gr;
 
-    float volume = getCompInstrumentVolume(currentTimbre);
-    float gr = getCompInstrumentGainReduction(currentTimbre);
-    // gr tend to slower reach 0
-    // Let'as accelerate when we don't want to draw the metter anymore
-    if (gr > -.1f) {
-        gr = 0;
-    }
-    if (volume != lastVolume || gr != lastGainReduction) {
-        lastVolume = volume;
-        lastGainReduction = gr;
-
-        bool isCompressed = synthState->mixerState.instrumentState[currentTimbre].compressorType > 0;
-        tft->drawLevelMetter(5, 150, 230, 3, 5, volume, isCompressed, gr);
+            bool isCompressed = synthState_->mixerState.instrumentState_[currentTimbre_].compressorType > 0;
+            tft_->drawLevelMetter(5, 150, 230, 3, 5, volume, isCompressed, gr);
+        }
     }
 }
 
 void FMDisplayEditor::displayPreset() {
 
-    tft->fillArea(0, 0, 240, 21, COLOR_DARK_BLUE);
+    tft_->fillArea(0, 0, 240, 21, COLOR_DARK_BLUE);
 
-    tft->setCharBackgroundColor(COLOR_DARK_BLUE);
-    tft->setCharColor(COLOR_YELLOW);
-    tft->setCursorInPixel(2, 2);
-    if (this->synthState->getIsPlayingNote()) {
-        tft->print('~');
+    tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
+    tft_->setCharColor(COLOR_YELLOW);
+    tft_->setCursorInPixel(2, 2);
+    if (synthState_->getIsPlayingNote()) {
+        tft_->print('~');
     } else {
-        tft->print('I');
+        tft_->print('I');
     }
-    tft->print((char) ('0' + currentTimbre + 1));
-    tft->print(' ');
-    tft->setCharColor(COLOR_CYAN);
-    tft->print(this->synthState->params->presetName);
-    tft->setCharColor(COLOR_YELLOW);
-    if (presetModifed[currentTimbre]) {
-        tft->print('*');
+    tft_->print((char) ('0' + currentTimbre_ + 1));
+    tft_->print(' ');
+    tft_->setCharColor(COLOR_CYAN);
+    tft_->print(synthState_->params->presetName);
+    tft_->setCharColor(COLOR_YELLOW);
+    if (presetModifed_[currentTimbre_]) {
+        tft_->print('*');
     }
-    tft->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(COLOR_BLACK);
 }
 
 void FMDisplayEditor::resetAllPresetModified() {
     for (int k = 0; k < NUMBER_OF_TIMBRES; k++) {
-        presetModifed[k] = false;
+        presetModifed_[k] = false;
     }
 }
 
 void FMDisplayEditor::setPresetModified(int timbre, bool state) {
-    presetModifed[timbre] = state;
+    presetModifed_[timbre] = state;
 }
 
 void FMDisplayEditor::updateArpPattern(int currentRow, int encoder, int oldValue, int newValue) {
 
-    const int index = (int) this->synthState->params->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
-    const arp_pattern_t user_pattern = this->synthState->params->engineArpUserPatterns.patterns[index];
+    const int index = (int) synthState_->params->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    const arp_pattern_t user_pattern = synthState_->params->engineArpUserPatterns.patterns[index];
 
-    if (this->synthState->params->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+    if (synthState_->params->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
         return;
     }
 
     if (encoder == 1) {
         // new value to display
-        tft->setCharColor(COLOR_YELLOW);
-        tft->setCursor(this->synthState->patternSelect, 6);
-        tft->print((char) (127 + ((newValue >> (this->synthState->patternSelect)) & 0x1) * 15));
+        tft_->setCharColor(COLOR_YELLOW);
+        tft_->setCursor(synthState_->patternSelect, 6);
+        tft_->print((char) (127 + ((newValue >> (synthState_->patternSelect)) & 0x1) * 15));
     } else if (encoder == 0) {
         if ((oldValue % 4) == 0) {
-            tft->setCharColor(COLOR_WHITE);
+            tft_->setCharColor(COLOR_WHITE);
         } else {
-            tft->setCharColor(COLOR_GRAY);
+            tft_->setCharColor(COLOR_GRAY);
         }
-        tft->setCursor(oldValue, 6);
-        tft->print((char) (127 + ((user_pattern >> (oldValue)) & 0x1) * 15));
-        tft->setCharColor(COLOR_YELLOW);
-        tft->setCursor(newValue, 6);
-        tft->print((char) (127 + ((user_pattern >> (newValue)) & 0x1) * 15));
+        tft_->setCursor(oldValue, 6);
+        tft_->print((char) (127 + ((user_pattern >> (oldValue)) & 0x1) * 15));
+        tft_->setCharColor(COLOR_YELLOW);
+        tft_->setCursor(newValue, 6);
+        tft_->print((char) (127 + ((user_pattern >> (newValue)) & 0x1) * 15));
     }
 }
 
 void FMDisplayEditor::updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue) {
     int whichStepSeq = currentRow - ROW_LFOSEQ1;
 
-    StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&this->synthState->params->lfoSteps1))[whichStepSeq];
+    StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&synthState_->params->lfoSteps1))[whichStepSeq];
 
-    tft->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(COLOR_BLACK);
 
     if (encoder == 3) {
         // new value to display
-        tft->setCharColor(COLOR_YELLOW);
-        tft->setCursor(this->synthState->stepSelect[whichStepSeq], 6);
-        tft->print((char) (127 + newValue));
+        tft_->setCharColor(COLOR_YELLOW);
+        tft_->setCursor(synthState_->stepSelect[whichStepSeq], 6);
+        tft_->print((char) (127 + newValue));
     } else if (encoder == 2) {
         if ((oldValue % 4) == 0) {
-            tft->setCharColor(COLOR_WHITE);
+            tft_->setCharColor(COLOR_WHITE);
         } else {
-            tft->setCharColor(COLOR_GRAY);
+            tft_->setCharColor(COLOR_GRAY);
         }
-        tft->setCursor(oldValue, 6);
-        tft->print((char) (127 + seqSteps->steps[oldValue]));
-        tft->setCharColor(COLOR_YELLOW);
-        tft->setCursor(newValue, 6);
-        tft->print((char) (127 + seqSteps->steps[newValue]));
+        tft_->setCursor(oldValue, 6);
+        tft_->print((char) (127 + seqSteps->steps[oldValue]));
+        tft_->setCharColor(COLOR_YELLOW);
+        tft_->setCursor(newValue, 6);
+        tft_->print((char) (127 + seqSteps->steps[newValue]));
     }
 }
 
@@ -3352,18 +3353,18 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
 
     switch (param->displayType) {
     case DISPLAY_TYPE_STRINGS:
-        tft->print(param->valueName[newValue]);
+        tft_->print(param->valueName[newValue]);
         if (unlikely(param->valueName == polyMonoNames)) {
-            int numberOfVoices = synthState->mixerState.instrumentState[currentTimbre].numberOfVoices;
+            int numberOfVoices = synthState_->mixerState.instrumentState_[currentTimbre_].numberOfVoices;
             if (numberOfVoices == 0 || (newValue == 1 && numberOfVoices == 1)
                 || (newValue == 0 && numberOfVoices > 1)) {
-                tft->setCharColor(COLOR_RED);
+                tft_->setCharColor(COLOR_RED);
             } else {
-                tft->setCharColor(COLOR_GRAY);
+                tft_->setCharColor(COLOR_GRAY);
             }
-            tft->print("(");
-            tft->print(numberOfVoices);
-            tft->print(')');
+            tft_->print("(");
+            tft_->print(numberOfVoices);
+            tft_->print(')');
         }
         break;
     case DISPLAY_TYPE_FLOAT_LFO_FREQUENCY:
@@ -3373,48 +3374,48 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
             if (likely(stringIndex <= LFO_MIDICLOCK_MC_TIME_8)) {
 #endif
 
-                tft->print(' ');
-                tft->print(lfoOscMidiClock[stringIndex - LFO_FREQ_MAX_TIMES_10 - 1]);
+                tft_->print(' ');
+                tft_->print(lfoOscMidiClock[stringIndex - LFO_FREQ_MAX_TIMES_10 - 1]);
 #ifdef DEBUG
             } else {
-                tft->print("#ER#");
+                tft_->print("#ER#");
             }
 #endif
         } else {
-            tft->printFloatWithSpace(newFloatValue);
+            tft_->printFloatWithSpace(newFloatValue);
         }
         break;
     case DISPLAY_TYPE_STEP_SEQ_BPM:
 #ifdef DEBUG
         if (unlikely(newValue > LFO_SEQ_MIDICLOCK_TIME_4)) {
-            tft->print("#ER#");
+            tft_->print("#ER#");
             break;
         }
 #endif
         if (newValue > 240) {
-            tft->print(lfoSeqMidiClock[newValue - 241]);
+            tft_->print(lfoSeqMidiClock[newValue - 241]);
             break;
         }
-        tft->printValueWithSpace(newValue);
+        tft_->printValueWithSpace(newValue);
         break;
     case DISPLAY_TYPE_LFO_KSYN:
         if (unlikely(newFloatValue < 0.0f)) {
-            tft->print(" Off ");
+            tft_->print(" Off ");
             break;
         }
-        tft->printFloatWithSpace(newFloatValue);
+        tft_->printFloatWithSpace(newFloatValue);
         break;
     case DISPLAY_TYPE_FLOAT:
-        tft->printFloatWithSpace(newFloatValue);
+        tft_->printFloatWithSpace(newFloatValue);
         break;
         // else what follows
     case DISPLAY_TYPE_INT:
-        tft->printValueWithSpace(newValue);
+        tft_->printValueWithSpace(newValue);
         break;
     case DISPLAY_TYPE_FLOAT_OSC_FREQUENCY: {
         // Hack... to deal with the special case of the fixed frequency.....
         int oRow = row - ROW_OSC_FIRST;
-        OscillatorParams *oParam = (OscillatorParams*) &this->synthState->params->osc1;
+        OscillatorParams *oParam = (OscillatorParams*) &synthState_->params->osc1;
         OscFrequencyType ft = (OscFrequencyType) oParam[oRow].frequencyType;
 
         if (ft == OSC_FT_FIXE) {
@@ -3422,44 +3423,44 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
             if (newValue < 0) {
                 newValue = 0;
             }
-            tft->print(newValue);
+            tft_->print(newValue);
             if (newValue < 10000) {
-                tft->print(' ');
+                tft_->print(' ');
             }
             if (newValue < 1000) {
-                tft->print(' ');
+                tft_->print(' ');
             }
             if (newValue < 100) {
-                tft->print(' ');
+                tft_->print(' ');
             }
             if (newValue < 10) {
-                tft->print(' ');
+                tft_->print(' ');
             }
         } else {
-            tft->printFloatWithSpace(newFloatValue);
+            tft_->printFloatWithSpace(newFloatValue);
         }
         break;
     }
     case DISPLAY_TYPE_NONE:
-        tft->print("    ");
+        tft_->print("    ");
         break;
     case DISPLAY_TYPE_STEP_SEQ2:
     case DISPLAY_TYPE_STEP_SEQ1: {
         // Display the steps only once
         if (encoder == 2) {
             int whichStepSeq = row - ROW_LFOSEQ1;
-            StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&this->synthState->params->lfoSteps1))[whichStepSeq];
+            StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&synthState_->params->lfoSteps1))[whichStepSeq];
 
-            tft->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
             for (int k = 0; k < 16; k++) {
-                if (this->synthState->stepSelect[whichStepSeq] == k) {
-                    tft->setCharColor(COLOR_YELLOW);
+                if (synthState_->stepSelect[whichStepSeq] == k) {
+                    tft_->setCharColor(COLOR_YELLOW);
                 } else if ((k % 4) == 0) {
-                    tft->setCharColor(COLOR_WHITE);
+                    tft_->setCharColor(COLOR_WHITE);
                 } else {
-                    tft->setCharColor(COLOR_GRAY);
+                    tft_->setCharColor(COLOR_GRAY);
                 }
-                tft->print((char) (127 + seqSteps->steps[k]));
+                tft_->print((char) (127 + seqSteps->steps[k]));
             }
         }
     }
@@ -3468,29 +3469,29 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
         // Display the steps only once
         if (encoder == 0) {
 
-            const int index = (int) this->synthState->params->engineArp2.pattern;
+            const int index = (int) synthState_->params->engineArp2.pattern;
             arp_pattern_t user_pattern;
             bool editable = false;
 
-            if (this->synthState->params->engineArp2.pattern >= ARPEGGIATOR_PRESET_PATTERN_COUNT) {
-                user_pattern = this->synthState->params->engineArpUserPatterns.patterns[index
+            if (synthState_->params->engineArp2.pattern >= ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+                user_pattern = synthState_->params->engineArpUserPatterns.patterns[index
                     - ARPEGGIATOR_PRESET_PATTERN_COUNT];
                 editable = true;
             } else {
                 user_pattern = lut_res_arpeggiator_patterns[index];
             }
 
-            tft->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
             for (int k = 0; k < 16; k++) {
                 bool stepOn = ((user_pattern >> (k)) & 0x1) > 0;
-                if (this->synthState->patternSelect == k && editable) {
-                    tft->setCharColor(COLOR_YELLOW);
+                if (synthState_->patternSelect == k && editable) {
+                    tft_->setCharColor(COLOR_YELLOW);
                 } else if ((k % 4) == 0) {
-                    tft->setCharColor(COLOR_WHITE);
+                    tft_->setCharColor(COLOR_WHITE);
                 } else {
-                    tft->setCharColor(COLOR_GRAY);
+                    tft_->setCharColor(COLOR_GRAY);
                 }
-                tft->print((char) (127 + (stepOn ? 15 : 0)));
+                tft_->print((char) (127 + (stepOn ? 15 : 0)));
             }
 
         }
@@ -3498,22 +3499,22 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
         break;
     }
 
-    tft->setCharColor(COLOR_WHITE);
+    tft_->setCharColor(COLOR_WHITE);
 
 }
 
 void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
-    struct FullState *fullState = &(synthState->fullState);
+    struct FullState *fullState = &(synthState_->fullState);
 
     if (unlikely(fullState->mainPage == -1)) {
         return;
     }
 
     // Convert to legacy preenfm2 encoder and row
-    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-    const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
     const struct RowEncoder rowEncoder =
-        page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
+        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
     int encoder4 = rowEncoder.encoder;
     int row = rowEncoder.row;
@@ -3521,7 +3522,7 @@ void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
     // Step sequencer special case
     if (unlikely(row == ROW_LFOSEQ1 || row == ROW_LFOSEQ2)) {
         if (encoder4 >= 2) {
-            synthState->encoderTurnedForStepSequencer(row, encoder4, encoder6, ticks);
+            synthState_->encoderTurnedForStepSequencer(row, encoder4, encoder6, ticks);
             return;
         }
     };
@@ -3540,19 +3541,19 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         return;
     }
     if (unlikely(row == ROW_ARPEGGIATOR3)) {
-        synthState->encoderTurnedForArpPattern(row, encoder4, ticks);
+        synthState_->encoderTurnedForArpPattern(row, encoder4, ticks);
         return;
     }
 
     //
     int num;
     struct ParameterDisplay *param;
-    if (unlikely(this->synthState->fullState.mainPage == 1) && specialOpCase) {
-        int multiplier = this->synthState->fullState.editPage == 0 ? 1 : 2;
+    if (unlikely(synthState_->fullState.mainPage == 1) && specialOpCase) {
+        int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
         // operator is a bit different with PFM3
-        num = encoder4 + (row + this->synthState->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS;
-        param = &(allParameterRows.row[row + this->synthState->fullState.operatorNumber * multiplier]->params[encoder4]);
-        row += this->synthState->fullState.operatorNumber * multiplier;
+        num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS;
+        param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber * multiplier]->params[encoder4]);
+        row += synthState_->fullState.operatorNumber * multiplier;
     } else {
         num = encoder4 + row * NUMBER_OF_ENCODERS;
         param = &(allParameterRows.row[row]->params[encoder4]);
@@ -3574,7 +3575,7 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
             return;
         }
 
-        float &value = ((float*) synthState->params)[num];
+        float &value = ((float*) synthState_->params)[num];
         oldValue = value;
 
         float inc = param->incValue;
@@ -3597,7 +3598,7 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         }
         value = newValue;
     } else {
-        float *value = &((float*) synthState->params)[num];
+        float *value = &((float*) synthState_->params)[num];
         newValue = oldValue = (*value);
 
         // Must use newValue (int) so that the minValue comparaison works
@@ -3624,7 +3625,7 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         (*value) = (float) newValue;
     }
     if (newValue != oldValue) {
-        synthState->propagateNewParamValue(currentTimbre, row, encoder4, param, oldValue, newValue);
+        synthState_->propagateNewParamValue(currentTimbre_, row, encoder4, param, oldValue, newValue);
     }
 
 }
@@ -3635,27 +3636,27 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
     switch (button) {
     case BUTTON_PREVIOUS_INSTRUMENT: {
         // Convert to legacy preenfm2 encoder and row
-        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-        const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+        const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
         struct RowEncoder rowEncoder =
-            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
+            page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
         // Operator is a special case for row
-        if (unlikely(this->synthState->fullState.mainPage == 1)) {
-            int multiplier = this->synthState->fullState.editPage == 0 ? 1 : 2;
-            rowEncoder.row += this->synthState->fullState.operatorNumber * multiplier;
+        if (unlikely(synthState_->fullState.mainPage == 1)) {
+            int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+            rowEncoder.row += synthState_->fullState.operatorNumber * multiplier;
         }
 
         struct ParameterDisplay *param = &(allParameterRows.row[rowEncoder.row]->params[rowEncoder.encoder]);
         const struct OneSynthParams *defaultParams = &defaultPreset;
         int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS;
 
-        float *value = &((float*) synthState->params)[num];
+        float *value = &((float*) synthState_->params)[num];
         float oldValue = *value;
         float newValue = ((float*) defaultParams)[num];
         (*value) = newValue;
 
-        synthState->propagateNewParamValue(currentTimbre, rowEncoder.row, rowEncoder.encoder, param, oldValue,
+        synthState_->propagateNewParamValue(currentTimbre_, rowEncoder.row, rowEncoder.encoder, param, oldValue,
             newValue);
         break;
     }
@@ -3663,19 +3664,19 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
     {
 
         // All update must be in green
-        multipleEdition = true;
+        multipleEdition_ = true;
 
         // Convert to legacy preenfm2 encoder and row
-        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-        const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+        const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 
         struct RowEncoder rowEncoder =
-            page->states[this->synthState->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
+            page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
         // Operator is a special case for row
-        if (unlikely(this->synthState->fullState.mainPage == 1)) {
-            int multiplier = this->synthState->fullState.editPage == 0 ? 1 : 2;
-            rowEncoder.row += this->synthState->fullState.operatorNumber * multiplier;
+        if (unlikely(synthState_->fullState.mainPage == 1)) {
+            int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+            rowEncoder.row += synthState_->fullState.operatorNumber * multiplier;
         }
 
         int row = rowEncoder.row;
@@ -3688,7 +3689,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
             if ((row & 0x1) == envBBit) {
                 firstRow = ROW_ENV1b;
             }
-            int currentAlgo = (int)this->synthState->params->engine1.algo;
+            int currentAlgo = (int)synthState_->params->engine1.algo;
             int currentOpType = algoOpInformation[currentAlgo][(row - ROW_ENV1a) >> 1];
 
             for (int op = 0; op < NUMBER_OF_OPERATORS; op++) {
@@ -3698,7 +3699,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
                 }
             }
         } else if (row >= ROW_MODULATION1 && row <= ROW_MODULATION3) {
-            int imMax = algoInformation[(int)this->synthState->params->engine1.algo].im;
+            int imMax = algoInformation[(int)synthState_->params->engine1.algo].im;
             // Im or v ?
             if ((encoder4 & 0x1) == 0) {
                 for (int m = 0; m < imMax; m++) {
@@ -3711,7 +3712,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
             }
         } else if (row >= ROW_OSC_MIX1 && row <= ROW_OSC_MIX3) {
             // Mix or Pan ?
-            int algoNumber = (int)this->synthState->params->engine1.algo;
+            int algoNumber = (int)synthState_->params->engine1.algo;
             if ((encoder4 & 0x1) == 0) {
                 for (int m = 0; m < NUMBER_OF_OPERATORS; m++) {
                     if (algoOpInformation[algoNumber][m] == 1) {
@@ -3728,7 +3729,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
         }
 
         // End of multiple edition
-        multipleEdition = false;
+        multipleEdition_ = false;
 
         break;
     }
@@ -3737,21 +3738,21 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 }
 
 void FMDisplayEditor::buttonPressed(int button) {
-    struct FullState *fullState = &synthState->fullState;
+    struct FullState *fullState = &synthState_->fullState;
 
-    SynthEditMode oldSynthMode = this->synthState->fullState.synthMode;
-    MenuState oldMenuState = this->synthState->fullState.currentMenuItem->menuState;
+    SynthEditMode oldSynthMode = synthState_->fullState.synthMode;
+    MenuState oldMenuState = synthState_->fullState.currentMenuItem->menuState;
 
-    if (this->synthState->fullState.mainPage == -1) {
+    if (synthState_->fullState.mainPage == -1) {
         if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {
-            this->synthState->fullState.mainPage = button;
-            this->synthState->fullState.editPage = 0;
+            synthState_->fullState.mainPage = button;
+            synthState_->fullState.editPage = 0;
         }
     } else {
         switch (button) {
         case BUTTON_PFM3_EDIT:
         case BUTTON_PFM3_MENU:
-            this->synthState->fullState.mainPage = -1;
+            synthState_->fullState.mainPage = -1;
             break;
         case BUTTON_PFM3_1:
         case BUTTON_PFM3_2:
@@ -3759,34 +3760,34 @@ void FMDisplayEditor::buttonPressed(int button) {
         case BUTTON_PFM3_4:
         case BUTTON_PFM3_5:
         case BUTTON_PFM3_6:
-            const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-            const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+            const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+            const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
             if (button >= editMenu->numberOfButtons) {
                 break;
             }
-            if (this->synthState->fullState.editPage == button) {
+            if (synthState_->fullState.editPage == button) {
                 if (page->numberOfStates > 0) {
-                    this->synthState->fullState.buttonState[page->buttonId] =
-                        (this->synthState->fullState.buttonState[page->buttonId] + 1) % page->numberOfStates;
+                    synthState_->fullState.buttonState[page->buttonId] =
+                        (synthState_->fullState.buttonState[page->buttonId] + 1) % page->numberOfStates;
                 }
             } else {
                 // If new page has no state.. then we don't activate it
                 if (editMenu->pages[button]->numberOfStates > 0) {
-                    this->synthState->fullState.editPage = button;
+                    synthState_->fullState.editPage = button;
                 } else {
-                    if (this->synthState->fullState.mainPage == 1) {
-                        int numberOfOsc = algoInformation[(int)this->synthState->params->engine1.algo].osc - 1;
+                    if (synthState_->fullState.mainPage == 1) {
+                        int numberOfOsc = algoInformation[(int)synthState_->params->engine1.algo].osc - 1;
                         if (button ==  BUTTON_PFM3_4) {
-                            if (this->synthState->fullState.operatorNumber > 0) {
-                                this->synthState->fullState.operatorNumber--;
+                            if (synthState_->fullState.operatorNumber > 0) {
+                                synthState_->fullState.operatorNumber--;
                             } else {
-                                this->synthState->fullState.operatorNumber = numberOfOsc;
+                                synthState_->fullState.operatorNumber = numberOfOsc;
                             }
                         } else if (button == BUTTON_PFM3_6) {
-                            if (this->synthState->fullState.operatorNumber < numberOfOsc) {
-                                this->synthState->fullState.operatorNumber++;
+                            if (synthState_->fullState.operatorNumber < numberOfOsc) {
+                                synthState_->fullState.operatorNumber++;
                             } else {
-                                this->synthState->fullState.operatorNumber = 0;
+                                synthState_->fullState.operatorNumber = 0;
                             }
                         }
                     }
@@ -3797,62 +3798,62 @@ void FMDisplayEditor::buttonPressed(int button) {
 
     }
 
-    synthState->propagateNewPfm3Page();
+    synthState_->propagateNewPfm3Page();
 }
 
 void FMDisplayEditor::refreshOscillatorOperatorShape() {
-    int op = this->synthState->fullState.operatorNumber;
-    OscillatorParams *oscillatorParams = &this->synthState->params->osc1;
+    int op = synthState_->fullState.operatorNumber;
+    OscillatorParams *oscillatorParams = &synthState_->params->osc1;
 
-    tft->oscilloBgActionOperatorShape((int) oscillatorParams[op].shape);
+    tft_->oscilloBgActionOperatorShape((int) oscillatorParams[op].shape);
 }
 
 void FMDisplayEditor::refreshOscillatorOperatorEnvelope() {
-    int op = this->synthState->fullState.operatorNumber;
-    EnvelopeParamsA *envParamA = &this->synthState->params->env1a;
-    EnvelopeParamsB *envParamB = &this->synthState->params->env1b;
-    tft->oscilloBgSetEnvelope(envParamA[op * 2].attackTime, envParamA[op * 2].decayTime, envParamB[op * 2].sustainTime,
+    int op = synthState_->fullState.operatorNumber;
+    EnvelopeParamsA *envParamA = &synthState_->params->env1a;
+    EnvelopeParamsB *envParamB = &synthState_->params->env1b;
+    tft_->oscilloBgSetEnvelope(envParamA[op * 2].attackTime, envParamA[op * 2].decayTime, envParamB[op * 2].sustainTime,
         envParamB[op * 2].releaseTime, envParamA[op * 2].attackLevel, envParamA[op * 2].decayLevel,
         envParamB[op * 2].sustainLevel, envParamB[op * 2].releaseLevel);
-    tft->oscilloBgActionEnvelope();
+    tft_->oscilloBgActionEnvelope();
 }
 
 void FMDisplayEditor::refreshLfoOscillator() {
-    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-    const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 
     if (page != &pfm3ButtonLfos) {
         return;
     }
-    uint8_t lfoNumber = this->synthState->fullState.buttonState[page->buttonId];
+    uint8_t lfoNumber = synthState_->fullState.buttonState[page->buttonId];
 
-    LfoParams *lfoParam = &this->synthState->params->lfoOsc1;
-    float *lfoPhase = (float*) &this->synthState->params->lfoPhases;
+    LfoParams *lfoParam = &synthState_->params->lfoOsc1;
+    float *lfoPhase = (float*) &synthState_->params->lfoPhases;
 
-    tft->oscilloBgSetLfo(lfoParam[lfoNumber].shape, lfoParam[lfoNumber].freq, lfoParam[lfoNumber].keybRamp,
+    tft_->oscilloBgSetLfo(lfoParam[lfoNumber].shape, lfoParam[lfoNumber].freq, lfoParam[lfoNumber].keybRamp,
         lfoParam[lfoNumber].bias, lfoPhase[lfoNumber]);
-    tft->oscilloBgActionLfo();
+    tft_->oscilloBgActionLfo();
 }
 
 void FMDisplayEditor::refreshLfoEnv() {
-    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[this->synthState->fullState.mainPage];
-    const struct Pfm3OneButton *page = editMenu->pages[this->synthState->fullState.editPage];
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 
     if (page != &pfm3ButtonEnvs) {
         return;
     }
-    uint8_t envNumber = this->synthState->fullState.buttonState[page->buttonId];
+    uint8_t envNumber = synthState_->fullState.buttonState[page->buttonId];
 
     if (envNumber == 0) {
-        EnvelopeParams *envParam = &this->synthState->params->lfoEnv1;
-        tft->oscilloBgSetLfoEnvelope(envParam->attack, envParam->decay, 1.0f, envParam->release, 1.0f,
+        EnvelopeParams *envParam = &synthState_->params->lfoEnv1;
+        tft_->oscilloBgSetLfoEnvelope(envParam->attack, envParam->decay, 1.0f, envParam->release, 1.0f,
             envParam->sustain, envParam->sustain, 0.0f);
-        tft->oscilloBgActionEnvelope();
+        tft_->oscilloBgActionEnvelope();
     } else if (envNumber == 1) {
-        Envelope2Params *envParam = &this->synthState->params->lfoEnv2;
-        tft->oscilloBgSetLfoEnvelope(envParam->silence, envParam->attack, envParam->decay, 0.0f, 0.0f, 1.0f, 0.0f,
+        Envelope2Params *envParam = &synthState_->params->lfoEnv2;
+        tft_->oscilloBgSetLfoEnvelope(envParam->silence, envParam->attack, envParam->decay, 0.0f, 0.0f, 1.0f, 0.0f,
             0.0f);
-        tft->oscilloBgActionEnvelope();
+        tft_->oscilloBgActionEnvelope();
     }
 
 }

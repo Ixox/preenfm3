@@ -159,9 +159,7 @@ public:
     void setExternalClock(bool enable);
 
     void setStepMode(bool stepMode) {
-        // reinit step variables
-        tmpStepValue.full = 0l;
-        stepNumberOfNotesOn = 0;
+        cleanCurrentState();
         this->stepMode = stepMode;
     }
     void stepClearAll(int instrument);
@@ -179,6 +177,12 @@ public:
     }
     void setInstrumentStepSeq(int instrument, int index) {
     	instrumentStepSeq[instrument] = (uint8_t)index;
+    }
+
+    void cleanCurrentState() {
+        // Clean possibly not null value
+        tmpStepValue.full = 0l;
+        stepNumberOfNotesOn = 0;
     }
 
 private:

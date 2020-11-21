@@ -24,19 +24,17 @@
 #include "VisualInfo.h"
 #include "Storage.h"
 
-
 class FMDisplayEditor;
 class FMDisplayMixer;
 class FMDisplayMenu;
 class FMDisplaySequencer;
 
-
 class FMDisplay3: public SynthParamListener, public SynthMenuListener, public SynthStateAware, public VisualInfo {
 public:
     FMDisplay3();
     ~FMDisplay3();
-    void init(TftDisplay* tft);
-    void setDisplays(FMDisplayMixer* displayMixer, FMDisplayEditor* dDisplayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer);
+    void init(TftDisplay *tft);
+    void setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *dDisplayEditor, FMDisplayMenu *displayMenu, FMDisplaySequencer *displaySequencer);
     void customCharsInit();
 
     bool shouldThisValueShowUpPfm3(int row, int encoder, int encoder6);
@@ -69,7 +67,7 @@ public:
     }
 
     bool needRefresh() {
-        return refreshStatus != 0;
+        return refreshStatus_ != 0;
     }
 
     void refreshAllScreenByStep();
@@ -78,17 +76,16 @@ public:
     void checkPresetModified(int timbre);
 
     int rowInc(MenuState menuState);
-    void newSynthMode(FullState* fullState);
-    void newMenuState(FullState* fullState);
-    void newMenuSelect(FullState* fullState);
-    void newPfm3Page(FullState* fullState);
-    void menuBack(const MenuItem* oldMenuItem, FullState* fullState);
+    void newSynthMode(FullState *fullState);
+    void newMenuState(FullState *fullState);
+    void newMenuSelect(FullState *fullState);
+    void newPfm3Page(FullState *fullState);
+    void menuBack(const MenuItem *oldMenuItem, FullState *fullState);
     void refreshOscilloBG();
 
-
-    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
+    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
-    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
+    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton);
 
@@ -106,27 +103,24 @@ public:
     void stopNote(int timbre, char note);
 
     void setRefreshStatus(int refreshStatus) {
-        this->refreshStatus = refreshStatus;
+        refreshStatus_ = refreshStatus;
     }
 
 private:
-    TftDisplay* tft;
-    int refreshStatus;
-    int endRefreshStatus;
+    TftDisplay *tft_;
+    int refreshStatus_;
+    int endRefreshStatus_;
 
-    int menuRow;
     // Local value preset modified to know whether it's currently showing up
-    int currentTimbre;
+    int currentTimbre_;
     // Midi info
-    int noteOnCounter[NUMBER_OF_TIMBRES];
-
-
+    int noteOnCounter_[NUMBER_OF_TIMBRES];
 
     // One Display class per main page
-    FMDisplayMixer* displayMixer;
-    FMDisplayMenu* displayMenu;
-    FMDisplayEditor* displayEditor;
-    FMDisplaySequencer* displaySequencer;
+    FMDisplayMixer *displayMixer_;
+    FMDisplayMenu *displayMenu_;
+    FMDisplayEditor *displayEditor_;
+    FMDisplaySequencer *displaySequencer_;
 };
 
 #endif /* FMDISPLAY3_H_ */

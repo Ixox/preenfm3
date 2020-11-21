@@ -32,7 +32,7 @@ Synth::~Synth(void) {
 void Synth::init(SynthState *synthState) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         for (uint16_t k = 0; k < (sizeof(struct OneSynthParams) / sizeof(float)); k++) {
-            ((float*) &timbres_[t].params)[k] = ((float*) &preenMainPreset)[k];
+            ((float*) &timbres_[t].params_)[k] = ((float*) &preenMainPreset)[k];
         }
         timbres_[t].init(synthState, t);
         for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
@@ -47,7 +47,7 @@ void Synth::init(SynthState *synthState) {
     rebuidVoiceAllTimbre();
     // Here synthState is already initialized
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        timbres_[t].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[t].numberOfVoices);
+        timbres_[t].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[t].numberOfVoices);
         smoothVolume_[t] = 0.0f;
         smoothPan_[t] = 0.0f;
 
@@ -70,13 +70,17 @@ void Synth::init(SynthState *synthState) {
 }
 
 void Synth::noteOn(int timbre, char note, char velocity) {
-    sequencer_->insertNote(timbre, note, velocity);
+    if (synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+        sequencer_->insertNote(timbre, note, velocity);
+    }
     timbres_[timbre].noteOn(note, velocity);
 
 }
 
 void Synth::noteOff(int timbre, char note) {
-    sequencer_->insertNote(timbre, note, 0);
+    if (synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+        sequencer_->insertNote(timbre, note, 0);
+    }
     timbres_[timbre].noteOff(note);
 }
 
@@ -125,7 +129,7 @@ void Synth::setHoldPedal(int timbre, int value) {
 }
 
 void Synth::allNoteOffQuick(int timbre) {
-    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
         // voice number k of timbre
         int n = timbres_[timbre].voiceNumber[k];
@@ -136,7 +140,7 @@ void Synth::allNoteOffQuick(int timbre) {
 }
 
 void Synth::allNoteOff(int timbre) {
-    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
         // voice number k of timbre
         int n = timbres_[timbre].voiceNumber[k];
@@ -147,7 +151,7 @@ void Synth::allNoteOff(int timbre) {
 }
 
 void Synth::allSoundOff(int timbre) {
-    int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
         // voice number k of timbre
         int n = timbres_[timbre].voiceNumber[k];
@@ -236,7 +240,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres_[t].cleanNextBlock();
-        if (likely(this->synthState->mixerState.instrumentState[t].numberOfVoices > 0)) {
+        if (likely(this->synthState_->mixerState.instrumentState_[t].numberOfVoices > 0)) {
             timbres_[t].updateArpegiatorInternalClock();
             // eventually glide
             if (timbres_[t].voiceNumber[0] != -1 && this->voices_[timbres_[t].voiceNumber[0]].isGliding()) {
@@ -278,15 +282,15 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         // numberOfVoices = 0; => timbre is disabled
-        if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices == 0) {
+        if (this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices == 0) {
             continue;
         }
         //Gate and mixer are per timbre
-        if (abs(smoothVolume_[timbre] - synthState->mixerState.instrumentState[timbre].volume) < .0005f) {
-            smoothVolume_[timbre] = synthState->mixerState.instrumentState[timbre].volume;
+        if (abs(smoothVolume_[timbre] - synthState_->mixerState.instrumentState_[timbre].volume) < .0005f) {
+            smoothVolume_[timbre] = synthState_->mixerState.instrumentState_[timbre].volume;
         } else {
             smoothVolume_[timbre] = smoothVolume_[timbre] * .9f
-                + synthState->mixerState.instrumentState[timbre].volume * .1f;
+                + synthState_->mixerState.instrumentState_[timbre].volume * .1f;
         }
 
         // We divide by 4 to have headroom before saturating (>1.0f)
@@ -295,7 +299,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
         // Smooth pan to avoid audio noise
         smoothPan_[timbre] = smoothPan_[timbre] * .95f
-            + ((float) synthState->mixerState.instrumentState[timbre].pan / 63.0f) * .05f;
+            + ((float) synthState_->mixerState.instrumentState_[timbre].pan / 63.0f) * .05f;
 
         float *sampleFromTimbre = timbres_[timbre].getSampleBlock();
 
@@ -306,7 +310,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         // Max is 0x7fffff * [-1:1]
         float sampleMultipler = (float) 0x7fffff;
 
-        switch (synthState->mixerState.instrumentState[timbre].out) {
+        switch (synthState_->mixerState.instrumentState_[timbre].out) {
             // 0 => out1+out2, 1 => out1, 2=> out2
             // 3 => out3+out4, 4 => out3, 5=> out4
             // 6 => out5+out6, 7 => out5, 8=> out8
@@ -424,7 +428,7 @@ int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
     int maxNumberOfFreeVoice = 0;
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         if (t != timbre) {
-            maxNumberOfFreeVoice += this->synthState->mixerState.instrumentState[t].numberOfVoices;
+            maxNumberOfFreeVoice += this->synthState_->mixerState.instrumentState_[t].numberOfVoices;
         }
     }
     return MAX_NUMBER_OF_VOICES - maxNumberOfFreeVoice;
@@ -438,16 +442,16 @@ void Synth::beforeNewParamsLoad(int timbre) {
         velocityBeforeNewParalsLoad_[k] = 0;
     }
 
-    if (this->synthState->params->engineArp1.clock > 0) {
+    if (this->synthState_->params->engineArp1.clock > 0) {
         // Arpegiator : we store pressed key
-        int numberOfPressedNote = timbres_[timbre].note_stack.size();
+        int numberOfPressedNote = timbres_[timbre].note_stack_.size();
         for (int k = 0; k < numberOfPressedNote && k < NUMBER_OF_STORED_NOT; k++) {
-            const NoteEntry &noteEntry = timbres_[timbre].note_stack.played_note(k);
+            const NoteEntry &noteEntry = timbres_[timbre].note_stack_.played_note(k);
             noteBeforeNewParalsLoad_[k] = noteEntry.note;
             velocityBeforeNewParalsLoad_[k] = noteEntry.velocity;
         }
     } else {
-        int numberOfVoices = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+        int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
         for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOT; k++) {
             // voice number k of timbre
             int n = timbres_[timbre].voiceNumber[k];
@@ -469,19 +473,19 @@ void Synth::beforeNewParamsLoad(int timbre) {
 
 void Synth::afterNewParamsLoad(int timbre) {
     // Reset to 0 the number of voice then try to set the right value
-    if (timbres_[timbre].params.engine1.polyMono == 1) {
-        if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices == 1) {
+    if (timbres_[timbre].params_.engine1.polyMono == 1) {
+        if (this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices == 1) {
             // Set number of voice from 1 to 3 (or max available)
             int voicesMax = getNumberOfFreeVoicesForThisTimbre(timbre);
-            this->synthState->mixerState.instrumentState[timbre].numberOfVoices = 3 < voicesMax ? 3 : voicesMax;
+            this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices = 3 < voicesMax ? 3 : voicesMax;
             rebuidVoiceTimbre(timbre);
-            timbres_[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+            timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
         }
     } else {
-        if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices != 1) {
-            this->synthState->mixerState.instrumentState[timbre].numberOfVoices = 1;
+        if (this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices != 1) {
+            this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices = 1;
             rebuidVoiceTimbre(timbre);
-            timbres_[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+            timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
         }
     }
 
@@ -503,14 +507,14 @@ void Synth::afterNewMixerLoad() {
     rebuidVoiceAllTimbre();
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
-        synthState->scalaSettingsChanged(timbre);
-        timbres_[timbre].numberOfVoicesChanged(this->synthState->mixerState.instrumentState[timbre].numberOfVoices);
+        synthState_->scalaSettingsChanged(timbre);
+        timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
         timbres_[timbre].afterNewParamsLoad();
         // values to force check lfo used
         timbres_[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
         // Update compressor
         newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, -1,
-            this->synthState->mixerState.instrumentState[timbre].compressorType);
+            this->synthState_->mixerState.instrumentState_[timbre].compressorType);
     }
 }
 
@@ -523,7 +527,7 @@ int Synth::getFreeVoice() {
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         // Must be different from 0 and -1
-        int nv = this->synthState->mixerState.instrumentState[t].numberOfVoices;
+        int nv = this->synthState_->mixerState.instrumentState_[t].numberOfVoices;
 
         for (int v = 0; v < nv; v++) {
             used[timbres_[t].voiceNumber[v]] = true;
@@ -567,40 +571,40 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
             timbres_[timbre].setNewEffecParam(encoder);
             break;
         case ROW_ENV1a:
-            timbres_[timbre].env1.reloadADSR(encoder);
+            timbres_[timbre].env1_.reloadADSR(encoder);
             break;
         case ROW_ENV1b:
-            timbres_[timbre].env1.reloadADSR(encoder + 4);
+            timbres_[timbre].env1_.reloadADSR(encoder + 4);
             break;
         case ROW_ENV2a:
-            timbres_[timbre].env2.reloadADSR(encoder);
+            timbres_[timbre].env2_.reloadADSR(encoder);
             break;
         case ROW_ENV2b:
-            timbres_[timbre].env2.reloadADSR(encoder + 4);
+            timbres_[timbre].env2_.reloadADSR(encoder + 4);
             break;
         case ROW_ENV3a:
-            timbres_[timbre].env3.reloadADSR(encoder);
+            timbres_[timbre].env3_.reloadADSR(encoder);
             break;
         case ROW_ENV3b:
-            timbres_[timbre].env3.reloadADSR(encoder + 4);
+            timbres_[timbre].env3_.reloadADSR(encoder + 4);
             break;
         case ROW_ENV4a:
-            timbres_[timbre].env4.reloadADSR(encoder);
+            timbres_[timbre].env4_.reloadADSR(encoder);
             break;
         case ROW_ENV4b:
-            timbres_[timbre].env4.reloadADSR(encoder + 4);
+            timbres_[timbre].env4_.reloadADSR(encoder + 4);
             break;
         case ROW_ENV5a:
-            timbres_[timbre].env5.reloadADSR(encoder);
+            timbres_[timbre].env5_.reloadADSR(encoder);
             break;
         case ROW_ENV5b:
-            timbres_[timbre].env5.reloadADSR(encoder + 4);
+            timbres_[timbre].env5_.reloadADSR(encoder + 4);
             break;
         case ROW_ENV6a:
-            timbres_[timbre].env6.reloadADSR(encoder);
+            timbres_[timbre].env6_.reloadADSR(encoder);
             break;
         case ROW_ENV6b:
-            timbres_[timbre].env6.reloadADSR(encoder + 4);
+            timbres_[timbre].env6_.reloadADSR(encoder + 4);
             break;
         case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
             timbres_[timbre].verifyLfoUsed(encoder, oldValue, newValue);
@@ -629,7 +633,7 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
 
 // synth is the only one who knows timbres
 void Synth::newTimbre(int timbre) {
-    this->synthState->setParamsAndTimbre(&timbres_[timbre].params, timbre);
+    this->synthState_->setParamsAndTimbre(&timbres_[timbre].params_, timbre);
 }
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
@@ -687,7 +691,7 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
 
 void Synth::rebuidVoiceTimbre(int timbre) {
 
-    int nv = this->synthState->mixerState.instrumentState[timbre].numberOfVoices;
+    int nv = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
 
     for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
         timbres_[timbre].setVoiceNumber(v, -1);
@@ -702,7 +706,7 @@ void Synth::rebuidVoiceAllTimbre() {
     int voiceNumber = 0;
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        int nv = this->synthState->mixerState.instrumentState[t].numberOfVoices;
+        int nv = this->synthState_->mixerState.instrumentState_[t].numberOfVoices;
 
         for (int v = 0; v < nv; v++) {
             timbres_[t].setVoiceNumber(v, voiceNumber++);
@@ -715,7 +719,7 @@ void Synth::rebuidVoiceAllTimbre() {
 }
 
 void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
-    this->synthState->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, &timbres_[timbre].params);
+    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, &timbres_[timbre].params_);
 }
 
 void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
@@ -726,29 +730,29 @@ void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue
     this->timbres_[timbre].setNewValue(index, param, newValue);
     float newNewValue = ((float*) this->timbres_[timbre].getParamRaw())[index];
     if (oldValue != newNewValue) {
-        this->synthState->propagateNewParamValueFromExternal(timbre, row, encoder, param, oldValue, newNewValue);
+        this->synthState_->propagateNewParamValueFromExternal(timbre, row, encoder, param, oldValue, newNewValue);
     }
 }
 
 void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue) {
     switch (mixerValue) {
         case MIXER_VALUE_VOLUME: {
-            float oldValue = this->synthState->mixerState.instrumentState[timbre].volume;
-            this->synthState->mixerState.instrumentState[timbre].volume = newValue;
+            float oldValue = this->synthState_->mixerState.instrumentState_[timbre].volume;
+            this->synthState_->mixerState.instrumentState_[timbre].volume = newValue;
             if (oldValue != newValue) {
-                this->synthState->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
+                this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
             }
             break;
         }
         case MIXER_VALUE_PAN: {
-            float oldValue = this->synthState->mixerState.instrumentState[timbre].pan;
+            float oldValue = this->synthState_->mixerState.instrumentState_[timbre].pan;
             // Can be 64
             if (newValue > 63.0f) {
                 newValue = 63.0f;
             }
-            this->synthState->mixerState.instrumentState[timbre].pan = newValue;
+            this->synthState_->mixerState.instrumentState_[timbre].pan = newValue;
             if (oldValue != newValue) {
-                this->synthState->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
+                this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
             }
             break;
         }
@@ -764,16 +768,16 @@ void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int 
     int oldValue = this->timbres_[timbre].getSeqStepValue(whichStepSeq, step);
 
     if (oldValue != newValue) {
-        int oldStep = this->synthState->stepSelect[whichStepSeq];
-        this->synthState->stepSelect[whichStepSeq] = step;
+        int oldStep = this->synthState_->stepSelect[whichStepSeq];
+        this->synthState_->stepSelect[whichStepSeq] = step;
         if (oldStep != step) {
-            this->synthState->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep,
+            this->synthState_->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep,
                 step);
         }
         this->timbres_[timbre].setSeqStepValue(whichStepSeq, step, newValue);
         int newNewValue = this->timbres_[timbre].getSeqStepValue(whichStepSeq, step);
         if (oldValue != newNewValue) {
-            this->synthState->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue,
+            this->synthState_->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue,
                 newValue);
         }
     }
@@ -785,6 +789,6 @@ void Synth::setNewSymbolInPresetName(int timbre, int index, int value) {
 
 void Synth::setCurrentInstrument(int value) {
     if (value >= 1 && value <= (NUMBER_OF_TIMBRES + 1)) {
-        this->synthState->setCurrentInstrument(value);
+        this->synthState_->setCurrentInstrument(value);
     }
 }

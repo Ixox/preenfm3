@@ -45,23 +45,23 @@ const char* ScalaFile::getFolderName() {
 
 
 float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
-    if (mixerState->instrumentState[instrumentNumber].scalaEnable == 0) {
+    if (mixerState->instrumentState_[instrumentNumber].scalaEnable == 0) {
         return diatonicScaleFrequency;
     }
     // propertyFiles is a 4096 char array
     char* scalaBuffer = storageBuffer;
     char *line = lineBuffer;
 
-    const PFM3File* scaleFile = getFile(mixerState->instrumentState[instrumentNumber].scaleScaleNumber);
+    const PFM3File* scaleFile = getFile(mixerState->instrumentState_[instrumentNumber].scaleScaleNumber);
 
-    if (fsu->str_cmp(mixerState->instrumentState[instrumentNumber].scalaScaleFileName, scaleFile->name) == 0) {
+    if (fsu->str_cmp(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName, scaleFile->name) == 0) {
         // Name don't feet, new scales have been updated
-        int newNumber = getFileIndex(mixerState->instrumentState[instrumentNumber].scalaScaleFileName);
+        int newNumber = getFileIndex(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName);
         if (newNumber == -1) {
             return (float*)0;
         }
         scaleFile = getFile(newNumber);
-        mixerState->instrumentState[instrumentNumber].scaleScaleNumber = newNumber;
+        mixerState->instrumentState_[instrumentNumber].scaleScaleNumber = newNumber;
     }
 
     int size;
@@ -109,7 +109,7 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
 }
 
 float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) {
-    if (mixerState->instrumentState[instrumentNumber].scalaEnable == 0) {
+    if (mixerState->instrumentState_[instrumentNumber].scalaEnable == 0) {
         return diatonicScaleFrequency;
     }
 
@@ -117,7 +117,7 @@ float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) 
 
 	float octaveRatio = interval[instrumentNumber][numberOfDegrees[instrumentNumber]-1];
 	int octaveDegree = numberOfDegrees[instrumentNumber];
-	if (mixerState->instrumentState[instrumentNumber].scalaMapping == SCALA_MAPPING_KEYB) {
+	if (mixerState->instrumentState_[instrumentNumber].scalaMapping == SCALA_MAPPING_KEYB) {
 		octaveDegree = ((numberOfDegrees[instrumentNumber] + 11) / 12) * 12;
 	}
 

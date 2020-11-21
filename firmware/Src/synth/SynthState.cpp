@@ -882,15 +882,15 @@ char* SynthState::getTimbreName(int t) {
 }
 
 bool SynthState::scalaSettingsChanged(int timbre) {
-    if (!mixerState.instrumentState[timbre].scalaEnable) {
-        mixerState.instrumentState[timbre].scaleFrequencies = diatonicScaleFrequency;
+    if (!mixerState.instrumentState_[timbre].scalaEnable) {
+        mixerState.instrumentState_[timbre].scaleFrequencies = diatonicScaleFrequency;
     } else {
-        if (storage->getScalaFile()->getFile(mixerState.instrumentState[timbre].scaleScaleNumber)->fileType == FILE_EMPTY) {
+        if (storage->getScalaFile()->getFile(mixerState.instrumentState_[timbre].scaleScaleNumber)->fileType == FILE_EMPTY) {
             return false;
         }
         float* newScaleFrequencies = storage->getScalaFile()->loadScalaScale(&mixerState, timbre);
         if (newScaleFrequencies != 0) {
-            mixerState.instrumentState[timbre].scaleFrequencies = newScaleFrequencies;
+            mixerState.instrumentState_[timbre].scaleFrequencies = newScaleFrequencies;
         } else {
             // File Size returned 0
             return false;

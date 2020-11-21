@@ -352,7 +352,7 @@ void preenfm3_USART1_IRQHandler() {
         uint8_t midiByte = huart1.Instance->RDR;
         usartBufferIn.insert(midiByte);
         // Insert in usartBufferOut if midi through
-        if (synthState.mixerState.midiThru != 0) {
+        if (synthState.mixerState.midiThru_ != 0) {
             // Can we insert now ? if TX fifo not full
             if (READ_BIT(huart1.Instance->ISR, USART_ISR_TXE_TXFNF) != 0) {
                 huart1.Instance->TDR = midiByte;
@@ -464,7 +464,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xb:
             case 0xe:
             case 0x3:
-                if (synthState.mixerState.midiThru != 0) {
+                if (synthState.mixerState.midiThru_ != 0) {
                     usartBufferOut.insert(buffer[usbr+1]);
                     usartBufferOut.insert(buffer[usbr+2]);
                     usartBufferOut.insert(buffer[usbr+3]);
@@ -481,7 +481,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xc:
             case 0xd:
             case 0x2:
-                if (synthState.mixerState.midiThru != 0) {
+                if (synthState.mixerState.midiThru_ != 0) {
                     usartBufferOut.insert(buffer[usbr+1]);
                     usartBufferOut.insert(buffer[usbr+2]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
@@ -494,7 +494,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
                 // ========= 1 byte =======================
             case 0xF:
                 usbMidi.insert(buffer[usbr + 1]);
-                if (synthState.mixerState.midiThru != 0) {
+                if (synthState.mixerState.midiThru_ != 0) {
                     usartBufferOut.insert(buffer[usbr+1]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
                 }

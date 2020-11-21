@@ -61,13 +61,13 @@ private:
 	void drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest);
 	void drawMix(uint8_t imNum);
 
-	uint8_t operatorPosition[6];
-	uint8_t imSource[6];
-	uint8_t imDest[6];
-	uint8_t operatorMix[6];
-	uint16_t *buffer;
-	uint8_t *fgBuffer;
-	uint16_t color;
+	uint8_t operatorPosition_[6];
+	uint8_t imSource_[6];
+	uint8_t imDest_[6];
+	uint8_t operatorMix_[6];
+	uint16_t *buffer_;
+	uint8_t *fgBuffer_;
+	uint16_t color_;
 
 };
 

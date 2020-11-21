@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #ifndef TIMBRE_H_
 #define TIMBRE_H_
 
@@ -33,11 +31,11 @@
 #include "note_stack.h"
 #include "event_scheduler.h"
 
-
 extern float panTable[];
 class Voice;
 
-enum {  CLOCK_OFF,
+enum {
+    CLOCK_OFF,
     CLOCK_INTERNAL,
     CLOCK_EXTERNAL
 };
@@ -48,16 +46,16 @@ class Timbre {
 public:
     Timbre();
     virtual ~Timbre();
-    void init(SynthState* synthState, int timbreNumber);
+    void init(SynthState *synthState, int timbreNumber);
     void setVoiceNumber(int v, int n);
-    void initVoicePointer(int n, Voice* voice);
+    void initVoicePointer(int n, Voice *voice);
     void updateArpegiatorInternalClock();
     void cleanNextBlock();
     void prepareMatrixForNewBlock();
     void voicesToTimbre(float volumeGain);
     void gateFx();
     void afterNewParamsLoad();
-    void setNewValue(int index, struct ParameterDisplay* param, float newValue);
+    void setNewValue(int index, struct ParameterDisplay *param, float newValue);
     void setNewEffecParam(int encoder);
     int getSeqStepValue(int whichStepSeq, int step);
     void setSeqStepValue(int whichStepSeq, int step, int value);
@@ -84,18 +82,16 @@ public:
 
     void numberOfVoicesChanged(uint8_t newNumberOfVoices) {
         if (newNumberOfVoices > 0) {
-            numberOfVoiceInverse = 1.0f / (float)newNumberOfVoices;
+            numberOfVoiceInverse_ = 1.0f / (float) newNumberOfVoices;
         } else {
-            numberOfVoiceInverse = 1.0f;
+            numberOfVoiceInverse_ = 1.0f;
         }
-        this->numberOfVoices = newNumberOfVoices;
+        numberOfVoices_ = newNumberOfVoices;
     }
 
     void lfoValueChange(int currentRow, int encoder, float newValue);
 
-
     void setHoldPedal(int value);
-
 
     void resetMatrixDestination(float oldValue);
     void setMatrixSource(enum SourceEnum source, float newValue);
@@ -109,16 +105,16 @@ public:
     void midiClockStart();
     void midiClockSongPositionStep(int songPosition);
 
-    struct OneSynthParams * getParamRaw() {
-        return &params;
+    struct OneSynthParams* getParamRaw() {
+        return &params_;
     }
 
     float* getSampleBlock() {
-        return sampleBlock;
+        return sampleBlock_;
     }
 
     const float* getSampleBlock() const {
-        return sampleBlock;
+        return sampleBlock_;
     }
 
     signed char voiceNumber[MAX_NUMBER_OF_VOICES];
@@ -129,22 +125,22 @@ public:
 
     // Do matrix use LFO
     bool isLfoUsed(int lfo) {
-        return  lfoUSed[lfo] > 0;
+        return lfoUSed_[lfo] > 0;
     }
 
     uint8_t getLowerNote() {
-        return lowerNote;
+        return lowerNote_;
     }
     float getLowerNoteFrequency() {
         return lowerNoteFrequency;
     }
 
-    char *getPresetName() {
-    	return params.presetName;
+    char* getPresetName() {
+        return params_.presetName;
     }
 
     float getNumberOfVoiceInverse() {
-        return numberOfVoiceInverse;
+        return numberOfVoiceInverse_;
     }
 
 private:
@@ -158,58 +154,53 @@ private:
     void OnMidiStart();
     void OnMidiStop();
     void OnMidiClock();
-	void SendNote(uint8_t note, uint8_t velocity);
+    void SendNote(uint8_t note, uint8_t velocity);
 
-	int8_t timbreNumber;
-    struct OneSynthParams params;
-    struct MixerState *mixerState;
-    float sampleBlock[BLOCK_SIZE * 2];
-    float *sbMax;
-    float numberOfVoiceInverse;
+    int8_t timbreNumber_;
+    struct OneSynthParams params_;
+    struct MixerState *mixerState_;
+    float sampleBlock_[BLOCK_SIZE * 2];
+    float *sbMax_;
+    float numberOfVoiceInverse_;
     // numberOfVoices is to be used instead of params.engine1.numberOfVoice
     // Because numberOfVoices can be just incremented, and we're not sure the voice is ready.
     // numberOfVoices is incremented after the new voices are initialized and ready to use.
-    float numberOfVoices;
+    float numberOfVoices_;
 
-    float mixerGain;
-    Voice *voices[MAX_NUMBER_OF_VOICES];
-    bool holdPedal;
-    int8_t lastPlayedNote;
-
+    float mixerGain_;
+    Voice *voices_[MAX_NUMBER_OF_VOICES];
+    bool holdPedal_;
+    int8_t lastPlayedNote_;
 
     // 6 oscillators Max
-    Osc osc1;
-    Osc osc2;
-    Osc osc3;
-    Osc osc4;
-    Osc osc5;
-    Osc osc6;
+    Osc osc1_;
+    Osc osc2_;
+    Osc osc3_;
+    Osc osc4_;
+    Osc osc5_;
+    Osc osc6_;
 
     // And their 6 envelopes
-    Env env1;
-    Env env2;
-    Env env3;
-    Env env4;
-    Env env5;
-    Env env6;
-
+    Env env1_;
+    Env env2_;
+    Env env3_;
+    Env env4_;
+    Env env5_;
+    Env env6_;
 
     // Must recompute LFO steps ?
-    bool recomputeNext;
-    float currentGate;
+    bool recomputeNext_;
+    float currentGate_;
     // Arpeggiator
 
     // TO REFACTOR
-    float ticksPerSecond;
-    float ticksEveryNCalls;
-    int ticksEveyNCallsInteger;
+    float ticksPerSecond_;
+    float ticksEveryNCalls_;
+    int ticksEveyNCallsInteger_;
 
-
-
-    float arpegiatorStep;
-    NoteStack note_stack;
-    EventScheduler event_scheduler;
-
+    float arpegiatorStep_;
+    NoteStack note_stack_;
+    EventScheduler event_scheduler_;
 
     uint8_t running_;
     uint8_t latch_;
@@ -219,17 +210,17 @@ private:
     int8_t current_direction_;
     int8_t current_octave_;
     int8_t current_step_;
-	int8_t start_step_;
+    int8_t start_step_;
     uint8_t ignore_note_off_messages_;
     uint8_t recording_;
 
     // lfoUsed
-    uint8_t lfoUSed[NUMBER_OF_LFO];
-    uint8_t lowerNote;
+    uint8_t lfoUSed_[NUMBER_OF_LFO];
+    uint8_t lowerNote_;
     float lowerNoteFrequency;
-    bool lowerNoteReleased;
+    bool lowerNoteReleased_;
     // static
-    static uint8_t voiceIndex;
+    static uint8_t voiceIndex_;
 };
 
 #endif /* TIMBRE_H_ */

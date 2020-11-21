@@ -25,48 +25,48 @@
 class SynthState;
 class TftDisplay;
 
-
 struct Pfm3OneButtonState {
-    const char* stateLabel;
+    const char *stateLabel;
     const RowEncoder rowEncoder[6];
 };
 
 struct Pfm3OneButton {
-    const char* buttonLabel;
+    const char *buttonLabel;
     const uint8_t buttonId;
     const int numberOfStates;
-    const Pfm3OneButtonState* states[];
+    const Pfm3OneButtonState *states[];
 
 };
 
 struct Pfm3EditMenu {
     const char *mainMenuName;
     const int numberOfButtons;
-    const Pfm3OneButton* pages[];
+    const Pfm3OneButton *pages[];
 };
 
 struct PfmMainMenu {
     const Pfm3EditMenu *editMenu[6];
 };
 
-
-class FMDisplayEditor  {
+class FMDisplayEditor {
 public:
     FMDisplayEditor();
 
-    void init(SynthState* synthState, TftDisplay* tft) {
-        this->synthState = synthState;
-        this->tft = tft;
+    void init(SynthState *synthState, TftDisplay *tft) {
+        synthState_ = synthState;
+        tft_ = tft;
     }
 
     void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
-    void newParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
+    void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
     void tempoClick();
-    bool isPresetModifed(int timbre) { return presetModifed[timbre]; }
+    bool isPresetModifed(int timbre) {
+        return presetModifed_[timbre];
+    }
     void setPresetModified(int timbre, bool state);
     void resetAllPresetModified();
-    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay* param, float newFloatValue);
+    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param, float newFloatValue);
 
     void updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue);
     void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
@@ -87,16 +87,16 @@ private:
 
     void resetHideParams();
     uint8_t getX(int encoder);
-    TftDisplay* tft;
-    SynthState* synthState;
+    TftDisplay *tft_;
+    SynthState *synthState_;
 
-    bool presetModifed[NUMBER_OF_TIMBRES];
-    bool hideParam[NUMBER_OF_ENCODERS_PFM3];
+    bool presetModifed_[NUMBER_OF_TIMBRES];
+    bool hideParam_[NUMBER_OF_ENCODERS_PFM3];
     // Value Changed info
-    uint8_t valueChangedCounter[NUMBER_OF_ENCODERS_PFM3];
-    uint8_t imChangedCounter[NUMBER_OF_ENCODERS_PFM3];
-    int currentTimbre;
-    bool multipleEdition;
+    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
+    uint8_t imChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
+    int currentTimbre_;
+    bool multipleEdition_;
 };
 
 #endif

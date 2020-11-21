@@ -56,8 +56,8 @@ public:
     FMDisplayMixer();
 
     void init(SynthState *synthState, TftDisplay *tft) {
-        this->synthState_ = synthState;
-        this->tft_ = tft;
+        synthState_ = synthState;
+        tft_ = tft;
     }
 
     void displayMixerValue(int timbre);

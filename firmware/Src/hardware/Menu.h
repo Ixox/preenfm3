@@ -18,11 +18,9 @@
 #ifndef MENU_H_
 #define MENU_H_
 
-
 #define INTERNAL_LAST_BANK 71
 
 #include "Storage.h"
-
 
 enum {
     MIDICONFIG_USB = 0,
@@ -41,11 +39,7 @@ enum {
 };
 
 enum SynthEditMode {
-    SYNTH_MODE_MIXER = 1,
-    SYNTH_MODE_EDIT_PFM3,
-    SYNTH_MODE_MENU,
-    SYNTH_MODE_SEQUENCER,
-	SYNTH_MODE_COLORS
+    SYNTH_MODE_MIXER = 1, SYNTH_MODE_EDIT_PFM3, SYNTH_MODE_MENU, SYNTH_MODE_SEQUENCER, SYNTH_MODE_COLORS
 };
 
 enum MidiConfigUSB {
@@ -106,10 +100,8 @@ enum MenuState {
     MENU_DEFAULT_SEQUENCER_SAVE,
     MENU_DEFAULT_SEQUENCER_DELETE,
 
-	LAST_MENU
+    LAST_MENU
 };
-
-
 
 enum {
     MENUTYPE_WITHSUBMENU = 0,
@@ -124,7 +116,7 @@ enum {
 
 struct MenuItem {
     MenuState menuState;
-    const char* name;
+    const char *name;
     uint8_t menuType;
     short maxValue;
     MenuState subMenu[6];
@@ -137,7 +129,6 @@ struct Randomizer {
     int8_t IM;
     int8_t Modl;
 };
-
 
 struct PreviousMenuChoice {
     uint8_t main;
@@ -154,7 +145,7 @@ struct FullState {
     SynthEditMode synthModeBeforeMenu;
     uint16_t menuSelect;
     uint8_t previousMenuSelect;
-    const MenuItem* currentMenuItem;
+    const MenuItem *currentMenuItem;
     char name[13];
 
     uint8_t previousChoice;
@@ -163,19 +154,19 @@ struct FullState {
 
     uint8_t preenFMBankNumber;
     uint8_t preenFMPresetNumber;
-    const struct PFM3File* preenFMBank;
+    const struct PFM3File *preenFMBank;
 
     uint8_t preenFMMixerNumber;
     uint8_t preenFMMixerPresetNumber;
-    const struct PFM3File* preenFMMixer;
+    const struct PFM3File *preenFMMixer;
 
     uint8_t preenFMSeqBankNumber;
     uint8_t preenFMSeqSequencerNumber;
-    const struct PFM3File* preenFMSequence;
+    const struct PFM3File *preenFMSequence;
 
     uint16_t dx7BankNumber;
     uint8_t dx7PresetNumber;
-    const struct PFM3File* dx7Bank;
+    const struct PFM3File *dx7Bank;
     struct Randomizer randomizer;
     uint8_t mixerCurrentEdit;
     uint8_t menuCurrentEdit;
@@ -189,10 +180,10 @@ struct FullState {
 };
 
 struct MidiConfig {
-    const char* title;
-    const char* nameInFile;
+    const char *title;
+    const char *nameInFile;
     uint8_t maxValue;
-    const char** valueName;
+    const char **valueName;
 };
 
 extern const struct MenuItem allMenus[];
@@ -201,7 +192,7 @@ extern const struct MidiConfig midiConfig[];
 class MenuItemUtil {
 public:
     static const MenuItem* getMenuItem(MenuState ms) {
-        const MenuItem* item = &allMenus[0];
+        const MenuItem *item = &allMenus[0];
         int cpt = 0;
         while (item->menuState != LAST_MENU) {
             if (item->menuState == ms) {
@@ -218,7 +209,7 @@ public:
         if (ms == MENU_DONE || ms == MENU_CANCEL || ms == MENU_ERROR) {
             return getMenuItem(ms);
         }
-        const MenuItem* item = &allMenus[0];
+        const MenuItem *item = &allMenus[0];
         int cpt = 0;
         while (item->menuState != LAST_MENU) {
             for (int k = 0; k < 6; k++) {

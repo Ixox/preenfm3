@@ -576,10 +576,10 @@ bool carrierOperator[ALGO_END][6];
 #define GETX1(o) (((o-1) % 3)*26 + 6)
 #define GETY1(o) (((o-1)/3)*25 + 2)
 
-#define SETPIXEL(x, y) buffer[(x)+(y)*80]=color
+#define SETPIXEL(x, y) buffer_[(x)+(y)*80]=color_
 
-#define SETFGPIXEL(x, y) fgBuffer[(x)+(y)*80]=0xff
-#define DELFGPIXEL(x, y) fgBuffer[(x)+(y)*80]=0x00
+#define SETFGPIXEL(x, y) fgBuffer_[(x)+(y)*80]=0xff
+#define DELFGPIXEL(x, y) fgBuffer_[(x)+(y)*80]=0x00
 
 TftAlgo::TftAlgo() {
 
@@ -593,18 +593,18 @@ TftAlgo::TftAlgo() {
         }
         while (algoInfo[idx] != END) {
             switch (algoInfo[idx++]) {
-            case OPERATOR:
-                idx += 2;
-                break;
-            case IM:
-                modulationIndex[a][algoInfo[idx] - 1].source = algoInfo[idx + 1];
-                modulationIndex[a][algoInfo[idx] - 1].destination = algoInfo[idx + 2];
-                idx += 3;
-                break;
-            case MIX:
-                carrierOperator[a][algoInfo[idx] - 1] = true;
-                idx++;
-                break;
+                case OPERATOR:
+                    idx += 2;
+                    break;
+                case IM:
+                    modulationIndex[a][algoInfo[idx] - 1].source = algoInfo[idx + 1];
+                    modulationIndex[a][algoInfo[idx] - 1].destination = algoInfo[idx + 2];
+                    idx += 3;
+                    break;
+                case MIX:
+                    carrierOperator[a][algoInfo[idx] - 1] = true;
+                    idx++;
+                    break;
             }
         }
     }
@@ -614,15 +614,15 @@ TftAlgo::~TftAlgo() {
 }
 
 void TftAlgo::setBufferAdress(uint16_t *bufferAdress) {
-    this->buffer = bufferAdress;
+    buffer_ = bufferAdress;
 }
 
 void TftAlgo::setFGBufferAdress(uint8_t *bufferAdress) {
-    this->fgBuffer = bufferAdress;
+    fgBuffer_ = bufferAdress;
 }
 
 void TftAlgo::setColor(uint16_t col) {
-    color = col;
+    color_ = col;
 }
 
 /*
@@ -630,8 +630,7 @@ void TftAlgo::setColor(uint16_t col) {
  *
  */
 void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
-    int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0,
-            curpixel = 0;
+    int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0, curpixel = 0;
 
     deltax = ABS(x2 - x1);
     deltay = ABS(y2 - y1);
@@ -672,15 +671,15 @@ void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t
 
     for (curpixel = 0; curpixel <= numpixels; curpixel++) {
         switch (mode) {
-        case 1:
-            SETPIXEL(x, y);
-            break;
-        case 2:
-            SETFGPIXEL(x, y);
-            break;
-        case 3:
-            DELFGPIXEL(x, y);
-            break;
+            case 1:
+                SETPIXEL(x, y);
+                break;
+            case 2:
+                SETFGPIXEL(x, y);
+                break;
+            case 3:
+                DELFGPIXEL(x, y);
+                break;
         }
         num += numadd;
         if (num >= den) {
@@ -695,7 +694,7 @@ void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t
 
 void TftAlgo::drawNumber(int x, int y, int opNum) {
 
-    if (operatorMix[opNum - 1] == 1) {
+    if (operatorMix_[opNum - 1] == 1) {
         // Carrier
         setColor(RGB565_YELLOW);
     } else {
@@ -727,21 +726,21 @@ void TftAlgo::highlightOperator(uint8_t opPosition) {
         y1 = 0;
     }
 
-    for (int x = x1; x < x1 + 20; x+= 4) {
-        *((int32_t*)(&fgBuffer[(x)+(y1)*80])) = 0xffffffff;
-        *((int32_t*)(&fgBuffer[(x)+(y1+1)*80])) = 0xffffffff;
-        *((int32_t*)(&fgBuffer[(x)+(y1+19)*80])) = 0xffffffff;
-        *((int32_t*)(&fgBuffer[(x)+(y1+20)*80])) = 0xffffffff;
+    for (int x = x1; x < x1 + 20; x += 4) {
+        *((int32_t*) (&fgBuffer_[(x) + (y1) * 80])) = 0xffffffff;
+        *((int32_t*) (&fgBuffer_[(x) + (y1 + 1) * 80])) = 0xffffffff;
+        *((int32_t*) (&fgBuffer_[(x) + (y1 + 19) * 80])) = 0xffffffff;
+        *((int32_t*) (&fgBuffer_[(x) + (y1 + 20) * 80])) = 0xffffffff;
     }
     for (int y = y1; y < y1 + 20; y++) {
-        *((int16_t*)(&fgBuffer[(x1)+(y)*80])) = 0xffff;
-        *((int16_t*)(&fgBuffer[(x1 + 19)+(y)*80])) = 0xffff;
+        *((int16_t*) (&fgBuffer_[(x1) + (y) * 80])) = 0xffff;
+        *((int16_t*) (&fgBuffer_[(x1 + 19) + (y) * 80])) = 0xffff;
     }
 }
 
 void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 
-    if (operatorMix[opNum - 1] == 1) {
+    if (operatorMix_[opNum - 1] == 1) {
         // Carrier
         setColor(RGB565_CYAN);
     } else {
@@ -767,17 +766,17 @@ void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 void TftAlgo::drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 
     if (opSource != opDest) {
-        int xSource = GETX1(operatorPosition[opSource-1]) + 8;
-        int ySource = GETY1(operatorPosition[opSource-1]) + 17;
+        int xSource = GETX1(operatorPosition_[opSource-1]) + 8;
+        int ySource = GETY1(operatorPosition_[opSource-1]) + 17;
 
-        int xDest = GETX1(operatorPosition[opDest-1]) + 8;
-        int yDest = GETY1(operatorPosition[opDest-1]) - 1;
+        int xDest = GETX1(operatorPosition_[opDest-1]) + 8;
+        int yDest = GETY1(operatorPosition_[opDest-1]) - 1;
 
         drawLine(mode, xSource, ySource, xDest, yDest);
     } else {
         // Feedback
-        int x = GETX1(operatorPosition[opSource-1]) + 8;
-        int y = GETY1(operatorPosition[opSource-1]) + 8;
+        int x = GETX1(operatorPosition_[opSource-1]) + 8;
+        int y = GETY1(operatorPosition_[opSource-1]) + 8;
 
         drawLine(mode, x + 8, y, x + 10, y);
         drawLine(mode, x + 10, y, x + 10, y - 10);
@@ -796,8 +795,8 @@ void TftAlgo::drawMix(uint8_t imNum) {
 }
 
 void TftAlgo::drawAlgoOperator(int algo, int op) {
-    if (operatorPosition[op] != 0) {
-        highlightOperator(operatorPosition[op]);
+    if (operatorPosition_[op] != 0) {
+        highlightOperator (operatorPosition_[op]);
     }
 }
 
@@ -806,30 +805,30 @@ void TftAlgo::drawAlgo(int algo) {
     algo = algo % NUMBER_OF_ALGOS;
     const uint8_t *algoInfo = allAlgos[algo];
     for (int i = 0; i < 6; i++) {
-        operatorPosition[i] = 0;
-        imSource[i] = 0;
-        imDest[i] = 0;
-        operatorMix[i] = 0;
+        operatorPosition_[i] = 0;
+        imSource_[i] = 0;
+        imDest_[i] = 0;
+        operatorMix_[i] = 0;
     }
 
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
-        case OPERATOR:
-            operatorPosition[algoInfo[idx] - 1] = algoInfo[idx + 1];
-            drawOperator(algoInfo[idx], algoInfo[idx + 1]);
-            idx += 2;
-            break;
-        case IM:
-            imSource[algoInfo[idx] - 1] = algoInfo[idx + 1];
-            imDest[algoInfo[idx] - 1] = algoInfo[idx + 2];
-            setColor(RGB565_RED);
-            drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
-            idx += 3;
-            break;
-        case MIX:
-            operatorMix[algoInfo[idx] - 1] = 1;
-            drawMix(algoInfo[idx++]);
-            break;
+            case OPERATOR:
+                operatorPosition_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+                drawOperator(algoInfo[idx], algoInfo[idx + 1]);
+                idx += 2;
+                break;
+            case IM:
+                imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+                imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
+                setColor(RGB565_RED);
+                drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
+                idx += 3;
+                break;
+            case MIX:
+                operatorMix_[algoInfo[idx] - 1] = 1;
+                drawMix(algoInfo[idx++]);
+                break;
         }
     }
 
@@ -838,18 +837,18 @@ void TftAlgo::drawAlgo(int algo) {
     idx = 0;
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
-        case OPERATOR:
-            x1 = GETX1(algoInfo[idx + 1]);
-            y1 = GETY1(algoInfo[idx + 1]);
-            drawNumber(x1 + 3, y1 + 3, algoInfo[idx]);
-            idx += 2;
-            break;
-        case IM:
-            idx += 3;
-            break;
-        case MIX:
-            idx++;
-            break;
+            case OPERATOR:
+                x1 = GETX1(algoInfo[idx + 1]);
+                y1 = GETY1(algoInfo[idx + 1]);
+                drawNumber(x1 + 3, y1 + 3, algoInfo[idx]);
+                idx += 2;
+                break;
+            case IM:
+                idx += 3;
+                break;
+            case MIX:
+                idx++;
+                break;
         }
     }
 

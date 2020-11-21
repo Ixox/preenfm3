@@ -22,12 +22,11 @@
 #include "Env.h"
 #include "Osc.h"
 
-
 /** \brief  Unsigned Saturate
-    This function saturates an unsigned value.
-    \param [in]  value  Value to be saturated
-    \param [in]    sat  Bit position to saturate to (0..31)
-    \return             Saturated value
+ This function saturates an unsigned value.
+ \param [in]  value  Value to be saturated
+ \param [in]    sat  Bit position to saturate to (0..31)
+ \return             Saturated value
  */
 #define __USAT(ARG1,ARG2) \
 ({                          \
@@ -38,9 +37,7 @@
 
 class Timbre;
 
-
-class Voice
-{
+class Voice {
     friend class Timbre;
 
 public:
@@ -63,23 +60,47 @@ public:
     void glideFirstNoteOff();
     void glide();
 
-    bool isReleased() { return this->released; }
-    bool isPlaying() { return this->playing; }
-    bool isNewNotePending() { return this->newNotePending; }
-    unsigned int getIndex() { return this->index; }
-    char getNote() { return this->note; }
-    char getMidiVelocity() { return this->midiVelocity; }
-    float getNoteFrequency() { return this->noteFrequency; }
+    bool isReleased() {
+        return this->released;
+    }
+    bool isPlaying() {
+        return this->playing;
+    }
+    bool isNewNotePending() {
+        return this->newNotePending;
+    }
+    unsigned int getIndex() {
+        return this->index;
+    }
+    char getNote() {
+        return this->note;
+    }
+    char getMidiVelocity() {
+        return this->midiVelocity;
+    }
+    float getNoteFrequency() {
+        return this->noteFrequency;
+    }
     float getNoteRealFrequencyEstimation(float newNoteFrequency);
-    char getNextPendingNote() { return this->pendingNote; }
-    char getNextGlidingNote() { return this->nextGlidingNote; }
-    bool isHoldedByPedal() { return this->holdedByPedal; }
-    void setHoldedByPedal(bool holded) { this->holdedByPedal = holded; }
+    char getNextPendingNote() {
+        return this->pendingNote;
+    }
+    char getNextGlidingNote() {
+        return this->nextGlidingNote;
+    }
+    bool isHoldedByPedal() {
+        return this->holdedByPedal;
+    }
+    void setHoldedByPedal(bool holded) {
+        this->holdedByPedal = holded;
+    }
     void setCurrentTimbre(Timbre *timbre);
-    bool isGliding() { return gliding; }
+    bool isGliding() {
+        return gliding;
+    }
 
     void updateAllModulationIndexes() {
-        int numberOfIMs = algoInformation[(int)(currentTimbre->getParamRaw()->engine1.algo)].im;
+        int numberOfIMs = algoInformation[(int) (currentTimbre->getParamRaw()->engine1.algo)].im;
 
         feedbackModulation = currentTimbre->getParamRaw()->engineIm3.modulationIndex6 + this->velIm6;
         if (unlikely(feedbackModulation < 0.0f)) {
@@ -88,16 +109,19 @@ public:
             feedbackModulation = 1.0f;
         }
 
-        modulationIndex1 = currentTimbre->getParamRaw()->engineIm1.modulationIndex1 + matrix.getDestination(INDEX_MODULATION1) + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm1;
+        modulationIndex1 = currentTimbre->getParamRaw()->engineIm1.modulationIndex1 + matrix.getDestination(INDEX_MODULATION1)
+            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm1;
         if (unlikely(modulationIndex1 < 0.0f)) {
             modulationIndex1 = 0.0f;
         }
-        modulationIndex2 = currentTimbre->getParamRaw()->engineIm1.modulationIndex2 + matrix.getDestination(INDEX_MODULATION2) + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm2;
+        modulationIndex2 = currentTimbre->getParamRaw()->engineIm1.modulationIndex2 + matrix.getDestination(INDEX_MODULATION2)
+            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm2;
         if (unlikely(modulationIndex2 < 0.0f)) {
             modulationIndex2 = 0.0f;
         }
 
-        modulationIndex3 = currentTimbre->getParamRaw()->engineIm2.modulationIndex3 + matrix.getDestination(INDEX_MODULATION3) + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm3;
+        modulationIndex3 = currentTimbre->getParamRaw()->engineIm2.modulationIndex3 + matrix.getDestination(INDEX_MODULATION3)
+            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm3;
         if (unlikely(modulationIndex3 < 0.0f)) {
             modulationIndex3 = 0.0f;
         }
@@ -106,7 +130,8 @@ public:
             return;
         }
 
-        modulationIndex4 = currentTimbre->getParamRaw()->engineIm2.modulationIndex4 + matrix.getDestination(INDEX_MODULATION4) + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm4;
+        modulationIndex4 = currentTimbre->getParamRaw()->engineIm2.modulationIndex4 + matrix.getDestination(INDEX_MODULATION4)
+            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm4;
         if (unlikely(modulationIndex4 < 0.0f)) {
             modulationIndex4 = 0.0f;
         }
@@ -118,7 +143,7 @@ public:
     }
 
     void updateAllMixOscsAndPans() {
-        int *opInfo = algoOpInformation[(int)currentTimbre->getParamRaw()->engine1.algo];
+        int *opInfo = algoOpInformation[(int) currentTimbre->getParamRaw()->engine1.algo];
         float inv65535 = .0000152587890625; // 1/ 65535
         int pan;
 
@@ -128,7 +153,7 @@ public:
             mix1 = __USAT((int)(mix1 * 65536) , 16) * inv65535;
             float pan1 = currentTimbre->getParamRaw()->engineMix1.panOsc1 + matrix.getDestination(PAN_OSC1) + matrix.getDestination(ALL_PAN) + 1.0f;
             // pan1 is between -1 and 1 : Scale from 0.0 to 256
-            pan = __USAT((int)(pan1 * 128), 8);
+            pan = __USAT((int )(pan1 * 128), 8);
             pan1Left = panTable[pan] * .05f + pan1Left * .95f;
             pan1Right = panTable[256 - pan] * .05f + pan1Right * .95f;
         }
@@ -137,7 +162,7 @@ public:
             mix2 = currentTimbre->getParamRaw()->engineMix1.mixOsc2 + matrix.getDestination(MIX_OSC2) + matrix.getDestination(ALL_MIX);
             mix2 = __USAT((int)(mix2 * 65535) , 16) * inv65535;
             float pan2 = currentTimbre->getParamRaw()->engineMix1.panOsc2 + matrix.getDestination(PAN_OSC2) + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int)(pan2 * 128), 8);
+            pan = __USAT((int )(pan2 * 128), 8);
             pan2Left = panTable[pan] * .05f + pan2Left * .95f;
             pan2Right = panTable[256 - pan] * .05f + pan2Right * .95f;
         }
@@ -146,16 +171,16 @@ public:
             mix3 = currentTimbre->getParamRaw()->engineMix2.mixOsc3 + matrix.getDestination(MIX_OSC3) + matrix.getDestination(ALL_MIX);
             mix3 = __USAT((int)(mix3 * 65535) , 16) * inv65535;
             float pan3 = currentTimbre->getParamRaw()->engineMix2.panOsc3 + matrix.getDestination(PAN_OSC3) + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int)(pan3 * 128), 8);
+            pan = __USAT((int )(pan3 * 128), 8);
             pan3Left = panTable[pan] * .05f + pan3Left * .95f;
             pan3Right = panTable[256 - pan] * .05f + pan3Right * .95f;
         }
 
         if (likely(opInfo[3] == 1)) {
             // No matrix for mix4 and pan4
-            mix4 = currentTimbre->getParamRaw()->engineMix2.mixOsc4 + matrix.getDestination(MIX_OSC4)  + matrix.getDestination(ALL_MIX);
+            mix4 = currentTimbre->getParamRaw()->engineMix2.mixOsc4 + matrix.getDestination(MIX_OSC4) + matrix.getDestination(ALL_MIX);
             mix4 = __USAT((int)(mix4 * 65535) , 16) * inv65535;
-            float pan4 = currentTimbre->getParamRaw()->engineMix2.panOsc4 + matrix.getDestination(PAN_OSC4)  + matrix.getDestination(ALL_PAN) + 1.0f;
+            float pan4 = currentTimbre->getParamRaw()->engineMix2.panOsc4 + matrix.getDestination(PAN_OSC4) + matrix.getDestination(ALL_PAN) + 1.0f;
             pan = __USAT((int )(pan4 * 128), 8);
             pan4Left = panTable[pan] * .05f + pan4Left * .95f;
             pan4Right = panTable[256 - pan] * .05f + pan4Right * .95f;
@@ -179,7 +204,6 @@ public:
             pan6Right = panTable[256 - pan] * .05f + pan6Right * .95f;
         }
     }
-
 
     void midiClockSongPositionStep(int songPosition, bool recomputeNext) {
         if (likely(currentTimbre->isLfoUsed(0))) {
@@ -229,7 +253,6 @@ public:
         }
     }
 
-
     void midiClockStart() {
         if (likely(currentTimbre->isLfoUsed(0))) {
             lfoOsc[0].midiContinue();
@@ -253,7 +276,6 @@ public:
             lfoStepSeq[1].midiContinue();
         }
     }
-
 
     void lfoNoteOn() {
         if (likely(currentTimbre->isLfoUsed(0))) {
@@ -336,11 +358,10 @@ public:
         }
     }
 
-
     void afterNewParamsLoad() {
         this->matrix.resetSources();
         this->matrix.resetAllDestination();
-        for (int j=0; j<NUMBER_OF_ENCODERS; j++) {
+        for (int j = 0; j < NUMBER_OF_ENCODERS; j++) {
             this->lfoOsc[0].valueChanged(j);
             this->lfoOsc[1].valueChanged(j);
             this->lfoOsc[2].valueChanged(j);
@@ -354,35 +375,33 @@ public:
         v0R = v1R = 0.0f;
     }
 
-
     void lfoValueChange(int currentRow, int encoder, float newValue) {
         switch (currentRow) {
-        case ROW_LFOOSC1:
-        case ROW_LFOOSC2:
-        case ROW_LFOOSC3:
-            lfoOsc[currentRow - ROW_LFOOSC1].valueChanged(encoder);
-            break;
-        case ROW_LFOENV1:
-            lfoEnv[0].valueChanged(encoder);
-            break;
-        case ROW_LFOENV2:
-            lfoEnv2[0].valueChanged(encoder);
-            break;
-        case ROW_LFOSEQ1:
-        case ROW_LFOSEQ2:
-            lfoStepSeq[currentRow - ROW_LFOSEQ1].valueChanged(encoder);
-            break;
+            case ROW_LFOOSC1:
+            case ROW_LFOOSC2:
+            case ROW_LFOOSC3:
+                lfoOsc[currentRow - ROW_LFOOSC1].valueChanged(encoder);
+                break;
+            case ROW_LFOENV1:
+                lfoEnv[0].valueChanged(encoder);
+                break;
+            case ROW_LFOENV2:
+                lfoEnv2[0].valueChanged(encoder);
+                break;
+            case ROW_LFOSEQ1:
+            case ROW_LFOSEQ2:
+                lfoStepSeq[currentRow - ROW_LFOSEQ1].valueChanged(encoder);
+                break;
         }
     }
 
-	const float* const getSampleBlock() {
-		return sampleBlock;
-	}
+    const float* const getSampleBlock() {
+        return sampleBlock;
+    }
 
 private:
-	// private function for BP filter
+    // private function for BP filter
     void recomputeBPValues(float q, float fSquare);
-
 
     // voice status
     bool released;
@@ -401,19 +420,19 @@ private:
     // Harm freq shifting
     float freqHarm, targetFreqHarm;
 
-    EnvData envState1;
-    EnvData envState2;
-    EnvData envState3;
-    EnvData envState4;
-    EnvData envState5;
-    EnvData envState6;
+    EnvData envState1_;
+    EnvData envState2_;
+    EnvData envState3_;
+    EnvData envState4_;
+    EnvData envState5_;
+    EnvData envState6_;
 
-    OscState oscState1;
-    OscState oscState2;
-    OscState oscState3;
-    OscState oscState4;
-    OscState oscState5;
-    OscState oscState6;
+    OscState oscState1_;
+    OscState oscState2_;
+    OscState oscState3_;
+    OscState oscState4_;
+    OscState oscState5_;
+    OscState oscState6_;
 
     bool holdedByPedal;
     // Fixing the "plop" when all notes are buisy...
@@ -437,7 +456,7 @@ private:
     float env5ValueMem;
     float env6ValueMem;
 
-    Timbre* currentTimbre;
+    Timbre *currentTimbre;
 
     // glide phase increment
     static float glidePhaseInc[10];
@@ -449,15 +468,15 @@ private:
     float modulationIndex1, modulationIndex2, modulationIndex3, modulationIndex4, modulationIndex5;
     float feedbackModulation, fdbLastValue[3];
     float mix1, mix2, mix3, mix4, mix5, mix6;
-    float pan1Left, pan2Left, pan3Left, pan4Left, pan5Left, pan6Left  ;
-    float pan1Right, pan2Right, pan3Right, pan4Right, pan5Right, pan6Right ;
+    float pan1Left, pan2Left, pan3Left, pan4Left, pan5Left, pan6Left;
+    float pan1Right, pan2Right, pan3Right, pan4Right, pan5Right, pan6Right;
     //
     LfoOsc lfoOsc[NUMBER_OF_LFO_OSC];
     LfoEnv lfoEnv[NUMBER_OF_LFO_ENV];
     LfoEnv2 lfoEnv2[NUMBER_OF_LFO_ENV2];
     LfoStepSeq lfoStepSeq[NUMBER_OF_LFO_STEP];
 
-	// preenfm3
+    // preenfm3
     // Voice needs their own sample block to apply effects
     float sampleBlock[BLOCK_SIZE * 2];
     float mixerGain;
@@ -471,7 +490,6 @@ private:
     float fxPhase;
     // save float fxParam1 to detect modification
     float fxParam1PlusMatrix;
-
 
 };
 

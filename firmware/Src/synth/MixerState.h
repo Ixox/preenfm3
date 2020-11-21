@@ -31,8 +31,6 @@ enum MIXER_BANK_VERSION {
 
 #define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION3
 
-
-
 struct MixerInstrumentState {
     uint8_t out;
     uint8_t compressorType;
@@ -50,29 +48,28 @@ struct MixerInstrumentState {
     int8_t pan;
 };
 
-
-
 class MixerState {
 public:
     MixerState();
     virtual ~MixerState();
 
-    void getFullState(char* buffer, uint32_t *size);
-    void getFullDefaultState(char* buffer, uint32_t *size, uint8_t mixNumber);
-    void restoreFullState(char* buffer);
-    static char* getMixNameFromFile(char* buffer);
+    void getFullState(char *buffer, uint32_t *size);
+    void getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNumber);
+    void restoreFullState(char *buffer);
+    static char* getMixNameFromFile(char *buffer);
 
-    char mixName[13];
-    uint8_t currentChannel;
-    uint8_t globalChannel;
-    uint8_t midiThru;
-    float tuning;
-    struct MixerInstrumentState instrumentState[NUMBER_OF_TIMBRES];
+    char mixName_[13];
+    uint8_t currentChannel_;
+    uint8_t globalChannel_;
+    uint8_t midiThru_;
+    float tuning_;
+    uint8_t levelMeterWhere_;
+    struct MixerInstrumentState instrumentState_[NUMBER_OF_TIMBRES];
 
-private :
-    void restoreFullStateVersion1(char* buffer);
-    void restoreFullStateVersion2(char* buffer);
-    void restoreFullStateVersion3(char* buffer);
+private:
+    void restoreFullStateVersion1(char *buffer);
+    void restoreFullStateVersion2(char *buffer);
+    void restoreFullStateVersion3(char *buffer);
     void setDefaultValues();
 };
 

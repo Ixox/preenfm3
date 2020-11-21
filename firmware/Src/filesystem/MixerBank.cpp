@@ -159,7 +159,7 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
             convertFlashToParams((struct FlashSynthParams *) storageBuffer, this->timbre[t], true);
 
             // Init scala scale if enabled
-            if (mixerState->instrumentState[t].scalaEnable == 1) {
+            if (mixerState->instrumentState_[t].scalaEnable == 1) {
                 scalaFile->loadScalaScale(mixerState, t);
             }
         } else {
@@ -253,7 +253,7 @@ const char* MixerBank::loadMixerName(const struct PFM3File* mixer, int mixerNumb
 bool MixerBank::saveMixer(const struct PFM3File* mixer, int mixerNumber, char* mixerName) {
     const char* fullBankName = getFullName(mixer->name);
 
-    fsu->copy(this->mixerState->mixName, mixerName, 12);
+    fsu->copy(this->mixerState->mixName_, mixerName, 12);
 
     FRESULT result = f_open(&mixerFile, fullBankName, FA_WRITE);
     if (result == FR_OK) {
