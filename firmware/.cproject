@@ -176,9 +176,6 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.808559775" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1318910354.474531439.1248467436" name="SimpleGateProcess.inl" rcbsApplicability="disable" resourcePath="Src/SimpleEffect/SimpleGateProcess.inl" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.702788511.944768735">
-						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.702788511.944768735" name="MCU G++ Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.702788511"/>
-					</fileInfo>
 					<sourceEntries>
 						<entry excluding="ili9341/ili9341.c|ili9341/fonts.c|SD/adafruit_802_sd.c|SD/stm32h7xx_nucleo_bus.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry excluding="Third_Party/FatFs/src/ff_gen_drv.c|Third_Party/FatFs/src/ff.c|Third_Party/FatFs/src/diskio.c|Third_Party/FatFs/src/option/syscall.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
@@ -298,6 +295,7 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths.294938293" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3lib/FATFS/App}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Src/SimpleEffect}&quot;"/>
 									<listOptionValue builtIn="false" value="Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/preenfm3/Src/midipal}&quot;"/>
 									<listOptionValue builtIn="false" value="../Middlewares/ST/STM32_USB_Device_Library/Core/Inc"/>
@@ -363,9 +361,6 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.1984333761" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1318910354.474531439.1984372304.395466397" name="SimpleGateProcess.inl" rcbsApplicability="disable" resourcePath="Src/SimpleEffect/SimpleGateProcess.inl" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.854102758.902101996">
-						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.854102758.902101996" name="MCU G++ Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.854102758"/>
-					</fileInfo>
 					<sourceEntries>
 						<entry excluding="ili9341/ili9341.c|ili9341/fonts.c|SD/adafruit_802_sd.c|SD/stm32h7xx_nucleo_bus.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry excluding="Third_Party/FatFs/src/ff_gen_drv.c|Third_Party/FatFs/src/ff.c|Third_Party/FatFs/src/diskio.c|Third_Party/FatFs/src/option/syscall.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>

@@ -672,8 +672,10 @@ int32_t ADAFRUIT_802_SD_GetCardInfo(uint32_t Instance, ADAFRUIT_802_SD_CardInfo_
   {
     CardInfo->LogBlockSize = 512U;
     CardInfo->CardBlockSize = 512U;
-    CardInfo->CardCapacity = (CardInfo->Csd.version.v2.DeviceSize + 1U) * 1024U * CardInfo->LogBlockSize;
-    CardInfo->LogBlockNbr = (CardInfo->CardCapacity) / (CardInfo->LogBlockSize);
+    // Pfm3 fix: split on 2 lines to avoid int32 overflow when SDCard > 4GB
+    CardInfo->CardCapacity = CardInfo->Csd.version.v2.DeviceSize + 1U;
+    CardInfo->CardCapacity *= 1024U * CardInfo->LogBlockSize;
+    CardInfo->LogBlockNbr = (CardInfo->Csd.version.v2.DeviceSize + 1U) * 1024U;
   }
   else
   {

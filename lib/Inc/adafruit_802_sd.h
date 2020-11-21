@@ -131,7 +131,8 @@ typedef struct
 {
   SD_CardSpecificData_t Csd;
   SD_CardIdData_t Cid;
-  uint32_t CardCapacity;              /*!< Card Capacity */
+  // Preenfm3 fix : cardCapacity must be 64 bits for SD card > 4GB
+  uint64_t CardCapacity;              /*!< Card Capacity */
   uint32_t CardBlockSize;             /*!< Card Block Size */
   uint32_t LogBlockNbr;               /*!< Specifies the Card logical Capacity in blocks   */
   uint32_t LogBlockSize;              /*!< Specifies logical block size in bytes           */
