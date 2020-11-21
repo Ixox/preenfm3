@@ -20,8 +20,6 @@
 #include "Synth.h"
 #include "FMDisplaySequencer.h"
 
-
-
 __attribute__((section(".ram_d3"))) SeqMidiAction actions[SEQ_ACTION_SIZE];
 __attribute__((section(".ram_d3"))) StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];
 
@@ -485,9 +483,13 @@ void Sequencer::insertNote(uint8_t instrument, uint8_t note, uint8_t velocity) {
             stepNumberOfNotesOn ++;
 
         } else {
+            // Can be < 0 when we swap between normal and step mode while playuing
             stepNumberOfNotesOn --;
             if (stepNumberOfNotesOn == 0) {
                 displaySequencer->newNoteEntered(instrument);
+            }
+            if (stepNumberOfNotesOn < 0) {
+                stepNumberOfNotesOn = 0;
             }
         }
         return;

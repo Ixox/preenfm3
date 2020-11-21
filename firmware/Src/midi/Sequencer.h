@@ -159,6 +159,9 @@ public:
     void setExternalClock(bool enable);
 
     void setStepMode(bool stepMode) {
+        // reinit step variables
+        tmpStepValue.full = 0l;
+        stepNumberOfNotesOn = 0;
         this->stepMode = stepMode;
     }
     void stepClearAll(int instrument);
