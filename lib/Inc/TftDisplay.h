@@ -177,6 +177,7 @@ public:
     bool hasJustBeenCleared() { return bHasJustBeenCleared; }
     void resetHasJustBeenCleared() { bHasJustBeenCleared = false; }
 
+    void drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr);
 
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);

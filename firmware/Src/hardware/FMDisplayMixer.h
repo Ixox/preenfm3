@@ -24,6 +24,7 @@
 class SynthState;
 class TftDisplay;
 
+
 // Mixer struct
 
 struct Pfm3MixerButtonStateParam {
@@ -31,37 +32,33 @@ struct Pfm3MixerButtonStateParam {
     float maxValue;
     float numberOfValues;
     ParameterDisplayType displayType;
-    const char** valueName;
+    const char **valueName;
 };
 
 struct Pfm3MixerButtonState {
-  const char* stateLabel;
-  enum MixerValueType mixerValueType;
-  struct Pfm3MixerButtonStateParam buttonState;
+    const char *stateLabel;
+    enum MixerValueType mixerValueType;
+    struct Pfm3MixerButtonStateParam buttonState;
 };
-
 
 struct Pfm3MixerButton {
-  const char* buttonLabel;
-  int numberOfStates;
-  const Pfm3MixerButtonState* state[];
+    const char *buttonLabel;
+    int numberOfStates;
+    const Pfm3MixerButtonState *state[];
 };
-
 
 struct PfmMixerMenu {
-  const Pfm3MixerButton *mixerButton[6];
+    const Pfm3MixerButton *mixerButton[6];
 };
 
-
-class FMDisplayMixer  {
+class FMDisplayMixer {
 public:
     FMDisplayMixer();
 
-    void init(SynthState* synthState, TftDisplay* tft) {
-        this->synthState = synthState;
-        this->tft = tft;
+    void init(SynthState *synthState, TftDisplay *tft) {
+        this->synthState_ = synthState;
+        this->tft_ = tft;
     }
-
 
     void displayMixerValue(int timbre);
     void refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus);
@@ -75,11 +72,9 @@ public:
 private:
     void refreshMixerRowGlobalOptions(int row);
     void displayMixerValueInteger(int timbre, int x, int value);
-    TftDisplay* tft;
-    SynthState* synthState;
-    uint8_t valueChangedCounter[NUMBER_OF_ENCODERS_PFM3];
-    float lastVolume[NUMBER_OF_TIMBRES];
-    float lastGainReduction[NUMBER_OF_TIMBRES];
+    TftDisplay *tft_;
+    SynthState *synthState_;
+    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
 };
 
 #endif

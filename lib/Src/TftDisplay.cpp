@@ -712,7 +712,6 @@ void TftDisplay::clearMixerValues() {
     newAction.param3 = 240;
     newAction.param4 = 20;
     tftActions.insert(newAction);
-
 }
 
 void TftDisplay::clearMixerLabels() {
@@ -1556,3 +1555,49 @@ void TftDisplay::oscilloBgDrawLfo() {
 
 }
 
+void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr) {
+    float maxX = width + (volume + gr) * pixelPerDb;
+    if (maxX < 0) {
+        maxX = 0;
+    }
+    // Erase
+    fillArea(x, y, width, height, COLOR_BLACK);
+
+    uint8_t visuColo = COLOR_LIGHT_GREEN;
+    uint8_t visuColorAfterThresh = COLOR_LIGHT_GREEN2;
+
+    if (isComp) {
+        // Saturation ?
+        if (maxX > width) {
+            maxX = width;
+            visuColo = COLOR_RED;
+            visuColorAfterThresh = COLOR_RED;
+        }
+
+        // With compressor
+        int afterThresh = 0;
+        int threashold = 12;
+        int threshInPixel = width - threashold * pixelPerDb;
+        if (maxX > threshInPixel) {
+            afterThresh = (maxX - threshInPixel);
+            maxX = threshInPixel;
+        }
+        fillArea(x, y, maxX, height, visuColo);
+        if (afterThresh > 0) {
+            fillArea(x + threshInPixel + 1, y, afterThresh, height, visuColorAfterThresh);
+            fillArea(x + threshInPixel, y, 1, height, COLOR_ORANGE);
+        }
+
+        if (gr < -.5) {
+            fillArea(x, y, -gr * pixelPerDb, height, COLOR_ORANGE);
+        }
+    } else {
+        // Without compressor
+        if (maxX > width) {
+            maxX = width;
+            visuColo = COLOR_RED;
+        }
+        fillArea(x, y, maxX, height, visuColo);
+    }
+
+}

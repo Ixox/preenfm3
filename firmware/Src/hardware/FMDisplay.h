@@ -29,10 +29,6 @@ extern const char* lfoOscMidiClock[];
 
 #define CUSTOM_CHAR_NOTE (char)7
 
-// Mixer first Y line and HEIGHT
-#define Y_MIXER 80
-#define HEIGHT_MIXER_LINE 28
-
 
 extern struct ModulationIndex modulationIndex[ALGO_END][6];
 extern arp_pattern_t lut_res_arpeggiator_patterns[ARPEGGIATOR_PRESET_PATTERN_COUNT];

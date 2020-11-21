@@ -20,6 +20,7 @@
 #include "FMDisplay.h"
 #include "SynthState.h"
 #include "TftDisplay.h"
+#include "preenfm3.h"
 
 extern bool carrierOperator[28][6];
 
@@ -3219,6 +3220,7 @@ void FMDisplayEditor::resetHideParams() {
 }
 
 void FMDisplayEditor::tempoClick() {
+    static float lastVolume, lastGainReduction;
 
     for (int e = 0; e < NUMBER_OF_ENCODERS_PFM3; e++) {
         if (valueChangedCounter[e] > 0) {
@@ -3237,6 +3239,22 @@ void FMDisplayEditor::tempoClick() {
                 tft->eraseHighlightIM(e, im.source, im.destination);
             }
         }
+    }
+
+
+    float volume = getCompInstrumentVolume(currentTimbre);
+    float gr = getCompInstrumentGainReduction(currentTimbre);
+    // gr tend to slower reach 0
+    // Let'as accelerate when we don't want to draw the metter anymore
+    if (gr > -.1f) {
+        gr = 0;
+    }
+    if (volume != lastVolume || gr != lastGainReduction) {
+        lastVolume = volume;
+        lastGainReduction = gr;
+
+        bool isCompressed = synthState->mixerState.instrumentState[currentTimbre].compressorType > 0;
+        tft->drawLevelMetter(5, 150, 230, 3, 5, volume, isCompressed, gr);
     }
 }
 

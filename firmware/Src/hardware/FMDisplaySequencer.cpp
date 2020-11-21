@@ -19,14 +19,14 @@
 #include "TftDisplay.h"
 #include "TftAlgo.h"
 #include "Sequencer.h"
-
+#include "preenfm3.h"
 
 #define Y_START_SEQ  72
 
 #define X_START_STEP   28
 #define Y_START_STEP  (Y_START_SEQ + 55)
 #define Y_HEIGHT 30
-
+#define Y_STEP_LEVEL_METTER 252
 
 const char* buttonLabel[SEQ_MOD_LAST]= {
         "Seq", "Rec", "Play", "Clear", "Step"
@@ -687,3 +687,55 @@ const char* FMDisplaySequencer::getSequenceName() {
 	return sequencer->getSequenceName();
 }
 
+
+void FMDisplaySequencer::tempoClick() {
+
+    static float lastVolume[NUMBER_OF_TIMBRES];
+    static float lastGainReduction[NUMBER_OF_TIMBRES];
+
+
+    if (seqMode != SEQ_MODE_STEP) {
+        for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
+
+            if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices > 0) {
+                float volume = getCompInstrumentVolume(timbre);
+                float gr = getCompInstrumentGainReduction(timbre);
+                // gr tend to slower reach 0
+                // Let'as accelerate when we don't want to draw the metter anymore
+                if (gr > -.1f) {
+                    gr = 0;
+                }
+                if ((volume != lastVolume[timbre] || gr != lastGainReduction[timbre])) {
+
+                    lastVolume[timbre] = volume;
+                    lastGainReduction[timbre] = gr;
+
+                    bool isCompressed = synthState->mixerState.instrumentState[timbre].compressorType > 0;
+                    tft->drawLevelMetter(30, Y_START_SEQ + 7 + timbre * 27 + 20,
+                        208, 3, 5, volume, isCompressed, gr);
+                }
+            }
+        }
+    }
+    // Not sure it's a good idea to add level metter in the step seq
+    //    else {
+    //        if (this->synthState->mixerState.instrumentState[stepCurrentInstrument].numberOfVoices > 0) {
+    //            float volume = getCompInstrumentVolume(stepCurrentInstrument);
+    //            float gr = getCompInstrumentGainReduction(stepCurrentInstrument);
+    //            // gr tend to slower reach 0
+    //            // Let'as accelerate when we don't want to draw the metter anymore
+    //            if (gr > -.1f) {
+    //                gr = 0;
+    //            }
+    //            if ((volume != lastVolume[stepCurrentInstrument] || gr != lastGainReduction[stepCurrentInstrument])) {
+    //
+    //                lastVolume[stepCurrentInstrument] = volume;
+    //                lastGainReduction[stepCurrentInstrument] = gr;
+    //
+    //                bool isCompressed = synthState->mixerState.instrumentState[stepCurrentInstrument].compressorType > 0;
+    //                tft->drawLevelMetter(5, Y_STEP_LEVEL_METTER,
+    //                    235, 3, 5, volume, isCompressed, gr);
+    //            }
+    //        }
+    //    }
+}

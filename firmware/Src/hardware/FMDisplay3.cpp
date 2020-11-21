@@ -362,6 +362,8 @@ void FMDisplay3::tempoClick() {
         displayMixer->tempoClick();
     } else if (this->synthState->fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
         displayEditor->tempoClick();
+    } else if (this->synthState->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+        displaySequencer->tempoClick();
     }
 }
 
