@@ -75,7 +75,7 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define MSC_MEDIA_PACKET     2048U
+#define MSC_MEDIA_PACKET     1024U
 
 /****************************************/
 /* #define for FS and HS identification */
