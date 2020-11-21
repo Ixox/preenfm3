@@ -28,6 +28,8 @@
 #include "SynthStateAware.h"
 #include "dwt.h"
 
+#include "SimpleComp.h"
+
 #define UINT_MAX  4294967295
 #define NUMBER_OF_STORED_NOT 6
 
@@ -57,7 +59,7 @@ public:
     void allSoundOff();
     void allSoundOff(int timbre);
     bool isPlaying();
-    void buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3);
+    uint8_t buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3);
 
 
     // Overide SynthParamListener
@@ -95,7 +97,6 @@ public:
     void beforeNewParamsLoad(int timbre);
     void afterNewParamsLoad(int timbre);
     void afterNewMixerLoad();
-    void updateNumberOfActiveTimbres();
     void showAlgo() { }
     void showIMInformation() {}
 
@@ -170,13 +171,14 @@ public:
         return cpuUsage;
     }
 
+    chunkware_simple::SimpleComp& getCompInstrument(int t) {
+        return compInstrument[t];
+    }
 
 private:
     // Called by setSynthState
     void init(SynthState* synthState);
     void mixAndPan(int32_t *dest, float* source, float &pan, float sampleMultipler);
-    float ratioTimbre[NUMBER_OF_TIMBRES];
-    float filteredVolume[NUMBER_OF_TIMBRES];
     Voice voices[MAX_NUMBER_OF_VOICES];
     Timbre timbres[NUMBER_OF_TIMBRES];
 
@@ -206,6 +208,8 @@ private:
 
     float smoothPan[NUMBER_OF_TIMBRES];
     float smoothVolume[NUMBER_OF_TIMBRES];
+
+    chunkware_simple::SimpleComp compInstrument[NUMBER_OF_TIMBRES];
 
 };
 

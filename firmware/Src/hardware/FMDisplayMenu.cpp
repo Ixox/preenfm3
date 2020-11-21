@@ -19,6 +19,7 @@
 #include "TftDisplay.h"
 #include "version.h"
 
+
 extern int getLength(const char *str);
 
 const char* enveloppeRandomizer[] = {
@@ -657,6 +658,9 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
             break;
         case MENU_DEFAULT_SEQUENCER_LOAD:
             synthState->getStorage()->getSequenceBank()->loadDefaultSequence();
+            break;
+        case MENU_PRESET_NEW:
+            copySynthParams((char*) &newPresetParams, (char*) synthState->params);
             break;
         default:
             break;

@@ -60,6 +60,9 @@ enum TFT_COLOR {
     COLOR_DARK_GRAY,
     COLOR_CYAN,
     COLOR_DARK_YELLOW,
+    COLOR_ORANGE,
+    COLOR_LIGHT_GREEN,
+    COLOR_LIGHT_GREEN2,
     NUMBER_OF_TFT_COLORS
 };
 
@@ -205,6 +208,7 @@ private:
     float oscilloPhaseIndex;
     uint32_t oscilloPhaseIndexToUse;
     bool oscilloIsClean;
+    float olscilloYScale;
 
     float oscilloFullPeriodSampl[OSCILLO_BUFFER_SIZE];
     TftAlgo *tftAlgo;

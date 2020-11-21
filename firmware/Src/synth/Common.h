@@ -213,6 +213,7 @@ enum {
 
 extern const struct OneSynthParams preenMainPreset;
 extern const struct OneSynthParams defaultPreset;
+extern const struct OneSynthParams newPresetParams;
 
 extern struct AlgoInformation algoInformation[];
 
@@ -562,6 +563,7 @@ enum {
 
 enum MixerValueType {
     MIXER_VALUE_OUT = 0,
+    MIXER_VALUE_COMPRESSOR,
     MIXER_VALUE_PAN,
     MIXER_VALUE_VOLUME,
     MIXER_VALUE_NUMBER_OF_VOICES,

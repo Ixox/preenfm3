@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
 #include "stm32h7xx_hal.h"
 #include "Synth.h"
 #include "Menu.h"
@@ -30,6 +29,8 @@ Synth::Synth(void) {
 
 Synth::~Synth(void) {
 }
+
+
 
 void Synth::init(SynthState* synthState) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
@@ -55,9 +56,15 @@ void Synth::init(SynthState* synthState) {
         smoothVolume[t] = 0.0f;
         smoothPan[t] = 0.0f;
 
-    }
-    updateNumberOfActiveTimbres();
 
+        // Default is No compressor
+        // We set the sample rate /32 because we update the env only once per BLOCK
+        compInstrument[t].setSampleRate(PREENFM_FREQUENCY / 32.0f);
+        compInstrument[t].setRatio(1.0f);
+        compInstrument[t].setThresh(1000.0f);
+        compInstrument[t].setAttack(10.0);
+        compInstrument[t].setRelease(100.0);
+    }
 
     // Cpu usage
     cptCpuUsage = 0;
@@ -65,6 +72,7 @@ void Synth::init(SynthState* synthState) {
     numberOfPlayingVoices = 0;
     cpuUsage = 0.0f;
     totalNumberofCyclesInv = 1 / (SystemCoreClock * 32.0f * PREENFM_FREQUENCY_INVERSED);
+
 }
 
 void Synth::noteOn(int timbre, char note, char velocity) {
@@ -210,8 +218,13 @@ void Synth::mixAndPan(int32_t *dest, float* source, float &pan, float sampleMult
 }
 
 
+/**
+ * return : outputSaturated bit field
+ */
 
-void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
+uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3) {
+    uint8_t outputSaturated = 0;
+
 	CYCLE_MEASURE_START(cycles_all);
 
     // We consider the random number is always ready here...
@@ -259,11 +272,11 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
 	// Dispatch the timbres ont the different out !!
 
     int32_t *cb1 = buffer1;
-    int32_t *endcb1 = buffer1 + 64;
+    const int32_t *endcb1 = buffer1 + 64;
     int32_t *cb2 = buffer2;
-    int32_t *endcb2 = buffer2 + 64;
+    const int32_t *endcb2 = buffer2 + 64;
     int32_t *cb3 = buffer3;
-    int32_t *endcb3 = buffer3 + 64;
+    const int32_t *endcb3 = buffer3 + 64;
 
     while (cb1 < endcb1) {
         *cb1++ = 0;
@@ -276,27 +289,33 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
 
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
+        // numberOfVoices = 0; => timbre is disabled
     	if (this->synthState->mixerState.instrumentState[timbre].numberOfVoices == 0) {
     		continue;
     	}
         //Gate and mixer are per timbre
-    	float sampleMultipler = (float)0x7fffffff;
-    	if (abs(filteredVolume[timbre] - synthState->mixerState.instrumentState[timbre].volume) < .0005f)  {
-    	    filteredVolume[timbre] = synthState->mixerState.instrumentState[timbre].volume;
+    	if (abs(smoothVolume[timbre] - synthState->mixerState.instrumentState[timbre].volume) < .0005f)  {
+    	    smoothVolume[timbre] = synthState->mixerState.instrumentState[timbre].volume;
     	} else {
-    	    filteredVolume[timbre] = filteredVolume[timbre] * .9f + synthState->mixerState.instrumentState[timbre].volume * .1f;
+    	    smoothVolume[timbre] = smoothVolume[timbre] * .9f + synthState->mixerState.instrumentState[timbre].volume * .1f;
     	}
-    	sampleMultipler *= ratioTimbre[timbre] * filteredVolume[timbre];
-        timbres[timbre].voicesToTimbre();
+
+        // We divide by 4 to have headroom before saturating (>1.0f)
+        timbres[timbre].voicesToTimbre(smoothVolume[timbre] * .25f);
         timbres[timbre].gateFx();
 
-        /*
-         * Smooth pan and volume
-         */
-        smoothVolume[timbre] = smoothVolume[timbre] * .95f + sampleMultipler * .05f;
+        // Smooth pan to avoid audio noise
         smoothPan[timbre] = smoothPan[timbre] * .95f + ((float)synthState->mixerState.instrumentState[timbre].pan / 63.0f) * .05f;
 
         float *sampleFromTimbre = timbres[timbre].getSampleBlock();
+
+        // Even without compressor we call this meethod
+        // It allows to retrieve the volume in DB
+        compInstrument[timbre].processPfm3(sampleFromTimbre);
+
+        // Max is 0x7fffff * [-1:1]
+        float sampleMultipler = (float)0x7fffff;
+
         switch (synthState->mixerState.instrumentState[timbre].out) {
         // 0 => out1+out2, 1 => out1, 2=> out2
         // 3 => out3+out4, 4 => out3, 5=> out4
@@ -309,7 +328,7 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             }
         	break;
         case 1:
-            mixAndPan(buffer1, sampleFromTimbre, smoothPan[timbre], smoothVolume[timbre]);
+            mixAndPan(buffer1, sampleFromTimbre, smoothPan[timbre], sampleMultipler);
         	break;
         case 2:
             cb1 = buffer1;
@@ -326,7 +345,7 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             }
         	break;
         case 4:
-            mixAndPan(buffer2, sampleFromTimbre, smoothPan[timbre], smoothVolume[timbre]);
+            mixAndPan(buffer2, sampleFromTimbre, smoothPan[timbre], sampleMultipler);
         	break;
         case 5:
             cb2 = buffer2;
@@ -343,7 +362,7 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
             }
         	break;
         case 7:
-            mixAndPan(buffer3, sampleFromTimbre, smoothPan[timbre], smoothVolume[timbre]);
+            mixAndPan(buffer3, sampleFromTimbre, smoothPan[timbre], sampleMultipler);
         	break;
         case 8:
             cb3 = buffer3;
@@ -357,6 +376,49 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
     }
 
 
+
+    /*
+     * Let's check the clipping
+     */
+    cb1 = buffer1;
+    cb2 = buffer2;
+    cb3 = buffer3;
+
+    while (cb1 < endcb1) {
+        if (unlikely(*cb1 > 0x7FFFFF)) {
+            *cb1 = 0x7FFFFF;
+            outputSaturated |= 0b001;
+        }
+        if (unlikely(*cb1 < -0x7FFFFF)) {
+            *cb1 = -0x7FFFFF;
+            outputSaturated |= 0b001;
+        }
+        *cb1 <<= 8;
+        cb1++;
+
+        if (unlikely(*cb2 > 0x7FFFFF)) {
+            *cb2 = 0x7FFFFF;
+            outputSaturated |= 0b010;
+        }
+        if (unlikely(*cb2 < -0x7FFFFF)) {
+            *cb2 = -0x7FFFFF;
+            outputSaturated |= 0b010;
+        }
+        *cb2 <<= 8;
+        cb2++;
+
+        if (unlikely(*cb3 > 0x7FFFFF)) {
+            *cb3 = 0x7FFFFF;
+            outputSaturated |= 0b100;
+        }
+        if (unlikely(*cb3 < -0x7FFFFF)) {
+            *cb3 = -0x7FFFFF;
+            outputSaturated |= 0b100;
+        }
+        *cb3 <<= 8;
+        cb3++;
+    }
+
     CYCLE_MEASURE_END();
 
     // Take 100 of them to have a 0-100 percent value
@@ -366,6 +428,8 @@ void Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buf
         cptCpuUsage = 0;
         totalCyclesUsedInSynth = 0;
     }
+
+    return outputSaturated;
 }
 
 int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
@@ -460,26 +524,11 @@ void Synth::afterNewMixerLoad() {
         timbres[timbre].afterNewParamsLoad();
         // values to force check lfo used
         timbres[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
-        //
+        // Update compressor
+        newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, -1, this->synthState->mixerState.instrumentState[timbre].compressorType);
     }
-
-    updateNumberOfActiveTimbres();
 }
 
-void Synth::updateNumberOfActiveTimbres() {
-	float timbrePerOutput[NUMBER_OF_TIMBRES] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
-	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-		int output = this->synthState->mixerState.instrumentState[t].out / 3;
-		if (this->synthState->mixerState.instrumentState[t].numberOfVoices > 0) {
-		    timbrePerOutput[output] += 1.0f;
-		}
-	}
-	for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-		int output = this->synthState->mixerState.instrumentState[t].out / 3;
-		ratioTimbre[t] =  1.0f / timbrePerOutput[output];
-	}
-}
 
 int Synth::getFreeVoice() {
     // Loop on all voices
@@ -616,12 +665,39 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
                 }
             }
             timbres[timbre].numberOfVoicesChanged(newValue);
-            if (newValue == 0.0f || oldValue == 0.0f) {
-                updateNumberOfActiveTimbres();
-            }
             break;
-        case MIXER_VALUE_OUT:
-            updateNumberOfActiveTimbres();
+        case MIXER_VALUE_COMPRESSOR:
+            switch ((int)newValue) {
+                // No
+                case 0:
+                    compInstrument[timbre].setRatio(1.0f);
+                    // Must never be reached
+                    compInstrument[timbre].setThresh(1000.0f);
+                    compInstrument[timbre].setAttack(10.0);
+                    compInstrument[timbre].setRelease(100.0);
+                    break;
+                case 1:
+                    // Slow2
+                    compInstrument[timbre].setRatio(.33f);
+                    compInstrument[timbre].setThresh(-12.0f);
+                    compInstrument[timbre].setAttack(100.0);
+                    compInstrument[timbre].setRelease(500.0);
+                    break;
+                case 2:
+                    // Medium2
+                    compInstrument[timbre].setRatio(.33f);
+                    compInstrument[timbre].setThresh(-12.0f);
+                    compInstrument[timbre].setAttack(10.0);
+                    compInstrument[timbre].setRelease(100.0);
+                    break;
+                case 3:
+                    // Fast4
+                    compInstrument[timbre].setRatio(.33f);
+                    compInstrument[timbre].setThresh(-12.0f);
+                    compInstrument[timbre].setAttack(2.0);
+                    compInstrument[timbre].setRelease(20.0);
+                    break;
+            }
             break;
     }
 }

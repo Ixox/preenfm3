@@ -18,8 +18,6 @@
 #include "Common.h"
 #include "SynthState.h"
 
-
-
 const struct OneSynthParams defaultPreset  = {
         { ALGO7, 14, 1, 4} ,
         { 0.0, 0.0, 0.0, 0.0} ,
@@ -166,3 +164,77 @@ const struct OneSynthParams preenMainPreset  = {
 		{{ 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0}} ,
 		"Sound"
 };
+
+const struct OneSynthParams newPresetParams  = {
+        { ALGO1, 0, 1, 4} ,
+
+        { 0, 0, 0.0, 0 },
+        { 0, 0, 0.0, 0 } ,
+        { 0, 0, 0.0, 0} ,
+
+        { 1, 0, 1, 0} ,
+        { 1, 0, 1, 0} ,
+        { 1, 0, 1, 0} ,
+        // Arpeggiator
+        { 0.0, 90.0, 0.0, 1.0} ,
+        { 1.0, 12.0, 14.0, 0.0} ,
+        { 0, 0, 0, 0 },
+        // FX
+        { 0, 0.5, 0.5, 1.0} ,
+
+
+        // Oscillator
+        { OSC_SHAPE_SIN,  OSC_FT_KEYBOARD , 1.0, 0} ,
+        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , .5, 0} ,
+        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 2, 0} ,
+        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 4, 0} ,
+        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 6, 0} ,
+        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 2.5, 0} ,
+        // Enveloppe
+        { .05, 1, 0.3, 0.7 },
+        { 0.1, 0.7, 1.0 ,0},
+
+        { 0, 1, 0.1, 1 },
+        { 0.1, 1, 1.0 , 0},
+        { 0, 1, 0.1, 1 },
+        { 0.1, 1, 1.0 , 0},
+        { 0, 1, 0.1, 1 },
+        { 0.1, 1, 1.0 , 0},
+        { 0, 1, 0.1, 1 },
+        { 0.1, 1, 1.0 , 0},
+        { 0, 1, 0.1, 1 },
+        { 0.1, 1, 1.0 , 0},
+
+        // Modulation matrix
+        { MATRIX_SOURCE_PITCHBEND, 1.0, ALL_OSC_FREQ_HARM, 0} ,
+        { MATRIX_SOURCE_LFO1, 0.0, PAN_OSC1,0} ,
+        { MATRIX_SOURCE_LFO2, 0.0, INDEX_ALL_MODULATION, 0} ,
+        { MATRIX_SOURCE_LFO3, 0.0, INDEX_MODULATION1, 0} ,
+        { MATRIX_SOURCE_MODWHEEL, 3.0, INDEX_ALL_MODULATION, 0} ,
+        { MATRIX_SOURCE_MODWHEEL, 0.3, MTX2_MUL, 0} ,
+        { MATRIX_SOURCE_MODWHEEL, 1.0, MTX3_MUL, MTX4_MUL} ,
+        { MATRIX_SOURCE_LFOSEQ1, 0.0, MAIN_GATE, 0} ,
+        { MATRIX_SOURCE_LFOENV1, 0.0, FILTER_FREQUENCY, 0} ,
+        { MATRIX_SOURCE_LFO1, 0.0, INDEX_MODULATION2, 0} ,
+        { MATRIX_SOURCE_MODWHEEL, 0.0, PAN_OSC1, 0} ,
+        { MATRIX_SOURCE_NOTE1, 0.0f, INDEX_ALL_MODULATION, 0} ,
+        // Init Performance
+        { 0, 0, 0, 0},
+        // LFOs
+        { LFO_SIN, 2, 0, 0} ,
+        { LFO_SIN, 3, 0, 1.0} ,
+        { LFO_SIN, 4, 0, 4.0} ,
+        // LFO phases
+        { 0, 0, 0, 0},
+        { .2, 0, 1.0, 1.0} ,
+        { 1, .2, .2, 1.0} ,
+        { 110, .5,  0, 0}  ,
+        { 140, .6, 0, 0},
+        // Midi note scale
+        { 0, 60, 2, 0},
+        { MIDI_NOTE_CURVE_M_LINEAR, 60, MIDI_NOTE_CURVE_LINEAR, 0},
+        {{ 0,7,15,15,15,0,15,15,  0,15,15,15,0,15,15,15}} ,
+        {{ 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0}} ,
+        "Default"
+};
+

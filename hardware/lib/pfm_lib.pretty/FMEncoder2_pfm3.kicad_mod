@@ -1,4 +1,4 @@
-(module FMEncoder2_pfm3 (layer F.Cu) (tedit 5F9E9DA8)
+(module FMEncoder2_pfm3 (layer F.Cu) (tedit 5FB57C82)
   (fp_text reference Edit (at 0 -4.445) (layer F.Fab)
     (effects (font (size 2 2) (thickness 0.25)))
   )
@@ -26,6 +26,8 @@
   (pad B thru_hole circle (at 2.6035 -7.5565 90) (size 1.75006 1.75006) (drill 1.00076) (layers *.Cu *.Mask))
   (pad "" thru_hole circle (at -6.49986 0.0635 90) (size 3.2004 3.2004) (drill 2.49936) (layers *.Cu *.Mask))
   (pad "" thru_hole circle (at 6.49986 0.0635 90) (size 3.2004 3.2004) (drill 2.49936) (layers *.Cu *.Mask))
+  (pad S1 thru_hole circle (at -2.54 6.985 90) (size 1.75006 1.75006) (drill 1.00076) (layers *.Cu *.Mask))
+  (pad S2 thru_hole circle (at 2.54 6.985 90) (size 1.75006 1.75006) (drill 1.00076) (layers *.Cu *.Mask))
   (model ${KICAD_USER_TEMPLATE_DIR}/EC11E12-15P30C-SW.stp
     (at (xyz 0 0 0))
     (scale (xyz 1 1 1))

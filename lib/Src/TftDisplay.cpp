@@ -128,6 +128,12 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_GRAY] = reducedColor(0x606060);
     tftPalette[COLOR_DARK_GRAY] = reducedColor(0x101010);
     tftPalette[COLOR_CYAN] = reducedColor(0x76dfef);
+    tftPalette[COLOR_ORANGE] = reducedColor(0xff7f00);
+
+    // Level metter
+    tftPalette[COLOR_LIGHT_GREEN] = reducedColor(0x70ff70);
+    tftPalette[COLOR_LIGHT_GREEN2] = reducedColor(0xa0ff70);
+
 
     for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
         tftPalette565[c] = convertTo565(tftPalette[c]);
@@ -141,6 +147,7 @@ TftDisplay::TftDisplay() {
     flatOscilloAlreadyDisplayed = true;
     tftPushMillis = 0;
     part = 0;
+    olscilloYScale = 1.0f;
 }
 
 TftDisplay::~TftDisplay() {
@@ -223,8 +230,8 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
 
     fgOscillo = &tftForeground[tftTmpIndex];
 
-    memset(fgOscillo, 0, 160 * 100);
-    tftTmpIndex += 160 * 100;
+    memset(fgOscillo, 0, 160 * 101);
+    tftTmpIndex += 160 * 101;
 
     fgAlgo = &tftForeground[tftTmpIndex];
     memset(fgAlgo, 0, 80 * 100);
@@ -913,10 +920,12 @@ void TftDisplay::printSmallChar(char c) {
 void TftDisplay::oscilloRrefresh() {
     float oscilloSampleReadPtr = oscilloSamplePeriod - oscilloPhaseIndexToUse;
     bool saturate = false;
+    int32_t maxYValue = 0;
+    float multiplier = olscilloYScale * 50.0f;
     uint32_t total = 0;
     for (int x = 0; x < 160; x++) {
         // Use _usat on value before multiplying ?????
-        int8_t oValue = (int8_t) (oscilloFullPeriodSampl[(int) oscilloSampleReadPtr] * 50.0f);
+        int8_t oValue = (int8_t) (oscilloFullPeriodSampl[(int) oscilloSampleReadPtr] * multiplier);
         total += abs(oValue);
         if (unlikely(oValue > 50)) {
             saturate = true;
@@ -926,6 +935,16 @@ void TftDisplay::oscilloRrefresh() {
             oscilloYValue[x] = -50;
         } else {
             oscilloYValue[x] = oValue;
+        }
+
+        if (oValue > 0) {
+            if (unlikely(maxYValue < oValue)) {
+                maxYValue = oValue;
+            }
+        } else if (oValue < 0) {
+            if (unlikely(maxYValue < -oValue)) {
+                maxYValue = -oValue;
+            }
         }
 
         oscilloSampleReadPtr += oscilloSampleInc;
@@ -963,9 +982,20 @@ void TftDisplay::oscilloRrefresh() {
         // Ask for tft push and refresh
         TFTAction newAction;
         newAction.actionType = TFT_DRAW_OSCILLO;
-        newAction.param1 = saturate ? 1 : 0;
+        // We don't want oscillo in red when saturation since we have olscilloYScale
+        //newAction.param1 = saturate ? 1 : 0;
+        newAction.param1 = 0;
         newAction.param3 = 0;
         tftActions.insert(newAction);
+
+        // Dynamically adjust olscilloYScale
+        if (saturate) {
+            olscilloYScale -= .2f;
+        } else {
+            if (maxYValue < 30 && olscilloYScale < .8f) {
+                olscilloYScale += .2f;
+            }
+        }
     }
     // We can start filling again the oscillo buffer
 	oscilloDataWritePtr = 0;
