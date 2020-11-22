@@ -166,7 +166,7 @@ const struct OneSynthParams preenMainPreset  = {
 };
 
 const struct OneSynthParams newPresetParams  = {
-        { ALGO1, 0, 1, 4} ,
+        { ALGO1, 8, 1, 4} ,
 
         { 0, 0, 0.0, 0 },
         { 0, 0, 0.0, 0 } ,
@@ -185,25 +185,29 @@ const struct OneSynthParams newPresetParams  = {
 
         // Oscillator
         { OSC_SHAPE_SIN,  OSC_FT_KEYBOARD , 1.0, 0} ,
-        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , .5, 0} ,
+        { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 1, 0} ,
         { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 2, 0} ,
         { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 4, 0} ,
         { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 6, 0} ,
         { OSC_SHAPE_SIN, OSC_FT_KEYBOARD , 2.5, 0} ,
         // Enveloppe
-        { .05, 1, 0.3, 0.7 },
-        { 0.1, 0.7, 1.0 ,0},
+        { .07, 1, 0.3, 1.0 },
+        { 0, 1, 0.4, 0.0 },
 
-        { 0, 1, 0.1, 1 },
-        { 0.1, 1, 1.0 , 0},
-        { 0, 1, 0.1, 1 },
-        { 0.1, 1, 1.0 , 0},
-        { 0, 1, 0.1, 1 },
-        { 0.1, 1, 1.0 , 0},
-        { 0, 1, 0.1, 1 },
-        { 0.1, 1, 1.0 , 0},
-        { 0, 1, 0.1, 1 },
-        { 0.1, 1, 1.0 , 0},
+        { .0, 1, 0.3, 1.0 },
+        { 0, 1, 0.4, 0.0 },
+
+        { .0, 1, 0.3, 1.0 },
+        { 0, 1, 0.4, 0.0 },
+
+        { .0, 1, 0.3, 1.0 },
+        { 0, 1, 0.4, 0.0 },
+
+        { .0, 1, 0.3, 1.0 },
+        { 0, 1, 0.4, 0.0 },
+
+        { .0, 1, 0.3, 1.0 },
+        { 0, 1, 0.4, 0.0 },
 
         // Modulation matrix
         { MATRIX_SOURCE_PITCHBEND, 1.0, ALL_OSC_FREQ_HARM, 0} ,
@@ -233,8 +237,8 @@ const struct OneSynthParams newPresetParams  = {
         // Midi note scale
         { 0, 60, 2, 0},
         { MIDI_NOTE_CURVE_M_LINEAR, 60, MIDI_NOTE_CURVE_LINEAR, 0},
-        {{ 0,7,15,15,15,0,15,15,  0,15,15,15,0,15,15,15}} ,
-        {{ 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0}} ,
+        { { 0, 7, 15, 15, 15, 0, 15, 15, 0, 15, 15, 15, 0, 15, 15, 15 } },
+        { { 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0 } },
         "Default"
 };
 
