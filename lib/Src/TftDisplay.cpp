@@ -999,7 +999,7 @@ void TftDisplay::oscilloRrefresh() {
         if (saturate) {
             olscilloYScale -= .2f;
         } else {
-            if (maxYValue < 30 && olscilloYScale < .8f) {
+            if (maxYValue < 30 && olscilloYScale < 4.0f) {
                 olscilloYScale += .2f;
             }
         }
