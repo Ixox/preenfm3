@@ -3273,7 +3273,7 @@ void FMDisplayEditor::displayPreset() {
     }
     tft_->print((char) ('0' + currentTimbre_ + 1));
     tft_->print(' ');
-    tft_->setCharColor(COLOR_CYAN);
+    tft_->setCharColor(COLOR_WHITE);
     tft_->print(synthState_->params->presetName);
     tft_->setCharColor(COLOR_YELLOW);
     if (presetModifed_[currentTimbre_]) {
