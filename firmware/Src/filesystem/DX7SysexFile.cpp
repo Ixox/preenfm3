@@ -23,9 +23,9 @@ __attribute__((section(".ram_d2b"))) struct PFM3File dx7BankAlloc[NUMBEROFDX7BAN
 
 
 DX7SysexFile::DX7SysexFile() {
-	numberOfFilesMax = NUMBEROFDX7BANKS;
+	numberOfFilesMax_ = NUMBEROFDX7BANKS;
     dx7Bank = dx7BankAlloc;
-	myFiles = dx7Bank;
+	myFiles_ = dx7Bank;
 }
 
 DX7SysexFile::~DX7SysexFile() {

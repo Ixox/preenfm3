@@ -33,26 +33,24 @@ public:
     PatchBank();
     virtual ~PatchBank();
 
-    void createPatchBank(const char* name);
-    void savePatch(const struct PFM3File* bank, int patchNumber, const struct OneSynthParams *params);
+    void createPatchBank(const char *name);
+    void savePatch(const struct PFM3File *bank, int patchNumber, const struct OneSynthParams *params);
     void setArpeggiatorPartOfThePreset(uint8_t *pointer) {
-        arpeggiatorPartOfThePreset = pointer;
+        arpeggiatorPartOfThePreset_ = pointer;
     }
-    void loadPatch(const struct PFM3File* bank, int patchNumber, struct OneSynthParams *params);
-    const char* loadPatchName(const struct PFM3File* bank, int patchNumber);
+    void loadPatch(const struct PFM3File *bank, int patchNumber, struct OneSynthParams *params);
+    const char* loadPatchName(const struct PFM3File *bank, int patchNumber);
 
-    bool decodeBufferAndApplyPreset(uint8_t* buffer, struct OneSynthParams *params);
-#ifdef DEBUG
-    void testMemoryPreset();
-#endif
+    bool decodeBufferAndApplyPreset(uint8_t *buffer, struct OneSynthParams *params);
+    void copyNewPreset(struct OneSynthParams *params);
 
 protected:
     const char* getFolderName();
     bool isCorrectFile(char *name, int size);
 
 private:
-    uint8_t *arpeggiatorPartOfThePreset;
-    char presetName[13];
+    uint8_t *arpeggiatorPartOfThePreset_;
+    char presetName_[13];
 };
 
 #endif /* PATCHBANK_H_ */

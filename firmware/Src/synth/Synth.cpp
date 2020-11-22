@@ -293,8 +293,8 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
                 + synthState_->mixerState.instrumentState_[timbre].volume * .1f;
         }
 
-        // We divide by 4 to have headroom before saturating (>1.0f)
-        timbres_[timbre].voicesToTimbre(smoothVolume_[timbre] * .25f);
+        // We divide by 5 to have headroom before saturating (>1.0f)
+        timbres_[timbre].voicesToTimbre(smoothVolume_[timbre] * .2f);
         timbres_[timbre].gateFx();
 
         // Smooth pan to avoid audio noise

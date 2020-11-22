@@ -361,7 +361,13 @@ void SynthState::encoderTurned(int encoder, int ticks) {
     }
 }
 
-void SynthState::savePreset() {
+void SynthState::loadNewPreset(int timbre) {
+    storeTestNote();
+    propagateNoteOff();
+    propagateBeforeNewParamsLoad(timbre);
+    storage->getPatchBank()->copyNewPreset(params);
+    propagateAfterNewParamsLoad(timbre);
+    restoreTestNote();
 }
 
 void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params) {

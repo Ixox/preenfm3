@@ -32,8 +32,8 @@ __attribute__((section(".ram_d2b"))) static FIL mixerFile;
 
 
 MixerBank::MixerBank() {
-    this->numberOfFilesMax = NUMBEROFPREENFMMIXERS;
-    this->myFiles = preenFMMixerAlloc;
+    this->numberOfFilesMax_ = NUMBEROFPREENFMMIXERS;
+    this->myFiles_ = preenFMMixerAlloc;
 }
 
 MixerBank::~MixerBank() {
@@ -183,7 +183,7 @@ bool MixerBank::loadDefaultMixer() {
 }
 
 void MixerBank::createMixerBank(const char* name) {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
     uint32_t defaultMixerSize;
@@ -253,7 +253,7 @@ const char* MixerBank::loadMixerName(const struct PFM3File* mixer, int mixerNumb
 bool MixerBank::saveMixer(const struct PFM3File* mixer, int mixerNumber, char* mixerName) {
     const char* fullBankName = getFullName(mixer->name);
 
-    fsu->copy(this->mixerState->mixName_, mixerName, 12);
+    fsu_->copy(this->mixerState->mixName_, mixerName, 12);
 
     FRESULT result = f_open(&mixerFile, fullBankName, FA_WRITE);
     if (result == FR_OK) {

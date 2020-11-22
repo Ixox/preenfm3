@@ -53,7 +53,7 @@ void UserWaveform::loadUserWaveforms() {
     for (int f = 0; f < 6; f++) {
         // Check if bin exists
 
-        fsu->copy_string(fileName, USERWAVEFORM_FILENAME_BIN);
+        fsu_->copy_string(fileName, USERWAVEFORM_FILENAME_BIN);
         fileName[20] = (char)('1' + f);
 
         int sizeBin = checkSize(fileName);
@@ -61,7 +61,7 @@ void UserWaveform::loadUserWaveforms() {
         if (sizeBin != -1) {
             loadUserWaveformFromBin(f, fileName);
         } else {
-            fsu->copy_string(fileName, USERWAVEFORM_FILENAME_TXT);
+            fsu_->copy_string(fileName, USERWAVEFORM_FILENAME_TXT);
             fileName[20] = (char)('1' + f);
 
             int sizeTxt = checkSize(fileName);
@@ -90,7 +90,7 @@ void UserWaveform::loadUserWaveforms() {
 
                     normalize(userWaveform[f], numberOfSample);
 
-                    fsu->copy_string(fileName, USERWAVEFORM_FILENAME_BIN);
+                    fsu_->copy_string(fileName, USERWAVEFORM_FILENAME_BIN);
                     fileName[20] = (char)('1' + f);
                     saveUserWaveformToBin(f, fileName);
                     // Reload from Bin
@@ -128,11 +128,11 @@ int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool 
         // Init name
         if (userWaveFormNames[f][0] == 0) {
 
-            while (fsu->isSeparator(buffer[index])) {
+            while (fsu_->isSeparator(buffer[index])) {
                 index++;
             }
             int b = 0;
-            while (b<4 && !fsu->isSeparator(buffer[index])) {
+            while (b<4 && !fsu_->isSeparator(buffer[index])) {
                 userWaveFormNames[f][b++] = buffer[index++];
             }
             // complete with space
@@ -142,10 +142,10 @@ int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool 
         }
         // init number of sample
         if (numberOfSample <= 0) {
-            while (fsu->isSeparator(buffer[index])) {
+            while (fsu_->isSeparator(buffer[index])) {
                 index++;
             }
-            numberOfSample = (int)(fsu->stof(&buffer[index], floatSize) + .5f);
+            numberOfSample = (int)(fsu_->stof(&buffer[index], floatSize) + .5f);
 
             if (numberOfSample < 32 || numberOfSample > 1024) {
                 return numberOfSampleError(f);
@@ -154,7 +154,7 @@ int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool 
             index += floatSize;
         }
 
-        userWaveform[f][floatRead++] = fsu->stof(&buffer[index], floatSize);
+        userWaveform[f][floatRead++] = fsu_->stof(&buffer[index], floatSize);
         index += floatSize;
 
         // Stop if index > (filled - 30) Or if last && floatRead == 1024

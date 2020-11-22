@@ -22,12 +22,11 @@ extern char patch_zeros[ALIGNED_PATCH_ZERO];
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
 
 PatchBank::PatchBank() {
-    this->numberOfFilesMax = NUMBEROFPREENFMBANKS;
-    this->myFiles = preenFMBankAlloc;
+    numberOfFilesMax_ = NUMBEROFPREENFMBANKS;
+    myFiles_ = preenFMBankAlloc;
 }
 
 PatchBank::~PatchBank() {
-    // TODO Auto-generated destructor stub
 }
 
 const char* PatchBank::getFolderName() {
@@ -56,15 +55,15 @@ bool PatchBank::isCorrectFile(char *name, int size) {
     return true;
 }
 
-void PatchBank::createPatchBank(const char* name) {
+void PatchBank::createPatchBank(const char *name) {
     UINT byteWritten;
 
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
 
-    const struct PFM3File * newBank = addEmptyFile(name);
-    const char* fullBankName = getFullName(name);
+    const struct PFM3File *newBank = addEmptyFile(name);
+    const char *fullBankName = getFullName(name);
     if (newBank == 0) {
         return;
     }
@@ -77,8 +76,8 @@ void PatchBank::createPatchBank(const char* name) {
     for (uint32_t s = PFM_PATCH_SIZE; s < ALIGNED_PATCH_SIZE; s++) {
         storageBuffer[s] = 0;
     }
-    convertParamsToFlash(&preenMainPreset, (struct FlashSynthParams*)storageBuffer, *arpeggiatorPartOfThePreset > 0);
-    *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
+    convertParamsToFlash(&preenMainPreset, (struct FlashSynthParams*) storageBuffer, *arpeggiatorPartOfThePreset_ > 0);
+    *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
 
     for (int k = 0; k < 128; k++) {
         f_write(&bankFile, storageBuffer, ALIGNED_PATCH_SIZE, &byteWritten);
@@ -86,69 +85,77 @@ void PatchBank::createPatchBank(const char* name) {
     closeFile(bankFile);
 }
 
-void PatchBank::loadPatch(const struct PFM3File* bank, int patchNumber, struct OneSynthParams *params) {
-    const char* fullBankName = getFullName(bank->name);
+void PatchBank::loadPatch(const struct PFM3File *bank, int patchNumber, struct OneSynthParams *params) {
+    const char *fullBankName = getFullName(bank->name);
 
     int result = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, (void*) storageBuffer, ALIGNED_PATCH_SIZE);
 
     if (result == ALIGNED_PATCH_SIZE) {
-        uint32_t version = *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
+        uint32_t version = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
         switch (version) {
-        case PRESET_VERSION2:
-            // Direct copy
-            for (uint32_t p = 0; p < PFM_PATCH_SIZE; p++) {
-                ((char*)params)[p] = storageBuffer[p];
-            }
-            break;
-        default:
-            // VERSION1 Needs a conversion
-            convertFlashToParams((const struct FlashSynthParams*)storageBuffer, params, *arpeggiatorPartOfThePreset > 0);
-            break;
+            case PRESET_VERSION2:
+                // Direct copy
+                for (uint32_t p = 0; p < PFM_PATCH_SIZE; p++) {
+                    ((char*) params)[p] = storageBuffer[p];
+                }
+                break;
+            default:
+                // VERSION1 Needs a conversion
+                convertFlashToParams((const struct FlashSynthParams*) storageBuffer, params, *arpeggiatorPartOfThePreset_ > 0);
+                break;
         }
     }
 }
 
-const char* PatchBank::loadPatchName(const struct PFM3File* bank, int patchNumber) {
+const char* PatchBank::loadPatchName(const struct PFM3File *bank, int patchNumber) {
 
-    const char* fullBankName = getFullName(bank->name);
+    const char *fullBankName = getFullName(bank->name);
     uint32_t version;
     load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE + ALIGNED_PATCH_SIZE - 5, (void*) &version, 4);
 
     int namePosition;
 
     switch (version) {
-    case PRESET_VERSION2: {
-        OneSynthParams * version2Params = (OneSynthParams *)storageBuffer;
-        namePosition = (int) (((unsigned int) version2Params->presetName) - (unsigned int) version2Params);
-        break;
-    }
-    default: {
-        // VERSION 1
-        FlashSynthParams *flashSynthParams = (FlashSynthParams *)storageBuffer;
-        namePosition = (int) (((unsigned int) flashSynthParams->presetName) - (unsigned int) flashSynthParams);
-        break;
-    }
+        case PRESET_VERSION2: {
+            OneSynthParams *version2Params = (OneSynthParams*) storageBuffer;
+            namePosition = (int) (((unsigned int) version2Params->presetName) - (unsigned int) version2Params);
+            break;
+        }
+        default: {
+            // VERSION 1
+            FlashSynthParams *flashSynthParams = (FlashSynthParams*) storageBuffer;
+            namePosition = (int) (((unsigned int) flashSynthParams->presetName) - (unsigned int) flashSynthParams);
+            break;
+        }
     }
 
-    load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + namePosition, (void*) presetName, 12);
-    presetName[12] = 0;
-    return presetName;
+    load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + namePosition, (void*) presetName_, 12);
+    presetName_[12] = 0;
+    return presetName_;
 
 }
 
-void PatchBank::savePatch(const struct PFM3File* bank, int patchNumber, const struct OneSynthParams *params) {
-    const char* fullBankName = getFullName(bank->name);
+void PatchBank::savePatch(const struct PFM3File *bank, int patchNumber, const struct OneSynthParams *params) {
+    const char *fullBankName = getFullName(bank->name);
 
     for (uint32_t p = 0; p < PFM_PATCH_SIZE; p++) {
-        storageBuffer[p] = ((char*)params)[p];
+        storageBuffer[p] = ((char*) params)[p];
     }
     for (int p = PFM_PATCH_SIZE; p < ALIGNED_PATCH_SIZE; p++) {
         storageBuffer[p] = 0;
     }
-    convertParamsToFlash(params, (struct FlashSynthParams*)storageBuffer, *arpeggiatorPartOfThePreset > 0);
-    *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
+    convertParamsToFlash(params, (struct FlashSynthParams*) storageBuffer, *arpeggiatorPartOfThePreset_ > 0);
+    *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
 
     // Save patch
     save(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);
+}
+
+void PatchBank::copyNewPreset(struct OneSynthParams *params) {
+    char *source = (char*) &newPresetParams;
+    char *dest = (char*) params;
+    for (uint32_t k = 0; k < sizeof(struct OneSynthParams); k++) {
+        dest[k] = source[k];
+    }
 }
 

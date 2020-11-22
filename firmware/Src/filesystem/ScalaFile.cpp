@@ -29,9 +29,9 @@ extern float diatonicScaleFrequency[];
 
 
 ScalaFile::ScalaFile() {
-	this->numberOfFilesMax = NUMBEROFSCALASCALEFILES;
+	this->numberOfFilesMax_ = NUMBEROFSCALASCALEFILES;
 	this->scalaScaleFile = scalaScaleFileAlloc;
-	this->myFiles = scalaScaleFile;
+	this->myFiles_ = scalaScaleFile;
 }
 
 ScalaFile::~ScalaFile() {
@@ -54,7 +54,7 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
 
     const PFM3File* scaleFile = getFile(mixerState->instrumentState_[instrumentNumber].scaleScaleNumber);
 
-    if (fsu->str_cmp(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName, scaleFile->name) == 0) {
+    if (fsu_->str_cmp(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName, scaleFile->name) == 0) {
         // Name don't feet, new scales have been updated
         int newNumber = getFileIndex(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName);
         if (newNumber == -1) {
@@ -78,7 +78,7 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
     	interval[instrumentNumber][i] = 0.0f;
     }
     while (loop !=-1 && (readProperties - scalaBuffer) < size) {
-    	loop = fsu->getLine(readProperties, line);
+    	loop = fsu_->getLine(readProperties, line);
     	if (line[0] != '!') {
             switch (state) {
                 case 0:
@@ -86,7 +86,7 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
                     break;
                 case 1:
                     // line contains number of degrees
-                	numberOfDegrees[instrumentNumber] = fsu->toInt(line);
+                	numberOfDegrees[instrumentNumber] = fsu_->toInt(line);
                 	if (numberOfDegrees[instrumentNumber] > MAX_NUMBER_OF_INTERVALS) {
                 		numberOfDegrees[instrumentNumber] = MAX_NUMBER_OF_INTERVALS;
                 	}
@@ -167,13 +167,13 @@ float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) 
 
 
 float ScalaFile::getScalaIntervale(const char* line) {
-    int slashPos = fsu->getPositionOfSlash(line);
+    int slashPos = fsu_->getPositionOfSlash(line);
     if (slashPos != -1) {
-        float num = fsu->toFloat(line);
-        float den = fsu->toFloat(line + slashPos + 1);
+        float num = fsu_->toFloat(line);
+        float den = fsu_->toFloat(line + slashPos + 1);
         return num/den;
     } else {
-        return pow(2.0f, fsu->toFloat(line) / 1200.0f);
+        return pow(2.0f, fsu_->toFloat(line) / 1200.0f);
     }
 }
 

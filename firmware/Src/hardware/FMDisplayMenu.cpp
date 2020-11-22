@@ -633,7 +633,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
                 synthState_->getStorage()->getSequenceBank()->loadDefaultSequence();
                 break;
             case MENU_PRESET_NEW:
-                copySynthParams((char*) &newPresetParams, (char*) synthState_->params);
+                synthState_->loadNewPreset(currentTimbre);
                 break;
             default:
                 break;

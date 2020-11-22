@@ -64,8 +64,8 @@ extern SeqMidiAction actions[SEQ_ACTION_SIZE];
 extern StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];
 
 SequenceBank::SequenceBank() {
-    this->numberOfFilesMax = NUMBEROFPREENFMSEQUENCES;
-    this->myFiles = preenFMSequenceAlloc;
+    this->numberOfFilesMax_ = NUMBEROFPREENFMSEQUENCES;
+    this->myFiles_ = preenFMSequenceAlloc;
 }
 
 const char* SequenceBank::getFolderName() {
@@ -113,7 +113,7 @@ bool SequenceBank::isReadOnly(struct PFM3File *file) {
 }
 
 void SequenceBank::loadSequence(const struct PFM3File* bank, int patchNumber) {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
 
@@ -170,7 +170,7 @@ void SequenceBank::loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber) 
 
 
 const char* SequenceBank::loadSequenceName(const struct PFM3File* bank, int patchNumber) {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
 
@@ -214,7 +214,7 @@ const char* SequenceBank::loadSequenceName(const struct PFM3File* bank, int patc
 
 
 void SequenceBank::createSequenceFile(const char* name) {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
 
@@ -267,7 +267,7 @@ void SequenceBank::createSequenceFile(const char* name) {
  * This save the sequence with the current version
  */
 void SequenceBank::saveSequence(const struct PFM3File* sequencePFMFile, int sequenceNumber, char* sequenceName) {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
 

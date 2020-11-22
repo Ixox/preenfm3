@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef PREENFMFILETYPE_H_
 #define PREENFMFILETYPE_H_
 
@@ -29,7 +28,7 @@ enum FILE_ENUM {
     DEFAULT_MIXER = 0,
     PROPERTIES,
     FIRMWARE,
-	DEFAULT_SEQUENCE
+    DEFAULT_SEQUENCE
 };
 
 #define DEFAULT_MIXER_NAME       "0:/pfm3/mix.dfl"
@@ -156,58 +155,57 @@ public:
     PreenFMFileType();
     virtual ~PreenFMFileType();
 
-    bool exists(const char* name);
-    void setFileSystemUtils(FileSystemUtils* fsu) {
-        this->fsu = fsu;
+    bool exists(const char *name);
+    void setFileSystemUtils(FileSystemUtils *fsu) {
+        fsu_ = fsu;
     }
 
     const struct PFM3File* getFile(int fileNumber);
-    int getFileIndex(const char* name);
-    int getFileIndex(const struct PFM3File* file);
-    int renameFile(const struct PFM3File* bank, const char* newName);
-    bool nameExists(const char* bankName);
-    const struct PFM3File* addEmptyFile(const char* fileName);
+    int getFileIndex(const char *name);
+    int getFileIndex(const struct PFM3File *file);
+    int renameFile(const struct PFM3File *bank, const char *newName);
+    bool nameExists(const char *bankName);
+    const struct PFM3File* addEmptyFile(const char *fileName);
 
 protected:
     virtual const char* getFolderName() = 0;
     virtual bool isCorrectFile(char *name, int size) = 0;
 
-    int numberOfFiles;
-    int numberOfFilesMax;
-
     int remove(FILE_ENUM file);
     const char* getFileName(FILE_ENUM file);
-    const char* getFullName(const char* fileName);
-    int load(FILE_ENUM file, int seek, void* bytes, int size);
-    int load(const char* fileName, int seek, void* bytes, int size);
-    int save(FILE_ENUM file, int seek, void* bytes, int size);
-    int save(const char* fileName, int seek, void* bytes, int size);
+    const char* getFullName(const char *fileName);
+    int load(FILE_ENUM file, int seek, void *bytes, int size);
+    int load(const char *fileName, int seek, void *bytes, int size);
+    int save(FILE_ENUM file, int seek, void *bytes, int size);
+    int save(const char *fileName, int seek, void *bytes, int size);
     int checkSize(FILE_ENUM file);
-    int checkSize(const char* fileName);
+    int checkSize(const char *fileName);
 
-    FIL createFile(const char* fileName);
+    FIL createFile(const char *fileName);
     bool closeFile(FIL &file);
-    int saveData(FIL &file, void* bytes, uint32_t size);
+    int saveData(FIL &file, void *bytes, uint32_t size);
 
     int initFiles();
-    int readNextFile(struct PFM3File* bank);
+    int readNextFile(struct PFM3File *bank);
 
-    void swapFiles(struct PFM3File* bankFiles, int i, int j);
-    void sortFiles(struct PFM3File* bankFiles, int numberOfFiles);
+    void swapFiles(struct PFM3File *bankFiles, int i, int j);
+    void sortFiles(struct PFM3File *bankFiles, int numberOfFiles);
 
-    void convertParamsToFlash(const struct OneSynthParams* params, struct FlashSynthParams* memory, bool saveArp);
-    void convertFlashToParams(const struct FlashSynthParams* memory, struct OneSynthParams* params, bool loadArp);
+    void convertParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *memory, bool saveArp);
+    void convertFlashToParams(const struct FlashSynthParams *memory, struct OneSynthParams *params, bool loadArp);
 
-    int bankBaseLength(const char* bankName);
+    int bankBaseLength(const char *bankName);
 
-    struct PFM3File *myFiles;
-    struct PFM3File errorFile;
-    char fullName[40];
-    FileSystemUtils* fsu;
-    bool isInitialized;
+    int numberOfFiles_;
+    int numberOfFilesMax_;
+    struct PFM3File *myFiles_;
+    struct PFM3File errorFile_;
+    char fullName_[40];
+    FileSystemUtils *fsu_;
+    bool isInitialized_;
 
     virtual bool isReadOnly(struct PFM3File *file) {
-    	return false;
+        return false;
     }
 };
 
