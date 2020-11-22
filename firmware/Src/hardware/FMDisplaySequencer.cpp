@@ -117,20 +117,28 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
             tft_->setCharBackgroundColor(COLOR_BLACK);
 
             for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
-                tft_->setCursorInPixel(8, Y_START_SEQ + 7 + i * 27);
-
-                if (sequencer_->isSeqActivated(i) || sequencer_->isStepActivated(i)) {
-                    if (!sequencer_->isSeqActivated(i)) {
-                        tft_->setCharColor(COLOR_CYAN);
-                    } else if (!sequencer_->isStepActivated(i)) {
-                        tft_->setCharColor(COLOR_GREEN);
-                    } else {
-                        tft_->setCharColor(COLOR_RED);
-                    }
-                    tft_->print((char) 146);
+                tft_->setCursorInPixel(7, Y_START_SEQ + 9 + i * 27);
+                tft_->setCharColor(COLOR_RED);
+                if (sequencer_->isSeqActivated(i)) {
+                    tft_->printSmallChar((char) 127);
                 } else {
-                    tft_->print(' ');
+                    tft_->printSmallChar(' ');
                 }
+                if (sequencer_->isStepActivated(i)) {
+                    tft_->printSmallChar((char) 127);
+                }
+//                if (sequencer_->isSeqActivated(i) || sequencer_->isStepActivated(i)) {
+//                    if (!sequencer_->isSeqActivated(i)) {
+//                        tft_->setCharColor(COLOR_CYAN);
+//                    } else if (!sequencer_->isStepActivated(i)) {
+//                        tft_->setCharColor(COLOR_GREEN);
+//                    } else {
+//                        tft_->setCharColor(COLOR_RED);
+//                    }
+//                    tft_->print((char) 146);
+//                } else {
+//                    tft_->print(' ');
+//                }
             }
             break;
         case 14:
@@ -170,29 +178,31 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
         case 7:
             tft_->fillArea(100, 247, 55, 20, COLOR_BLACK);
             if (seqMode_ != SEQ_MODE_NORMAL) {
-                tft_->setCharColor(COLOR_WHITE);
+                switch (seqMode_)  {
+                    case SEQ_MODE_MUTE:
+                        tft_->setCharColor(COLOR_GREEN);
+                        break;
+                    case SEQ_MODE_REC:
+                        tft_->setCharColor(COLOR_RED);
+                        break;
+                    default:
+                        tft_->setCharColor(COLOR_WHITE);
+                        break;
+                }
                 tft_->setCursorInPixel(100, 247);
                 tft_->print(buttonLabel[seqMode_]);
             }
             break;
         case 6:
             if (seqMode_ == SEQ_MODE_NORMAL) {
-                tft_->drawSimpleButton("", 270, 29, 0, COLOR_GREEN, COLOR_DARK_YELLOW);
-                tft_->setCharBackgroundColor(COLOR_DARK_YELLOW);
-                tft_->setCursorInPixel(24, 271);
-                tft_->setCharColor(COLOR_GREEN);
-                tft_->print((char) 0x90);
-                tft_->print(' ');
-                tft_->setCharColor(COLOR_RED);
-                tft_->print((char) 0x91);
-                tft_->setCharBackgroundColor(COLOR_BLACK);
+                tft_->drawSimpleButton("\x90", 270, 29, 0, COLOR_GREEN, COLOR_DARK_YELLOW);
             } else {
                 tft_->drawSimpleButton("1", 270, 29, 0, COLOR_WHITE, COLOR_DARK_YELLOW);
             }
             break;
         case 5:
             if (seqMode_ == SEQ_MODE_NORMAL) {
-                tft_->drawSimpleButton("", 270, 29, 1, COLOR_GREEN, COLOR_DARK_YELLOW);
+                tft_->drawSimpleButton("\x91", 270, 29, 1, COLOR_RED, COLOR_DARK_YELLOW);
             } else {
                 tft_->drawSimpleButton("2", 270, 29, 1, COLOR_WHITE, COLOR_DARK_YELLOW);
             }
@@ -206,7 +216,7 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
             break;
         case 3:
             if (seqMode_ == SEQ_MODE_NORMAL) {
-                tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_WHITE, COLOR_DARK_YELLOW);
+                tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_DARK_YELLOW);
             } else {
                 tft_->drawSimpleButton("4", 270, 29, 3, COLOR_WHITE, COLOR_DARK_YELLOW);
             }
@@ -385,6 +395,7 @@ void FMDisplaySequencer::clearSequence(int start, int end) {
 
 void FMDisplaySequencer::noteOn(int instrument, bool show) {
     if (likely(seqMode_ != SEQ_MODE_STEP)) {
+        tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCursorInPixel(160, Y_START_SEQ + 7 + instrument * 27);
         if (sequencer_->isRecording(instrument)) {
             tft_->setCharColor(COLOR_RED);
@@ -555,11 +566,6 @@ void FMDisplaySequencer::buttonLongPressed(int instrument, int button) {
 
     if (seqMode_ == SEQ_MODE_NORMAL) {
         switch (button) {
-            case BUTTON_PFM3_1:
-                // Long press on button 1 : record select
-                seqMode_ = SEQ_MODE_REC;
-                refresh(7, 1);
-                break;
             case BUTTON_PFM3_4:
                 // Long press on button 4 : Clear sequencer
                 sequencer_->stop();
@@ -603,6 +609,9 @@ void FMDisplaySequencer::buttonPressed(int instrument, int button) {
                 refresh(7, 1);
                 break;
             case BUTTON_PFM3_2:
+                // Long press on button 1 : record select
+                seqMode_ = SEQ_MODE_REC;
+                refresh(7, 1);
                 break;
             case BUTTON_PFM3_3:
                 seqMode_ = SEQ_MODE_STEP;

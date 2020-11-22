@@ -409,6 +409,7 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
             const char *valueTitle = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit]->state[buttonState]->stateLabel;
             int len = getLength(valueTitle);
             tft_->setCursorInPixel(240 - len * TFT_BIG_CHAR_WIDTH, 50);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCharColor(COLOR_GREEN);
             tft_->print(valueTitle);
             // NO BREAK ....

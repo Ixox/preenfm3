@@ -295,32 +295,34 @@ void FMDisplay3::midiClock(bool show) {
 }
 
 void FMDisplay3::noteOn(int timbre, bool show) {
-    if (likely(this->synthState_->fullState.synthMode != SYNTH_MODE_SEQUENCER)) {
-        int x = 240 - (3 - (timbre % 3)) * TFT_SMALL_CHAR_WIDTH;
-        int y = 1 + (timbre / 3) * TFT_SMALL_CHAR_HEIGHT;
-        tft_->setCursorInPixel(x, y);
-        switch (this->synthState_->fullState.synthMode) {
-            case SYNTH_MODE_MIXER:
-                tft_->setCharBackgroundColor(COLOR_DARK_GREEN);
-                break;
-            case SYNTH_MODE_MENU:
-                tft_->setCharBackgroundColor(COLOR_DARK_RED);
-                break;
-            case SYNTH_MODE_EDIT_PFM3:
-                tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
-                break;
-        }
-        tft_->setCharColor(COLOR_WHITE);
+    int x = 240 - (3 - (timbre % 3)) * TFT_SMALL_CHAR_WIDTH;
+    int y = 1 + (timbre / 3) * TFT_SMALL_CHAR_HEIGHT;
+    tft_->setCursorInPixel(x, y);
+    switch (this->synthState_->fullState.synthMode) {
+        case SYNTH_MODE_MIXER:
+            tft_->setCharBackgroundColor(COLOR_DARK_GREEN);
+            break;
+        case SYNTH_MODE_MENU:
+            tft_->setCharBackgroundColor(COLOR_DARK_RED);
+            break;
+        case SYNTH_MODE_EDIT_PFM3:
+            tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
+            break;
+        case SYNTH_MODE_SEQUENCER:
+            tft_->setCharBackgroundColor(COLOR_DARK_YELLOW);
+            break;
+    }
+    tft_->setCharColor(COLOR_WHITE);
 
-        if (show) {
-            if (noteOnCounter_[timbre] == 0) {
-                tft_->printSmallChar((char) ('0' + timbre + 1));
-            }
-            noteOnCounter_[timbre] = 2;
-        } else {
-            tft_->printSmallChar(' ');
+    if (show) {
+        if (noteOnCounter_[timbre] == 0) {
+            tft_->printSmallChar((char) ('0' + timbre + 1));
         }
+        noteOnCounter_[timbre] = 2;
     } else {
+        tft_->printSmallChar(' ');
+    }
+    if (likely(this->synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER)) {
         // special case for SEQUENCER
         if (show) {
             if (noteOnCounter_[timbre] == 0) {

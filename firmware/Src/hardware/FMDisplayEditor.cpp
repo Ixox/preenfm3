@@ -3152,7 +3152,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                 page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[button];
             uint8_t x = getX(button);
 
-            tft_->setCharColor(COLOR_GRAY);
+            tft_->setCharColor(COLOR_MEDIUM_GRAY);
             tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
             if (rowEncoder.row != ROW_NONE) {

@@ -119,20 +119,18 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_BLUE] = reducedColor(0x6060ff);
     tftPalette[COLOR_DARK_BLUE] = reducedColor(0x202060);
     tftPalette[COLOR_YELLOW] = reducedColor(0xffff00);
-    tftPalette[COLOR_DARK_YELLOW] = reducedColor(0x404000);
+    tftPalette[COLOR_DARK_YELLOW] = reducedColor(0x504010);
     tftPalette[COLOR_RED] = reducedColor(0xff4010);
     tftPalette[COLOR_DARK_RED] = reducedColor(0x401000);
     tftPalette[COLOR_GREEN] = reducedColor(0x40ff40);
     tftPalette[COLOR_DARK_GREEN] = reducedColor(0x004000);
-    tftPalette[COLOR_LIGHT_GRAY] = reducedColor(0x808080);
+    tftPalette[COLOR_LIGHT_GRAY] = reducedColor(0xb0b0b0);
+    tftPalette[COLOR_MEDIUM_GRAY] = reducedColor(0x909090);
     tftPalette[COLOR_GRAY] = reducedColor(0x606060);
-    tftPalette[COLOR_DARK_GRAY] = reducedColor(0x101010);
+    tftPalette[COLOR_DARK_GRAY] = reducedColor(0x202020);
     tftPalette[COLOR_CYAN] = reducedColor(0x76dfef);
     tftPalette[COLOR_ORANGE] = reducedColor(0xff7f00);
-
-    // Level metter
     tftPalette[COLOR_LIGHT_GREEN] = reducedColor(0x70ff70);
-    tftPalette[COLOR_LIGHT_GREEN2] = reducedColor(0xa0ff70);
 
 
     for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
@@ -183,7 +181,7 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
 
     fgSmallChars = &tftForeground[tftTmpIndex];
 
-    for (int ch = 0; ch < 95; ch++) {
+    for (int ch = 0; ch < 96; ch++) {
         int index = ch * Font_7x10.height;
         for (int i = 0; i < Font_7x10.height; i++) {
             uint32_t b = Font_7x10.data[index + i];
@@ -905,7 +903,7 @@ void TftDisplay::printSmallChar(char c) {
     newAction.actionType = TFT_DISPLAY_ONE_SMALL_CHAR;
     newAction.param1 = cursorX;
     newAction.param2 = cursorY;
-    if ((c >= 32) && (c < 32 + 96)) {
+    if ((c >= 32) && (c < 32 + 97)) {
         newAction.param3 = c - 32;
     } else {
         newAction.param3 = 3;
