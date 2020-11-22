@@ -29,10 +29,10 @@
 
 
 const char* outDisplay[] = { "1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6" };
-const char* compDisplay[]= { "No", "Slow", "Medi", "Fast"};
+const char* compDisplay[]= { "Off", "Slow", "Medium", "Fast"};
 const char* enableNames[] = { "Off", "On" };
 const char* levelMeterWhere[] = { "Off", "Mix", "All" };
-const char* scalaMapNames[] = { "Keyb", "Cont" };
+const char* scalaMapNames[] = { "Keybrd", "Continu" };
 static const char* nullNames[] = { };
 
 const char* midiWithNone [] = { "None", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
@@ -300,15 +300,11 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
             const char *scalaName = synthState_->getStorage()->getScalaFile()->getFile((*((uint8_t*) valueP)))->name;
             // memorize scala name
             // memcpy(synthState->mixerState.instrumentState[timbre].scalaScale, scalaName, 12); ??
-            int len = getLength(scalaName);
-            tft_->setCursorInPixel(9 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
-            for (int s = 0; s < 13 - len; s++) {
-                tft_->print(' ');
-            }
-            for (int l = 0; l < len; l++) {
-                tft_->print(scalaName[l]);
-            }
-
+            int dotIndex = 0;
+            for (dotIndex = 0; dotIndex < 7 && scalaName[dotIndex] != '.'; dotIndex++);
+            tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235-160, 20, COLOR_BLACK);
+            tft_->setCursorInPixel(238 - dotIndex * TFT_SMALL_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 4);
+            tft_->printSmallChars(scalaName, dotIndex);
             break;
         }
         case DISPLAY_TYPE_INT:
@@ -331,11 +327,9 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
         case DISPLAY_TYPE_STRINGS: {
             const char *label = buttonStateParam->valueName[(int) (*((uint8_t*) valueP))];
             int len = getLength(label);
-            tft_->setCursorInPixel(17 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
-            for (int s = 0; s < 4 - len; s++) {
-                tft_->print(' ');
-            }
-            tft_->print(label);
+            tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235-160, 20, COLOR_BLACK);
+            tft_->setCursorInPixel(238 - len * 11 , Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+            tft_->print(label, 7);
             break;
         }
         case DISPLAY_TYPE_FLOAT: {
@@ -382,11 +376,7 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
 
             tft_->setCursorInPixel(22, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
             if (!isGlobalSettings) {
-                // scala scale file is a particular case
-                // We don't display preset name to display scala scales
-                if (mixerValueType != MIXER_VALUE_SCALA_SCALE) {
-                    tft_->print(synthState_->getTimbreName(19 - refreshStatus));
-                }
+                tft_->print(synthState_->getTimbreName(19 - refreshStatus));
             } else {
                 int line = 19 - refreshStatus;
                 if (line < NUMBER_OF_GLOBAL_SETTINGS) {

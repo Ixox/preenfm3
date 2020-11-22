@@ -802,6 +802,16 @@ void TftDisplay::printSmallChars(const char* str) {
     }
 }
 
+void TftDisplay::printSmallChars(const char* str, int length) {
+    int i = 0;
+    char c = str[i++];
+    while (c != '\0' and i <= length) {
+        printSmallChar(c);
+        c = str[i++];
+    }
+}
+
+
 void TftDisplay::print(const char* str, TFT_COLOR color, TFT_COLOR bgColor) {
 
     int i = 0;

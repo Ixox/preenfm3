@@ -121,6 +121,7 @@ public:
     void print(int number);
     void print(char c);
     void printSmallChars(const char* str);
+    void printSmallChars(const char* str, int length);
     void printSmallChar(char c);
     void printSmallChar(int number);
     void print(char c, TFT_COLOR color, TFT_COLOR bgColor);
