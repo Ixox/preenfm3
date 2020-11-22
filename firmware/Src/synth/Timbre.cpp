@@ -239,7 +239,8 @@ void Timbre::preenNoteOn(char note, char velocity) {
     note &= 0x7f;
 
     int iNov = params_.engine1.polyMono == 0.0f ? 1 : (int) numberOfVoices_;
-    if (unlikely(iNov == 0)) {
+    // NumberOfVoice = 0 or no mapping in scala frequencies
+    if (unlikely(iNov == 0 || mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note] == 0.0f)) {
         return;
     }
 

@@ -150,10 +150,10 @@ float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) 
 				lastNote = octave + n;
 			}
 		}
-		// Same scalaFrequency for all remaining notes
+		// Remaining note must be silent
 		for (int nn = numberOfDegrees[instrumentNumber] ; nn < octaveDegree; nn++) {
 			if (octave + nn <= 127) {
-			    instrumentScalaFrequency[octave + nn] = instrumentScalaFrequency[octave] * octaveRatio;
+			    instrumentScalaFrequency[octave + nn] = 0.0f;
 				lastNote = octave + nn;
 			}
 		}
