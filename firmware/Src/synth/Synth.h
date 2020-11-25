@@ -85,7 +85,6 @@ public:
 
     int getFreeVoice();
     void rebuidVoiceAllTimbre();
-    void rebuidVoiceTimbre(int timbre);
 
     int getNumberOfFreeVoicesForThisTimbre(int timbre);
 

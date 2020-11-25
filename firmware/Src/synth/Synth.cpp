@@ -472,22 +472,6 @@ void Synth::beforeNewParamsLoad(int timbre) {
 ;
 
 void Synth::afterNewParamsLoad(int timbre) {
-    // Reset to 0 the number of voice then try to set the right value
-    if (timbres_[timbre].params_.engine1.polyMono == 1) {
-        if (this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices == 1) {
-            // Set number of voice from 1 to 3 (or max available)
-            int voicesMax = getNumberOfFreeVoicesForThisTimbre(timbre);
-            this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices = 3 < voicesMax ? 3 : voicesMax;
-            rebuidVoiceTimbre(timbre);
-            timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
-        }
-    } else {
-        if (this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices != 1) {
-            this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices = 1;
-            rebuidVoiceTimbre(timbre);
-            timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
-        }
-    }
 
     timbres_[timbre].afterNewParamsLoad();
     // values to force check lfo used
@@ -686,19 +670,6 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
                     break;
             }
             break;
-    }
-}
-
-void Synth::rebuidVoiceTimbre(int timbre) {
-
-    int nv = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
-
-    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
-        timbres_[timbre].setVoiceNumber(v, -1);
-    }
-
-    for (int v = 0; v < nv; v++) {
-        timbres_[timbre].setVoiceNumber(v, getFreeVoice());
     }
 }
 
