@@ -115,6 +115,7 @@ enum {
 enum {
     ROW_ENGINE_FIRST = 0,
     ROW_ENGINE = ROW_ENGINE_FIRST,
+    ROW_ENGINE2,
     ROW_MODULATION1,
     ROW_MODULATION2,
     ROW_MODULATION3,
@@ -230,6 +231,14 @@ struct Engine1Params {
     float polyMono;
     float glide;
 };
+
+struct Engine2Params {
+    float glideType;
+    float spread;
+    float detune;
+    float unused;
+};
+
 
 //{ "Acti", "Clk ", "BPM ", "Dire" },
 //{ "Ptrn", "Divi", "Dura", "Latc" },
@@ -420,6 +429,7 @@ struct MidiNoteCurveRowParams {
 
 struct OneSynthParams {
     struct Engine1Params engine1;
+    struct Engine2Params engine2;
     struct EngineIm1 engineIm1;
     struct EngineIm2 engineIm2;
     struct EngineIm3 engineIm3;

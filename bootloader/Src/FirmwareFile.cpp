@@ -33,6 +33,15 @@ FirmwareFile::FirmwareFile() {
 FirmwareFile::~FirmwareFile() {
 }
 
+uint32_t FirmwareFile::getNumberOfFiles() {
+    if (!isInitialized) {
+        initFiles();
+    }
+    return numberOfFiles;
+}
+
+
+
 const struct FirmwarePFM3File* FirmwareFile::getFile(uint32_t fileNumber) {
     if (!isInitialized) {
         initFiles();

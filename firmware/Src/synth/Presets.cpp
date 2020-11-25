@@ -20,6 +20,7 @@
 
 const struct OneSynthParams defaultPreset  = {
         { ALGO7, 14, 1, 4} ,
+        { 0, 0.5, 0.2, 0.0} ,
         { 0.0, 0.0, 0.0, 0.0} ,
         { 0.0, 0.0, 0.0, 0.0} ,
         { 0.0, 0.0, 0.0, 0.0} ,
@@ -90,6 +91,7 @@ const struct OneSynthParams defaultPreset  = {
 
 const struct OneSynthParams preenMainPreset  = {
 		{ ALGO1, 0, 1, 4} ,
+        { 0, 0.5, 0.2, 0.0} ,
 
 		{ 0, 0, 0.0, 0 },
 		{ 0, 0, 0.0, 0 } ,
@@ -167,6 +169,7 @@ const struct OneSynthParams preenMainPreset  = {
 
 const struct OneSynthParams newPresetParams  = {
         { ALGO1, 8, 1, 4} ,
+        { 0, 0.5, 0.2, 0.0} ,
 
         { 0, 0, 0.0, 0 },
         { 0, 0, 0.0, 0 } ,

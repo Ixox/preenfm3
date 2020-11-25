@@ -46,6 +46,7 @@ public:
 
     void init();
     void nextBlock();
+    void detuneForUnisons(int voiceNumber, float numberOfVoicesInv, float numberOfOscInv);
     void emptyBuffer();
     void fxAfterBlock();
     void endNoteOrBeginNextOne();
@@ -95,6 +96,10 @@ public:
         this->holdedByPedal = holded;
     }
     void setCurrentTimbre(Timbre *timbre);
+
+    Timbre* getCurrentTimbre() {
+        return currentTimbre;
+    }
     bool isGliding() {
         return gliding;
     }
@@ -395,7 +400,7 @@ public:
         }
     }
 
-    const float* const getSampleBlock() {
+    float* const getSampleBlock() {
         return sampleBlock;
     }
 
@@ -490,7 +495,6 @@ private:
     float fxPhase;
     // save float fxParam1 to detect modification
     float fxParam1PlusMatrix;
-
 };
 
 #endif

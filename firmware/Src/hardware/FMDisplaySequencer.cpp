@@ -118,27 +118,10 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
 
             for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
                 tft_->setCursorInPixel(7, Y_START_SEQ + 9 + i * 27);
-                tft_->setCharColor(COLOR_RED);
-                if (sequencer_->isSeqActivated(i)) {
-                    tft_->printSmallChar((char) 127);
-                } else {
-                    tft_->printSmallChar(' ');
-                }
-                if (sequencer_->isStepActivated(i)) {
-                    tft_->printSmallChar((char) 127);
-                }
-//                if (sequencer_->isSeqActivated(i) || sequencer_->isStepActivated(i)) {
-//                    if (!sequencer_->isSeqActivated(i)) {
-//                        tft_->setCharColor(COLOR_CYAN);
-//                    } else if (!sequencer_->isStepActivated(i)) {
-//                        tft_->setCharColor(COLOR_GREEN);
-//                    } else {
-//                        tft_->setCharColor(COLOR_RED);
-//                    }
-//                    tft_->print((char) 146);
-//                } else {
-//                    tft_->print(' ');
-//                }
+                tft_->setCharColor(sequencer_->isSeqActivated(i) ? COLOR_RED : COLOR_GRAY);
+                tft_->printSmallChar((char) 127);
+                tft_->setCharColor(sequencer_->isStepActivated(i) ? COLOR_RED : COLOR_GRAY);
+                tft_->printSmallChar((char) 127);
             }
             break;
         case 14:
@@ -268,8 +251,12 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
 
             tft_->setCharColor(COLOR_YELLOW);
             tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCursorInPixel(X_START_STEP, Y_START_SEQ + 10);
+            tft_->setCursorInPixel(X_START_STEP - 2 * TFT_BIG_CHAR_WIDTH, Y_START_SEQ + 10);
             tft_->print(instrument + 1);
+
+            tft_->setCursorInPixel(X_START_STEP, Y_START_SEQ + 10);
+            tft_->print(synthState_->getTimbreName(instrument));
+
             // Let's store current instrument here (when it's displayed)
             stepCurrentInstrument_ = instrument;
             tft_->setCharColor(COLOR_CYAN);
@@ -309,7 +296,7 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
             tft_->drawSimpleButton("<Seq", 270, 29, 2, COLOR_WHITE, COLOR_DARK_YELLOW);
             break;
         case 3:
-            tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_DARK_YELLOW);
             break;
         case 2:
             tft_->drawSimpleButton(" ", 270, 29, 4, COLOR_WHITE, COLOR_DARK_YELLOW);

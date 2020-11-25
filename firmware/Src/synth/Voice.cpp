@@ -24,7 +24,6 @@
 float Voice::glidePhaseInc[10];
 
 
-
 //for bitwise manipulations
 #define FLOAT2SHORT 32768.f
 #define SHORT2FLOAT 1./32768.f
@@ -434,7 +433,8 @@ void Voice::glideToNote(short newNote, float newNoteFrequency) {
 void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short velocity, unsigned int index) {
     // Update index : so that few chance to be chosen again during the quick dying
     this->index = index;
-    if (!this->released && (int) currentTimbre->params_.engine1.polyMono == 0 && currentTimbre->params_.engine1.glide > 0) {
+    // We can glide in mono and unison
+    if (!this->released && (int) currentTimbre->params_.engine1.polyMono != 1.0f && currentTimbre->params_.engine1.glide > 0) {
         glideToNote(newNote, newNoteFrequency);
         this->holdedByPedal = false;
     } else {
@@ -493,12 +493,27 @@ float Voice::getNoteRealFrequencyEstimation(float newNoteFrequency) {
 
 void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsigned int index) {
 
+
+    // We can glide in mono and unison
+    if (unlikely(currentTimbre->params_.engine1.polyMono != 1.0f && currentTimbre->params_.engine1.glide > 0
+        && currentTimbre->params_.engine2.glideType > 0.0f)) {
+        glideToNote(newNote, newNoteFrequency);
+    } else {
+        this->note = newNote;
+        this->noteFrequency = newNoteFrequency;
+
+        currentTimbre->osc1_.newNote(&oscState1_, newNoteFrequency);
+        currentTimbre->osc2_.newNote(&oscState2_, newNoteFrequency);
+        currentTimbre->osc3_.newNote(&oscState3_, newNoteFrequency);
+        currentTimbre->osc4_.newNote(&oscState4_, newNoteFrequency);
+        currentTimbre->osc5_.newNote(&oscState5_, newNoteFrequency);
+        currentTimbre->osc6_.newNote(&oscState6_, newNoteFrequency);
+    }
+
+    this->midiVelocity = velocity;
     this->released = false;
     this->playing = true;
     this->isFullOfZero = false;
-    this->note = newNote;
-    this->midiVelocity = velocity;
-    this->noteFrequency = newNoteFrequency;
     this->pendingNote = 0;
     this->newNotePending = false;
     this->holdedByPedal = false;
@@ -518,12 +533,6 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsign
     int newVelocity = zeroVelo + ((velocity * (128 - zeroVelo)) >> 7);
     this->velocity = newVelocity * .0078125f; // divide by 127
 
-    currentTimbre->osc1_.newNote(&oscState1_, newNoteFrequency);
-    currentTimbre->osc2_.newNote(&oscState2_, newNoteFrequency);
-    currentTimbre->osc3_.newNote(&oscState3_, newNoteFrequency);
-    currentTimbre->osc4_.newNote(&oscState4_, newNoteFrequency);
-    currentTimbre->osc5_.newNote(&oscState5_, newNoteFrequency);
-    currentTimbre->osc6_.newNote(&oscState6_, newNoteFrequency);
 
     // Tell nextBlock() to init Env...
     this->newNotePlayed = true;
@@ -647,8 +656,29 @@ void Voice::emptyBuffer() {
     }
 }
 
+// Must be decided at noteOn !!!!!!
+// Must be decided at noteOn !!!!!!
+// Must be decided at noteOn !!!!!!
+// Must be decided at noteOn !!!!!!
+void Voice::detuneForUnisons(int  voice, float numberOfVoicesInv, float numberOfOscInv)  {
+
+    float detune = -.05f + (voice * numberOfVoicesInv) * .1f;
+
+    oscState1_.mainFrequency *= 1.0f + (detune + .01f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+    oscState2_.mainFrequency *= 1.0f + (detune - .01f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+
+    oscState3_.mainFrequency *= 1.0f + (detune + .02f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+    oscState4_.mainFrequency *= 1.0f + (detune - .02f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+
+    oscState4_.mainFrequency *= 1.0f + (detune + .03f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+    oscState5_.mainFrequency *= 1.0f + (detune - .03f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+
+}
+
 void Voice::nextBlock() {
+
     updateAllMixOscsAndPans();
+
     // After matrix
     if (unlikely(this->newNotePlayed)) {
         this->newNotePlayed = false;

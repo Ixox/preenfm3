@@ -95,22 +95,22 @@ const struct Pfm3MixerButton voiceButton = {
 // ==
 
 const struct Pfm3MixerButtonState midiButtonState = {
-      "Midi Channel", MIXER_VALUE_MIDI_CHANNEL,
+      "Channel", MIXER_VALUE_MIDI_CHANNEL,
         {0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithAll }
 };
 
 const struct Pfm3MixerButtonState rangeStartButtonState = {
-      "First Midi Note", MIXER_VALUE_MIDI_FIRST_NOTE,
+      "First Note", MIXER_VALUE_MIDI_FIRST_NOTE,
         {0, 127, 128, DISPLAY_TYPE_INT, nullNames }
 };
 
 const struct Pfm3MixerButtonState rangeEndButtonState = {
-      "Last Midi Note", MIXER_VALUE_MIDI_LAST_NOTE,
+      "Last Note", MIXER_VALUE_MIDI_LAST_NOTE,
         {0, 127, 128, DISPLAY_TYPE_INT, nullNames }
 };
 
 const struct Pfm3MixerButtonState rangeShiftButtonState = {
-      "Midi Note Shift", MIXER_VALUE_MIDI_SHIFT_NOTE,
+      "Note Shift", MIXER_VALUE_MIDI_SHIFT_NOTE,
         {-63, 64, 128, DISPLAY_TYPE_INT, nullNames }
 };
 
@@ -125,18 +125,18 @@ const struct Pfm3MixerButton midiButton = {
 
 
 const struct Pfm3MixerButtonState scalaEnable = {
-      "Scala Enable", MIXER_VALUE_SCALA_ENABLE,
+      "Enable", MIXER_VALUE_SCALA_ENABLE,
         {0, 1, 2, DISPLAY_TYPE_STRINGS, enableNames }
 };
 
 
 const struct Pfm3MixerButtonState scalaMap = {
-      "Scala Mapping", MIXER_VALUE_SCALA_MAPPING,
+      "Mapping", MIXER_VALUE_SCALA_MAPPING,
         {0, SCALA_MAPPING_NUMBER_OF_OPTIONS - 1, SCALA_MAPPING_NUMBER_OF_OPTIONS, DISPLAY_TYPE_STRINGS, scalaMapNames }
 };
 
 const struct Pfm3MixerButtonState scalaScale = {
-      "Scala Scale", MIXER_VALUE_SCALA_SCALE,
+      "Scale", MIXER_VALUE_SCALA_SCALE,
         {0, NUMBEROFSCALASCALEFILES-1, NUMBEROFSCALASCALEFILES, DISPLAY_TYPE_SCALA_SCALE, nullNames }
 };
 
@@ -161,7 +161,7 @@ const struct Pfm3MixerButtonStateParam globalSettings[6] = {
 
 
 const struct Pfm3MixerButtonState globalSettingsDetect = {
-      "Global Options", MIXER_VALUE_GLOBAL_SETTINGS
+      "Options", MIXER_VALUE_GLOBAL_SETTINGS
 };
 
 const struct Pfm3MixerButton globalButton = {

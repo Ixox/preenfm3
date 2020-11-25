@@ -132,7 +132,7 @@ void Synth::allNoteOffQuick(int timbre) {
     int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
         // voice number k of timbre
-        int n = timbres_[timbre].voiceNumber[k];
+        int n = timbres_[timbre].voiceNumber_[k];
         if (voices_[n].isPlaying()) {
             voices_[n].noteOffQuick();
         }
@@ -143,7 +143,7 @@ void Synth::allNoteOff(int timbre) {
     int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
         // voice number k of timbre
-        int n = timbres_[timbre].voiceNumber[k];
+        int n = timbres_[timbre].voiceNumber_[k];
         if (voices_[n].isPlaying() && !voices_[n].isReleased()) {
             voices_[n].noteOff();
         }
@@ -154,7 +154,7 @@ void Synth::allSoundOff(int timbre) {
     int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
         // voice number k of timbre
-        int n = timbres_[timbre].voiceNumber[k];
+        int n = timbres_[timbre].voiceNumber_[k];
         voices_[n].killNow();
     }
 }
@@ -238,29 +238,33 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         noise[noiseIndex++] = (random32bit >> 16) * .000030518f - 1.0f; // value between -1 and 1.
     }
 
+    numberOfPlayingVoices_ = 0;
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        timbres_[t].cleanNextBlock();
+
+        // timbres_[t].cleanNextBlock();
         if (likely(this->synthState_->mixerState.instrumentState_[t].numberOfVoices > 0)) {
             timbres_[t].updateArpegiatorInternalClock();
-            // eventually glide
-            if (timbres_[t].voiceNumber[0] != -1 && this->voices_[timbres_[t].voiceNumber[0]].isGliding()) {
-                this->voices_[timbres_[t].voiceNumber[0]].glide();
-            }
+            // optionally glide
+            timbres_[t].glide();
+            //
+            timbres_[t].prepareMatrixForNewBlock();
+            // render all voices in their own buffer
+            numberOfPlayingVoices_ += timbres_[t].voicesNextBlock();
         }
-        timbres_[t].prepareMatrixForNewBlock();
     }
 
     // render all voices in their own sample block...
-    numberOfPlayingVoices_ = 0;
-    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
-        if (likely(this->voices_[v].isPlaying())) {
-            this->voices_[v].nextBlock();
-            this->voices_[v].fxAfterBlock();
-            numberOfPlayingVoices_++;
-        } else {
-            this->voices_[v].emptyBuffer();
-        }
-    }
+//    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
+//        if (likely(this->voices_[v].isPlaying())) {
+//            if (this->voices_[v].getCurrentTimbre()->params_.engine1.polyMono != 2.0f) {
+//                this->voices_[v].nextBlock();
+//                this->voices_[v].fxAfterBlock();
+//                numberOfPlayingVoices_++;
+//            }
+//        } else {
+//            this->voices_[v].emptyBuffer();
+//        }
+//    }
 
     // Dispatch the timbres ont the different out !!
 
@@ -454,7 +458,7 @@ void Synth::beforeNewParamsLoad(int timbre) {
         int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
         for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOT; k++) {
             // voice number k of timbre
-            int n = timbres_[timbre].voiceNumber[k];
+            int n = timbres_[timbre].voiceNumber_[k];
             if (voices_[n].isPlaying() && !voices_[n].isReleased()) {
                 noteBeforeNewParalsLoad_[k] = voices_[n].getNote();
                 velocityBeforeNewParalsLoad_[k] = voices_[n].getMidiVelocity();
@@ -514,7 +518,7 @@ int Synth::getFreeVoice() {
         int nv = this->synthState_->mixerState.instrumentState_[t].numberOfVoices;
 
         for (int v = 0; v < nv; v++) {
-            used[timbres_[t].voiceNumber[v]] = true;
+            used[timbres_[t].voiceNumber_[v]] = true;
         }
     }
 
@@ -631,7 +635,7 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
                 }
             } else {
                 for (int v = (int) newValue; v < (int) oldValue; v++) {
-                    voices_[timbres_[timbre].voiceNumber[v]].killNow();
+                    voices_[timbres_[timbre].voiceNumber_[v]].killNow();
                     timbres_[timbre].setVoiceNumber(v, -1);
                 }
             }
