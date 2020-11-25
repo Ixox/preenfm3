@@ -21,7 +21,7 @@
 #include "Timbre.h"
 
 
-float Voice::glidePhaseInc[10];
+float Voice::glidePhaseInc[12];
 
 
 //for bitwise manipulations
@@ -381,8 +381,8 @@ const float filterpoles[10][64] = {
 Voice::Voice(void) {
 
     if (glidePhaseInc[0] != .2f) {
-        float tmp[] = { 5.0f, 9.0f, 15.0f, 22.0f, 35.0f, 50.0f, 90.0f, 140.0f, 200.0f, 500.0f };
-        for (int k = 0; k < 10; k++) {
+        float tmp[] = { 5.0f, 9.0f, 15.0f, 22.0f, 35.0f, 50.0f, 90.0f, 140.0f, 200.0f, 500.0f, 1200.0f, 2700.0f };
+        for (int k = 0; k < 12; k++) {
             glidePhaseInc[k] = 1.0f / tmp[k];
         }
     }
@@ -437,6 +437,7 @@ void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short veloci
     if (!this->released && (int) currentTimbre->params_.engine1.polyMono != 1.0f && currentTimbre->params_.engine1.glide > 0) {
         glideToNote(newNote, newNoteFrequency);
         this->holdedByPedal = false;
+        newGlide=false;
     } else {
         // update note now so that the noteOff is triggered by the new note
         this->note = newNote;
@@ -498,6 +499,8 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsign
     if (unlikely(currentTimbre->params_.engine1.polyMono != 1.0f && currentTimbre->params_.engine1.glide > 0
         && currentTimbre->params_.engine2.glideType > 0.0f)) {
         glideToNote(newNote, newNoteFrequency);
+        newGlide=true;
+        this->note = newNote;
     } else {
         this->note = newNote;
         this->noteFrequency = newNoteFrequency;

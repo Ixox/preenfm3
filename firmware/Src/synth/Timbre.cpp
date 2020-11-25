@@ -388,7 +388,7 @@ void Timbre::preenNoteOff(char note) {
             continue;
         }
 
-        if (likely(voices_[n]->getNextGlidingNote() == 0)) {
+        if (likely(voices_[n]->getNextGlidingNote() == 0 || voices_[n]->isNewGlide())) {
             if (voices_[n]->getNote() == note) {
                 if (unlikely(holdPedal_)) {
                     voices_[n]->setHoldedByPedal(true);

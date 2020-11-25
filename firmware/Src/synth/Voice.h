@@ -404,6 +404,10 @@ public:
         return sampleBlock;
     }
 
+    bool isNewGlide() {
+        return newGlide;
+    }
+
 private:
     // private function for BP filter
     void recomputeBPValues(float q, float fSquare);
@@ -452,6 +456,7 @@ private:
     float glidePhase;
     char nextGlidingNote;
     float nextGlidingNoteFrequency;
+    bool newGlide; // Firs gliding note in "Always" mode
 
     // env Value
     float env1ValueMem;
@@ -464,7 +469,7 @@ private:
     Timbre *currentTimbre;
 
     // glide phase increment
-    static float glidePhaseInc[10];
+    static float glidePhaseInc[12];
 
     // Matrix....
     Matrix matrix;

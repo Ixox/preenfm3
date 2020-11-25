@@ -69,7 +69,7 @@ struct ParameterRowDisplay engine1ParameterRow = {
         "Algo",
         "Velo",
         "Voice",
-        "Porta" },
+        "Speed" },
     {
         {
             ALGO1,
@@ -97,23 +97,24 @@ struct ParameterRowDisplay engine1ParameterRow = {
             nullNamesOrder },
         {
             0,
-            10,
-            11,
+            12,
+            13,
             DISPLAY_TYPE_INT,
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
 
 const char *glideTypeNames[] = {
-    "Alws",
-    "Attk"};
+    "Overlap",
+    "Always ",
+};
 
 struct ParameterRowDisplay engine2ParameterRow = {
     "NewPfm3",
     {
-        "GlTyp",
-        "Sprd",
-        "Detun",
+        "Glide",
+        "Spread",
+        "Detune",
         "" },
     {
         {
