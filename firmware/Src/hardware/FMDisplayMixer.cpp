@@ -320,6 +320,21 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
                     tft_->print('-');
                     return;
                 }
+            } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
+                uint8_t numberOfVoice = *((int8_t*) valueP);
+                uint8_t polyMono = synthState_->getTimbrePolyMono(timbre);
+                if (numberOfVoice == 0) {
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                } else if (numberOfVoice == 1) {
+                    if (polyMono == 2.0f) {
+                        tft_->setCharColor(COLOR_RED);
+                    }
+                } else {
+                    // More than 1 voice and mono mode
+                    if (polyMono == 0.0f) {
+                        tft_->setCharColor(COLOR_RED);
+                    }
+                }
             }
 
             displayMixerValueInteger(timbre, 18, (*((int8_t*) valueP)));
@@ -368,9 +383,17 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
             tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCursorInPixel(2, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
             if (currentTimbre != (19 - refreshStatus)) {
-                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                if (synthState_->mixerState.instrumentState_[19 - refreshStatus].numberOfVoices == 0) {
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                } else {
+                    tft_->setCharColor(COLOR_LIGHT_GRAY);
+                }
             } else {
-                tft_->setCharColor(COLOR_YELLOW);
+                if (synthState_->mixerState.instrumentState_[19 - refreshStatus].numberOfVoices == 0) {
+                    tft_->setCharColor(COLOR_DARK_YELLOW);
+                } else {
+                    tft_->setCharColor(COLOR_YELLOW);
+                }
             }
             tft_->print(20 - refreshStatus);
 
@@ -572,6 +595,14 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
                 } else {
                     *((int8_t*) valueP) = (int8_t) newValue;
                 }
+
+                // If we arrive to 0 voice or leave 0 voice, let's redraw the timbre names
+                if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
+                    if (oldValue == 0.0f || newValue == 0.0f) {
+                        refresh(19, 14);
+                    }
+                }
+
             }
             synthState_->propagateNewMixerValue(mixerValueType, encoder, oldValue, newValue);
 

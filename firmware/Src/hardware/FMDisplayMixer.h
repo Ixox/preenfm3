@@ -68,6 +68,21 @@ public:
     void encoderTurned(int encoder, int ticks);
     void buttonPressed(int button);
     void* getValuePointer(int valueType, int encoder);
+    void setRefreshStatusPointer(int *refreshStatus, int *endRefreshStatus) {
+        refreshStatusP_ = refreshStatus;
+        endRefreshStatusP_ = endRefreshStatus;
+    }
+    void refresh(int startRefreshStatus, int endRefreshStatus) {
+        // if we're already refreshing we keep the endRefreshStatus
+        int rs = *refreshStatusP_;
+        int ers = *endRefreshStatusP_;
+        if (unlikely(rs != 0)) {
+            *endRefreshStatusP_ = MIN(ers, endRefreshStatus);
+        } else {
+            *endRefreshStatusP_ = endRefreshStatus;
+        }
+        *refreshStatusP_ = startRefreshStatus;
+    }
 
 private:
     void refreshMixerRowGlobalOptions(int row);
@@ -75,6 +90,8 @@ private:
     TftDisplay *tft_;
     SynthState *synthState_;
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
+    int *refreshStatusP_;
+    int *endRefreshStatusP_;
 };
 
 #endif

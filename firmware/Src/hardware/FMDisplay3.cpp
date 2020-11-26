@@ -62,6 +62,7 @@ void FMDisplay3::setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *disp
     this->displayMenu_ = displayMenu;
     this->displaySequencer_ = displaySequencer;
     this->displaySequencer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
+    this->displayMixer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
 }
 
 bool FMDisplay3::shouldThisValueShowUpPfm3(int row, int encoder, int encoder6) {

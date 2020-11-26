@@ -575,6 +575,7 @@ public:
     }
 
     char* getTimbreName(int t);
+    uint8_t getTimbrePolyMono(int t);
 
     Storage* getStorage() {
         return storage;
