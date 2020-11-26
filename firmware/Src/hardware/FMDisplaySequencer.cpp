@@ -118,9 +118,9 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
 
             for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
                 tft_->setCursorInPixel(7, Y_START_SEQ + 9 + i * 27);
-                tft_->setCharColor(sequencer_->isSeqActivated(i) ? COLOR_RED : COLOR_GRAY);
+                tft_->setCharColor(sequencer_->isSeqActivated(i) ? COLOR_RED : COLOR_DARK_GRAY);
                 tft_->printSmallChar((char) 127);
-                tft_->setCharColor(sequencer_->isStepActivated(i) ? COLOR_RED : COLOR_GRAY);
+                tft_->setCharColor(sequencer_->isStepActivated(i) ? COLOR_RED : COLOR_DARK_GRAY);
                 tft_->printSmallChar((char) 127);
             }
             break;

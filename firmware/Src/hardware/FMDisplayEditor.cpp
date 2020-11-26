@@ -2766,20 +2766,34 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             case ROW_OSC6:
                 rowToTest = ROW_OSC1;
                 break;
+            case ROW_ENV1a:
             case ROW_ENV2a:
             case ROW_ENV3a:
             case ROW_ENV4a:
             case ROW_ENV5a:
-            case ROW_ENV6a:
+            case ROW_ENV6a: {
+                int op = (currentRow - ROW_ENV1a) >> 1;
+                // This mean we used MENU + encoder, so some new value must not be displayed
+                if (op != synthState_->fullState.operatorNumber) {
+                    return;
+                }
                 rowToTest = ROW_ENV1a;
                 break;
+            }
+            case ROW_ENV1b:
             case ROW_ENV2b:
             case ROW_ENV3b:
             case ROW_ENV4b:
             case ROW_ENV5b:
-            case ROW_ENV6b:
+            case ROW_ENV6b: {
+                int op = (currentRow - ROW_ENV1b) >> 1;
+                // This mean we used MENU + encoder, so some new value must not be displayed
+                if (op != synthState_->fullState.operatorNumber) {
+                    return;
+                }
                 rowToTest = ROW_ENV1b;
                 break;
+            }
             }
         }
         if (rowToTest == rowEncoder.row && encoder == rowEncoder.encoder) {
@@ -3079,7 +3093,9 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                         tft_->print(filterRowDisplay[effect].paramName[rowEncoder.encoder - 1]);
                     } else {
                         hideParam_[button] = true;
-                        tft_->print("    ");
+                        tft_->setCharColor(COLOR_DARK_GRAY);
+                        // Display LP in gray if no filter
+                        tft_->print(filterRowDisplay[2].paramName[rowEncoder.encoder - 1]);
                     }
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
@@ -3552,7 +3568,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
             newValue);
         break;
     }
-    case BUTTON_PFM3_EDIT:
+    case BUTTON_PFM3_MENU:
     {
 
         // All update must be in green
