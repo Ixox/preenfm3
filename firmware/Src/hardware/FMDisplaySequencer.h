@@ -25,8 +25,6 @@ class SynthState;
 class TftDisplay;
 class Sequencer;
 
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
 enum SequencerButtonMode {
     SEQ_MODE_NORMAL = 0,
     SEQ_MODE_REC,   // 1
@@ -55,19 +53,19 @@ public:
     void buttonLongPressed(int instrument, int button);
     void* getValuePointer(int valueType, int encoder);
     void setRefreshStatusPointer(int *refreshStatus, int *endRefreshStatus) {
-        refreshStatus_ = refreshStatus;
-        endRefreshStatus_ = endRefreshStatus;
+        refreshStatusP_ = refreshStatus;
+        endRefreshStatusP_ = endRefreshStatus;
     }
     void refresh(int startRefreshStatus, int endRefreshStatus) {
         // if we're already refreshing we keep the endRefreshStatus
-        int rs = *refreshStatus_;
-        int ers = *endRefreshStatus_;
+        int rs = *refreshStatusP_;
+        int ers = *endRefreshStatusP_;
         if (unlikely(rs != 0)) {
-            *endRefreshStatus_ = MIN(ers, endRefreshStatus);
+            *endRefreshStatusP_ = MIN(ers, endRefreshStatus);
         } else {
-            *endRefreshStatus_ = endRefreshStatus;
+            *endRefreshStatusP_ = endRefreshStatus;
         }
-        *refreshStatus_ = startRefreshStatus;
+        *refreshStatusP_ = startRefreshStatus;
     }
 
     void refreshInstrument(int instrument) {
@@ -112,8 +110,8 @@ private:
     SynthState *synthState_;
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
     Sequencer *sequencer_;
-    int *refreshStatus_;
-    int *endRefreshStatus_;
+    int *refreshStatusP_;
+    int *endRefreshStatusP_;
     SequencerButtonMode seqMode_;
     int stepCursor_;
     int stepSize_;

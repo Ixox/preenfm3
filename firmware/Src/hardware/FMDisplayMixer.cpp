@@ -95,22 +95,22 @@ const struct Pfm3MixerButton voiceButton = {
 // ==
 
 const struct Pfm3MixerButtonState midiButtonState = {
-      "Midi Channel", MIXER_VALUE_MIDI_CHANNEL,
+      "Channel", MIXER_VALUE_MIDI_CHANNEL,
         {0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithAll }
 };
 
 const struct Pfm3MixerButtonState rangeStartButtonState = {
-      "First Midi Note", MIXER_VALUE_MIDI_FIRST_NOTE,
+      "First Note", MIXER_VALUE_MIDI_FIRST_NOTE,
         {0, 127, 128, DISPLAY_TYPE_INT, nullNames }
 };
 
 const struct Pfm3MixerButtonState rangeEndButtonState = {
-      "Last Midi Note", MIXER_VALUE_MIDI_LAST_NOTE,
+      "Last Note", MIXER_VALUE_MIDI_LAST_NOTE,
         {0, 127, 128, DISPLAY_TYPE_INT, nullNames }
 };
 
 const struct Pfm3MixerButtonState rangeShiftButtonState = {
-      "Midi Note Shift", MIXER_VALUE_MIDI_SHIFT_NOTE,
+      "Note Shift", MIXER_VALUE_MIDI_SHIFT_NOTE,
         {-63, 64, 128, DISPLAY_TYPE_INT, nullNames }
 };
 
@@ -125,18 +125,18 @@ const struct Pfm3MixerButton midiButton = {
 
 
 const struct Pfm3MixerButtonState scalaEnable = {
-      "Scala Enable", MIXER_VALUE_SCALA_ENABLE,
+      "Enable", MIXER_VALUE_SCALA_ENABLE,
         {0, 1, 2, DISPLAY_TYPE_STRINGS, enableNames }
 };
 
 
 const struct Pfm3MixerButtonState scalaMap = {
-      "Scala Mapping", MIXER_VALUE_SCALA_MAPPING,
+      "Mapping", MIXER_VALUE_SCALA_MAPPING,
         {0, SCALA_MAPPING_NUMBER_OF_OPTIONS - 1, SCALA_MAPPING_NUMBER_OF_OPTIONS, DISPLAY_TYPE_STRINGS, scalaMapNames }
 };
 
 const struct Pfm3MixerButtonState scalaScale = {
-      "Scala Scale", MIXER_VALUE_SCALA_SCALE,
+      "Scale", MIXER_VALUE_SCALA_SCALE,
         {0, NUMBEROFSCALASCALEFILES-1, NUMBEROFSCALASCALEFILES, DISPLAY_TYPE_SCALA_SCALE, nullNames }
 };
 
@@ -161,7 +161,7 @@ const struct Pfm3MixerButtonStateParam globalSettings[6] = {
 
 
 const struct Pfm3MixerButtonState globalSettingsDetect = {
-      "Global Options", MIXER_VALUE_GLOBAL_SETTINGS
+      "Options", MIXER_VALUE_GLOBAL_SETTINGS
 };
 
 const struct Pfm3MixerButton globalButton = {
@@ -320,6 +320,21 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
                     tft_->print('-');
                     return;
                 }
+            } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
+                uint8_t numberOfVoice = *((int8_t*) valueP);
+                uint8_t polyMono = synthState_->getTimbrePolyMono(timbre);
+                if (numberOfVoice == 0) {
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                } else if (numberOfVoice == 1) {
+                    if (polyMono == 2.0f) {
+                        tft_->setCharColor(COLOR_RED);
+                    }
+                } else {
+                    // More than 1 voice and mono mode
+                    if (polyMono == 0.0f) {
+                        tft_->setCharColor(COLOR_RED);
+                    }
+                }
             }
 
             displayMixerValueInteger(timbre, 18, (*((int8_t*) valueP)));
@@ -368,9 +383,17 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
             tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCursorInPixel(2, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
             if (currentTimbre != (19 - refreshStatus)) {
-                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                if (synthState_->mixerState.instrumentState_[19 - refreshStatus].numberOfVoices == 0) {
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                } else {
+                    tft_->setCharColor(COLOR_LIGHT_GRAY);
+                }
             } else {
-                tft_->setCharColor(COLOR_YELLOW);
+                if (synthState_->mixerState.instrumentState_[19 - refreshStatus].numberOfVoices == 0) {
+                    tft_->setCharColor(COLOR_DARK_YELLOW);
+                } else {
+                    tft_->setCharColor(COLOR_YELLOW);
+                }
             }
             tft_->print(20 - refreshStatus);
 
@@ -572,6 +595,14 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
                 } else {
                     *((int8_t*) valueP) = (int8_t) newValue;
                 }
+
+                // If we arrive to 0 voice or leave 0 voice, let's redraw the timbre names
+                if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
+                    if (oldValue == 0.0f || newValue == 0.0f) {
+                        refresh(19, 14);
+                    }
+                }
+
             }
             synthState_->propagateNewMixerValue(mixerValueType, encoder, oldValue, newValue);
 

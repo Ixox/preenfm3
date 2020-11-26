@@ -52,6 +52,8 @@ public:
     void updateArpegiatorInternalClock();
     void cleanNextBlock();
     void prepareMatrixForNewBlock();
+    uint8_t voicesNextBlock();
+    void glide();
     void voicesToTimbre(float volumeGain);
     void gateFx();
     void afterNewParamsLoad();
@@ -117,7 +119,7 @@ public:
         return sampleBlock_;
     }
 
-    signed char voiceNumber[MAX_NUMBER_OF_VOICES];
+    signed char voiceNumber_[MAX_NUMBER_OF_VOICES];
 
     // Midi note response
     // Midi Note Scale

@@ -59,7 +59,9 @@ const char *algoNames[] = {
 
 const char *polyMonoNames[] = {
     "Mono",
-    "Poly" };
+    "Poly",
+    "Unis"};
+
 
 struct ParameterRowDisplay engine1ParameterRow = {
     "Engine",
@@ -67,7 +69,7 @@ struct ParameterRowDisplay engine1ParameterRow = {
         "Algo",
         "Velo",
         "Voice",
-        "Porta" },
+        "Speed" },
     {
         {
             ALGO1,
@@ -87,20 +89,71 @@ struct ParameterRowDisplay engine1ParameterRow = {
             nullNamesOrder },
         {
             0,
-            1,
             2,
+            3,
             DISPLAY_TYPE_STRINGS,
             polyMonoNames,
             nullNamesOrder,
             nullNamesOrder },
         {
             0,
-            10,
-            11,
+            12,
+            13,
             DISPLAY_TYPE_INT,
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
+
+const char *glideTypeNames[] = {
+    "Overlap",
+    "Always ",
+};
+
+struct ParameterRowDisplay engine2ParameterRow = {
+    "NewPfm3",
+    {
+        "Glide",
+        "Spread",
+        "Detune",
+        "" },
+    {
+        {
+            0,
+            1,
+            2,
+            DISPLAY_TYPE_STRINGS,
+            glideTypeNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder } } };
+
+
+
+
+
 
 const char *clockName[] = {
     "Off ",
@@ -1256,218 +1309,27 @@ struct ParameterRowDisplay lfoEnv2ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *matrixSourceNames[] = {
-    "None",
-    "lfo1",
-    "lfo2",
-    "lfo3",
-    "env1",
-    "env2",
-    "seq1",
-    "seq2",
-    "ModW",
-    "PitB",
-    "AftT",
-    "Velo",
-    "Not1",
-    "p1  ",
-    "p2  ",
-    "p3  ",
-    "p4  ",
-    "Not2",
-    "Brth" };
+const char *matrixSourceNames[] = { "None", "lfo1", "lfo2", "lfo3", "env1", "env2", "seq1", "seq2", "ModW", "PitB", "AftT", "Velo", "Not1", "p1  ", "p2  ",
+    "p3  ", "p4  ", "Not2", "Brth" };
 
-const unsigned char matrixSourceOrder[] = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    17,
-    18,
-    13,
-    14,
-    15,
-    16 };
-const unsigned char matrixSourcePosition[] = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    15,
-    16,
-    17,
-    18,
-    13,
-    14 };
+const unsigned char matrixSourceOrder[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 13, 14, 15, 16 };
+const unsigned char matrixSourcePosition[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 13, 14 };
 
-const char *matrixDestNames[] = {
-    "None",
-    "Gate",
-    "IM1 ",
-    "IM2 ",
-    "IM3 ",
-    "IM4 ",
-    "IM* ",
-    "Mix1",
-    "Pan1",
-    "Mix2",
-    "Pan2",
-    "Mix3",
-    "Pan3",
-    "Mix4",
-    "Pan4",
-    "Mix*",
-    "Pan*",
-    "o1Fq",
-    "o2Fq",
-    "o3Fq",
-    "o4Fq",
-    "o5Fq",
-    "o6Fq",
-    "o*Fq",
-    /*24*/"Att1",
-    "Att2",
-    "Att3",
-    "Att4",
-    "Att5",
-    "Att6",
-    /*30*/"AttC",
-    "RelC",
-    /*32*/"mx01",
-    "mx02",
-    "mx03",
-    "mx04",
-    /*36*/"l1Fq",
-    "l2Fq",
-    "l3Fq",
-    "e2si",
-    "s1ga",
-    "s2ga",
+const char *matrixDestNames[] = { "None", "Gate", "IM1 ", "IM2 ", "IM3 ", "IM4 ", "IM* ", "Mix1", "Pan1", "Mix2", "Pan2", "Mix3", "Pan3", "Mix4", "Pan4",
+    "Mix*", "Pan*", "o1Fq", "o2Fq", "o3Fq", "o4Fq", "o5Fq", "o6Fq", "o*Fq",
+    /*24*/"Att1", "Att2", "Att3", "Att4", "Att5", "Att6",
+    /*30*/"AttC", "RelC",
+    /*32*/"mx01", "mx02", "mx03", "mx04",
+    /*36*/"l1Fq", "l2Fq", "l3Fq", "e2si", "s1ga", "s2ga",
     /*42*/"Fltr",
-    /*43*/"o*Fh",
-    "DecC",
-    /*45*/"AttM",
-    "DecM",
-    "RelM"
-
-};
-const unsigned char matrixTargetOrder[] = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    43,
-    24,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30,
-    45,
-    44,
-    46,
-    31,
-    47,
-    32,
-    33,
-    34,
-    35,
-    36,
-    37,
-    38,
-    39,
-    40,
-    41,
-    42 };
+    /*43*/"o*Fh", "DecC",
+    /*45*/"AttM", "DecM", "RelM" };
+const unsigned char matrixTargetOrder[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29,
+    30, 45, 44, 46, 31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42 };
 //   Order                                        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44 };
-const unsigned char matrixTargetPosition[] = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30,
-    31,
-    35,
-    37,
-    38,
-    39,
-    40,
-    41,
-    42,
-    43,
-    44,
-    45,
-    46,
-    47,
-    24,
-    33,
-    32,
-    34,
-    36 };
+
+const unsigned char matrixTargetPosition[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 31,
+    35, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 24, 33, 32, 34, 36 };
 
 struct ParameterRowDisplay matrixParameterRow = {
     "Matrix",
@@ -1793,6 +1655,7 @@ struct ParameterRowDisplay midiNote2ParameterRow = {
 struct AllParameterRowsDisplay allParameterRows = {
     {
         &engine1ParameterRow,
+        &engine2ParameterRow,
         &engineIM1ParameterRow,
         &engineIM2ParameterRow,
         &engineIM3ParameterRow,
@@ -1843,9 +1706,12 @@ struct AllParameterRowsDisplay allParameterRows = {
         &lfoStepParameterRow,
         &lfoStepParameterRow,
         &midiNote1ParameterRow,
-        &midiNote2ParameterRow } };
+        &midiNote2ParameterRow
+} };
 
+// =================================================
 // constant for pfm3 editor
+// =================================================
 
 const struct Pfm3OneButtonState pfm3ButtonEngineState = {
     "Engine",
@@ -1854,27 +1720,53 @@ const struct Pfm3OneButtonState pfm3ButtonEngineState = {
             ROW_ENGINE,
             ENCODER_ENGINE_ALGO },
         {
-            ROW_ENGINE,
-            ENCODER_ENGINE_MONOPOLY },
+            ROW_NONE,
+            ENCODER_NONE },
         {
             ROW_NONE,
             ENCODER_NONE },
         {
             ROW_ENGINE,
-            ENCODER_ENGINE_GLIDE },
-        {
-            ROW_ENGINE,
             ENCODER_ENGINE_VELOCITY },
         {
+            ROW_ENGINE,
+            ENCODER_ENGINE_MONOPOLY },
+        {
             ROW_NONE,
-            ENCODER_NONE } } };
+            ENCODER_NONE },
+} };
+
+const struct Pfm3OneButtonState pfm3ButtonMonoState = {
+    "Mono",
+    {
+        {
+            ROW_ENGINE2,
+            ENCODER_ENGINE_GLIDE_TYPE },
+        {
+            ROW_ENGINE,
+            ENCODER_ENGINE_GLIDE },
+        {
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_ENGINE2,
+            ENCODER_ENGINE_SPREAD },
+        {
+            ROW_ENGINE2,
+            ENCODER_ENGINE_UNISON },
+        {
+            ROW_NONE,
+            ENCODER_NONE }
+} };
+
 
 const struct Pfm3OneButton pfm3ButtonEngine = {
     "Engine",
     BUTTONID_EDIT_ENGINE,
-    1,
+    2,
     {
-        &pfm3ButtonEngineState } };
+        &pfm3ButtonEngineState,
+        &pfm3ButtonMonoState } };
 
 const struct Pfm3OneButtonState pfm3ButtonIMState = {
     "Modulation Index",
@@ -2874,20 +2766,34 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             case ROW_OSC6:
                 rowToTest = ROW_OSC1;
                 break;
+            case ROW_ENV1a:
             case ROW_ENV2a:
             case ROW_ENV3a:
             case ROW_ENV4a:
             case ROW_ENV5a:
-            case ROW_ENV6a:
+            case ROW_ENV6a: {
+                int op = (currentRow - ROW_ENV1a) >> 1;
+                // This mean we used MENU + encoder, so some new value must not be displayed
+                if (op != synthState_->fullState.operatorNumber) {
+                    return;
+                }
                 rowToTest = ROW_ENV1a;
                 break;
+            }
+            case ROW_ENV1b:
             case ROW_ENV2b:
             case ROW_ENV3b:
             case ROW_ENV4b:
             case ROW_ENV5b:
-            case ROW_ENV6b:
+            case ROW_ENV6b: {
+                int op = (currentRow - ROW_ENV1b) >> 1;
+                // This mean we used MENU + encoder, so some new value must not be displayed
+                if (op != synthState_->fullState.operatorNumber) {
+                    return;
+                }
                 rowToTest = ROW_ENV1b;
                 break;
+            }
             }
         }
         if (rowToTest == rowEncoder.row && encoder == rowEncoder.encoder) {
@@ -3187,7 +3093,9 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                         tft_->print(filterRowDisplay[effect].paramName[rowEncoder.encoder - 1]);
                     } else {
                         hideParam_[button] = true;
-                        tft_->print("    ");
+                        tft_->setCharColor(COLOR_DARK_GRAY);
+                        // Display LP in gray if no filter
+                        tft_->print(filterRowDisplay[2].paramName[rowEncoder.encoder - 1]);
                     }
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
@@ -3357,7 +3265,7 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
         if (unlikely(param->valueName == polyMonoNames)) {
             int numberOfVoices = synthState_->mixerState.instrumentState_[currentTimbre_].numberOfVoices;
             if (numberOfVoices == 0 || (newValue == 1 && numberOfVoices == 1)
-                || (newValue == 0 && numberOfVoices > 1)) {
+                || (newValue == 0 && numberOfVoices > 1) || (newValue == 2 && numberOfVoices == 1)) {
                 tft_->setCharColor(COLOR_RED);
             } else {
                 tft_->setCharColor(COLOR_GRAY);
@@ -3660,7 +3568,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
             newValue);
         break;
     }
-    case BUTTON_PFM3_EDIT:
+    case BUTTON_PFM3_MENU:
     {
 
         // All update must be in green

@@ -65,6 +65,14 @@ enum {
 	ENCODER_INVISIBLE
 };
 
+
+enum {
+    ENCODER_ENGINE_GLIDE_TYPE = 0,
+    ENCODER_ENGINE_SPREAD,
+    ENCODER_ENGINE_UNISON
+};
+
+
 enum {
     ENCODER_ARPEGGIATOR_CLOCK = 0,
     ENCODER_ARPEGGIATOR_BPM,
@@ -567,6 +575,7 @@ public:
     }
 
     char* getTimbreName(int t);
+    uint8_t getTimbrePolyMono(int t);
 
     Storage* getStorage() {
         return storage;

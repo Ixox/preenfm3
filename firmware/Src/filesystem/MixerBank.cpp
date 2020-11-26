@@ -154,8 +154,8 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         f_lseek(file, mixerNumber * FULL_MIXER_SIZE + ALIGNED_MIXER_SIZE + t * ALIGNED_PATCH_SIZE);
-        result = f_read(file, storageBuffer, PFM_PATCH_SIZE, &byteRead);
-        if (result == FR_OK && byteRead == PFM_PATCH_SIZE) {
+        result = f_read(file, storageBuffer, PFM2_PATCH_SIZE, &byteRead);
+        if (result == FR_OK && byteRead == PFM2_PATCH_SIZE) {
             convertFlashToParams((struct FlashSynthParams *) storageBuffer, this->timbre[t], true);
 
             // Init scala scale if enabled

@@ -112,7 +112,6 @@ uint32_t getButtonPressed() {
 }
 
 void bootloaderInit() {
-
     sdError = preenfm3LibInitSD();
 
     MX_USB_DEVICE_Init();
@@ -142,19 +141,26 @@ void bootloaderInit() {
 
 void displayFile(int fileNumber) {
 
-    if (sdError == 0) {
-        tft.fillArea(0, 100, 240, 20, COLOR_BLACK);
-        tft.setCharBackgroundColor(COLOR_BLACK);
-        tft.setCharColor(COLOR_CYAN);
-        tft.setCursor(5, 5);
-        tft.print(firmwares.getFile(fileNumber)->name);
-    } else {
+    if (sdError != 0) {
         tft.fillArea(0, 98, 240, 22, COLOR_RED);
         tft.setCharBackgroundColor(COLOR_RED);
         tft.setCharColor(COLOR_BLACK);
         tft.setCursor(5, 5);
         tft.print("SD CARD ERROR");
         tft.setCharBackgroundColor(COLOR_BLACK);
+    } else if (firmwares.getNumberOfFiles() == 0) {
+        tft.fillArea(0, 98, 240, 22, COLOR_BLACK);
+        tft.setCharBackgroundColor(COLOR_BLACK);
+        tft.setCharColor(COLOR_RED);
+        tft.setCursor(2, 5);
+        tft.print("No firmware in '/'");
+        tft.setCharBackgroundColor(COLOR_BLACK);
+    } else {
+        tft.fillArea(0, 100, 240, 20, COLOR_BLACK);
+        tft.setCharBackgroundColor(COLOR_BLACK);
+        tft.setCharColor(COLOR_CYAN);
+        tft.setCursor(5, 5);
+        tft.print(firmwares.getFile(fileNumber)->name);
     }
 }
 
@@ -218,26 +224,32 @@ void bootloaderLoop() {
 
             switch (button) {
             case 8:
-                if (fileSelect < (firmwares.getNumberOfFiles() - 1)) {
-                    fileSelect ++;
-                } else {
-                    fileSelect = 0;
+                if (sdError == 0 && firmwares.getNumberOfFiles() >= 2) {
+                    if (fileSelect < (firmwares.getNumberOfFiles() - 1)) {
+                        fileSelect ++;
+                    } else {
+                        fileSelect = 0;
+                    }
+                    displayFile(fileSelect);
                 }
-                displayFile(fileSelect);
                 break;
             case 7:
-                if (fileSelect > 0) {
-                    fileSelect --;
-                } else {
-                    fileSelect = firmwares.getNumberOfFiles() - 1;
+                if (sdError == 0 && firmwares.getNumberOfFiles() >= 2) {
+                    if (fileSelect > 0) {
+                        fileSelect --;
+                    } else {
+                        fileSelect = firmwares.getNumberOfFiles() - 1;
+                    }
+                    displayFile(fileSelect);
                 }
-                displayFile(fileSelect);
                 break;
             case 0:
-                // Button 1
-                // Flash
-                formatFlash(firmwares.getFile(fileSelect)->size);
-                flashFirmware(firmwares.getFile(fileSelect));
+                if (sdError == 0 && firmwares.getNumberOfFiles() >= 1) {
+                    // Button 1
+                    // Flash
+                    formatFlash(firmwares.getFile(fileSelect)->size);
+                    flashFirmware(firmwares.getFile(fileSelect));
+                }
                 break;
             case 1:
                 // Button 2

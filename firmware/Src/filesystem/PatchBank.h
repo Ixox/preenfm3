@@ -26,7 +26,7 @@ enum PRESET_VERSION {
 };
 
 // Let's stick to VERSION1
-#define PRESET_CURRENT_VERSION PRESET_VERSION1
+#define PRESET_CURRENT_VERSION PRESET_VERSION2
 
 class PatchBank: public PreenFMFileType {
 public:

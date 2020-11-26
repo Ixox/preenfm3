@@ -127,7 +127,7 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_LIGHT_GRAY] = reducedColor(0xb0b0b0);
     tftPalette[COLOR_MEDIUM_GRAY] = reducedColor(0x909090);
     tftPalette[COLOR_GRAY] = reducedColor(0x606060);
-    tftPalette[COLOR_DARK_GRAY] = reducedColor(0x202020);
+    tftPalette[COLOR_DARK_GRAY] = reducedColor(0x303030);
     tftPalette[COLOR_CYAN] = reducedColor(0x76dfef);
     tftPalette[COLOR_ORANGE] = reducedColor(0xff7f00);
     tftPalette[COLOR_LIGHT_GREEN] = reducedColor(0x70ff70);

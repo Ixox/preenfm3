@@ -40,7 +40,7 @@ public:
 	FirmwareFile();
 	virtual ~FirmwareFile();
     const struct FirmwarePFM3File* getFile(uint32_t fileNumber);
-    uint32_t getNumberOfFiles() { return numberOfFiles; };
+    uint32_t getNumberOfFiles();
     const char* getFullName(const char* fileName);
     void reset() { isInitialized = false; }
 

@@ -46,6 +46,7 @@ public:
 
     void init();
     void nextBlock();
+    void detuneForUnisons(int voiceNumber, float numberOfVoicesInv, float numberOfOscInv);
     void emptyBuffer();
     void fxAfterBlock();
     void endNoteOrBeginNextOne();
@@ -95,6 +96,10 @@ public:
         this->holdedByPedal = holded;
     }
     void setCurrentTimbre(Timbre *timbre);
+
+    Timbre* getCurrentTimbre() {
+        return currentTimbre;
+    }
     bool isGliding() {
         return gliding;
     }
@@ -395,8 +400,12 @@ public:
         }
     }
 
-    const float* const getSampleBlock() {
+    float* const getSampleBlock() {
         return sampleBlock;
+    }
+
+    bool isNewGlide() {
+        return newGlide;
     }
 
 private:
@@ -447,6 +456,7 @@ private:
     float glidePhase;
     char nextGlidingNote;
     float nextGlidingNoteFrequency;
+    bool newGlide; // Firs gliding note in "Always" mode
 
     // env Value
     float env1ValueMem;
@@ -459,7 +469,7 @@ private:
     Timbre *currentTimbre;
 
     // glide phase increment
-    static float glidePhaseInc[10];
+    static float glidePhaseInc[12];
 
     // Matrix....
     Matrix matrix;
@@ -490,7 +500,6 @@ private:
     float fxPhase;
     // save float fxParam1 to detect modification
     float fxParam1PlusMatrix;
-
 };
 
 #endif
