@@ -17,7 +17,6 @@
 
 
 
-#include <string.h>
 #include "stm32h7xx_hal.h"
 #include "TftAlgo.h"
 #include "Common.h"

@@ -21,6 +21,7 @@
 #include "FMDisplayMenu.h"
 #include "FMDisplayEditor.h"
 #include "FMDisplaySequencer.h"
+#include "ili9341.h"
 
 extern struct WaveTable waveTables[NUMBER_OF_WAVETABLES];
 
@@ -371,13 +372,17 @@ void FMDisplay3::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue
 }
 
 void FMDisplay3::newPfm3Page(FullState *fullState) {
-    if (unlikely(fullState->synthMode == SYNTH_MODE_COLORS)) {
+    if (unlikely(fullState->synthMode == SYNTH_MODE_REINIT_TFT)) {
+        tft_->clearActions();
+        tft_->pauseRefresh();
+        ILI9341_Init();
         tft_->clear();
         float h = 320.0f / (NUMBER_OF_TFT_COLORS);
         for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
             int y = h * c;
             tft_->fillArea(0, y, 240, h, c + 1);
         }
+        tft_->restartRefreshTft();
     } else {
         refreshStatus_ = 20;
         this->refreshOscilloBG();

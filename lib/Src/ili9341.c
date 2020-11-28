@@ -1,14 +1,10 @@
-
 #include "stm32h7xx_hal.h"
 #include "ili9341.h"
-
 
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern uint8_t dmaReady;
 
 uint16_t windowLastX = 9999;
-uint16_t windowLastY = 9999;
-
 
 static void ILI9341_Reset() {
     HAL_GPIO_WritePin(ILI9341_RES_GPIO_Port, ILI9341_RES_Pin, GPIO_PIN_RESET);
@@ -16,52 +12,48 @@ static void ILI9341_Reset() {
     HAL_Delay(5);
     ILI9341_Select();
     HAL_GPIO_WritePin(ILI9341_RES_GPIO_Port, ILI9341_RES_Pin, GPIO_PIN_SET);
+    windowLastX = 9999;
 }
 
 static HAL_StatusTypeDef ILI9341_WriteCommand(uint8_t cmd) {
-    PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin) ;
+    PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
     return HAL_SPI_Transmit(&ILI9341_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
 }
 
-static HAL_StatusTypeDef  ILI9341_WriteData(uint8_t* buff, size_t buff_size) {
-    PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin) ;
+static HAL_StatusTypeDef ILI9341_WriteData(uint8_t *buff, size_t buff_size) {
+    PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
     // buff_size must be < 64K
     return HAL_SPI_Transmit(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
 }
 
-
-HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1) {
+    static uint8_t dataX[] = { 0, 0, 0, 239 };
     // column address set
-    if (x0 != windowLastX) {
-        windowLastX = x0;
-        ILI9341_WriteCommand(0x2A);
-        uint8_t data1[] = { (x0 >> 8) & 0xFF, x0 & 0xFF, (x1 >> 8) & 0xFF, x1 & 0xFF };
-        ILI9341_WriteData(data1, 4);
+    if (windowLastX != 0) {
+        windowLastX = 0;
+        if (ILI9341_WriteCommand(0x2A) != HAL_OK) {
+            return HAL_ERROR;
+        }
+        if (ILI9341_WriteData(dataX, 4) != HAL_OK) {
+            return HAL_ERROR;
+        }
     }
     // row address set
     // Optimization removed to fix a button refresh problem
-    if (y0 != windowLastY) {
-        HAL_StatusTypeDef ret;
-        ret = ILI9341_WriteCommand(0x2B);
-        if (ret == HAL_OK) {
-            uint8_t data2[] = { (y0 >> 8) & 0xFF, y0 & 0xFF, (y1 >> 8) & 0xFF, y1 & 0xFF };
-            ret = ILI9341_WriteData(data2, 4);
-            if (ret != HAL_OK) {
-                return ret;
-            }
-            windowLastY = y0;
-        } else {
-            return ret;
-        }
+    if (ILI9341_WriteCommand(0x2B) != HAL_OK) {
+        return HAL_ERROR;
     }
-
+    uint8_t dataY[] = { (y0 >> 8) & 0xFF, y0 & 0xFF, (y1 >> 8) & 0xFF, y1 & 0xFF };
+    if (ILI9341_WriteData(dataY, 4) != HAL_OK) {
+        return HAL_ERROR;
+    }
     // write to RAM
     return ILI9341_WriteCommand(0x2C); // RAMWR
 }
 
 void ILI9341_Init() {
 
-	// INIT ILI9341
+    // INIT ILI9341
     ILI9341_Select();
     ILI9341_Reset();
 
@@ -72,7 +64,7 @@ void ILI9341_Init() {
     ILI9341_Unselect();
     HAL_Delay(10);
     ILI9341_Select();
-        
+
     // POWER CONTROL A
     ILI9341_WriteCommand(0xCB);
     {
@@ -143,14 +135,12 @@ void ILI9341_Init() {
         ILI9341_WriteData(data, sizeof(data));
     }
 
-
     // PIXEL FORMAT
     ILI9341_WriteCommand(0x3A);
     {
         uint8_t data[] = { 0x55 };
         ILI9341_WriteData(data, sizeof(data));
     }
-
 
     // FRAME RATIO CONTROL, STANDARD RGB COLOR
     ILI9341_WriteCommand(0xB1);
@@ -183,16 +173,14 @@ void ILI9341_Init() {
     // POSITIVE GAMMA CORRECTION
     ILI9341_WriteCommand(0xE0);
     {
-        uint8_t data[] = { 0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1,
-                           0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00 };
+        uint8_t data[] = { 0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00 };
         ILI9341_WriteData(data, sizeof(data));
     }
 
     // NEGATIVE GAMMA CORRECTION
     ILI9341_WriteCommand(0xE1);
     {
-        uint8_t data[] = { 0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1,
-                           0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F };
+        uint8_t data[] = { 0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F };
         ILI9341_WriteData(data, sizeof(data));
     }
 

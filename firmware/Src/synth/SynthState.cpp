@@ -16,7 +16,6 @@
  */
 
 #include "stm32h7xx_hal.h"
-#include "ili9341.h"
 #include "FMDisplayMixer.h"
 #include "FMDisplayMenu.h"
 #include "FMDisplayEditor.h"
@@ -235,34 +234,34 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
                 // Turn off the backlight
                 TIM1->CCR2 = 0;
                 // reinit TFT + redisplay full page
-                ILI9341_Init();
-                fullState.synthMode = SYNTH_MODE_COLORS;
+                fullState.synthMode = SYNTH_MODE_REINIT_TFT;
                 propagateNewPfm3Page();
                 // Wait for the page to be ready
                 // Turn on the backlight
                 uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
                 TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
 
-                HAL_Delay(1500);
+                HAL_Delay(500);
                 fullState.synthMode = previousMode;
                 propagateNewPfm3Page();
                 break;
             }
         }
-        case BUTTON_NEXT_INSTRUMENT:
-        	if (button2 == BUTTON_PREVIOUS_INSTRUMENT) {
-                propagateNoteOff();
-                propagateBeforeNewParamsLoad(currentTimbre);
-                propagateAfterNewParamsLoad(currentTimbre);
-        	}
-        	break;
-        case BUTTON_PREVIOUS_INSTRUMENT:
-        	if (button2 == BUTTON_NEXT_INSTRUMENT) {
-                propagateNoteOff();
-                propagateBeforeNewParamsLoad(currentTimbre);
-                propagateAfterNewParamsLoad(currentTimbre);
-        	}
-        	break;
+        break;
+    case BUTTON_NEXT_INSTRUMENT:
+        if (button2 == BUTTON_PREVIOUS_INSTRUMENT) {
+            propagateNoteOff();
+            propagateBeforeNewParamsLoad(currentTimbre);
+            propagateAfterNewParamsLoad(currentTimbre);
+        }
+        break;
+    case BUTTON_PREVIOUS_INSTRUMENT:
+        if (button2 == BUTTON_NEXT_INSTRUMENT) {
+            propagateNoteOff();
+            propagateBeforeNewParamsLoad(currentTimbre);
+            propagateAfterNewParamsLoad(currentTimbre);
+        }
+        break;
     }
 
 

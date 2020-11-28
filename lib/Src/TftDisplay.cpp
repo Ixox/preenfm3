@@ -94,9 +94,13 @@ TftDisplay::TftDisplay() {
     areaY[TFT_PART_HEADER] = 0;
     areaHeight[TFT_PART_HEADER] = 40;
     areaY[TFT_PART_VALUES] = 40;
-    areaHeight[TFT_PART_VALUES] = 120;
+    areaHeight[TFT_PART_VALUES] = 60;
+    areaY[TFT_PART_VALUES2] = 100;
+    areaHeight[TFT_PART_VALUES2] = 60;
     areaY[TFT_PART_OSCILLO] = 160;
-    areaHeight[TFT_PART_OSCILLO] = 110;
+    areaHeight[TFT_PART_OSCILLO] = 55;
+    areaY[TFT_PART_OSCILLO2] = 215;
+    areaHeight[TFT_PART_OSCILLO2] = 55;
     areaY[TFT_PART_BUTTONS] = 270;
     areaHeight[TFT_PART_BUTTONS] = 50;
 
@@ -287,19 +291,27 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
     uint16_t yBottom = y + height;
 
     if (unlikely(y < 40)) {
-        tftDirtyBits |= 0b0001;
+        tftDirtyBits |= 0b000001;
     }
 
-    if (unlikely(y < 160 && yBottom >= 40)) {
-        tftDirtyBits |= 0b0010;
+    if (unlikely(y < 100 && yBottom >= 40)) {
+        tftDirtyBits |= 0b000010;
     }
 
-    if (unlikely(y < 270 && yBottom >= 160)) {
-        tftDirtyBits |= 0b0100;
+    if (unlikely(y < 160 && yBottom >= 100)) {
+        tftDirtyBits |= 0b000100;
+    }
+
+    if (unlikely(y < 215 && yBottom >= 160)) {
+        tftDirtyBits |= 0b001000;
+    }
+
+    if (unlikely(y < 270 && yBottom >= 215)) {
+        tftDirtyBits |= 0b010000;
     }
 
     if (unlikely(yBottom >= 270)) {
-        tftDirtyBits |= 0b1000;
+        tftDirtyBits |= 0b100000;
     }
 }
 
@@ -308,7 +320,7 @@ void TftDisplay::tic() {
 
 
     uint32_t currentMillis = HAL_GetTick();
-    if (unlikely((currentMillis - tftPushMillis) > 15)) {
+    if (unlikely((currentMillis - tftPushMillis) > 25)) {
         if (pushToTft()) {
            // a part have been pushed
            tftPushMillis = currentMillis;
@@ -646,7 +658,7 @@ bool TftDisplay::pushToTft() {
 
     // 4 max - can break before
     int p;
-    for (p = 0; p < 4 ; p++) {
+    for (p = 0; p < TFT_NUMBER_OF_PARTS ; p++) {
         if ((tftDirtyBits & (1UL << part)) > 0) {
             // Update TFT part
             ILI9341_Select();
@@ -655,7 +667,8 @@ bool TftDisplay::pushToTft() {
             uint16_t height = areaHeight[part];
             uint16_t y = areaY[part];
 
-            if (ILI9341_SetAddressWindow(0, y, 239, y + height - 1) == HAL_OK) {
+            if (ILI9341_SetAddressWindow(y, y + height - 1) == HAL_OK) {
+
                 PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
 
                 if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
@@ -1568,8 +1581,6 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
     if (maxX < 0) {
         maxX = 0;
     }
-    // Erase
-    fillArea(x, y, width, height, COLOR_BLACK);
 
     uint8_t visuColo = COLOR_LIGHT_GREEN;
     uint8_t visuColorAfterThresh = COLOR_WHITE;
@@ -1591,6 +1602,7 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
             maxX = threshInPixel;
         }
         fillArea(x, y, maxX, height, visuColo);
+        fillArea(x + maxX, y, width - maxX, height, COLOR_BLACK);
         if (afterThresh > 0) {
             fillArea(x + threshInPixel, y, afterThresh, height, visuColorAfterThresh);
             fillArea(x + threshInPixel, y, 1, height, COLOR_ORANGE);
@@ -1606,6 +1618,7 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
             visuColo = COLOR_RED;
         }
         fillArea(x, y, maxX, height, visuColo);
+        fillArea(x + maxX, y, width - maxX, height, COLOR_BLACK);
     }
 
 }

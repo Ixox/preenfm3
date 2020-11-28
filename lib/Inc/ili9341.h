@@ -36,24 +36,24 @@ extern SPI_HandleTypeDef ILI9341_SPI_PORT;
 
 // rotate right
 /*
-#define ILI9341_WIDTH  320
-#define ILI9341_HEIGHT 240
-#define ILI9341_ROTATION (ILI9341_MADCTL_MX | ILI9341_MADCTL_MY | ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR)
-*/
+ #define ILI9341_WIDTH  320
+ #define ILI9341_HEIGHT 240
+ #define ILI9341_ROTATION (ILI9341_MADCTL_MX | ILI9341_MADCTL_MY | ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR)
+ */
 
 // rotate left
 /*
-#define ILI9341_WIDTH  320
-#define ILI9341_HEIGHT 240
-#define ILI9341_ROTATION (ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR)
-*/
+ #define ILI9341_WIDTH  320
+ #define ILI9341_HEIGHT 240
+ #define ILI9341_ROTATION (ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR)
+ */
 
 // upside down
 /*
-#define ILI9341_WIDTH  240
-#define ILI9341_HEIGHT 320
-#define ILI9341_ROTATION (ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR)
-*/
+ #define ILI9341_WIDTH  240
+ #define ILI9341_HEIGHT 320
+ #define ILI9341_ROTATION (ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR)
+ */
 
 /****************************/
 
@@ -69,7 +69,7 @@ extern SPI_HandleTypeDef ILI9341_SPI_PORT;
 #define ILI9341_COLOR565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 // call before initializing any SPI devices
@@ -77,13 +77,11 @@ extern SPI_HandleTypeDef ILI9341_SPI_PORT;
 #define ILI9341_Select() PFM_CLEAR_PIN(ILI9341_CS_GPIO_Port, ILI9341_CS_Pin)
 #define ILI9341_Unselect() PFM_SET_PIN(ILI9341_CS_GPIO_Port, ILI9341_CS_Pin)
 
-
 void ILI9341_Init(void);
-HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1);
 
 #ifdef __cplusplus
- }
+}
 #endif
-
 
 #endif // __ILI9341_H__

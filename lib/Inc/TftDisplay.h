@@ -29,18 +29,20 @@
 enum {
 	TFT_PART_HEADER = 0,
 	TFT_PART_VALUES,
+    TFT_PART_VALUES2,
 	TFT_PART_OSCILLO,
+    TFT_PART_OSCILLO2,
 	TFT_PART_BUTTONS
 };
 
-#define TFT_PART_HEADER_BITS        0b0001
-#define TFT_PART_VALUES_BITS        0b0010
-#define TFT_PART_OSCILLO_BITS       0b0100
-#define TFT_PART_BUTTONS_BITS       0b1000
-#define TFT_PART_MIXER_VALUES_BITS  0b0110
-#define TFT_PART_ALL_BITS           0b1111
+#define TFT_PART_HEADER_BITS        0b000001
+#define TFT_PART_VALUES_BITS        0b000110
+#define TFT_PART_OSCILLO_BITS       0b011000
+#define TFT_PART_BUTTONS_BITS       0b100000
+#define TFT_PART_ALL_BITS           0b111111
 
-#define TFT_NUMBER_OF_PARTS 4
+#define TFT_NUMBER_OF_PARTS 6
+
 
 #define RAM_D1_SECTION __attribute__((section(".ram_d1")))
 #define DMA2D_POSITION_NLR_PL         (uint32_t)POSITION_VAL(DMA2D_NLR_PL)        /*!< Required left shift to set pixels per lines value */
