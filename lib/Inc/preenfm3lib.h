@@ -18,8 +18,18 @@
 #pragma once
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "preenfm3_pins.h"
 
 void preenfm3LibInitGpio();
 void preenfm3ForceTftBacklight();
+void preenfm3TurnOnTftBacklight();
+void preenfm3TurnOffTftBacklight();
 uint32_t preenfm3LibInitSD();
+
+#ifdef __cplusplus
+}
+#endif

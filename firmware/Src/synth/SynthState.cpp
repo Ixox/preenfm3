@@ -24,6 +24,7 @@
 #include "Hexter.h"
 #include "Timbre.h"
 #include "Synth.h"
+#include "preenfm3lib.h"
 
 extern Synth synth;
 extern RNG_HandleTypeDef hrng;
@@ -65,7 +66,6 @@ SynthState::SynthState() {
     fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET] = 0;
     fullState.midiConfigValue[MIDICONFIG_BOOT_SOUND] = 0;
     fullState.midiConfigValue[MIDICONFIG_CPU_USAGE] = 0;
-    fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT] = 100;
     // Init randomizer values to 1
     fullState.randomizer.Oper = 1;
     fullState.randomizer.EnvT = 1;
@@ -232,14 +232,13 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
             	SynthEditMode previousMode = fullState.synthMode;
 
                 // Turn off the backlight
-                TIM1->CCR2 = 0;
+            	preenfm3TurnOffTftBacklight();
                 // reinit TFT + redisplay full page
                 fullState.synthMode = SYNTH_MODE_REINIT_TFT;
                 propagateNewPfm3Page();
                 // Wait for the page to be ready
                 // Turn on the backlight
-                uint8_t tft_bl =  fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
-                TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+                preenfm3TurnOnTftBacklight();
 
                 HAL_Delay(500);
                 fullState.synthMode = previousMode;

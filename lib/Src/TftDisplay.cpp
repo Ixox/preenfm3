@@ -93,14 +93,21 @@ TftDisplay::TftDisplay() {
 
     areaY[TFT_PART_HEADER] = 0;
     areaHeight[TFT_PART_HEADER] = 40;
+
     areaY[TFT_PART_VALUES] = 40;
-    areaHeight[TFT_PART_VALUES] = 60;
-    areaY[TFT_PART_VALUES2] = 100;
-    areaHeight[TFT_PART_VALUES2] = 60;
+    areaHeight[TFT_PART_VALUES] = 40;
+    areaY[TFT_PART_VALUES2] = 80;
+    areaHeight[TFT_PART_VALUES2] = 40;
+    areaY[TFT_PART_VALUES3] = 120;
+    areaHeight[TFT_PART_VALUES3] = 40;
+
     areaY[TFT_PART_OSCILLO] = 160;
-    areaHeight[TFT_PART_OSCILLO] = 55;
-    areaY[TFT_PART_OSCILLO2] = 215;
-    areaHeight[TFT_PART_OSCILLO2] = 55;
+    areaHeight[TFT_PART_OSCILLO] = 40;
+    areaY[TFT_PART_OSCILLO2] = 200;
+    areaHeight[TFT_PART_OSCILLO2] = 40;
+    areaY[TFT_PART_OSCILLO3] = 240;
+    areaHeight[TFT_PART_OSCILLO3] = 30;
+
     areaY[TFT_PART_BUTTONS] = 270;
     areaHeight[TFT_PART_BUTTONS] = 50;
 
@@ -291,27 +298,35 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
     uint16_t yBottom = y + height;
 
     if (unlikely(y < 40)) {
-        tftDirtyBits |= 0b000001;
+        tftDirtyBits |= 0b00000001;
     }
 
-    if (unlikely(y < 100 && yBottom >= 40)) {
-        tftDirtyBits |= 0b000010;
+    if (unlikely(y < 80 && yBottom >= 40)) {
+        tftDirtyBits |= 0b00000010;
     }
 
-    if (unlikely(y < 160 && yBottom >= 100)) {
-        tftDirtyBits |= 0b000100;
+    if (unlikely(y < 120 && yBottom >= 80)) {
+        tftDirtyBits |= 0b00000100;
     }
 
-    if (unlikely(y < 215 && yBottom >= 160)) {
-        tftDirtyBits |= 0b001000;
+    if (unlikely(y < 160 && yBottom >= 120)) {
+        tftDirtyBits |= 0b00001000;
     }
 
-    if (unlikely(y < 270 && yBottom >= 215)) {
-        tftDirtyBits |= 0b010000;
+    if (unlikely(y < 200 && yBottom >= 160)) {
+        tftDirtyBits |= 0b00010000;
+    }
+
+    if (unlikely(y < 240 && yBottom >= 200)) {
+        tftDirtyBits |= 0b00100000;
+    }
+
+    if (unlikely(y < 270 && yBottom >= 230)) {
+        tftDirtyBits |= 0b01000000;
     }
 
     if (unlikely(yBottom >= 270)) {
-        tftDirtyBits |= 0b100000;
+        tftDirtyBits |= 0b10000000;
     }
 }
 
@@ -320,7 +335,7 @@ void TftDisplay::tic() {
 
 
     uint32_t currentMillis = HAL_GetTick();
-    if (unlikely((currentMillis - tftPushMillis) > 25)) {
+    if (unlikely((currentMillis - tftPushMillis) > 20)) {
         if (pushToTft()) {
            // a part have been pushed
            tftPushMillis = currentMillis;
@@ -1010,10 +1025,10 @@ void TftDisplay::oscilloRrefresh() {
 
         // Dynamically adjust olscilloYScale
         if (saturate) {
-            olscilloYScale -= .2f;
+            olscilloYScale -= 1.0f;
         } else {
-            if (maxYValue < 30 && olscilloYScale < 4.0f) {
-                olscilloYScale += .2f;
+            if (maxYValue < 25 && olscilloYScale < 8.0f) {
+                olscilloYScale += 1.0f;
             }
         }
     }

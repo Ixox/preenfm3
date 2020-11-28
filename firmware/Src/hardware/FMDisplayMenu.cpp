@@ -179,16 +179,6 @@ void FMDisplayMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
         case MENU_CONFIG_SETTINGS:
             if (encoder == 3) {
                 changePresetSelect(&fullState->midiConfigValue[fullState->menuSelect], ticks, midiConfig[fullState->menuSelect].maxValue - 1);
-
-                if (fullState->menuSelect == MIDICONFIG_TFT_BACKLIGHT) {
-                    uint8_t tft_bl = fullState->midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
-#if defined(LQFP100) || defined(LQFP100_OLD)
-                TIM3->CCR4 = tft_bl < 10 ? 10 : tft_bl;
-#endif
-#if defined(LQFP144)
-                    TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
-#endif
-                }
             } else if (encoder == 0) {
                 changePresetSelect(&fullState->menuSelect, ticks, MIDICONFIG_SIZE);
             }

@@ -184,25 +184,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
   }
   else if(hspi->Instance==SPI2)
   {
-#if defined(LQFP100_OLD) || defined(LQFP100)
-    __HAL_RCC_SPI2_CLK_ENABLE();
-
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**SPI2 GPIO Configuration    
-    PB13     ------> SPI2_SCK
-    PB14     ------> SPI2_MISO
-    PB15     ------> SPI2_MOSI 
-    */
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-#endif
-
-
-#if defined(LQFP144)
     __HAL_RCC_SPI2_CLK_ENABLE();
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -275,8 +256,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     HAL_NVIC_SetPriority(SPI2_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(SPI2_IRQn);
 
-
-#endif
   }
 
 }
@@ -330,16 +309,8 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     PB15     ------> SPI2_MOSI 
     */
 
-#ifdef LQFP100_OLD
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
-#endif
-#ifdef LQFP100
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
-#endif
-#ifdef LQFP144
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_14|GPIO_PIN_15);
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9);
-#endif
 
 
   /* USER CODE BEGIN SPI2_MspDeInit 1 */
