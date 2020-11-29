@@ -139,6 +139,11 @@ void Synth::allNoteOffQuick(int timbre) {
     }
 }
 
+void Synth::stopArpegiator(int timbre) {
+    timbres_[timbre].resetArpeggiator();
+}
+
+
 void Synth::allNoteOff(int timbre) {
     int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
     for (int k = 0; k < numberOfVoices; k++) {
@@ -626,6 +631,13 @@ void Synth::newTimbre(int timbre) {
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     switch (valueType) {
+        case MIXER_VALUE_MIDI_CHANNEL:
+        case MIXER_VALUE_MIDI_FIRST_NOTE:
+        case MIXER_VALUE_MIDI_LAST_NOTE:
+        case MIXER_VALUE_MIDI_SHIFT_NOTE:
+            timbres_[timbre].resetArpeggiator();
+            allNoteOff(timbre);
+            break;
         case MIXER_VALUE_NUMBER_OF_VOICES:
             if (newValue == oldValue) {
                 return;

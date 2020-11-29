@@ -330,6 +330,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_BREATH, INV127 * midiEvent.value[1]);
         break;
     case CC_ALL_NOTES_OFF:
+        this->synth->stopArpegiator(timbre);
         this->synth->allNoteOff(timbre);
         break;
     case CC_ALL_SOUND_OFF:
@@ -341,6 +342,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     case CC_OMNI_OFF:
         // Omni on && omni OFF only accepted on original channel
         if (this->synthState_->mixerState.instrumentState_[timbre].midiChannel == midiEvent.channel) {
+            this->synth->stopArpegiator(timbre);
             this->synth->allNoteOff(timbre);
             omniOn[timbre] = false;
         }
@@ -348,11 +350,13 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     case CC_OMNI_ON:
         // Omni on && omni OFF only accepted on original channel
         if (this->synthState_->mixerState.instrumentState_[timbre].midiChannel == midiEvent.channel) {
+            this->synth->stopArpegiator(timbre);
             this->synth->allNoteOff(timbre);
             omniOn[timbre] = true;
         }
         break;
     case CC_RESET:
+        this->synth->stopArpegiator(timbre);
         this->synth->allNoteOff(timbre);
         this->runningStatus = 0;
         this->songPosition = 0;

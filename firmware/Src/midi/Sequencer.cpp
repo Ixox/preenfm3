@@ -62,6 +62,7 @@ void Sequencer::reset(bool synthNoteOff) {
 
     for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
         if (synthNoteOff) {
+            synth->stopArpegiator(i);
             synth->allNoteOff(i);
         }
 
@@ -115,6 +116,7 @@ void Sequencer::setExternalClock(bool enable) {
 void Sequencer::stop() {
     running = false;
     for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
+        synth->stopArpegiator(i);
         synth->allNoteOff(i);
     }
 }
@@ -175,6 +177,7 @@ void Sequencer::onMidiStop() {
         if (extMidiRunning) {
             extMidiRunning = false;
             for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
+                synth->stopArpegiator(i);
                 synth->allNoteOff(i);
             }
             displaySequencer->refresh(17, 17);
@@ -562,7 +565,8 @@ StepSeqValue* Sequencer::stepGetSequence(int instrument) {
 
 void Sequencer::stepClearAll(int instrument) {
 	int seqNumber = instrumentStepSeq[instrument];
-    synth->allNoteOff(instrument);
+    synth->stopArpegiator(instrument);
+	synth->allNoteOff(instrument);
     for (int s = 0; s < 255; s++) {
         stepNotes[seqNumber][s].full = 0;
     }
