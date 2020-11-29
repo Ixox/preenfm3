@@ -53,6 +53,7 @@ public:
     void noteOff(int timbre, char note);
     void noteOnFromSequencer(int timbre, char note, char velocity);
     void noteOffFromSequencer(int timbre, char note);
+    void stopArpegiator(int timbre);
     void allNoteOff(int timbre);
     void allNoteOffQuick(int timbre);
     void allSoundOff();

@@ -8,28 +8,27 @@ FIRMWARE_DIR=../firmware
 FIRMWARE_RELEASE=Release
 
 
-# BOOTLOADER_DIR=../bootloader
-# BOOTLOADER_RELEASE=Release
-
+BOOTLOADER_DIR=../bootloader
+BOOTLOADER_RELEASE=Release
 
 
 versionFile="./Inc/version.h"
 
 elfFile="${FIRMWARE_DIR}/${FIRMWARE_RELEASE}/preenfm3.elf"
-# elfBootloaderFile=${BOOTLOADER_DIR}/${BOOTLOADER_RELEASE}/preenfm3\ bootloader.elf
+elfBootloaderFile=${BOOTLOADER_DIR}/${BOOTLOADER_RELEASE}/preenfm3\ bootloader.elf
 
 read -r firmwareVersionLine < "${FIRMWARE_DIR}/${versionFile}"
-# read -r bootloaderVersionLine < "${BOOTLOADER_DIR}/${versionFile}"
+read -r bootloaderVersionLine < "${BOOTLOADER_DIR}/${versionFile}"
 
 # firmware has a v
 regexFirmware='\"v([0-9])\.([0-9]*)\"'
-# regexBootloader='\"([0-9])\.([0-9]*)\"'
+regexBootloader='\"([0-9])\.([0-9]*)\"'
 
 [[ $firmwareVersionLine =~ $regexFirmware ]]
 firmwareVersion=${BASH_REMATCH[1]}_${BASH_REMATCH[2]}
 
-# [[ $bootloaderVersionLine =~ $regexBootloader ]]
-# bootloaderVersion=${BASH_REMATCH[1]}_${BASH_REMATCH[2]}
+[[ $bootloaderVersionLine =~ $regexBootloader ]]
+bootloaderVersion=${BASH_REMATCH[1]}_${BASH_REMATCH[2]}
 
 
 buildFolder="pfm3_firmware_${firmwareVersion}"
@@ -39,22 +38,18 @@ rm -f ${buildFolder}/*
 binFirmware="p3_${firmwareVersion}.bin"
 binFirmwareWithPath="${buildFolder}/${binFirmware}"
 
-
-binBootloaderFolder=pfm3_firmware_0_97
-binBootloader=p3_boot_1_07.bin
-binBootloaderWithPath="${binBootloaderFolder}/${binBootloader}"
-
-# binBootloader="p3_boot_${bootloaderVersion}.bin"
-# binBootloaderWithPath="${buildFolder}/${binBootloader}"
+binBootloader="p3_boot_${bootloaderVersion}.bin"
+binBootloaderWithPath="${buildFolder}/${binBootloader}"
 
 echo "Build                : ${FIRMWARE_RELEASE}"
 echo "Firmware version     : ${firmwareVersion}"
+echo "Bootloader version   : ${bootloaderVersion}"
 echo "Build folder         : ${buildFolder}"
 echo "Firmare file name    : ${binFirmware}"
-echo "Bootloader file name : ${binBootloaderWithPath}"
+echo "Bootloader file name : ${binBootloader}"
 
 ${OBJCOPY_BIN} -R .ram_d2b -R .ram_d2 -R .ram_d1 -R .ram_d3 -R .instruction_ram -O binary ${elfFile} ${binFirmwareWithPath}
-cp ${binBootloaderWithPath}  ${buildFolder}
+${OBJCOPY_BIN} -R .ram_d2b -R .ram_d2 -R .ram_d1 -R .ram_d3 -R .instruction_ram -O binary "${elfBootloaderFile}" ${binBootloaderWithPath}
 
 echo ""
 echo "bin created in ${buildFolder}"

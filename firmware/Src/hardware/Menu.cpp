@@ -426,12 +426,6 @@ const struct MidiConfig midiConfig[]  = {
                 2,
                 yesNo
         },
-        {
-                "TFT backlight",
-                "tftbacklight",
-                101,
-                0
-        },
         // Don't count in MIDICONFIG_SIZE
         {
                 "Firmware Version",
