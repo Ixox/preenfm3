@@ -131,13 +131,14 @@ struct FlashSynthParams {
     struct LfoPhaseRowParams lfoPhases;
     struct MidiNoteCurveRowParams midiNote1Curve;
     struct MidiNoteCurveRowParams midiNote2Curve;
+    struct Engine2Params engine2;
 };
 
-#define PFM2_PATCH_SIZE sizeof(struct FlashSynthParams)
+#define PFM3_PATCH_FLASH_SIZE sizeof(struct FlashSynthParams)
 #define PFM3_PATCH_SIZE sizeof(struct OneSynthParams)
 
 #define ALIGNED_PATCH_SIZE 1024
-#define ALIGNED_PATCH_ZERO ALIGNED_PATCH_SIZE-PFM2_PATCH_SIZE
+#define ALIGNED_PATCH_ZERO ALIGNED_PATCH_SIZE-PFM3_PATCH_FLASH_SIZE
 
 #define MIXER_SIZE sizeof(struct MixerState)
 #define ALIGNED_MIXER_SIZE 1024

@@ -17,8 +17,6 @@
 
 #include "PatchBank.h"
 
-extern char patch_zeros[ALIGNED_PATCH_ZERO];
-
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
 
 PatchBank::PatchBank() {
@@ -73,7 +71,7 @@ void PatchBank::createPatchBank(const char *name) {
         return;
     }
 
-    for (uint32_t s = PFM2_PATCH_SIZE; s < ALIGNED_PATCH_SIZE; s++) {
+    for (uint32_t s = 0; s < ALIGNED_PATCH_SIZE; s++) {
         storageBuffer[s] = 0;
     }
     convertParamsToFlash(&preenMainPreset, (struct FlashSynthParams*) storageBuffer, *arpeggiatorPartOfThePreset_ > 0);
@@ -95,7 +93,7 @@ void PatchBank::loadPatch(const struct PFM3File *bank, int patchNumber, struct O
         switch (version) {
             case PRESET_VERSION2:
                 // Direct copy
-                for (uint32_t p = 0; p < PFM2_PATCH_SIZE; p++) {
+                for (uint32_t p = 0; p < PFM3_PATCH_FLASH_SIZE; p++) {
                     ((char*) params)[p] = storageBuffer[p];
                 }
                 break;
@@ -138,10 +136,7 @@ const char* PatchBank::loadPatchName(const struct PFM3File *bank, int patchNumbe
 void PatchBank::savePatch(const struct PFM3File *bank, int patchNumber, const struct OneSynthParams *params) {
     const char *fullBankName = getFullName(bank->name);
 
-    for (uint32_t p = 0; p < PFM2_PATCH_SIZE; p++) {
-        storageBuffer[p] = ((char*) params)[p];
-    }
-    for (int p = PFM2_PATCH_SIZE; p < ALIGNED_PATCH_SIZE; p++) {
+    for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
         storageBuffer[p] = 0;
     }
     convertParamsToFlash(params, (struct FlashSynthParams*) storageBuffer, *arpeggiatorPartOfThePreset_ > 0);

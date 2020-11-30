@@ -33,13 +33,7 @@ extern float diatonicScaleFrequency[];
 
 
 SynthState::SynthState() {
-    engineRow = ROW_ENGINE;
-    // operator works for both osc and env
-    oscillatorRow = 0;
-    matrixRow = ROW_MATRIX1;
-    lfoRow = ROW_LFOOSC1;
     operatorNumber = 0;
-    operatorView = 0;
 
     // First default preset
     fullState.synthMode = SYNTH_MODE_MIXER;

@@ -115,7 +115,6 @@ enum {
 enum {
     ROW_ENGINE_FIRST = 0,
     ROW_ENGINE = ROW_ENGINE_FIRST,
-    ROW_ENGINE2,
     ROW_MODULATION1,
     ROW_MODULATION2,
     ROW_MODULATION3,
@@ -176,8 +175,13 @@ enum {
     ROW_MIDINOTE1CURVE,
     ROW_MIDINOTE2CURVE,
     ROW_LFO_LAST = ROW_MIDINOTE2CURVE,
+    ROW_ENGINE2,
     ROW_NONE
 };
+
+#define NUMBER_OF_ROWS ROW_ENGINE2+1
+
+
 
 enum {
     LFO_SEQ_MIDICLOCK_DIV_4 = 241,
@@ -208,8 +212,6 @@ enum {
     ARPEGGIATOR_USER_PATTERN_COUNT = 4,
     ARPEGGIATOR_PATTERN_COUNT = ARPEGGIATOR_PRESET_PATTERN_COUNT + ARPEGGIATOR_USER_PATTERN_COUNT
 };
-
-#define NUMBER_OF_ROWS ROW_LFO_LAST+1
 
 
 extern const struct OneSynthParams preenMainPreset;
@@ -429,7 +431,6 @@ struct MidiNoteCurveRowParams {
 
 struct OneSynthParams {
     struct Engine1Params engine1;
-    struct Engine2Params engine2;
     struct EngineIm1 engineIm1;
     struct EngineIm2 engineIm2;
     struct EngineIm3 engineIm3;
@@ -483,6 +484,7 @@ struct OneSynthParams {
     struct MidiNoteCurveRowParams midiNote2Curve;
     struct StepSequencerSteps lfoSteps1;
     struct StepSequencerSteps lfoSteps2;
+    struct Engine2Params engine2;
     char presetName[13];
 };
 

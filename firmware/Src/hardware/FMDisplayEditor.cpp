@@ -1655,7 +1655,6 @@ struct ParameterRowDisplay midiNote2ParameterRow = {
 struct AllParameterRowsDisplay allParameterRows = {
     {
         &engine1ParameterRow,
-        &engine2ParameterRow,
         &engineIM1ParameterRow,
         &engineIM2ParameterRow,
         &engineIM3ParameterRow,
@@ -1706,7 +1705,8 @@ struct AllParameterRowsDisplay allParameterRows = {
         &lfoStepParameterRow,
         &lfoStepParameterRow,
         &midiNote1ParameterRow,
-        &midiNote2ParameterRow
+        &midiNote2ParameterRow,
+        &engine2ParameterRow
 } };
 
 // =================================================

@@ -548,10 +548,6 @@ public:
         return fullState.synthMode;
     }
 
-    int getOperatorNumber() {
-        return operatorNumber;
-    }
-
     void newSysexBankReady();
 
     void tempoClick();
@@ -595,8 +591,7 @@ public:
 private:
 
     int currentTimbre;
-    char engineRow, oscillatorRow, envelopeRow, matrixRow, lfoRow;
-    char operatorNumber, operatorView;
+    char operatorNumber;
 
     bool isPlayingNote;
     char playingNote;

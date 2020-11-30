@@ -18,7 +18,6 @@
 #include "PreenFMFileType.h"
 
 __attribute__((section(".ram_d2b"))) char storageBuffer[PROPERTY_FILE_SIZE];
-__attribute__((section(".ram_d2b"))) char patch_zeros[ALIGNED_PATCH_ZERO];
 __attribute__((section(".ram_d2b"))) static FIL file;
 
 PreenFMFileType::PreenFMFileType() {
@@ -296,6 +295,8 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
     // First engine line
 
     fsu_->copyFloat((float*) &params->engine1, (float*) &memory->engine1, 4);
+    fsu_->copyFloat((float*) &params->engine2, (float*) &memory->engine2, 4);
+
     if (saveArp) {
         fsu_->copyFloat((float*) &params->engineArp1, (float*) &memory->engineArp1, 4 * 2);
         memory->engineArpUserPatterns = params->engineArpUserPatterns;
@@ -343,6 +344,7 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
     fsu_->copyFloat((float*) &params->midiNote2Curve, (float*) &memory->midiNote2Curve, 4);
     fsu_->copyFloat((float*) &params->lfoPhases, (float*) &memory->lfoPhases, 4);
 
+
     for (int s = 0; s < 16; s++) {
         memory->lfoSteps1.steps[s] = params->lfoSteps1.steps[s];
         memory->lfoSteps2.steps[s] = params->lfoSteps2.steps[s];
@@ -355,6 +357,8 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
 void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory, struct OneSynthParams *params, bool loadArp) {
     // First engine line
     fsu_->copyFloat((float*) &memory->engine1, (float*) &params->engine1, 4);
+    fsu_->copyFloat((float*) &memory->engine2, (float*) &params->engine2, 4);
+
     if (loadArp) {
         fsu_->copyFloat((float*) &memory->engineArp1, (float*) &params->engineArp1, 4 * 2);
         params->engineArpUserPatterns = memory->engineArpUserPatterns;

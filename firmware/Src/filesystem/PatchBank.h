@@ -25,8 +25,8 @@ enum PRESET_VERSION {
     PRESET_VERSION2 = 292928062 // random 32 bits number for the first preenfm3
 };
 
-// Let's stick to VERSION1
-#define PRESET_CURRENT_VERSION PRESET_VERSION2
+// Let's stick to VERSION1 : VERSION2 seems dangerous :)
+#define PRESET_CURRENT_VERSION PRESET_VERSION1
 
 class PatchBank: public PreenFMFileType {
 public:

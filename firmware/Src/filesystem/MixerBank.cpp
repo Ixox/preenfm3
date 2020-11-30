@@ -25,8 +25,6 @@
 
 extern TftDisplay tft;
 
-extern char patch_zeros[ALIGNED_PATCH_ZERO];
-
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMMixerAlloc[NUMBEROFPREENFMMIXERS];
 __attribute__((section(".ram_d2b"))) static FIL mixerFile;
 
@@ -48,11 +46,6 @@ void MixerBank::init(struct OneSynthParams*timbre1, struct OneSynthParams*timbre
     this->timbre[3] = timbre4;
     this->timbre[4] = timbre5;
     this->timbre[5] = timbre6;
-
-
-    for (uint32_t k = 0; k < ALIGNED_PATCH_ZERO; k++) {
-        patch_zeros[k] = 0;
-    }
 }
 
 void MixerBank::setMixerState(struct MixerState* mixerState) {
@@ -154,8 +147,8 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         f_lseek(file, mixerNumber * FULL_MIXER_SIZE + ALIGNED_MIXER_SIZE + t * ALIGNED_PATCH_SIZE);
-        result = f_read(file, storageBuffer, PFM2_PATCH_SIZE, &byteRead);
-        if (result == FR_OK && byteRead == PFM2_PATCH_SIZE) {
+        result = f_read(file, storageBuffer, PFM3_PATCH_FLASH_SIZE, &byteRead);
+        if (result == FR_OK && byteRead == PFM3_PATCH_FLASH_SIZE) {
             convertFlashToParams((struct FlashSynthParams *) storageBuffer, this->timbre[t], true);
 
             // Init scala scale if enabled
