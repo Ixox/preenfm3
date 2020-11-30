@@ -22,10 +22,10 @@ read -r firmwareVersionLine < "${FIRMWARE_DIR}/${versionFile}"
 # read -r bootloaderVersionLine < "${BOOTLOADER_DIR}/${versionFile}"
 
 # firmware has a v
-regexFirmware='\"v([0-9])\.([0-9]*)\"'
-# regexBootloader='\"([0-9])\.([0-9]*)\"'
+regexFirmwareVersion='\"v([0-9])\.([0-9]+[a-z]*)\"'
+# regexBootloader='\"([0-9])\.([0-9]*[b-z]*)\"'
 
-[[ $firmwareVersionLine =~ $regexFirmware ]]
+[[ $firmwareVersionLine =~ $regexFirmwareVersion ]]
 firmwareVersion=${BASH_REMATCH[1]}_${BASH_REMATCH[2]}
 
 # [[ $bootloaderVersionLine =~ $regexBootloader ]]
