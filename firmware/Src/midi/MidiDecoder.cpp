@@ -22,8 +22,6 @@ extern "C" {
 #include "MidiDecoder.h"
 #include "RingBuffer.h"
 
-
-
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern uint8_t usbMidiBuffAll[128];
 extern uint8_t *usbMidiBuffWrt;
@@ -34,6 +32,8 @@ extern UART_HandleTypeDef huart1;
 
 RingBuffer<uint8_t, 64> usartBufferIn;
 RingBuffer<uint8_t, 64> usartBufferOut;
+RingBuffer<AsyncAction, 16> asyncActions;
+
 
 // Let's have sysexBuffer in regular RAM.
 #define SYSEX_BUFFER_SIZE 32
@@ -299,9 +299,16 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
         break;
     case MIDI_PROGRAM_CHANGE:
         if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE]) {
+            AsyncAction newAction;
+            newAction.fullBytes = 0l;
+            newAction.action.actionType = LOAD_PRESET;
             for (int tk = 0; tk < timbreIndex; tk++) {
-                this->synth->loadPreenFMPatchFromMidi(timbres[tk], bankNumber[timbres[tk]], bankNumberLSB[timbres[tk]], midiEvent.value[0]);
+                newAction.action.timbre |= (1 << timbres[tk]);
             }
+            newAction.action.param1 = bankNumber[timbres[0]];
+            newAction.action.param2 = bankNumberLSB[timbres[0]];
+            newAction.action.param3 = midiEvent.value[0];
+            asyncActions.insert(newAction);
         }
         break;
     case MIDI_SONG_POSITION:
@@ -734,7 +741,11 @@ void MidiDecoder::decodeNrpn(int timbre) {
 
         this->synth->setNewStepValueFromMidi(timbre, whichStepSeq, step, value);
     } else if (this->currentNrpn[timbre].paramMSB == 127 && this->currentNrpn[timbre].paramLSB == 127) {
-        sendCurrentPatchAsNrpns(timbre);
+        AsyncAction asyncAction;
+        asyncAction.fullBytes = 0l;
+        asyncAction.action.actionType = SEND_PATCH_AS_NRPN;
+        asyncAction.action.timbre = timbre;
+        asyncActions.insert(asyncAction);
     }
 }
 
@@ -1072,3 +1083,26 @@ uint8_t MidiDecoder::analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size) {
     }
     return 0;
 }
+
+
+/**
+ * Here we process the actions that cannot be executed inside the main midi loop
+ */
+void MidiDecoder::processAsyncActions() {
+    while (asyncActions.getCount() > 0) {
+        AsyncAction asyncAction = asyncActions.remove();
+        switch (asyncAction.action.actionType) {
+            case LOAD_PRESET:
+                for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+                    if (((1 << t) & asyncAction.action.timbre)  > 0) {
+                        synth->loadPreenFMPatchFromMidi(t, asyncAction.action.param1, asyncAction.action.param2, asyncAction.action.param3);
+                    }
+                }
+                break;
+            case SEND_PATCH_AS_NRPN:
+                sendCurrentPatchAsNrpns(asyncAction.action.timbre);
+                break;
+        }
+    }
+}
+
