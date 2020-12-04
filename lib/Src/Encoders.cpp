@@ -44,7 +44,7 @@ Encoders::Encoders() {
 
     // PreenFM PCB PFM3 V0.4 + Control board v0.2
     char encoderPins[] = { 17,18,15,16,9,10,20,19,14,13,12,11 };
-    char buttonPins[] = { 23, 21, 4, 24, 3, 2, 22, 5, 6, 7, 8, 1};
+    char buttonPins[] = { 23, 21, 4, 24, 3, 2, 22, 5, 6, 7, 8, 1, 32,31,30,27,28,29 };
 
     /*
 			0: 0000 = 00

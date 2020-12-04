@@ -25,8 +25,8 @@
 #include "preenfm3_pins.h"
 
 #define NUMBER_OF_ENCODERS 6
-#define NUMBER_OF_BUTTONS 12
-#define NUMBER_OF_PINS 24
+#define NUMBER_OF_BUTTONS 18
+#define NUMBER_OF_PINS 32
 
 
 enum LastEncoderMove {
