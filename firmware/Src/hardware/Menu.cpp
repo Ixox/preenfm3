@@ -25,7 +25,6 @@
 #define OVERCLOCK_STRING "o"
 #endif
 
-
 const char* yesNo [] = { "No", "Yes" };
 const char* midiReceives[] = { "None", "CC", "NRPN", "CC & NRPN" };
 const char* midiSends [] = { "None", "CC", "NRPN" };
@@ -34,6 +33,7 @@ const char* encoderType [] = { "12", "24", "12i", "24i" };
 const char* usbMidiText[] = { "Off", "In", "In/Out" };
 const char* version[] = { PFM3_FIRMWARE_VERSION };
 const char* oledSaver[] = { "Off", "2m", "5m", "10m", "1h" };
+const char* tftReinit [] = { "Auto", "Off" };
 
 
 
@@ -385,12 +385,6 @@ const struct MidiConfig midiConfig[]  = {
                 yesNo
         },
         {
-                "Boot To",
-                "boot",
-                4,
-                bootOptions
-        },
-        {
                 "Encoder Driver",
                 "encoders",
                 4,
@@ -415,16 +409,16 @@ const struct MidiConfig midiConfig[]  = {
                 yesNo
         },
         {
-                "Boot Sound",
-                "bootsound",
-                2,
-                yesNo
-        },
-        {
                 "Cpu Usage",
                 "cpuusage",
                 2,
                 yesNo
+        },
+        {
+                "TFT Reinit",
+                "tftreinit",
+                2,
+                tftReinit
         },
         // Don't count in MIDICONFIG_SIZE
         {

@@ -147,7 +147,6 @@ void FMDisplay3::newPresetName(int timbre) {
         }
     }
 }
-;
 
 void FMDisplay3::newTimbre(int timbre) {
     currentTimbre_ = timbre;
@@ -360,10 +359,11 @@ void FMDisplay3::afterNewParamsLoad(int timbre) {
     displayEditor_->setPresetModified(timbre, false);
 
     if (currentTimbre_ == timbre && this->synthState_->fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
-        tft_->clearActions();
-        tft_->clear();
-        displayEditor_->displayPreset();
-        refreshStatus_ = 12;
+        refreshStatus_ = 20;
+    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
+        tft_->clearMixerLabels();
+        refreshStatus_ = 19;
+        endRefreshStatus_ = 14;
     }
 }
 
@@ -373,16 +373,7 @@ void FMDisplay3::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue
 
 void FMDisplay3::newPfm3Page(FullState *fullState) {
     if (unlikely(fullState->synthMode == SYNTH_MODE_REINIT_TFT)) {
-        tft_->clearActions();
-        tft_->pauseRefresh();
-        ILI9341_Init();
-        tft_->clear();
-        float h = 320.0f / (NUMBER_OF_TFT_COLORS);
-        for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
-            int y = h * c;
-            tft_->fillArea(0, y, 240, h, c + 1);
-        }
-        tft_->restartRefreshTft();
+        tft_->reset();
     } else {
         refreshStatus_ = 20;
         this->refreshOscilloBG();

@@ -155,8 +155,10 @@ TftDisplay::TftDisplay() {
     oscilloIsClean = true;
     flatOscilloAlreadyDisplayed = true;
     tftPushMillis = 0;
+    tftGetStatusMillis = 0;
     part = 0;
     olscilloYScale = 1.0f;
+    tftMustBeReset_ = false;
 }
 
 TftDisplay::~TftDisplay() {
@@ -284,8 +286,15 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     // Check bgIndex here for tftBackground size (must be multiplied by 2)
 
     currentAction.actionType = 0;
-
 }
+
+void TftDisplay::reset() {
+    clearActions();
+    ILI9341_Init();
+    ILI9341_ReInit();
+    tftMustBeReset_ = false;
+}
+
 
 void TftDisplay::initWaveFormExt(int index, float* waveform, int size) {
     waveForm[index].waveForms = waveform;
@@ -330,12 +339,37 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
     }
 }
 
+
+
 void TftDisplay::tic() {
+
     uint32_t offset;
-
-
     uint32_t currentMillis = HAL_GetTick();
+
     if (unlikely((currentMillis - tftPushMillis) > 20)) {
+
+        // Only if previous DMA pushed is finished
+        if ((currentMillis - tftGetStatusMillis) > 500) {
+            status_[0] = 1;
+            status_[1] = 1;
+            if (ILI9341_ReadPowerMode(status_) != HAL_OK) {
+                status_[0] = 1;
+                status_[1] = 1;
+            }
+            // Try to detect when TFT is BLANK
+            if ((status_[0] & 0b11111100) != 0b11011100) {
+                if(status_[2] == status_[0]) {
+                    clearActions();
+                    fillArea(0, 0,  240,  320,  COLOR_RED);
+                    tftMustBeReset_ = true;
+                }
+            }
+            // status_2 allows to make sure we got 2 wrong number in a row
+            status_[2] = status_[0];
+            tftGetStatusMillis = currentMillis;
+            return;
+        }
+
         if (pushToTft()) {
            // a part have been pushed
            tftPushMillis = currentMillis;
@@ -667,6 +701,7 @@ void TftDisplay::tic() {
  * Screen is divided into UPDATE_NUMBER_OF_PARTS parts, and only at a time is pushed.
  */
 bool TftDisplay::pushToTft() {
+
     if (tftDirtyBits == 0 || !tftRefreshing) {
         return false;
     }
@@ -702,11 +737,9 @@ bool TftDisplay::pushToTft() {
 }
 
 void TftDisplay::pushToTftFinished() {
-    pushToTftInProgress = false;
     ILI9341_Unselect();
+    pushToTftInProgress = false;
 }
-
-
 
 void TftDisplay::setCursor(uint8_t x, uint16_t y) {
     cursorX = x * TFT_BIG_CHAR_WIDTH;
@@ -1635,5 +1668,5 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
         fillArea(x, y, maxX, height, visuColo);
         fillArea(x + maxX, y, width - maxX, height, COLOR_BLACK);
     }
-
 }
+
