@@ -1652,6 +1652,48 @@ struct ParameterRowDisplay midiNote2ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
+struct ParameterRowDisplay dummyParameterRow = {
+    "",
+    {
+        "",
+        "",
+        "",
+        "" },
+    {
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder  },
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder  },
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder  },
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder } } };
+
+
 struct AllParameterRowsDisplay allParameterRows = {
     {
         &engine1ParameterRow,
@@ -1706,6 +1748,8 @@ struct AllParameterRowsDisplay allParameterRows = {
         &lfoStepParameterRow,
         &midiNote1ParameterRow,
         &midiNote2ParameterRow,
+        &dummyParameterRow,
+        &dummyParameterRow,
         &engine2ParameterRow
 } };
 
@@ -2951,7 +2995,7 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
         }
 
         struct ParameterDisplay *param = &allParameterRows.row[row]->params[rowEncoder.encoder];
-        float newValue = ((float*) synthState_->params)[row * NUMBER_OF_ENCODERS + rowEncoder.encoder];
+        float newValue = ((float*) synthState_->params)[row * NUMBER_OF_ENCODERS_PFM2 + rowEncoder.encoder];
 
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
@@ -3130,7 +3174,7 @@ void FMDisplayEditor::resetHideParams() {
 void FMDisplayEditor::tempoClick() {
     static float lastVolume, lastGainReduction;
 
-    for (int e = 0; e < NUMBER_OF_ENCODERS_PFM3; e++) {
+    for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;
             if (valueChangedCounter_[e] == 0) {
@@ -3459,11 +3503,11 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
     if (unlikely(synthState_->fullState.mainPage == 1) && specialOpCase) {
         int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
         // operator is a bit different with PFM3
-        num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS;
+        num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber * multiplier]->params[encoder4]);
         row += synthState_->fullState.operatorNumber * multiplier;
     } else {
-        num = encoder4 + row * NUMBER_OF_ENCODERS;
+        num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row]->params[encoder4]);
     }
     float newValue;
@@ -3557,7 +3601,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 
         struct ParameterDisplay *param = &(allParameterRows.row[rowEncoder.row]->params[rowEncoder.encoder]);
         const struct OneSynthParams *defaultParams = &defaultPreset;
-        int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS;
+        int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS_PFM2;
 
         float *value = &((float*) synthState_->params)[num];
         float oldValue = *value;
