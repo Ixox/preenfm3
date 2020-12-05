@@ -541,8 +541,6 @@ uint8_t Timbre::voicesNextBlock() {
         float numberOfVoicesInv = 1 / numberOfVoices_;
 
         if (likely(voices_[voiceNumber_[0]]->isPlaying())) {
-
-
             for (int vv = 0; vv < numberOfVoices_; vv++) {
                 int v = voiceNumber_[vv];
                 // We simulate other voices but we use always the same
@@ -554,9 +552,7 @@ uint8_t Timbre::voicesNextBlock() {
                     }
                     opPan += opPanInc;
                 }
-//                voices_[v]->detuneForUnisons(vv, numberOfVoicesInv, algoNumberOfOscInv);
                 voices_[v]->nextBlock();
-//                voices_[v]->retuneForUnisons();
 
                 if (vv > 0) {
                     // We accumulate in the first voice buffer
@@ -685,7 +681,7 @@ void Timbre::afterNewParamsLoad() {
         voices_[voiceNumber_[k]]->afterNewParamsLoad();
     }
 
-    for (int j = 0; j < NUMBER_OF_ENCODERS * 2; j++) {
+    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2 * 2; j++) {
         env1_.reloadADSR(j);
         env2_.reloadADSR(j);
         env3_.reloadADSR(j);
@@ -695,7 +691,7 @@ void Timbre::afterNewParamsLoad() {
     }
 
     resetArpeggiator();
-    for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
+    for (int k = 0; k < NUMBER_OF_ENCODERS_PFM2; k++) {
         setNewEffecParam(k);
     }
     // Update midi note scale

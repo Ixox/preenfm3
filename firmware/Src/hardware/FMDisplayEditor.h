@@ -91,10 +91,10 @@ private:
     SynthState *synthState_;
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
-    bool hideParam_[NUMBER_OF_ENCODERS_PFM3];
+    bool hideParam_[NUMBER_OF_ENCODERS];
     // Value Changed info
-    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
-    uint8_t imChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
+    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
+    uint8_t imChangedCounter_[NUMBER_OF_ENCODERS];
     int currentTimbre_;
     bool multipleEdition_;
 };

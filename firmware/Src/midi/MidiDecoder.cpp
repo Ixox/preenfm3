@@ -649,9 +649,9 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
 
     // flush all parameters
     for (int currentrow = 0; currentrow < NUMBER_OF_ROWS; currentrow++) {
-        for (int encoder = 0; encoder < NUMBER_OF_ENCODERS; encoder++) {
+        for (int encoder = 0; encoder < NUMBER_OF_ENCODERS_PFM2; encoder++) {
             struct ParameterDisplay* param = &allParameterRows.row[currentrow]->params[encoder];
-            float floatValue = ((float*) paramsToSend)[currentrow * NUMBER_OF_ENCODERS + encoder];
+            float floatValue = ((float*) paramsToSend)[currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder];
 
             int valueToSend;
 
@@ -662,7 +662,7 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
                 valueToSend = floatValue + .1f;
             }
             // MSB / LSB
-            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS + encoder;
+            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS_PFM2 + encoder;
             // Value to send must be positive
 
             // NRPN is 4 control change
@@ -716,8 +716,8 @@ void MidiDecoder::decodeNrpn(int timbre) {
     if (this->currentNrpn[timbre].paramMSB < 2) {
         unsigned int index = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
         float value = (this->currentNrpn[timbre].valueMSB << 7) + this->currentNrpn[timbre].valueLSB;
-        unsigned int row = getParamRowFromNrpnRow(index / NUMBER_OF_ENCODERS);
-        unsigned int encoder = index % NUMBER_OF_ENCODERS;
+        unsigned int row = getParamRowFromNrpnRow(index / NUMBER_OF_ENCODERS_PFM2);
+        unsigned int encoder = index % NUMBER_OF_ENCODERS_PFM2;
 
         struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
 
@@ -806,7 +806,7 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 valueToSend = newValue + .1f;
             }
             // MSB / LSB
-            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS + encoder;
+            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS_PFM2 + encoder;
             // Value to send must be positive
 
             // NRPN is 4 control change

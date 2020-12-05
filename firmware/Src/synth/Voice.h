@@ -366,7 +366,7 @@ public:
     void afterNewParamsLoad() {
         this->matrix.resetSources();
         this->matrix.resetAllDestination();
-        for (int j = 0; j < NUMBER_OF_ENCODERS; j++) {
+        for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
             this->lfoOsc[0].valueChanged(j);
             this->lfoOsc[1].valueChanged(j);
             this->lfoOsc[2].valueChanged(j);

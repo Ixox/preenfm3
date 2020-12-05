@@ -198,7 +198,7 @@ void preenfm3Loop() {
     }
 
     if ((currentMillis - encoderMillis) >= 2) {
-        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER]);
+        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
         encoderMillis = currentMillis;
     }
 

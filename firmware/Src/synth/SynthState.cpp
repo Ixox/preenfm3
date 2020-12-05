@@ -59,6 +59,7 @@ SynthState::SynthState() {
     fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET] = 0;
     fullState.midiConfigValue[MIDICONFIG_CPU_USAGE] = 0;
     fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] = 0;
+    fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH] = 0;
     // Init randomizer values to 1
     fullState.randomizer.Oper = 1;
     fullState.randomizer.EnvT = 1;
@@ -82,7 +83,7 @@ SynthState::SynthState() {
     isPlayingNote = false;
 
     for (int row = 0; row < NUMBER_OF_ROWS; row++) {
-        for (int param = 0; param < NUMBER_OF_ENCODERS; param++) {
+        for (int param = 0; param < NUMBER_OF_ENCODERS_PFM2; param++) {
             struct ParameterDisplay* paramDisplay = &(allParameterRows.row[row]->params[param]);
             if (paramDisplay->numberOfValues > 1.0) {
                 paramDisplay->incValue = ((paramDisplay->maxValue - paramDisplay->minValue) / (paramDisplay->numberOfValues - 1.0f));

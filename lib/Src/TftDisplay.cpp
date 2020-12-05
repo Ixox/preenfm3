@@ -291,7 +291,6 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
 void TftDisplay::reset() {
     clearActions();
     ILI9341_Init();
-    ILI9341_ReInit();
     tftMustBeReset_ = false;
 }
 

@@ -435,8 +435,9 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
     }
 
     // for preenfm3
-    if (params->engine1.polyMono > 1) {
-        params->engine1.polyMono = 1;
+    if ((params->engine1.polyMono > 2.0f)
+        || (params->engine1.polyMono == 2.0f && params->engine2.spread == 0.0f && params->engine2.detune == 0.0f)) {
+        params->engine1.polyMono = 1.0f;
     }
 }
 

@@ -15,212 +15,200 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "Encoders.h"
-
 
 static inline void delay_micros(uint32_t ns) {
 
     /* fudge for function call overhead  */
     //us--;
     asm volatile("   mov r0, %[ns]          \n\t"
-                 "1: subs r0, #1            \n\t"
-                 "   bhi 1b                 \n\t"
-                 :
-                 : [ns] "r" (ns)
-                 : "r0");
-};
-
-
+        "1: subs r0, #1            \n\t"
+        "   bhi 1b                 \n\t"
+        :
+        : [ns] "r" (ns)
+        : "r0");
+}
+;
 
 Encoders::Encoders() {
-	// PreenFM PCB PFM3 V0.2
-//    char encoderPins[] = { 21,22, 23,24, 9,10, 11,12, 16,15, 14,13 };
-//    char buttonPins[] = { 1, 2, 3, 7, 8,4, 17, 18, 19, 20, 6, 5};
-
-    // PreenFM PCB PFM3 V0.3 + Control board v0.1
-//    char encoderPins[] = { 23,24,17,18,15,16,21,22,19,20,13,14 };
-//    char buttonPins[] = {4,3,2,1,8,7,9,10,11,6,5,12};
-
-    // PreenFM PCB PFM3 V0.4 + Control board v0.2
-    char encoderPins[] = { 17,18,15,16,9,10,20,19,14,13,12,11 };
-    char buttonPins[] = { 23, 21, 4, 24, 3, 2, 22, 5, 6, 7, 8, 1, 32,31,30,27,28,29 };
+    // PreenFM Control board 1.2 (pushable encoder)
+    char encoderPins[] = { 17, 18, 15, 16, 9, 10, 20, 19, 14, 13, 12, 11 };
+    char buttonPins[] = { 23, 21, 4, 24, 3, 2, 22, 5, 6, 7, 8, 1, 32, 31, 30, 27, 28, 29 };
 
     /*
-			0: 0000 = 00
-			1: 0001 = 00
-			2: 0010 = 00
-			3: 0011 = 00
-			4: 0100 = 02
-			5: 0101 = 00
-			6: 0110 = 00
-			7: 0111 = 01 // 1
-			8: 1000 = 00
-			9: 1001 = 00
-			A: 1010 = 00
-			B: 1011 = 02 // 2
-			C: 1100 = 00
-			D: 1101 = 00
-			E: 1110 = 00
-			F: 1111 = 00
-	*/
-	// PIC11 ... N24
-    int actionToCopy[2][16] = {     /* N12 */{ 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0},
-                                    /* N24 */ { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0}
+     0: 0000 = 00
+     1: 0001 = 00
+     2: 0010 = 00
+     3: 0011 = 00
+     4: 0100 = 02
+     5: 0101 = 00
+     6: 0110 = 00
+     7: 0111 = 01 // 1
+     8: 1000 = 00
+     9: 1001 = 00
+     A: 1010 = 00
+     B: 1011 = 02 // 2
+     C: 1100 = 00
+     D: 1101 = 00
+     E: 1110 = 00
+     F: 1111 = 00
+     */
+    int actionToCopy[2][16] = { { 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0 }, /* N12 */
+                                { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0 } /* N24 */
     };
 
-    for (int i=0; i<2; i++) {
-        for (int j=0; j<16; j++) {
-            action[i][j] = actionToCopy[i][j];
+
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 16; j++) {
+            action_[i][j] = actionToCopy[i][j];
         }
     }
 
-    firstListener= 0;
+    firstListener = 0;
 
+    for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
+        encoderBit1_[k] = 1 << (encoderPins[k * 2] - 1);
+        encoderBit2_[k] = 1 << (encoderPins[k * 2 + 1] - 1);
+        lastMove_[k] = LAST_MOVE_NONE;
+        tickSpeed_[k] = 1;
+    }
 
-	for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
-		encoderBit1[k] = 1 << (encoderPins[k*2] -1);
-		encoderBit2[k] = 1 << (encoderPins[k*2 + 1] -1);
-		lastMove[k] = LAST_MOVE_NONE;
-		tickSpeed[k] = 1;
-	}
+    for (int k = 0; k < NUMBER_OF_BUTTONS_MAX; k++) {
+        buttonBit_[k] = 1 << (buttonPins[k] - 1);
+        buttonPreviousState_[k] = false;
+        // > 30
+        buttonTimer_[k] = 31;
+        buttonUsedFromSomethingElse_[k] = false;
+    }
 
-	for (int k = 0; k < NUMBER_OF_BUTTONS; k++) {
-		buttonBit[k] = 1 << (buttonPins[k] -1);
-		buttonPreviousState[k] = false;
-		// > 30
-		buttonTimer[k] = 31;
-		buttonUsedFromSomethingElse[k] = false;
-	}
-
-	encoderTimer = 0;
-	firstButtonDown = -1;
+    encoderTimer_ = 0;
+    firstButtonDown_ = -1;
 
 }
 
 Encoders::~Encoders() {
 }
 
+int Encoders::getRegisterBits(uint8_t encoderPush) {
+    // Copy the values in the HC165 registers
+    HAL_GPIO_WritePin(HC165_LOAD_GPIO_Port, HC165_LOAD_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(HC165_LOAD_GPIO_Port, HC165_LOAD_Pin, GPIO_PIN_SET);
 
-int Encoders::getRegisterBits() {
-	// Copy the values in the HC165 registers
-	HAL_GPIO_WritePin(HC165_LOAD_GPIO_Port, HC165_LOAD_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(HC165_LOAD_GPIO_Port, HC165_LOAD_Pin, GPIO_PIN_SET);
-//
-//	// Analyse the new value
-	int registerBits = 0;
-	for(int i=0; i < NUMBER_OF_PINS; i++) {
-		HAL_GPIO_WritePin(HC165_CLK_GPIO_Port, HC165_CLK_Pin, GPIO_PIN_RESET);
-		registerBits |= (HAL_GPIO_ReadPin(HC165_DATA_GPIO_Port, HC165_DATA_Pin) << i);
-		HAL_GPIO_WritePin(HC165_CLK_GPIO_Port, HC165_CLK_Pin, GPIO_PIN_SET);
-	}
-	return registerBits;
+    // Analyse the new value
+    int registerBits = 0;
+    int numberOfPins = encoderPush == 0 ? 24 : 32;
+    for (int i = 0; i < numberOfPins; i++) {
+        HAL_GPIO_WritePin(HC165_CLK_GPIO_Port, HC165_CLK_Pin, GPIO_PIN_RESET);
+        registerBits |= (HAL_GPIO_ReadPin(HC165_DATA_GPIO_Port, HC165_DATA_Pin) << i);
+        HAL_GPIO_WritePin(HC165_CLK_GPIO_Port, HC165_CLK_Pin, GPIO_PIN_SET);
+    }
+    return registerBits;
 }
 
 void Encoders::checkSimpleStatus() {
-	int registerBits = getRegisterBits();
+    int registerBits = getRegisterBits(0);
 
-
-	for (int k=0; k<NUMBER_OF_BUTTONS; k++) {
-		// button is pressed ?
-		bool b1 = ((registerBits & buttonBit[k]) == 0);
-		// button is pressed
-		if (b1) {
-			if (buttonTimer[k] > 30) {
-				buttonPressed(k);
-			}
-			buttonTimer[k]=0;
-		}
-		buttonTimer[k]++;
-	}
+    for (int k = 0; k < NUMBER_OF_BUTTONS_MIN; k++) {
+        // button is pressed ?
+        bool b1 = ((registerBits & buttonBit_[k]) == 0);
+        // button is pressed
+        if (b1) {
+            if (buttonTimer_[k] > 30) {
+                buttonPressed(k);
+            }
+            buttonTimer_[k] = 0;
+        }
+        buttonTimer_[k]++;
+    }
 }
 
-void Encoders::checkStatus(int encoderType) {
-	int registerBits = getRegisterBits();
+void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
+    int registerBits = getRegisterBits(encoderPush);
 
-	// target the right action row.
-	// encoderType : First bit for type, second bit for inversed
-	int *actionEnc = action[encoderType & 0x1];
-	int inversedEnc = (encoderType & 0x2) == 0 ? 1 : -1;
+    // target the right action row.
+    // encoderType : First bit for type, second bit for inversed
+    int *actionEnc = action_[encoderType & 0x1];
+    int inversedEnc = (encoderType & 0x2) == 0 ? 1 : -1;
 
-	for (int k=0; k<NUMBER_OF_ENCODERS; k++) {
-		bool b1 = ((registerBits & encoderBit1[k]) == 0);
-		bool b2 = ((registerBits & encoderBit2[k]) == 0);
+    for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
+        bool b1 = ((registerBits & encoderBit1_[k]) == 0);
+        bool b2 = ((registerBits & encoderBit2_[k]) == 0);
 
-		encoderState[k] <<= 2;
-		encoderState[k] &= 0xf;
-		if (b1) {
-			encoderState[k] |= 1;
-		}
-		if (b2) {
-			encoderState[k] |= 2;
-		}
+        encoderState_[k] <<= 2;
+        encoderState_[k] &= 0xf;
+        if (b1) {
+            encoderState_[k] |= 1;
+        }
+        if (b2) {
+            encoderState_[k] |= 2;
+        }
 
-		if (actionEnc[encoderState[k]] == 1 && lastMove[k]!=LAST_MOVE_DEC) {
-			encoderTurned(k, tickSpeed[k] * inversedEnc);
-			tickSpeed[k] += 3;
-			lastMove[k] = LAST_MOVE_INC;
-			timerAction[k] = 60;
-		} else if (actionEnc[encoderState[k]] == 2 && lastMove[k]!=LAST_MOVE_INC) {
-			encoderTurned(k, -tickSpeed[k] * inversedEnc);
-			tickSpeed[k] += 3;
-			lastMove[k] = LAST_MOVE_DEC;
-			timerAction[k] = 60;
-		} else {
-			if (timerAction[k] > 1) {
-				timerAction[k] --;
-			} else if (timerAction[k] == 1) {
-				timerAction[k] --;
-				lastMove[k] = LAST_MOVE_NONE;
-			}
-			if (tickSpeed[k] > 1 && ((encoderTimer & 0x3) == 0)) {
-				tickSpeed[k] = tickSpeed[k] - 1;
-			}
-		}
-		if (tickSpeed[k] > 10) {
-			tickSpeed[k] = 10;
-		}
-	}
+        if (actionEnc[encoderState_[k]] == 1 && lastMove_[k] != LAST_MOVE_DEC) {
+            encoderTurned(k, tickSpeed_[k] * inversedEnc);
+            tickSpeed_[k] += 3;
+            lastMove_[k] = LAST_MOVE_INC;
+            timerAction_[k] = 60;
+        } else if (actionEnc[encoderState_[k]] == 2 && lastMove_[k] != LAST_MOVE_INC) {
+            encoderTurned(k, -tickSpeed_[k] * inversedEnc);
+            tickSpeed_[k] += 3;
+            lastMove_[k] = LAST_MOVE_DEC;
+            timerAction_[k] = 60;
+        } else {
+            if (timerAction_[k] > 1) {
+                timerAction_[k]--;
+            } else if (timerAction_[k] == 1) {
+                timerAction_[k]--;
+                lastMove_[k] = LAST_MOVE_NONE;
+            }
+            if (tickSpeed_[k] > 1 && ((encoderTimer_ & 0x3) == 0)) {
+                tickSpeed_[k] = tickSpeed_[k] - 1;
+            }
+        }
+        if (tickSpeed_[k] > 10) {
+            tickSpeed_[k] = 10;
+        }
+    }
 
-	for (int k=0; k<NUMBER_OF_BUTTONS; k++) {
-		bool b1 = ((registerBits & buttonBit[k]) == 0);
+    int numberOfButton = encoderPush == 0 ? NUMBER_OF_BUTTONS_MIN : NUMBER_OF_BUTTONS_MAX;
+    for (int k = 0; k < numberOfButton; k++) {
+        bool b1 = ((registerBits & buttonBit_[k]) == 0);
 
-		// button is pressed
-		if (b1) {
-			buttonTimer[k]++;
-			// just pressed ?
-			if (!buttonPreviousState[k]) {
-				if (firstButtonDown == -1) {
-					firstButtonDown = k;
-					buttonUsedFromSomethingElse[k] = false;
-				} else {
-					twoButtonsPressed(firstButtonDown, k);
-					buttonUsedFromSomethingElse[firstButtonDown] = true;
-					buttonUsedFromSomethingElse[k] = true;
-				}
-			} else {
-				if (buttonTimer[k] > 350 && !buttonUsedFromSomethingElse[k]) {
-					buttonLongPressed(k);
-					buttonUsedFromSomethingElse[k] = true;
-				}
-			}
-		} else {
-			// Just unpressed ?
-			if (buttonPreviousState[k]) {
-				if (firstButtonDown == k) {
-					firstButtonDown = -1;
-				}
-				if (buttonPreviousState[k] && !buttonUsedFromSomethingElse[k]) {
-					// Just released
-					if (buttonTimer[k] > 15) {
-						buttonPressed(k);
-					}
-				}
-				buttonTimer[k]=0;
-			}
-		}
+        // button is pressed
+        if (b1) {
+            buttonTimer_[k]++;
+            // just pressed ?
+            if (!buttonPreviousState_[k]) {
+                if (firstButtonDown_ == -1) {
+                    firstButtonDown_ = k;
+                    buttonUsedFromSomethingElse_[k] = false;
+                } else {
+                    twoButtonsPressed(firstButtonDown_, k);
+                    buttonUsedFromSomethingElse_[firstButtonDown_] = true;
+                    buttonUsedFromSomethingElse_[k] = true;
+                }
+            } else {
+                if (buttonTimer_[k] > 350 && !buttonUsedFromSomethingElse_[k]) {
+                    buttonLongPressed(k);
+                    buttonUsedFromSomethingElse_[k] = true;
+                }
+            }
+        } else {
+            // Just unpressed ?
+            if (buttonPreviousState_[k]) {
+                if (firstButtonDown_ == k) {
+                    firstButtonDown_ = -1;
+                }
+                if (buttonPreviousState_[k] && !buttonUsedFromSomethingElse_[k]) {
+                    // Just released
+                    if (buttonTimer_[k] > 15) {
+                        buttonPressed(k);
+                    }
+                }
+                buttonTimer_[k] = 0;
+            }
+        }
 
-		buttonPreviousState[k] = b1;
-	}
-	encoderTimer++;
+        buttonPreviousState_[k] = b1;
+    }
+    encoderTimer_++;
 }

@@ -89,7 +89,7 @@ private:
     void displayMixerValueInteger(int timbre, int x, int value);
     TftDisplay *tft_;
     SynthState *synthState_;
-    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
+    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
     int *refreshStatusP_;
     int *endRefreshStatusP_;
 };
