@@ -413,9 +413,6 @@ void Voice::init() {
     this->nextMainFrequency = 0.0f;
 }
 
-/**
- * fromFrequency is used by 'play mode always'
- */
 void Voice::glideToNote(short newNote, float newNoteFrequency) {
     // Must glide...
     this->gliding = true;
@@ -499,7 +496,7 @@ float Voice::getNoteRealFrequencyEstimation(float newNoteFrequency) {
 void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsigned int index) {
 
 
-    // We can glide in mono and unison
+    // On noteOn we can only glide in mono and unison with glideType ALWAYS
     if (unlikely(currentTimbre->params_.engine1.playMode != PLAY_MODE_POLY
         && currentTimbre->params_.engine2.glideType == GLIDE_TYPE_ALWAYS)) {
         if (unlikely(this->nextMainFrequency != 0.0f)) {

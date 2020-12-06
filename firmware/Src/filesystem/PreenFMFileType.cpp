@@ -448,7 +448,7 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
 
     // Fixe poly Mono depending on pfm3Version :
     uint32_t version = (uint32_t)(params->engine2.pfm3Version + .1f);
-    if (version == 0.0f) {
+    if (version == 0) {
         // map to new parameters
         // Compatible with pfm2 bank
         // in pfm2 bank playMode was the number of voice
@@ -456,7 +456,7 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
             || (params->engine1.playMode == 2.0f && params->engine2.unisonSpread == 0.0f && params->engine2.unisonDetune == 0.0f)) {
             params->engine1.playMode = PLAY_MODE_POLY;
         }
-        // Old preset, we set unisonSpred and unisonDetue different from 0
+        // Old preset, we set unisonSpread and unisonDetune different from 0
         if (params->engine2.unisonSpread == 0.0f && params->engine2.unisonDetune == 0.0f) {
             params->engine2.unisonSpread = 0.5f;
             params->engine2.unisonDetune = 0.12f;
