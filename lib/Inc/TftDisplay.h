@@ -184,6 +184,9 @@ public:
 
     void drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr);
 
+    bool mustBeReset() { return tftMustBeReset_; }
+    void reset();
+
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
     void oscilloBgDrawEnvelope();
@@ -195,6 +198,7 @@ private:
     uint8_t currentActionStep;
     uint32_t lastOscilloSaturateTic;
     uint32_t tftPushMillis;
+    uint32_t tftGetStatusMillis;
     // adress of the segment digit;
     uint8_t *fgSegmentDigit;
     uint8_t *fgBigChars;
@@ -237,6 +241,11 @@ private:
     bool pushToTftInProgress;
     uint32_t tftDirtyBits;
     uint8_t part;
+
+    // 3 bytes to deal with power status
+    uint8_t status_[3];
+    // Set to true if there is a TFT problem
+    bool tftMustBeReset_;
 };
 
 #endif /* HARDWARE_TFTDISPLAY_H_ */

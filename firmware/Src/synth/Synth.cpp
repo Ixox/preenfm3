@@ -711,7 +711,7 @@ void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patc
 
 void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
     struct ParameterDisplay *param = &(allParameterRows.row[row]->params[encoder]);
-    int index = row * NUMBER_OF_ENCODERS + encoder;
+    int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
     float oldValue = ((float*) this->timbres_[timbre].getParamRaw())[index];
 
     this->timbres_[timbre].setNewValue(index, param, newValue);

@@ -108,7 +108,7 @@ private:
 
     TftDisplay *tft_;
     SynthState *synthState_;
-    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS_PFM3];
+    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
     Sequencer *sequencer_;
     int *refreshStatusP_;
     int *endRefreshStatusP_;

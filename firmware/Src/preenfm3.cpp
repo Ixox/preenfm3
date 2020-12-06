@@ -62,6 +62,8 @@ Sequencer sequencer;
 uint8_t saturatedOutput = 0;
 uint8_t saturatedOutputMem = 0;
 bool saturatedOutputDisplayed = 0;
+int ili9341NumberOfErrorsOnScreen = 0;
+int ili9341NumberOfErrors = 0;
 
 RingBuffer<uint8_t, 64> usbMidi;
 
@@ -153,8 +155,12 @@ void preenfm3Init() {
 void preenfm3Loop() {
     uint32_t currentMillis = HAL_GetTick();
 
-    bool tftHasJustBeenCleared = tft.hasJustBeenCleared();
+    /*
+     * We process here the midi action the cannot be done in the high priori audio loop
+     */
+    midiDecoder.processAsyncActions();
 
+    bool tftHasJustBeenCleared = tft.hasJustBeenCleared();
 
     if (unlikely(saturatedOutput > 0)) {
         saturatedOutputMillis = currentMillis + 500;
@@ -192,7 +198,7 @@ void preenfm3Loop() {
     }
 
     if ((currentMillis - encoderMillis) >= 2) {
-        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER]);
+        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
         encoderMillis = currentMillis;
     }
 
@@ -216,6 +222,23 @@ void preenfm3Loop() {
         // Leave some time before redrawing the oscillo when whe are back to EDIT mode
         // so that it's not erased just after beeing displayed once
         oscilloMillis = currentMillis;
+    }
+
+
+    if (synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 0) {
+        // Detect TFT errors
+        if (unlikely(tft.mustBeReset())) {
+            tft.reset();
+            fmDisplay3.setRefreshStatus(21);
+            ili9341NumberOfErrors++;
+        }
+
+        if (ili9341NumberOfErrors != ili9341NumberOfErrorsOnScreen || tftHasJustBeenCleared) {
+            ili9341NumberOfErrorsOnScreen = ili9341NumberOfErrors;
+            tft.setCharColor(COLOR_GRAY);
+            tft.setCursorInPixel(5, 25);
+            tft.printSmallChar(ili9341NumberOfErrors);
+        }
     }
 
     if (synthState.fullState.midiConfigValue[MIDICONFIG_CPU_USAGE]) {

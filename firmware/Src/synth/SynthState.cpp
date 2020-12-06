@@ -53,13 +53,13 @@ SynthState::SynthState() {
     fullState.midiConfigValue[MIDICONFIG_RECEIVES] = 3;
     fullState.midiConfigValue[MIDICONFIG_SENDS] = 1;
     fullState.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE] = 1;
-    fullState.midiConfigValue[MIDICONFIG_BOOT_START] = 0;
     fullState.midiConfigValue[MIDICONFIG_TEST_NOTE] = 60;
     fullState.midiConfigValue[MIDICONFIG_TEST_VELOCITY] = 120;
     fullState.midiConfigValue[MIDICONFIG_ENCODER] = 1;
     fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET] = 0;
-    fullState.midiConfigValue[MIDICONFIG_BOOT_SOUND] = 0;
     fullState.midiConfigValue[MIDICONFIG_CPU_USAGE] = 0;
+    fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] = 0;
+    fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH] = 0;
     // Init randomizer values to 1
     fullState.randomizer.Oper = 1;
     fullState.randomizer.EnvT = 1;
@@ -83,7 +83,7 @@ SynthState::SynthState() {
     isPlayingNote = false;
 
     for (int row = 0; row < NUMBER_OF_ROWS; row++) {
-        for (int param = 0; param < NUMBER_OF_ENCODERS; param++) {
+        for (int param = 0; param < NUMBER_OF_ENCODERS_PFM2; param++) {
             struct ParameterDisplay* paramDisplay = &(allParameterRows.row[row]->params[param]);
             if (paramDisplay->numberOfValues > 1.0) {
                 paramDisplay->incValue = ((paramDisplay->maxValue - paramDisplay->minValue) / (paramDisplay->numberOfValues - 1.0f));
@@ -224,17 +224,8 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
                 break;
             case BUTTON_PREVIOUS_INSTRUMENT: {
             	SynthEditMode previousMode = fullState.synthMode;
-
-                // Turn off the backlight
-            	preenfm3TurnOffTftBacklight();
-                // reinit TFT + redisplay full page
                 fullState.synthMode = SYNTH_MODE_REINIT_TFT;
                 propagateNewPfm3Page();
-                // Wait for the page to be ready
-                // Turn on the backlight
-                preenfm3TurnOnTftBacklight();
-
-                HAL_Delay(500);
                 fullState.synthMode = previousMode;
                 propagateNewPfm3Page();
                 break;
@@ -473,7 +464,7 @@ void SynthState::buttonPressed(int button) {
         displaySequencer->buttonPressed(currentTimbre, button);
     }
 
-    // Any where these are main functions !!!!
+    // Anywhere these are main functions !!!!
     switch (button) {
     case BUTTON_PFM3_EDIT:
         fullState.synthMode = SYNTH_MODE_EDIT_PFM3;
@@ -509,6 +500,14 @@ void SynthState::buttonPressed(int button) {
         if (fullState.synthMode != SYNTH_MODE_MENU) {
             setCurrentInstrument(0);
         }
+        break;
+    case BUTTON_ENCODER_1:
+    case BUTTON_ENCODER_2:
+    case BUTTON_ENCODER_3:
+    case BUTTON_ENCODER_4:
+    case BUTTON_ENCODER_5:
+    case BUTTON_ENCODER_6:
+        setCurrentInstrument(button - BUTTON_ENCODER_1 + 1);
         break;
     }
 
@@ -879,8 +878,8 @@ char* SynthState::getTimbreName(int t) {
     return timbres[t].getPresetName();
 }
 
-uint8_t SynthState::getTimbrePolyMono(int t) {
-    return timbres[t].getParamRaw()->engine1.polyMono;
+uint8_t SynthState::getTimbrePlayMode(int t) {
+    return timbres[t].getParamRaw()->engine1.playMode;
 }
 
 

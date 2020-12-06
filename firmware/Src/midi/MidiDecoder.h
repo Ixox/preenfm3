@@ -135,6 +135,30 @@ struct Nrpn {
     bool readyToSend;
 };
 
+
+enum ActionType {
+    LOAD_PRESET,
+    SEND_PATCH_AS_NRPN
+};
+
+struct AsyncActionDetail {
+    uint8_t actionType;
+    uint8_t timbre;
+    uint8_t param1;
+    uint8_t param2;
+    uint8_t param3;
+    uint8_t param4;
+    uint8_t param5;
+    uint8_t param6;
+};
+
+struct AsyncAction {
+    union {
+        struct AsyncActionDetail action;
+        uint64_t fullBytes;
+    };
+};
+
 class MidiDecoder: public SynthParamListener, public SynthStateAware {
 public:
     MidiDecoder();
@@ -188,6 +212,8 @@ public:
     int getNrpnRowFromParamRow(int paramRow);
     int getParamRowFromNrpnRow(int nrpmRow);
 
+    // Some actions must not be called from the audio thread
+    void processAsyncActions();
 private:
     uint8_t analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size);
 

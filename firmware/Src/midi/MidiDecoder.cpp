@@ -22,8 +22,6 @@ extern "C" {
 #include "MidiDecoder.h"
 #include "RingBuffer.h"
 
-
-
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern uint8_t usbMidiBuffAll[128];
 extern uint8_t *usbMidiBuffWrt;
@@ -34,6 +32,8 @@ extern UART_HandleTypeDef huart1;
 
 RingBuffer<uint8_t, 64> usartBufferIn;
 RingBuffer<uint8_t, 64> usartBufferOut;
+RingBuffer<AsyncAction, 16> asyncActions;
+
 
 // Let's have sysexBuffer in regular RAM.
 #define SYSEX_BUFFER_SIZE 32
@@ -299,9 +299,16 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
         break;
     case MIDI_PROGRAM_CHANGE:
         if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE]) {
+            AsyncAction newAction;
+            newAction.fullBytes = 0l;
+            newAction.action.actionType = LOAD_PRESET;
             for (int tk = 0; tk < timbreIndex; tk++) {
-                this->synth->loadPreenFMPatchFromMidi(timbres[tk], bankNumber[timbres[tk]], bankNumberLSB[timbres[tk]], midiEvent.value[0]);
+                newAction.action.timbre |= (1 << timbres[tk]);
             }
+            newAction.action.param1 = bankNumber[timbres[0]];
+            newAction.action.param2 = bankNumberLSB[timbres[0]];
+            newAction.action.param3 = midiEvent.value[0];
+            asyncActions.insert(newAction);
         }
         break;
     case MIDI_SONG_POSITION:
@@ -642,9 +649,9 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
 
     // flush all parameters
     for (int currentrow = 0; currentrow < NUMBER_OF_ROWS; currentrow++) {
-        for (int encoder = 0; encoder < NUMBER_OF_ENCODERS; encoder++) {
+        for (int encoder = 0; encoder < NUMBER_OF_ENCODERS_PFM2; encoder++) {
             struct ParameterDisplay* param = &allParameterRows.row[currentrow]->params[encoder];
-            float floatValue = ((float*) paramsToSend)[currentrow * NUMBER_OF_ENCODERS + encoder];
+            float floatValue = ((float*) paramsToSend)[currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder];
 
             int valueToSend;
 
@@ -655,7 +662,7 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
                 valueToSend = floatValue + .1f;
             }
             // MSB / LSB
-            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS + encoder;
+            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS_PFM2 + encoder;
             // Value to send must be positive
 
             // NRPN is 4 control change
@@ -709,8 +716,8 @@ void MidiDecoder::decodeNrpn(int timbre) {
     if (this->currentNrpn[timbre].paramMSB < 2) {
         unsigned int index = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
         float value = (this->currentNrpn[timbre].valueMSB << 7) + this->currentNrpn[timbre].valueLSB;
-        unsigned int row = getParamRowFromNrpnRow(index / NUMBER_OF_ENCODERS);
-        unsigned int encoder = index % NUMBER_OF_ENCODERS;
+        unsigned int row = getParamRowFromNrpnRow(index / NUMBER_OF_ENCODERS_PFM2);
+        unsigned int encoder = index % NUMBER_OF_ENCODERS_PFM2;
 
         struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
 
@@ -734,7 +741,11 @@ void MidiDecoder::decodeNrpn(int timbre) {
 
         this->synth->setNewStepValueFromMidi(timbre, whichStepSeq, step, value);
     } else if (this->currentNrpn[timbre].paramMSB == 127 && this->currentNrpn[timbre].paramLSB == 127) {
-        sendCurrentPatchAsNrpns(timbre);
+        AsyncAction asyncAction;
+        asyncAction.fullBytes = 0l;
+        asyncAction.action.actionType = SEND_PATCH_AS_NRPN;
+        asyncAction.action.timbre = timbre;
+        asyncActions.insert(asyncAction);
     }
 }
 
@@ -795,7 +806,7 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 valueToSend = newValue + .1f;
             }
             // MSB / LSB
-            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS + encoder;
+            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS_PFM2 + encoder;
             // Value to send must be positive
 
             // NRPN is 4 control change
@@ -1072,3 +1083,26 @@ uint8_t MidiDecoder::analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size) {
     }
     return 0;
 }
+
+
+/**
+ * Here we process the actions that cannot be executed inside the main midi loop
+ */
+void MidiDecoder::processAsyncActions() {
+    while (asyncActions.getCount() > 0) {
+        AsyncAction asyncAction = asyncActions.remove();
+        switch (asyncAction.action.actionType) {
+            case LOAD_PRESET:
+                for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+                    if (((1 << t) & asyncAction.action.timbre)  > 0) {
+                        synth->loadPreenFMPatchFromMidi(t, asyncAction.action.param1, asyncAction.action.param2, asyncAction.action.param3);
+                    }
+                }
+                break;
+            case SEND_PATCH_AS_NRPN:
+                sendCurrentPatchAsNrpns(asyncAction.action.timbre);
+                break;
+        }
+    }
+}
+

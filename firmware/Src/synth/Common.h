@@ -28,8 +28,8 @@
 
 #define BLOCK_SIZE 32
 
-#define NUMBER_OF_ENCODERS 4
-#define NUMBER_OF_ENCODERS_PFM3 6
+#define NUMBER_OF_ENCODERS_PFM2 4
+#define NUMBER_OF_ENCODERS 6
 
 #define MAX_NUMBER_OF_VOICES 16
 
@@ -37,16 +37,6 @@
 #define NUMBER_OF_OPERATORS 6
 
 #define PREENFM_FREQUENCY 47916.0f
-
-//#ifndef OVERCLOCK
-//// 168000000 / 1105 / 4
-//#define PREENFM_FREQUENCY 38009.04f
-//#else
-//// Polyphony !!!
-//// 192000000 / 1142 / 4  :
-//#define PREENFM_FREQUENCY 42031.52f
-//
-//#endif
 
 #define PREENFM_FREQUENCY_INVERSED 1.0f/PREENFM_FREQUENCY
 #define PREENFM_FREQUENCY_INVERSED_LFO PREENFM_FREQUENCY_INVERSED*32.0f
@@ -175,6 +165,8 @@ enum {
     ROW_MIDINOTE1CURVE,
     ROW_MIDINOTE2CURVE,
     ROW_LFO_LAST = ROW_MIDINOTE2CURVE,
+    ROW_LFOSEQ1_STEP,
+    ROW_LFOSEQ2_STEP,
     ROW_ENGINE2,
     ROW_NONE
 };
@@ -227,18 +219,32 @@ extern int algoOpInformation[][NUMBER_OF_OPERATORS];
 extern uint8_t sysexTmpMem[];
 extern struct OneSynthParams oneSynthParamsTmp;
 
+
+enum {
+    PLAY_MODE_MONO = 0,
+    PLAY_MODE_POLY,
+    PLAY_MODE_UNISON
+};
+
 struct Engine1Params {
     float algo;
     float velocity;
-    float polyMono;
-    float glide;
+    float playMode;
+    float glideSpeed;
+};
+
+
+enum {
+    GLIDE_TYPE_OFF = 0,
+    GLIDE_TYPE_OVERLAP,
+    GLIDE_TYPE_ALWAYS
 };
 
 struct Engine2Params {
     float glideType;
-    float spread;
-    float detune;
-    float unused;
+    float unisonSpread;
+    float unisonDetune;
+    float pfm3Version;
 };
 
 

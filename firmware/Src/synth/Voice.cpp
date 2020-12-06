@@ -21,7 +21,7 @@
 #include "Timbre.h"
 
 
-float Voice::glidePhaseInc[12];
+float Voice::glidePhaseInc[13];
 
 
 //for bitwise manipulations
@@ -381,8 +381,8 @@ const float filterpoles[10][64] = {
 Voice::Voice(void) {
 
     if (glidePhaseInc[0] != .2f) {
-        float tmp[] = { 5.0f, 9.0f, 15.0f, 22.0f, 35.0f, 50.0f, 90.0f, 140.0f, 200.0f, 500.0f, 1200.0f, 2700.0f };
-        for (int k = 0; k < 12; k++) {
+        float tmp[] = { 2.0f, 5.0f, 9.0f, 15.0f, 22.0f, 35.0f, 50.0f, 90.0f, 140.0f, 200.0f, 500.0f, 1200.0f, 2700.0f };
+        for (int k = 0; k < 13; k++) {
             glidePhaseInc[k] = 1.0f / tmp[k];
         }
     }
@@ -410,6 +410,7 @@ void Voice::init() {
     this->midiVelocity = 0;
     this->holdedByPedal = false;
     this->newNotePlayed = false;
+    this->nextMainFrequency = 0.0f;
 }
 
 void Voice::glideToNote(short newNote, float newNoteFrequency) {
@@ -434,7 +435,7 @@ void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short veloci
     // Update index : so that few chance to be chosen again during the quick dying
     this->index = index;
     // We can glide in mono and unison
-    if (!this->released && (int) currentTimbre->params_.engine1.polyMono != 1.0f && currentTimbre->params_.engine1.glide > 0) {
+    if (!this->released &&  currentTimbre->params_.engine1.playMode != PLAY_MODE_POLY && currentTimbre->params_.engine2.glideType != GLIDE_TYPE_OFF) {
         glideToNote(newNote, newNoteFrequency);
         this->holdedByPedal = false;
         newGlide=false;
@@ -463,7 +464,7 @@ void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short veloci
 }
 
 void Voice::glide() {
-    this->glidePhase += glidePhaseInc[(int) (currentTimbre->params_.engine1.glide - .95f)];
+    this->glidePhase += glidePhaseInc[(int) (currentTimbre->params_.engine1.glideSpeed + .05f)];
     if (glidePhase < 1.0f) {
 
         currentTimbre->osc1_.glideStep(&oscState1_, this->glidePhase);
@@ -495,12 +496,18 @@ float Voice::getNoteRealFrequencyEstimation(float newNoteFrequency) {
 void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsigned int index) {
 
 
-    // We can glide in mono and unison
-    if (unlikely(currentTimbre->params_.engine1.polyMono != 1.0f && currentTimbre->params_.engine1.glide > 0
-        && currentTimbre->params_.engine2.glideType > 0.0f)) {
+    // On noteOn we can only glide in mono and unison with glideType ALWAYS
+    if (unlikely(currentTimbre->params_.engine1.playMode != PLAY_MODE_POLY
+        && currentTimbre->params_.engine2.glideType == GLIDE_TYPE_ALWAYS)) {
+        if (unlikely(this->nextMainFrequency != 0.0f)) {
+            this->noteFrequency = this->nextMainFrequency;
+        } else {
+            this->noteFrequency = newNoteFrequency;
+        }
         glideToNote(newNote, newNoteFrequency);
         newGlide=true;
         this->note = newNote;
+        this->nextMainFrequency = newNoteFrequency;
     } else {
         this->note = newNote;
         this->noteFrequency = newNoteFrequency;
@@ -667,14 +674,14 @@ void Voice::detuneForUnisons(int  voice, float numberOfVoicesInv, float numberOf
 
     float detune = -.05f + (voice * numberOfVoicesInv) * .1f;
 
-    oscState1_.mainFrequency *= 1.0f + (detune + .01f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
-    oscState2_.mainFrequency *= 1.0f + (detune - .01f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+    oscState1_.mainFrequency *= 1.0f + (detune + .01f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
+    oscState2_.mainFrequency *= 1.0f + (detune - .01f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
 
-    oscState3_.mainFrequency *= 1.0f + (detune + .02f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
-    oscState4_.mainFrequency *= 1.0f + (detune - .02f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+    oscState3_.mainFrequency *= 1.0f + (detune + .02f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
+    oscState4_.mainFrequency *= 1.0f + (detune - .02f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
 
-    oscState4_.mainFrequency *= 1.0f + (detune + .03f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
-    oscState5_.mainFrequency *= 1.0f + (detune - .03f * numberOfOscInv) * currentTimbre->params_.engine2.detune;
+    oscState4_.mainFrequency *= 1.0f + (detune + .03f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
+    oscState5_.mainFrequency *= 1.0f + (detune - .03f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
 
 }
 
@@ -7363,7 +7370,7 @@ void Voice::setNewEffectParam(int encoder) {
         v0L = v1L = v2L = v3L = v4L = v5L = v6L = v7L = v8L = v0R = v1R = v2R = v3R = v4R = v5R = v6R = v7R = v8R = v8R = 0.0f;
         fxParamA1 = fxParamA2 = fxParamB2 = 0;
 
-        for (int k = 1; k < NUMBER_OF_ENCODERS; k++) {
+        for (int k = 1; k < NUMBER_OF_ENCODERS_PFM2; k++) {
             setNewEffectParam(k);
         }
     }

@@ -22,9 +22,33 @@ static HAL_StatusTypeDef ILI9341_WriteCommand(uint8_t cmd) {
 
 static HAL_StatusTypeDef ILI9341_WriteData(uint8_t *buff, size_t buff_size) {
     PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
-    // buff_size must be < 64K
     return HAL_SPI_Transmit(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
 }
+
+
+static HAL_StatusTypeDef ILI9341_ReadData(uint8_t *buff, size_t buff_size) {
+    PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
+    return HAL_SPI_Receive(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
+
+}
+
+
+HAL_StatusTypeDef ILI9341_ReadStatus(uint8_t buff[5]) {
+    ILI9341_Select();
+    ILI9341_WriteCommand(0x09);
+    HAL_StatusTypeDef ret = ILI9341_ReadData(buff, 5);
+    ILI9341_Unselect();
+    return ret;
+}
+
+HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[2]) {
+    ILI9341_Select();
+    ILI9341_WriteCommand(0x0A);
+    HAL_StatusTypeDef ret = ILI9341_ReadData(buff, 3);
+    ILI9341_Unselect();
+    return ret;
+}
+
 
 HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1) {
     static uint8_t dataX[] = { 0, 0, 0, 239 };

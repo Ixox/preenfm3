@@ -68,7 +68,7 @@ struct ParameterRowDisplay engine1ParameterRow = {
     {
         "Algo",
         "Velo",
-        "Voice",
+        "Mode",
         "Speed" },
     {
         {
@@ -105,6 +105,7 @@ struct ParameterRowDisplay engine1ParameterRow = {
             nullNamesOrder } } };
 
 const char *glideTypeNames[] = {
+    "Off    ",
     "Overlap",
     "Always ",
 };
@@ -119,8 +120,8 @@ struct ParameterRowDisplay engine2ParameterRow = {
     {
         {
             0,
-            1,
             2,
+            3,
             DISPLAY_TYPE_STRINGS,
             glideTypeNames,
             nullNamesOrder,
@@ -1652,6 +1653,48 @@ struct ParameterRowDisplay midiNote2ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
+struct ParameterRowDisplay dummyParameterRow = {
+    "",
+    {
+        "",
+        "",
+        "",
+        "" },
+    {
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder  },
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder  },
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder  },
+        {
+            0,
+            0,
+            0,
+            DISPLAY_TYPE_NONE,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder } } };
+
+
 struct AllParameterRowsDisplay allParameterRows = {
     {
         &engine1ParameterRow,
@@ -1706,6 +1749,8 @@ struct AllParameterRowsDisplay allParameterRows = {
         &lfoStepParameterRow,
         &midiNote1ParameterRow,
         &midiNote2ParameterRow,
+        &dummyParameterRow,
+        &dummyParameterRow,
         &engine2ParameterRow
 } };
 
@@ -1730,7 +1775,7 @@ const struct Pfm3OneButtonState pfm3ButtonEngineState = {
             ENCODER_ENGINE_VELOCITY },
         {
             ROW_ENGINE,
-            ENCODER_ENGINE_MONOPOLY },
+            ENCODER_ENGINE_PLAY_MODE },
         {
             ROW_NONE,
             ENCODER_NONE },
@@ -1741,19 +1786,19 @@ const struct Pfm3OneButtonState pfm3ButtonMonoState = {
     {
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE_GLIDE_TYPE },
+            ENCODER_ENGINE2_GLIDE_TYPE },
         {
             ROW_ENGINE,
-            ENCODER_ENGINE_GLIDE },
+            ENCODER_ENGINE_GLIDE_SPEED },
         {
             ROW_NONE,
             ENCODER_NONE },
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE_SPREAD },
+            ENCODER_ENGINE2_SPREAD },
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE_UNISON },
+            ENCODER_ENGINE2_UNISON },
         {
             ROW_NONE,
             ENCODER_NONE }
@@ -2951,7 +2996,7 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
         }
 
         struct ParameterDisplay *param = &allParameterRows.row[row]->params[rowEncoder.encoder];
-        float newValue = ((float*) synthState_->params)[row * NUMBER_OF_ENCODERS + rowEncoder.encoder];
+        float newValue = ((float*) synthState_->params)[row * NUMBER_OF_ENCODERS_PFM2 + rowEncoder.encoder];
 
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
@@ -3097,6 +3142,20 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                         // Display LP in gray if no filter
                         tft_->print(filterRowDisplay[2].paramName[rowEncoder.encoder - 1]);
                     }
+                } else if (rowEncoder.row == ROW_ENGINE2
+                     && ((synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE)
+                        || (synthState_->params->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_SPREAD))) {
+                    // Hide Engine2 GlideType if play mode poly
+                    // and Engine2 Spread and Detune if play mode is not uison
+                    hideParam_[button] = true;
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                } else if (rowEncoder.row == ROW_ENGINE
+                     && (synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE_GLIDE_SPEED)) {
+                    // Hide Ending1 GlideSpeed if play mode poly
+                    hideParam_[button] = true;
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 }
@@ -3130,7 +3189,7 @@ void FMDisplayEditor::resetHideParams() {
 void FMDisplayEditor::tempoClick() {
     static float lastVolume, lastGainReduction;
 
-    for (int e = 0; e < NUMBER_OF_ENCODERS_PFM3; e++) {
+    for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;
             if (valueChangedCounter_[e] == 0) {
@@ -3459,11 +3518,11 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
     if (unlikely(synthState_->fullState.mainPage == 1) && specialOpCase) {
         int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
         // operator is a bit different with PFM3
-        num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS;
+        num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber * multiplier]->params[encoder4]);
         row += synthState_->fullState.operatorNumber * multiplier;
     } else {
-        num = encoder4 + row * NUMBER_OF_ENCODERS;
+        num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row]->params[encoder4]);
     }
     float newValue;
@@ -3557,7 +3616,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 
         struct ParameterDisplay *param = &(allParameterRows.row[rowEncoder.row]->params[rowEncoder.encoder]);
         const struct OneSynthParams *defaultParams = &defaultPreset;
-        int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS;
+        int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS_PFM2;
 
         float *value = &((float*) synthState_->params)[num];
         float oldValue = *value;
