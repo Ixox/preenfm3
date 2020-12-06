@@ -105,6 +105,7 @@ struct ParameterRowDisplay engine1ParameterRow = {
             nullNamesOrder } } };
 
 const char *glideTypeNames[] = {
+    "Off    ",
     "Overlap",
     "Always ",
 };
@@ -119,8 +120,8 @@ struct ParameterRowDisplay engine2ParameterRow = {
     {
         {
             0,
-            1,
             2,
+            3,
             DISPLAY_TYPE_STRINGS,
             glideTypeNames,
             nullNamesOrder,
@@ -1774,7 +1775,7 @@ const struct Pfm3OneButtonState pfm3ButtonEngineState = {
             ENCODER_ENGINE_VELOCITY },
         {
             ROW_ENGINE,
-            ENCODER_ENGINE_MONOPOLY },
+            ENCODER_ENGINE_PLAY_MODE },
         {
             ROW_NONE,
             ENCODER_NONE },
@@ -1785,19 +1786,19 @@ const struct Pfm3OneButtonState pfm3ButtonMonoState = {
     {
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE_GLIDE_TYPE },
+            ENCODER_ENGINE2_GLIDE_TYPE },
         {
             ROW_ENGINE,
-            ENCODER_ENGINE_GLIDE },
+            ENCODER_ENGINE_GLIDE_SPEED },
         {
             ROW_NONE,
             ENCODER_NONE },
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE_SPREAD },
+            ENCODER_ENGINE2_SPREAD },
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE_UNISON },
+            ENCODER_ENGINE2_UNISON },
         {
             ROW_NONE,
             ENCODER_NONE }
@@ -3141,6 +3142,20 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                         // Display LP in gray if no filter
                         tft_->print(filterRowDisplay[2].paramName[rowEncoder.encoder - 1]);
                     }
+                } else if (rowEncoder.row == ROW_ENGINE2
+                     && ((synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE)
+                        || (synthState_->params->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_SPREAD))) {
+                    // Hide Engine2 GlideType if play mode poly
+                    // and Engine2 Spread and Detune if play mode is not uison
+                    hideParam_[button] = true;
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                } else if (rowEncoder.row == ROW_ENGINE
+                     && (synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE_GLIDE_SPEED)) {
+                    // Hide Ending1 GlideSpeed if play mode poly
+                    hideParam_[button] = true;
+                    tft_->setCharColor(COLOR_DARK_GRAY);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 }

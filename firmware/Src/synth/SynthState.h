@@ -67,17 +67,18 @@
 enum {
     ENCODER_ENGINE_ALGO = 0,
     ENCODER_ENGINE_VELOCITY,
-    ENCODER_ENGINE_MONOPOLY,
-    ENCODER_ENGINE_GLIDE,
+    ENCODER_ENGINE_PLAY_MODE,
+    ENCODER_ENGINE_GLIDE_SPEED,
 	ENCODER_NONE, // Define only once !
 	ENCODER_INVISIBLE
 };
 
 
 enum {
-    ENCODER_ENGINE_GLIDE_TYPE = 0,
-    ENCODER_ENGINE_SPREAD,
-    ENCODER_ENGINE_UNISON
+    ENCODER_ENGINE2_GLIDE_TYPE = 0,
+    ENCODER_ENGINE2_SPREAD,
+    ENCODER_ENGINE2_UNISON,
+    ENCODER_USED_FOR_PFM3_VERSION,
 };
 
 
@@ -579,7 +580,7 @@ public:
     }
 
     char* getTimbreName(int t);
-    uint8_t getTimbrePolyMono(int t);
+    uint8_t getTimbrePlayMode(int t);
 
     Storage* getStorage() {
         return storage;

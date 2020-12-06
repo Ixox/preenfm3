@@ -878,8 +878,8 @@ char* SynthState::getTimbreName(int t) {
     return timbres[t].getPresetName();
 }
 
-uint8_t SynthState::getTimbrePolyMono(int t) {
-    return timbres[t].getParamRaw()->engine1.polyMono;
+uint8_t SynthState::getTimbrePlayMode(int t) {
+    return timbres[t].getParamRaw()->engine1.playMode;
 }
 
 

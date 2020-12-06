@@ -457,6 +457,8 @@ private:
     char nextGlidingNote;
     float nextGlidingNoteFrequency;
     bool newGlide; // Firs gliding note in "Always" mode
+    // Used by 'glide always'
+    float nextMainFrequency;
 
     // env Value
     float env1ValueMem;
@@ -469,7 +471,7 @@ private:
     Timbre *currentTimbre;
 
     // glide phase increment
-    static float glidePhaseInc[12];
+    static float glidePhaseInc[13];
 
     // Matrix....
     Matrix matrix;

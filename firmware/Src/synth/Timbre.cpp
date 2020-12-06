@@ -243,7 +243,7 @@ void Timbre::preenNoteOn(char note, char velocity) {
 
     note &= 0x7f;
 
-    int iNov = params_.engine1.polyMono == 1.0f ? (int) numberOfVoices_ : 1;
+    int iNov = params_.engine1.playMode == PLAY_MODE_POLY ? (int) numberOfVoices_ : 1;
 
     // Frequency depends on the current instrument scale
     float noteFrequency = mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note];
@@ -263,13 +263,13 @@ void Timbre::preenNoteOn(char note, char velocity) {
 
         // same note = priority 1 : take the voice immediatly
         if (unlikely(voices_[n]->isPlaying() && voices_[n]->getNote() == note)) {
-            if (likely(params_.engine1.polyMono != 2.0f)) {
+            if (likely(params_.engine1.playMode != PLAY_MODE_UNISON)) {
                 preenNoteOnUpdateMatrix(n, note, velocity);
                 voices_[n]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
             } else {
                 // Unison !!
-                float noteFrequencyUnison = noteFrequency  + ((k & 0x1 == 0) ? 1 : -1) * noteFrequency * params_.engine2.detune * .1f;
-                float noteFrequencyUnisonInc = noteFrequency * params_.engine2.detune * .2f / numberOfVoices_;
+                float noteFrequencyUnison = noteFrequency  + ((k & 0x1 == 0) ? 1 : -1) * noteFrequency * params_.engine2.unisonDetune * .1f;
+                float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * .2f / numberOfVoices_;
                 for (int k = 0; k < numberOfVoices_; k++) {
                     int n = voiceNumber_[k];
                     preenNoteOnUpdateMatrix(n, note, velocity);
@@ -316,7 +316,7 @@ void Timbre::preenNoteOn(char note, char velocity) {
     // All voices in newnotepending state ?
     if (voiceToUse != -1) {
 
-        if (likely(params_.engine1.polyMono != 2.0f)) {
+        if (likely(params_.engine1.playMode != PLAY_MODE_UNISON)) {
             preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
 
             switch (newNoteType) {
@@ -331,8 +331,8 @@ void Timbre::preenNoteOn(char note, char velocity) {
         } else {
             // Unisons : we start all voices with different frequency
 
-            float noteFrequencyUnison = noteFrequency * (1 - params_.engine2.detune * .05f);
-            float noteFrequencyUnisonInc = noteFrequency * params_.engine2.detune * .1f / numberOfVoices_;
+            float noteFrequencyUnison = noteFrequency * (1 - params_.engine2.unisonDetune * .05f);
+            float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * .1f / numberOfVoices_;
 
             for (int k = 0; k < numberOfVoices_; k++) {
                 int n = voiceNumber_[k];
@@ -370,7 +370,7 @@ void Timbre::preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity) {
 }
 
 void Timbre::preenNoteOff(char note) {
-    bool isUnison = params_.engine1.polyMono == 2.0f;
+    bool isUnison = params_.engine1.playMode == PLAY_MODE_UNISON;
 
 
     if (note == lowerNote_) {
@@ -378,7 +378,7 @@ void Timbre::preenNoteOff(char note) {
     }
 
     // Unison we must check all voices.... (different from noteOn)
-    int iNov = params_.engine1.polyMono == 0.0f ? 1 : (int) numberOfVoices_;
+    int iNov = params_.engine1.playMode == PLAY_MODE_MONO ? 1 : (int) numberOfVoices_;
     for (int k = 0; k < iNov; k++) {
         // voice number k of timbre
         int n = voiceNumber_[k];
@@ -497,7 +497,7 @@ void Timbre::prepareMatrixForNewBlock() {
 
 
 void Timbre::glide() {
-    if (unlikely(params_.engine1.polyMono == 2.0f)) {
+    if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
         for (int vv = 0; vv < numberOfVoices_; vv++) {
             int v = voiceNumber_[vv];
             if (v != -1 && voices_[v]->isGliding()) {
@@ -513,7 +513,7 @@ void Timbre::glide() {
 
 uint8_t Timbre::voicesNextBlock() {
     uint8_t numberOfPlayingVoices_ = 0;
-    if (unlikely(params_.engine1.polyMono == 2.0f)) {
+    if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
         cleanNextBlock();
         // UNISON
         float pansSav[6];
@@ -536,8 +536,8 @@ uint8_t Timbre::voicesNextBlock() {
         int algoNumberOfMix = algoInformation[(int)params_.engine1.algo].mix;
 
         float numberOfCarrierOp = numberOfVoices_ * 6;
-        float opPan = - params_.engine2.spread;
-        float opPanInc = 2.0f / numberOfCarrierOp * params_.engine2.spread;
+        float opPan = - params_.engine2.unisonSpread;
+        float opPanInc = 2.0f / numberOfCarrierOp * params_.engine2.unisonSpread;
         float numberOfVoicesInv = 1 / numberOfVoices_;
 
         if (likely(voices_[voiceNumber_[0]]->isPlaying())) {
@@ -565,14 +565,6 @@ uint8_t Timbre::voicesNextBlock() {
                 }
                 numberOfPlayingVoices_++;
             }
-
-            // Then we adjust the voice level
-//            float *source = voices_[voiceNumber_[0]]->getSampleBlock();
-//
-//            for (int s = 0; s < BLOCK_SIZE; s++) {
-//                *source++ *= numberOfVoicesInv;
-//                *source++ *= numberOfVoicesInv;
-//            }
             voices_[voiceNumber_[0]]->fxAfterBlock();
 
         } else {
@@ -610,7 +602,8 @@ void Timbre::voicesToTimbre(float volumeGain) {
 
     int numberOfVoicesToCopy = numberOfVoices_;
 
-    if (unlikely(params_.engine1.polyMono == 2.0f)) {
+    // If unison : all voices have already been added to the first one
+    if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
         numberOfVoicesToCopy = 1;
     }
 

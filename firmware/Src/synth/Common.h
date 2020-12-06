@@ -219,18 +219,32 @@ extern int algoOpInformation[][NUMBER_OF_OPERATORS];
 extern uint8_t sysexTmpMem[];
 extern struct OneSynthParams oneSynthParamsTmp;
 
+
+enum {
+    PLAY_MODE_MONO = 0,
+    PLAY_MODE_POLY,
+    PLAY_MODE_UNISON
+};
+
 struct Engine1Params {
     float algo;
     float velocity;
-    float polyMono;
-    float glide;
+    float playMode;
+    float glideSpeed;
+};
+
+
+enum {
+    GLIDE_TYPE_OFF = 0,
+    GLIDE_TYPE_OVERLAP,
+    GLIDE_TYPE_ALWAYS
 };
 
 struct Engine2Params {
     float glideType;
-    float spread;
-    float detune;
-    float unused;
+    float unisonSpread;
+    float unisonDetune;
+    float pfm3Version;
 };
 
 

@@ -291,11 +291,23 @@ void PreenFMFileType::sortFiles(struct PFM3File *bankFiles, int numberOfFiles) {
     }
 }
 
+/*******************************************************
+ *  engine2.pfm3Version : Set the version we save.
+ *  Used by convertFlashToParams to make sure what we're reading from the SD card
+ *
+ *  > version 1.0
+ *    engine2.spread and engine2.detune available
+ *    engine1.monoPoly has a new value : 2 for unison
+ *
+ *********************************************************/
 void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *memory, bool saveArp) {
-    // First engine line
-
+    // Engines line
     fsu_->copyFloat((float*) &params->engine1, (float*) &memory->engine1, 4);
     fsu_->copyFloat((float*) &params->engine2, (float*) &memory->engine2, 4);
+
+    // VERSION : 1.0
+    memory->engine2.pfm3Version = 1.0f;
+
 
     if (saveArp) {
         fsu_->copyFloat((float*) &params->engineArp1, (float*) &memory->engineArp1, 4 * 2);
@@ -434,10 +446,27 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
         params->midiNote2Curve.breakNote = 60;
     }
 
-    // for preenfm3
-    if ((params->engine1.polyMono > 2.0f)
-        || (params->engine1.polyMono == 2.0f && params->engine2.spread == 0.0f && params->engine2.detune == 0.0f)) {
-        params->engine1.polyMono = 1.0f;
+    // Fixe poly Mono depending on pfm3Version :
+    uint32_t version = (uint32_t)(params->engine2.pfm3Version + .1f);
+    if (version == 0.0f) {
+        // map to new parameters
+        // Compatible with pfm2 bank
+        // in pfm2 bank playMode was the number of voice
+        if (params->engine1.playMode > 2.0f
+            || (params->engine1.playMode == 2.0f && params->engine2.unisonSpread == 0.0f && params->engine2.unisonDetune == 0.0f)) {
+            params->engine1.playMode = PLAY_MODE_POLY;
+        }
+        // Old preset, we set unisonSpred and unisonDetue different from 0
+        if (params->engine2.unisonSpread == 0.0f && params->engine2.unisonDetune == 0.0f) {
+            params->engine2.unisonSpread = 0.5f;
+            params->engine2.unisonDetune = 0.12f;
+        }
+        // Map glide speed to new glideSpeed and glideType
+        if (params->engine1.glideSpeed > 0.0f) {
+            params->engine2.glideType = GLIDE_TYPE_OVERLAP;
+        } else {
+            params->engine2.glideType = GLIDE_TYPE_OFF;
+        }
     }
 }
 

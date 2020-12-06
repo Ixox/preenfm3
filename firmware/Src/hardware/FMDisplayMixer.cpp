@@ -322,7 +322,7 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
                 }
             } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
                 uint8_t numberOfVoice = *((int8_t*) valueP);
-                uint8_t polyMono = synthState_->getTimbrePolyMono(timbre);
+                uint8_t polyMono = synthState_->getTimbrePlayMode(timbre);
                 if (numberOfVoice == 0) {
                     tft_->setCharColor(COLOR_DARK_GRAY);
                 } else if (numberOfVoice == 1) {
