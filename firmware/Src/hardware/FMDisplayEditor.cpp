@@ -68,7 +68,7 @@ struct ParameterRowDisplay engine1ParameterRow = {
     {
         "Algo",
         "Velo",
-        "Voice",
+        "Mode",
         "Speed" },
     {
         {
