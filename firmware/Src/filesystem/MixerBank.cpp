@@ -153,7 +153,14 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
             // Init scala scale if enabled
             if (mixerState->instrumentState_[t].scalaEnable == 1) {
-                scalaFile->loadScalaScale(mixerState, t);
+                if (scalaFile->loadScalaScale(mixerState, t) == 0) {
+                    // could not find the asked scala scale
+                    mixerState->instrumentState_[t].scalaEnable = 0;
+                    for (int c = 0; c < 12; c++) {
+                        mixerState->instrumentState_[t].scalaScaleFileName[c] = 0;
+                    }
+                    mixerState->instrumentState_[t].scaleScaleNumber = 0;
+                }
             }
         } else {
             this->timbre[t]->presetName[0] = '#';

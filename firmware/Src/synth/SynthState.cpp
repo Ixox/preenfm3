@@ -883,18 +883,27 @@ uint8_t SynthState::getTimbrePlayMode(int t) {
 }
 
 
+/*
+ * When a scala scale file does not exist anymore ?
+ * If both number and name are wrong, scala is disable
+ */
 bool SynthState::scalaSettingsChanged(int timbre) {
     if (!mixerState.instrumentState_[timbre].scalaEnable) {
         mixerState.instrumentState_[timbre].scaleFrequencies = diatonicScaleFrequency;
     } else {
-        if (storage->getScalaFile()->getFile(mixerState.instrumentState_[timbre].scaleScaleNumber)->fileType == FILE_EMPTY) {
+        const struct PFM3File*  scalaFile = storage->getScalaFile()->getFile(mixerState.instrumentState_[timbre].scaleScaleNumber);
+        if (scalaFile->fileType == FILE_EMPTY) {
+            // Lest file
             return false;
+        }
+        // Let's fill scala Name (used in loadScalaScale)
+        for (int c = 0; c < 12; c++) {
+            mixerState.instrumentState_[timbre].scalaScaleFileName[c] = scalaFile->name[c];
         }
         float* newScaleFrequencies = storage->getScalaFile()->loadScalaScale(&mixerState, timbre);
         if (newScaleFrequencies != 0) {
             mixerState.instrumentState_[timbre].scaleFrequencies = newScaleFrequencies;
         } else {
-            // File Size returned 0
             return false;
         }
     }
@@ -902,7 +911,7 @@ bool SynthState::scalaSettingsChanged(int timbre) {
 }
 
 const char* SynthState::getSequenceName() {
-	displaySequencer->getSequenceName();
+	return displaySequencer->getSequenceName();
 }
 
 

@@ -54,15 +54,25 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
 
     const PFM3File* scaleFile = getFile(mixerState->instrumentState_[instrumentNumber].scaleScaleNumber);
 
-    if (fsu_->str_cmp(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName, scaleFile->name) == 0) {
-        // Name don't feet, new scales have been updated
-        int newNumber = getFileIndex(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName);
-        if (newNumber == -1) {
-            return (float*)0;
+    if (mixerState->instrumentState_[instrumentNumber].scalaScaleFileName[0] != 0) {
+        if (fsu_->str_cmp(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName, scaleFile->name) != 0) {
+            // Name don't feet, new scales have been updated
+            // Let's try to find the correct name
+            int newNumber = getFileIndex(mixerState->instrumentState_[instrumentNumber].scalaScaleFileName);
+            if (newNumber != -1) {
+                scaleFile = getFile(newNumber);
+                mixerState->instrumentState_[instrumentNumber].scaleScaleNumber = newNumber;
+            } else {
+                return (float*)0;
+            }
         }
-        scaleFile = getFile(newNumber);
-        mixerState->instrumentState_[instrumentNumber].scaleScaleNumber = newNumber;
+    } else {
+        // v0.99 and before bug : If scalaScaleFileName is null we keep the number and copy the new name
+        for (int c = 0; c < 13; c++) {
+            mixerState->instrumentState_[instrumentNumber].scalaScaleFileName[c] = scaleFile->name[c];
+        }
     }
+
 
     int size;
     if ((size = load(getFullName(scaleFile->name), 0,  (void*)scalaBuffer, 0)) == 0) {

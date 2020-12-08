@@ -83,7 +83,7 @@ public:
     void preenNoteOff(char note);
 
     void numberOfVoicesChanged(uint8_t newNumberOfVoices) {
-        if (newNumberOfVoices > 0) {
+        if (likely(newNumberOfVoices > 0)) {
             numberOfVoiceInverse_ = 1.0f / (float) newNumberOfVoices;
         } else {
             numberOfVoiceInverse_ = 1.0f;
@@ -119,7 +119,7 @@ public:
         return sampleBlock_;
     }
 
-    signed char voiceNumber_[MAX_NUMBER_OF_VOICES];
+    int8_t voiceNumber_[MAX_NUMBER_OF_VOICES];
 
     // Midi note response
     // Midi Note Scale
