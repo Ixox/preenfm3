@@ -258,19 +258,6 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         }
     }
 
-    // render all voices in their own sample block...
-//    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
-//        if (likely(this->voices_[v].isPlaying())) {
-//            if (this->voices_[v].getCurrentTimbre()->params_.engine1.polyMono != 2.0f) {
-//                this->voices_[v].nextBlock();
-//                this->voices_[v].fxAfterBlock();
-//                numberOfPlayingVoices_++;
-//            }
-//        } else {
-//            this->voices_[v].emptyBuffer();
-//        }
-//    }
-
     // Dispatch the timbres ont the different out !!
 
     int32_t *cb1 = buffer1;
@@ -496,6 +483,11 @@ void Synth::afterNewParamsLoad(int timbre) {
 }
 
 void Synth::afterNewMixerLoad() {
+
+    // Set to 0 before rebuilding all voices/timbre relation
+    for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
+        timbres_[timbre].numberOfVoicesChanged(0);
+    }
 
     rebuidVoiceAllTimbre();
 
