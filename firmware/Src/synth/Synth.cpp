@@ -92,36 +92,46 @@ void Synth::noteOffFromSequencer(int timbre, char note) {
     timbres_[timbre].noteOff(note);
 }
 
-void Synth::midiClockContinue(int songPosition) {
+void Synth::midiClockContinue(int songPosition, bool tellSequencer) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres_[t].midiClockContinue(songPosition);
     }
-    sequencer_->onMidiContinue(songPosition);
+    if (tellSequencer) {
+        sequencer_->onMidiContinue(songPosition);
+    }
 }
 
-void Synth::midiClockStart() {
+void Synth::midiClockStart(bool tellSequencer) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres_[t].midiClockStart();
     }
-    sequencer_->onMidiStart();
+    if (tellSequencer) {
+        sequencer_->onMidiStart();
+    }
 }
 
-void Synth::midiClockStop() {
+void Synth::midiClockStop(bool tellSequencer) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres_[t].midiClockStop();
     }
-    sequencer_->onMidiStop();
+    if (tellSequencer) {
+        sequencer_->onMidiStop();
+    }
 }
 
-void Synth::midiTick() {
+void Synth::midiTick(bool tellSequencer) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         timbres_[t].OnMidiClock();
     }
-    sequencer_->onMidiClock();
+    if (tellSequencer) {
+        sequencer_->onMidiClock();
+    }
 }
 
-void Synth::midiClockSetSongPosition(int songPosition) {
-    sequencer_->midiClockSetSongPosition(songPosition);
+void Synth::midiClockSetSongPosition(int songPosition, bool tellSequencer) {
+    if (tellSequencer) {
+        sequencer_->midiClockSetSongPosition(songPosition);
+    }
 }
 
 void Synth::setHoldPedal(int timbre, int value) {

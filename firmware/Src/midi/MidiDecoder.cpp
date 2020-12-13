@@ -74,7 +74,7 @@ void MidiDecoder::newByte(unsigned char byte) {
         switch (byte) {
         case MIDI_CLOCK:
             this->midiClockCpt++;
-            this->synth->midiTick();
+            this->synth->midiTick(true);
             if (this->midiClockCpt == 6) {
                 if (this->isExternalMidiClockStarted) {
                     this->songPosition++;
@@ -95,20 +95,20 @@ void MidiDecoder::newByte(unsigned char byte) {
                 this->isExternalMidiClockStarted = true;
                 this->songPosition = 0;
                 this->midiClockCpt = 0;
-                this->synth->midiClockStart();
+                this->synth->midiClockStart(true);
             }
             break;
         case MIDI_CONTINUE:
             if (!this->isExternalMidiClockStarted) {
                 this->isExternalMidiClockStarted = true;
                 this->midiClockCpt = 0;
-                this->synth->midiClockContinue(this->songPosition);
+                this->synth->midiClockContinue(this->songPosition, true);
             }
             break;
         case MIDI_STOP:
             if (this->isExternalMidiClockStarted) {
                 this->isExternalMidiClockStarted = false;
-                this->synth->midiClockStop();
+                this->synth->midiClockStop(true);
                 this->visualInfo->midiClock(false);
             }
             break;
@@ -168,7 +168,7 @@ void MidiDecoder::newMessageType(unsigned char byte) {
     case MIDI_NOTE_ON:
     case MIDI_CONTROL_CHANGE:
     case MIDI_PITCH_BEND:
-    case MIDI_POLY_AFTER_TOUCH:
+    case MIDI_CHANNEL_PRESSURE:
         currentEventState.numberOfBytes = 2;
         currentEventState.eventState = MIDI_EVENT_IN_PROGRESS;
         break;
@@ -282,9 +282,10 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
             controlChange(timbres[tk], midiEvent);
         }
         break;
-    case MIDI_POLY_AFTER_TOUCH:
-        // We don't do anything
-        // this->synth->getMatrix()->setSource(MATRIX_SOURCE_AFTERTOUCH, midiEvent.value[1]);
+    case MIDI_CHANNEL_PRESSURE:
+        for (int tk = 0; tk < timbreIndex; tk++) {
+            this->synth->getTimbre(timbres[tk])->setMatrixChannelPressureSource(midiEvent.value[0], INV127 * midiEvent.value[1]);
+        }
         break;
     case MIDI_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
@@ -313,7 +314,7 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
         break;
     case MIDI_SONG_POSITION:
         this->songPosition = ((int) midiEvent.value[1] << 7) + midiEvent.value[0];
-        this->synth->midiClockSetSongPosition(this->songPosition);
+        this->synth->midiClockSetSongPosition(this->songPosition, true);
         break;
     }
 }
@@ -321,6 +322,24 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
 
 void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     int receives = this->synthState_->fullState.midiConfigValue[MIDICONFIG_RECEIVES];
+
+    // User CC are higher priority even if they hide some important preenfm3 CC
+    if (unlikely(this->synthState_->mixerState.userCC_[0] == midiEvent.value[0])) {
+        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC1, INV127 * midiEvent.value[1]);
+        return;
+    }
+    if (unlikely(this->synthState_->mixerState.userCC_[1] == midiEvent.value[0])) {
+        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC2, INV127 * midiEvent.value[1]);
+        return;
+    }
+    if (unlikely(this->synthState_->mixerState.userCC_[2] == midiEvent.value[0])) {
+        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC3, INV127 * midiEvent.value[1]);
+        return;
+    }
+    if (unlikely(this->synthState_->mixerState.userCC_[3] == midiEvent.value[0])) {
+        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC4, INV127 * midiEvent.value[1]);
+        return;
+    }
 
     // the following one should always been treated...
     switch (midiEvent.value[0]) {
@@ -367,12 +386,6 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         this->synth->allNoteOff(timbre);
         this->runningStatus = 0;
         this->songPosition = 0;
-        break;
-    case CC_SCALA_ENABLE:
-        // this->synth->setScalaEnable(midiEvent.value[1] > 0);
-        break;
-    case CC_SCALA_SCALE:
-        // this->synth->setScalaScale(midiEvent.value[1]);
         break;
     case CC_CURRENT_INSTRUMENT:
         this->synth->setCurrentInstrument(midiEvent.value[1]);

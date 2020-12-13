@@ -1314,9 +1314,10 @@ struct ParameterRowDisplay lfoEnv2ParameterRow = {
 
 const char *matrixSourceNames[MATRIX_SOURCE_MAX] = { /* 0 */ "none ", "Lfo 1", "Lfo 2", "Lfo 3", "Env 1", "Env 2", "Seq 1", "Seq 2",
     /* 8 */  "ModWl", "PitBe", "AftTo", "Veloc", "Note1", "Perf1", "Perf2",
-    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "CC 74", "RandK" };
+    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "CC 74", "RandK", "PolyA",
+    /* 22 */ "UsCC1", "UsCC2", "UsCC3", "UsCC4"};
 
-const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 11, 18, 13, 14, 15, 16, 19, 20 };
+const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 21, 11, 18, 13, 14, 15, 16, 19, 20, 22, 23, 24, 25 };
 unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
 
 const char *matrixDestNames[DESTINATION_MAX] = { "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4", "Pan 4",

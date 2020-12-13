@@ -45,8 +45,6 @@ enum AllControlChange {
     CC_BREATH = 2,
     CC_MIXER_VOLUME = 7,
     CC_MIXER_PAN = 10,
-    CC_SCALA_ENABLE = 12,
-    CC_SCALA_SCALE,
     CC_ALGO = 16,
     CC_IM1,
     CC_IM2,

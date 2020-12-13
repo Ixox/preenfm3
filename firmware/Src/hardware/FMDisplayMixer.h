@@ -85,7 +85,7 @@ public:
     }
 
 private:
-    void refreshMixerRowGlobalOptions(int row);
+    void refreshMixerRowGlobalOptions(int page, int row);
     void displayMixerValueInteger(int timbre, int x, int value);
     TftDisplay *tft_;
     SynthState *synthState_;

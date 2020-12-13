@@ -99,11 +99,11 @@ public:
     void showIMInformation() {
     }
 
-    void midiClockSetSongPosition(int songPosition);
-    void midiClockContinue(int songPosition);
-    void midiClockStart();
-    void midiClockStop();
-    void midiTick();
+    void midiClockSetSongPosition(int songPosition, bool tellSequencer);
+    void midiClockContinue(int songPosition, bool tellSequencer);
+    void midiClockStart(bool tellSequencer);
+    void midiClockStop(bool tellSequencer);
+    void midiTick(bool tellSequencer);
 
     void midiClockSongPositionStep(int songPosition) {
         for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {

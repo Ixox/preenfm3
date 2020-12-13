@@ -210,6 +210,8 @@ private:
     float precount;
     uint16_t lastBeat;
     uint32_t ledTimer;
+    int songPosition;
+    int lastSongPositionSent;
 
     // Step sequencer
     int stepCurrentInstrumentNONO;

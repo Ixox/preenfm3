@@ -71,6 +71,12 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     // levelMetter: default mixer only
     buffer[index++] = levelMeterWhere_;
 
+    // User CC
+    for (int u = 0; u < 4; u++) {
+        buffer[index++] =  userCC_[u];
+    }
+
+
     *size = index;
 }
 
@@ -129,6 +135,10 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     // levelMetter: default mixer only
     buffer[index++] = 1;
 
+    // User CC
+    for (int u = 0; u < 4; u++) {
+        userCC_[u] = 34 + u;
+    }
     *size = index;
 }
 
@@ -145,6 +155,9 @@ void MixerState::restoreFullState(char *buffer) {
         case MIXER_BANK_VERSION3:
             restoreFullStateVersion3(buffer);
             break;
+        case MIXER_BANK_VERSION4:
+            restoreFullStateVersion4(buffer);
+            break;
     }
 }
 
@@ -156,6 +169,10 @@ void MixerState::setDefaultValues() {
     // Let's set instrument 1 to Medium comp by default
     instrumentState_[0].compressorType = 2;
     levelMeterWhere_ = 1;
+    // User CC
+    for (int u = 0; u < 4; u++) {
+        userCC_[u] = 34 + u;
+    }
 }
 
 void MixerState::restoreFullStateVersion1(char *buffer) {
@@ -195,6 +212,7 @@ void MixerState::restoreFullStateVersion1(char *buffer) {
         volumeUint8[2] = buffer[index++];
         volumeUint8[3] = buffer[index++];
     }
+
 }
 
 /*
@@ -241,7 +259,7 @@ void MixerState::restoreFullStateVersion2(char *buffer) {
 }
 
 /*
- * Version 2 has compressor
+ * Version 3 has compressor
  */
 void MixerState::restoreFullStateVersion3(char *buffer) {
     int index = 0;
@@ -285,6 +303,58 @@ void MixerState::restoreFullStateVersion3(char *buffer) {
 
     levelMeterWhere_ = buffer[index++];
 }
+
+/*
+ * Version 4 has userCC
+ */
+void MixerState::restoreFullStateVersion4(char *buffer) {
+    int index = 0;
+    index++; // version
+
+    for (int i = 0; i < 12; i++) {
+        mixName_[i] = buffer[index++];
+    }
+    currentChannel_ = buffer[index++];
+    globalChannel_ = buffer[index++];
+    midiThru_ = buffer[index++];
+
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    tuningUint8[0] = buffer[index++];
+    tuningUint8[1] = buffer[index++];
+    tuningUint8[2] = buffer[index++];
+    tuningUint8[3] = buffer[index++];
+
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        instrumentState_[t].out = buffer[index++];
+        instrumentState_[t].midiChannel = buffer[index++];
+        instrumentState_[t].firstNote = buffer[index++];
+        instrumentState_[t].lastNote = buffer[index++];
+        instrumentState_[t].shiftNote = buffer[index++];
+        instrumentState_[t].numberOfVoices = buffer[index++];
+        instrumentState_[t].scalaEnable = buffer[index++];
+        instrumentState_[t].scalaMapping = buffer[index++];
+        instrumentState_[t].scaleScaleNumber = buffer[index++] << 8;
+        instrumentState_[t].scaleScaleNumber += buffer[index++];
+        for (int s = 0; s < 12; s++) {
+            instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
+        }
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        volumeUint8[0] = buffer[index++];
+        volumeUint8[1] = buffer[index++];
+        volumeUint8[2] = buffer[index++];
+        volumeUint8[3] = buffer[index++];
+        instrumentState_[t].pan = buffer[index++];
+        instrumentState_[t].compressorType = buffer[index++];
+    }
+
+    levelMeterWhere_ = buffer[index++];
+
+    // User CC
+    for (int u = 0; u < 4; u++) {
+        userCC_[u] = buffer[index++];
+    }
+}
+
 
 char* MixerState::getMixNameFromFile(char *buffer) {
     uint8_t version = buffer[0];

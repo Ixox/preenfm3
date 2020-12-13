@@ -97,6 +97,7 @@ public:
 
     void resetMatrixDestination(float oldValue);
     void setMatrixSource(enum SourceEnum source, float newValue);
+    void setMatrixChannelPressureSource(uint8_t note, float newValue);
     void verifyLfoUsed(int encoder, float oldValue, float newValue);
 
     void midiClockStop() {

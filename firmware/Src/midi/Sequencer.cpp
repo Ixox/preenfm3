@@ -81,6 +81,7 @@ void Sequencer::reset(bool synthNoteOff) {
     }
 
     this->lastFreeAction = NUMBER_OF_TIMBRES * 2;
+    this->lastSongPositionSent = -1;
 }
 
 void Sequencer::setNumberOfBars(int instrument, uint8_t bars) {
@@ -119,6 +120,9 @@ void Sequencer::stop() {
         synth->stopArpegiator(i);
         synth->allNoteOff(i);
     }
+    if (!externalClock) {
+        synth->midiClockStop(false);
+    }
 }
 
 void Sequencer::setMuted(uint8_t instrument, bool mute) {
@@ -150,6 +154,8 @@ void Sequencer::start() {
     running = true;
     if (!externalClock && current16bitTimer == 0 && millisTimer == 0) {
         precount = 1023;
+    } else if (!externalClock) {
+        synth->midiClockContinue(songPosition, false);
     }
 }
 
@@ -208,7 +214,14 @@ void Sequencer::ticMillis() {
     // if !running we must call tic for the precount
     tic(counter);
     if (likely(running)) {
-        this->millisTimer  = (this->millisTimer + 1) % sequenceDuration;
+        this->millisTimer  = (this->millisTimer + 1) % this->sequenceDuration;
+
+        // 4 bars = 16 quarter = 64 song position steps
+        songPosition = 64 * this->millisTimer / this->sequenceDuration;
+        if (songPosition != lastSongPositionSent) {
+            lastSongPositionSent = songPosition;
+            synth->midiClockSongPositionStep(songPosition);
+        }
     }
 }
 
@@ -240,6 +253,11 @@ void Sequencer::tic(uint16_t counter) {
         rewind();
         previousCurrent16bitTimer = 1;
         lastBeat = 1;
+        // Midi clock real start
+        if (!externalClock) {
+            songPosition = 0;
+            synth->midiClockStart(false);
+        }
     }
 
     this->current16bitTimer = counter;
