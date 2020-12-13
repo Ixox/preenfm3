@@ -1231,6 +1231,42 @@ void TftDisplay::drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2
     setCharBackgroundColor(COLOR_BLACK);
 }
 
+void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection, uint8_t buttonState, int8_t baseNumber) {
+    y += buttonNumber > 2 ? dyLine2 : 0;
+
+    uint8_t x1 = (buttonNumber % 3) * 80 + 4;
+
+    fillArea(x1, y, BUTTON_WIDTH, 21, COLOR_DARK_BLUE);
+    setCharBackgroundColor(COLOR_DARK_BLUE);
+
+    for (int b = 0; b < 2; b++) {
+        uint8_t drawnSubButton = baseNumber + b;
+
+        if (drawnSubButton > nulmberOfSelection) {
+            continue;
+        }
+
+        int x2 = x1 + b * BUTTON_WIDTH / 2;
+        if (currentSelection == drawnSubButton) {
+            // Current operator
+            setCharColor(COLOR_WHITE);
+            fillArea(x2, y + 19, BUTTON_WIDTH/2, 2, COLOR_WHITE);
+        } else {
+            setCharColor(COLOR_GRAY);
+            if (b == buttonState) {
+                fillArea(x2, y + 20, BUTTON_WIDTH/2, 1, COLOR_GRAY );
+            }
+        }
+
+        if (unlikely(drawnSubButton >= 9)) {
+            x2 -= 5;
+        }
+        setCursorInPixel(x2 + 12, y + 1);
+        print(drawnSubButton + 1);
+    }
+}
+
+
 void TftDisplay::drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
         TFT_COLOR background) {
 

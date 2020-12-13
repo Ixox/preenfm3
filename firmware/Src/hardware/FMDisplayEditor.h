@@ -84,7 +84,9 @@ public:
     void refreshLfoEnv();
 
 private:
-
+    void checkOperatorNumber();
+    bool isInOperatorPage();
+    bool isInMatrixPage();
     void resetHideParams();
     uint8_t getX(int encoder);
     TftDisplay *tft_;
@@ -97,6 +99,10 @@ private:
     uint8_t imChangedCounter_[NUMBER_OF_ENCODERS];
     int currentTimbre_;
     bool multipleEdition_;
+
+    // Remember curent editPage in mainPage
+    uint8_t editPageSelected_[6];
+
 };
 
 #endif

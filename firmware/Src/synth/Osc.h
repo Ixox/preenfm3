@@ -76,7 +76,7 @@ public:
 
 
 
-   	float* getNextBlock(struct OscState *oscState)  {
+   	inline float* getNextBlock(struct OscState *oscState)  {
         int shape = (int) oscillator->shape;
    		int max = waveTables[shape].max;
    		float *wave = waveTables[shape].table;
@@ -122,7 +122,7 @@ public:
     };
 
 
-    float* getNextBlockWithFeedbackAndEnveloppe(struct OscState *oscState, float feedback, float& env, float envInc, float freqMultiplier, float* lastValue) {
+    inline float* getNextBlockWithFeedbackAndEnveloppe(struct OscState *oscState, float feedback, float& env, float envInc, float freqMultiplier, float* lastValue) {
         int shape = (int) oscillator->shape;
         int max = waveTables[shape].max;
         float *wave = waveTables[shape].table;
@@ -132,59 +132,32 @@ public:
         float* oscValuesToFill = oscValues[4];
         float localEnv = env;
 
+        lastValue[2] = .95f * lastValue[2] + feedback * .05f;
+        float phaseModulationAmplitude = lastValue[2] * ((float) max) * .5f;
 
         float localLastValue0 = lastValue[0];
         float localLastValue1 = lastValue[1];
+        for (int k = 0; k < 32; k++) {
+            fIndex += freq;
+            iIndex = fIndex;
+            fIndex -= iIndex;
+            iIndex &= max;
+            fIndex += iIndex;
 
-        if (unlikely(feedback == 0.0f)) {
-            for (int k = 0; k < 32;) {
-                fIndex += freq;
-                iIndex = fIndex;
-                fIndex -= iIndex;
-                iIndex &= max;
-                fIndex += iIndex;
-                oscValuesToFill[k++] = wave[iIndex] * freqMultiplier * localEnv ;
-                localEnv += envInc;
-                // Two times less jump if done twice
-                fIndex += freq;
-                iIndex = fIndex;
-                fIndex -= iIndex;
-                iIndex &= max;
-                fIndex += iIndex;
-                oscValuesToFill[k++] = wave[iIndex] * freqMultiplier * localEnv ;
-                localEnv += envInc;
-            }
-            lastValue[0] = oscValuesToFill[31];
-            lastValue[1] = oscValuesToFill[31];
-            lastValue[2] = 0.0f;
-        } else {
-            float phaseModulationAmplitude = lastValue[2] * ((float) max) * .5f;
-            lastValue[2] = .95f * lastValue[2] + feedback * .05f;
+            int index =  iIndex + (localLastValue0 * phaseModulationAmplitude);
+            index &= max;
 
-            for (int k = 0; k < 32;) {
-                fIndex += freq;
-                iIndex = fIndex;
-                fIndex -= iIndex;
-                iIndex &= max;
-                fIndex += iIndex;
+            // Get rid of DC offset
+            float newValue = wave[index];
+            localLastValue0 = newValue - localLastValue1 + .99525f * localLastValue0;
+            localLastValue1 = newValue;
 
-                int index =  iIndex + (localLastValue0 * phaseModulationAmplitude);
-                index &= max;
+            oscValuesToFill[k] = localLastValue0 * freqMultiplier * localEnv ;
+            localEnv += envInc;
 
-
-                // Get rid of DC offset
-                float newValue = wave[index];
-                localLastValue0 = newValue - localLastValue1 + .99525f * localLastValue0;
-                localLastValue1 = newValue;
-
-                oscValuesToFill[k++] = localLastValue0 * freqMultiplier * localEnv ;
-
-                localEnv += envInc;
-            }
-            lastValue[0] = localLastValue0;
-            lastValue[1] = localLastValue1;
         }
-
+        lastValue[0] = localLastValue0;
+        lastValue[1] = localLastValue1;
 
         env = localEnv;
         oscState->index = fIndex;
@@ -242,7 +215,6 @@ public:
 
 private:
     DestinationEnum destFreq;
-    Matrix* matrix;
     static float* oscValues[5];
     static int oscValuesCpt;
     OscillatorParams* oscillator;

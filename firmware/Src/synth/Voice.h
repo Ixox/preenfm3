@@ -107,7 +107,7 @@ public:
     void updateAllModulationIndexes() {
         int numberOfIMs = algoInformation[(int) (currentTimbre->getParamRaw()->engine1.algo)].im;
 
-        feedbackModulation = currentTimbre->getParamRaw()->engineIm3.modulationIndex6 + this->velIm6;
+        feedbackModulation = currentTimbre->getParamRaw()->engineIm3.modulationIndex6 + this->velIm6 + matrix.getDestination(MTX_DEST_FEEDBACK);
         if (unlikely(feedbackModulation < 0.0f)) {
             feedbackModulation = 0.0f;
         } else if (unlikely(feedbackModulation > 1.0f)) {

@@ -1310,27 +1310,29 @@ struct ParameterRowDisplay lfoEnv2ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *matrixSourceNames[] = { "None", "lfo1", "lfo2", "lfo3", "env1", "env2", "seq1", "seq2", "ModW", "PitB", "AftT", "Velo", "Not1", "p1  ", "p2  ",
-    "p3  ", "p4  ", "Not2", "Brth" };
 
-const unsigned char matrixSourceOrder[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 13, 14, 15, 16 };
-const unsigned char matrixSourcePosition[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 13, 14 };
 
-const char *matrixDestNames[] = { "None", "Gate", "IM1 ", "IM2 ", "IM3 ", "IM4 ", "IM* ", "Mix1", "Pan1", "Mix2", "Pan2", "Mix3", "Pan3", "Mix4", "Pan4",
-    "Mix*", "Pan*", "o1Fq", "o2Fq", "o3Fq", "o4Fq", "o5Fq", "o6Fq", "o*Fq",
-    /*24*/"Att1", "Att2", "Att3", "Att4", "Att5", "Att6",
-    /*30*/"AttC", "RelC",
-    /*32*/"mx01", "mx02", "mx03", "mx04",
-    /*36*/"l1Fq", "l2Fq", "l3Fq", "e2si", "s1ga", "s2ga",
-    /*42*/"Fltr",
-    /*43*/"o*Fh", "DecC",
-    /*45*/"AttM", "DecM", "RelM" };
-const unsigned char matrixTargetOrder[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29,
+const char *matrixSourceNames[MATRIX_SOURCE_MAX] = { /* 0 */ "none ", "Lfo 1", "Lfo 2", "Lfo 3", "Env 1", "Env 2", "Seq 1", "Seq 2",
+    /* 8 */  "ModWl", "PitBe", "AftTo", "Veloc", "Note1", "Perf1", "Perf2",
+    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "CC 74", "RandK" };
+
+const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 11, 18, 13, 14, 15, 16, 19, 20 };
+unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
+
+const char *matrixDestNames[DESTINATION_MAX] = { "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4", "Pan 4",
+    "Mix *", "Pan *", "o1 Fq", "o2 Fq", "o3 Fq", "o4 Fq", "o5 Fq", "o6 Fq", "o* Fq",
+    /*24*/"Atk 1", "Atk 2", "Atk 3", "Atk 4", "Atk 5", "Atk 6",
+    /*30*/"Atk C", "Rel C",
+    /*32*/"mtx 1" , "mtx 2", "mtx 3", "mtx 4",
+    /*36*/"lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G",
+    /*42*/"Filtr",
+    /*43*/"o* Fh", "Dec C",
+    /*45*/"Atk M", "Dec M", "Rel M",
+    /* pfm3 feedback */ "FdBck"};
+const unsigned char matrixTargetOrder[DESTINATION_MAX] = { 0, 1, 2, 3, 4, 5, 48, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29,
     30, 45, 44, 46, 31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42 };
-//   Order                                        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44 };
 
-const unsigned char matrixTargetPosition[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 31,
-    35, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 24, 33, 32, 34, 36 };
+unsigned char matrixTargetPosition[DESTINATION_MAX];
 
 struct ParameterRowDisplay matrixParameterRow = {
     "Matrix",
@@ -2111,24 +2113,26 @@ const struct Pfm3OneButtonState pfm3ButtonNoPage = {
             ROW_NONE,
             ENCODER_NONE } } };
 
+
+
 const struct Pfm3OneButton pfm3ButtonOPMinus = {
-    "<<",
-    BUTTONID_ONLY_ONE_STATE,
-    0,
+    "1-2",
+    BUTTONID_OPERATOR_1_2,
+    2,
     {
         &pfm3ButtonNoPage } };
 
 const struct Pfm3OneButton pfm3ButtonOPNothing = {
-    "",
-    BUTTONID_ONLY_ONE_STATE,
-    0,
+    "3-4",
+    BUTTONID_OPERATOR_3_4,
+    2,
     {
         &pfm3ButtonNoPage } };
 
 const struct Pfm3OneButton pfm3ButtonOPPlus = {
-    ">>",
-    BUTTONID_ONLY_ONE_STATE,
-    0,
+    "5-6",
+    BUTTONID_OPERATOR_5_6,
+    2,
     {
         &pfm3ButtonNoPage } };
 
@@ -2777,9 +2781,20 @@ FMDisplayEditor::FMDisplayEditor() {
         presetModifed_[k] = false;
     }
     multipleEdition_ = false;
+
+    // Computer matrixTargetPosition position
+    int position = 0;
+    for (int i = 0; i < DESTINATION_MAX; i++) {
+        matrixTargetPosition[matrixTargetOrder[i]] = position++;
+    }
+    position = 0;
+    for (int i = 0; i < MATRIX_SOURCE_MAX; i++) {
+        matrixSourcePosition[matrixSourceOrder[i]] = position++;
+    }
 }
 
 void FMDisplayEditor::newTimbre(int timbre) {
+    checkOperatorNumber();
     currentTimbre_ = timbre;
 }
 
@@ -2858,13 +2873,7 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
         switch (currentRow) {
         case ROW_ENGINE:
             if (encoder == ENCODER_ENGINE_ALGO) {
-                int numberOfOsc = algoInformation[(int)synthState_->params->engine1.algo].osc - 1;
-
-                // If lower number of Osc, adjust current selected one so that it shows up on screen
-                // when going to operator page
-                if (synthState_->fullState.operatorNumber > numberOfOsc) {
-                    synthState_->fullState.operatorNumber = numberOfOsc;
-                }
+                checkOperatorNumber();
                 tft_->drawAlgo(newValue);
             }
             break;
@@ -3060,7 +3069,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
             tft_->fillArea(0, 270, 240, 30, COLOR_BLACK);
             tft_->setCursor(0, 2);
             tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCharColor(COLOR_DARK_BLUE);
+            tft_->setCharColor(COLOR_CYAN);
             // OPerator page
             if (synthState_->fullState.mainPage == 1) {
                 tft_->print("Op ");
@@ -3079,10 +3088,18 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         case 15:
         case 14:
         case 13: {
-
             int button = 18 - refreshStatus;
 
-            if (button < editMenu->numberOfButtons) {
+            if (unlikely(isInOperatorPage() && button >= 3 && button <= 5)) {
+                tft_->drawButtonBiState(270, 29, button, synthState_->fullState.operatorNumber,
+                    algoInformation[(int)synthState_->params->engine1.algo].osc - 1, synthState_->fullState.buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
+                    (button -3) * 2);
+            } else if (isInMatrixPage()) {
+                uint8_t currentSelection = synthState_->fullState.editPage * 2 + synthState_->fullState.buttonState[page->buttonId];
+                tft_->drawButtonBiState(270, 29, button, currentSelection,
+                    12, synthState_->fullState.buttonState[BUTTONID_MATRIX_1_2 + button],
+                    button * 2);
+            } else if (button < editMenu->numberOfButtons) {
                 const struct Pfm3OneButton *buttonPage = editMenu->pages[button];
                 tft_->drawButton(editMenu->pages[button]->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
                     synthState_->fullState.editPage == button ?
@@ -3103,6 +3120,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                 page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[button];
             uint8_t x = getX(button);
 
+            tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCharColor(COLOR_MEDIUM_GRAY);
             tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
@@ -3705,16 +3723,11 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 }
 
 void FMDisplayEditor::buttonPressed(int button) {
-    struct FullState *fullState = &synthState_->fullState;
-
-    SynthEditMode oldSynthMode = synthState_->fullState.synthMode;
-    MenuState oldMenuState = synthState_->fullState.currentMenuItem->menuState;
-
     if (synthState_->fullState.mainPage == -1) {
         if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {
             synthState_->fullState.mainPage = button;
-            synthState_->fullState.editPage = 0;
-        }
+            synthState_->fullState.editPage = editPageSelected_[synthState_->fullState.mainPage];
+         }
     } else {
         switch (button) {
         case BUTTON_PFM3_EDIT:
@@ -3732,7 +3745,25 @@ void FMDisplayEditor::buttonPressed(int button) {
             if (button >= editMenu->numberOfButtons) {
                 break;
             }
-            if (synthState_->fullState.editPage == button) {
+            if (unlikely(isInOperatorPage() && button >= BUTTON_PFM3_4 && button <= BUTTON_PFM3_6)) {
+                // Operator page
+                uint8_t buttonSelected = (button - BUTTON_PFM3_4);
+                uint8_t currentButton = synthState_->fullState.operatorNumber >> 1;
+                int buttonId = BUTTONID_OPERATOR_1_2 + buttonSelected;
+
+                uint8_t newButtonState = synthState_->fullState.buttonState[buttonId];
+                if (buttonSelected == currentButton) {
+                    newButtonState = (newButtonState + 1) & 0x1;
+                }
+                uint8_t numberOfOsc = algoInformation[(int)synthState_->params->engine1.algo].osc - 1;
+                uint8_t newOperatorSelect = buttonSelected * 2 + newButtonState;
+                if (newOperatorSelect <= numberOfOsc) {
+                    synthState_->fullState.operatorNumber =  newOperatorSelect;
+                    synthState_->fullState.buttonState[buttonId] = newButtonState;
+                } else {
+                    return;
+                }
+            } else if (synthState_->fullState.editPage == button) {
                 if (page->numberOfStates > 0) {
                     synthState_->fullState.buttonState[page->buttonId] =
                         (synthState_->fullState.buttonState[page->buttonId] + 1) % page->numberOfStates;
@@ -3740,24 +3771,10 @@ void FMDisplayEditor::buttonPressed(int button) {
             } else {
                 // If new page has no state.. then we don't activate it
                 if (editMenu->pages[button]->numberOfStates > 0) {
+                    // save what editPage is selected in current mainPage
+                    editPageSelected_[synthState_->fullState.mainPage] = button;
+
                     synthState_->fullState.editPage = button;
-                } else {
-                    if (synthState_->fullState.mainPage == 1) {
-                        int numberOfOsc = algoInformation[(int)synthState_->params->engine1.algo].osc - 1;
-                        if (button ==  BUTTON_PFM3_4) {
-                            if (synthState_->fullState.operatorNumber > 0) {
-                                synthState_->fullState.operatorNumber--;
-                            } else {
-                                synthState_->fullState.operatorNumber = numberOfOsc;
-                            }
-                        } else if (button == BUTTON_PFM3_6) {
-                            if (synthState_->fullState.operatorNumber < numberOfOsc) {
-                                synthState_->fullState.operatorNumber++;
-                            } else {
-                                synthState_->fullState.operatorNumber = 0;
-                            }
-                        }
-                    }
                 }
             }
             break;
@@ -3767,6 +3784,16 @@ void FMDisplayEditor::buttonPressed(int button) {
 
     synthState_->propagateNewPfm3Page();
 }
+
+
+bool FMDisplayEditor::isInOperatorPage() {
+    return synthState_->fullState.mainPage == 1;
+}
+
+bool FMDisplayEditor::isInMatrixPage() {
+    return synthState_->fullState.mainPage == 2;
+}
+
 
 void FMDisplayEditor::refreshOscillatorOperatorShape() {
     int op = synthState_->fullState.operatorNumber;
@@ -3825,3 +3852,18 @@ void FMDisplayEditor::refreshLfoEnv() {
 
 }
 
+void FMDisplayEditor::checkOperatorNumber() {
+    int numberOfOsc = algoInformation[(int)synthState_->params->engine1.algo].osc;
+
+    if (unlikely(numberOfOsc == 3)) {
+        // Special case for 3 operators
+        // We don't want button 4 to be selected
+        synthState_->fullState.buttonState[BUTTONID_OPERATOR_3_4] = 0;
+    }
+
+    // If lower number of Osc, adjust current selected one so that it shows up on screen
+    // when going to operator page
+    if (synthState_->fullState.operatorNumber > (numberOfOsc - 1)) {
+        synthState_->fullState.operatorNumber = (numberOfOsc - 1);
+    }
+}

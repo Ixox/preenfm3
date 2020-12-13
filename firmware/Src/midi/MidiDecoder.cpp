@@ -562,6 +562,9 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_MIXER_PAN:
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
             break;
+        case CC_MPE_SLIDE_CC74:
+            this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+            break;
         }
     }
 

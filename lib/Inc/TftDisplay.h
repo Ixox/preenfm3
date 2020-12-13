@@ -137,6 +137,8 @@ public:
             TFT_COLOR background = COLOR_DARK_BLUE);
     void drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color, TFT_COLOR background);
     void drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color, TFT_COLOR background);
+    void drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection, uint8_t buttonState, int8_t baseNumber);
+
 
     void clear();
     void clearMixerValues();
