@@ -2005,7 +2005,7 @@ const struct Pfm3OneButton pfm3ButtonFilter = {
 //        &pfm3ButtonOPShape, &pfm3ButtonOPEnv1, &pfm3ButtonOPEnv2}
 
 const struct Pfm3OneButtonState pfm3ButtonOPEnv2State = {
-    "Enveloppe",
+    "Env R",
     {
         {
             ROW_ENV1b,
@@ -2034,7 +2034,7 @@ const struct Pfm3OneButton pfm3ButtonOPEnv2 = {
         &pfm3ButtonOPEnv2State } };
 
 const struct Pfm3OneButtonState pfm3ButtonOPEnv1State = {
-    "Enveloppe",
+    "Env ADS",
     {
         {
             ROW_ENV1a,
