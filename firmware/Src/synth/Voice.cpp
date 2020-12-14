@@ -7454,3 +7454,77 @@ void Voice::setNewEffectParam(int encoder) {
             }
     }
 }
+
+
+void Voice::midiClockSongPositionStep(int songPosition, bool recomputeNext) {
+    if (likely(currentTimbre->isLfoUsed(0))) {
+        lfoOsc[0].midiClock(songPosition, recomputeNext);
+    }
+    if (likely(currentTimbre->isLfoUsed(1))) {
+        lfoOsc[1].midiClock(songPosition, recomputeNext);
+    }
+    if (likely(currentTimbre->isLfoUsed(2))) {
+        lfoOsc[2].midiClock(songPosition, recomputeNext);
+    }
+    if (likely(currentTimbre->isLfoUsed(3))) {
+        lfoEnv[0].midiClock(songPosition, recomputeNext);
+    }
+    if (likely(currentTimbre->isLfoUsed(4))) {
+        lfoEnv2[0].midiClock(songPosition, recomputeNext);
+    }
+    if (likely(currentTimbre->isLfoUsed(5))) {
+        lfoStepSeq[0].midiClock(songPosition, recomputeNext);
+    }
+    if (likely(currentTimbre->isLfoUsed(6))) {
+        lfoStepSeq[1].midiClock(songPosition, recomputeNext);
+    }
+}
+
+void Voice::midiClockContinue(int songPosition) {
+    if (likely(currentTimbre->isLfoUsed(0))) {
+        lfoOsc[0].midiClock(songPosition, false);
+    }
+    if (likely(currentTimbre->isLfoUsed(1))) {
+        lfoOsc[1].midiClock(songPosition, false);
+    }
+    if (likely(currentTimbre->isLfoUsed(2))) {
+        lfoOsc[2].midiClock(songPosition, false);
+    }
+    if (likely(currentTimbre->isLfoUsed(3))) {
+        lfoEnv[0].midiClock(songPosition, false);
+    }
+    if (likely(currentTimbre->isLfoUsed(4))) {
+        lfoEnv2[0].midiClock(songPosition, false);
+    }
+    if (likely(currentTimbre->isLfoUsed(5))) {
+        lfoStepSeq[0].midiClock(songPosition, false);
+    }
+    if (likely(currentTimbre->isLfoUsed(6))) {
+        lfoStepSeq[1].midiClock(songPosition, false);
+    }
+}
+
+void Voice::midiClockStart() {
+    if (likely(currentTimbre->isLfoUsed(0))) {
+        lfoOsc[0].midiContinue();
+    }
+    if (likely(currentTimbre->isLfoUsed(1))) {
+        lfoOsc[1].midiContinue();
+    }
+    if (likely(currentTimbre->isLfoUsed(2))) {
+        lfoOsc[2].midiContinue();
+    }
+    if (likely(currentTimbre->isLfoUsed(3))) {
+        lfoEnv[0].midiContinue();
+    }
+    if (likely(currentTimbre->isLfoUsed(4))) {
+        lfoEnv2[0].midiContinue();
+    }
+    if (likely(currentTimbre->isLfoUsed(5))) {
+        lfoStepSeq[0].midiContinue();
+    }
+    if (likely(currentTimbre->isLfoUsed(6))) {
+        lfoStepSeq[1].midiContinue();
+    }
+}
+

@@ -78,14 +78,14 @@ public:
 
     void setTempo(float newTempo);
 
-    bool isRunning() { return running; }
+    bool isRunning() { return running_; }
     void start();
     void stop();
 
     void rewind() {
-        millisTimer = 0;
-        current16bitTimer = 0;
-        midiClockTimer = 0;
+        millisTimer_ = 0;
+        current16bitTimer_ = 0;
+        midiClockTimer_ = 0;
     }
 
     void reset(bool synthNoteOff);
@@ -98,69 +98,69 @@ public:
     void onMidiClock();
     void midiClockSetSongPosition(int songPosition);
 
-    void tic(uint16_t counter);
+    void mainSequencerTic(uint16_t counter);
     void calculateSequenceDuration(int instrument);
     void insertNote(uint8_t instrument, uint8_t note, uint8_t velocity);
 
     bool isMuted(uint8_t instrument) {
-        return muted[instrument];
+        return muted_[instrument];
     }
     void setMuted(uint8_t instrument, bool mute);
 
     void toggleMuted(uint8_t instrument);
 
     bool isRecording(uint8_t instrument) {
-        return recording[instrument];
+        return recording_[instrument];
     }
     void setRecording(uint8_t instrument, bool record) {
-        recording[instrument] = record;
+        recording_[instrument] = record;
     }
     void toggleRecording(uint8_t instrument) {
-        recording[instrument] = !recording[instrument];
+        recording_[instrument] = !recording_[instrument];
     }
     bool setSeqActivated(uint8_t instrument);
 
 
     bool isSeqActivated(uint8_t instrument) {
-        return seqActivated[instrument];
+        return seqActivated_[instrument];
     }
 
     bool isStepActivated(uint8_t instrument) {
-    	int seqNumber = instrumentStepSeq[instrument];
-        return stepActivated[seqNumber];
+    	int seqNumber = instrumentStepSeq_[instrument];
+        return stepActivated_[seqNumber];
     }
 
     float getPrecount() {
-        return precount;
+        return precount_;
     }
     uint8_t getMeasure() {
-        return (current16bitTimer >> (BITS_PER_BEAT + 2));
+        return (current16bitTimer_ >> (BITS_PER_BEAT + 2));
     }
     uint8_t getBeat()  {
-        return ((current16bitTimer >> BITS_PER_BEAT) & 0x3) + 1;
+        return ((current16bitTimer_ >> BITS_PER_BEAT) & 0x3) + 1;
     }
     uint8_t getTempo() {
-        return tempo;
+        return tempo_;
     }
     uint8_t getMemory() {
-        return 100.0f * ((float)lastFreeAction) * SEQ_ACTION_SIZE_INV;
+        return 100.0f * ((float)lastFreeAction_) * SEQ_ACTION_SIZE_INV;
     }
 
     uint8_t getNumberOfBars(int instrument) {
-        return (instrumentTimerMask[instrument] >> (BITS_PER_BEAT + 2)) + 1;
+        return (instrumentTimerMask_[instrument] >> (BITS_PER_BEAT + 2)) + 1;
     }
 
     void setNumberOfBars(int instrument, uint8_t bars);
 
     bool isExternalClockEnabled() {
-        return externalClock;
+        return externalClock_;
     }
 
     void setExternalClock(bool enable);
 
     void setStepMode(bool stepMode) {
         cleanCurrentState();
-        this->stepMode = stepMode;
+        this->stepMode_ = stepMode;
     }
     void stepClearAll(int instrument);
     bool stepRecordNotes(int instrument, int stepCursor, int stepSize);
@@ -168,21 +168,21 @@ public:
 
     StepSeqValue* stepGetSequence(int instrument);
     const char* getSequenceName() {
-        return sequenceName;
+        return sequenceName_;
     }
     void setSequenceName(const char* newName);
     char* getSequenceNameInBuffer(char* buffer);
     uint8_t getInstrumentStepSeq(int instrument) {
-    	return instrumentStepSeq[instrument];
+    	return instrumentStepSeq_[instrument];
     }
     void setInstrumentStepSeq(int instrument, int index) {
-    	instrumentStepSeq[instrument] = (uint8_t)index;
+    	instrumentStepSeq_[instrument] = (uint8_t)index;
     }
 
     void cleanCurrentState() {
         // Clean possibly not null value
-        tmpStepValue.full = 0l;
-        stepNumberOfNotesOn = 0;
+        tmpStepValue_.full = 0l;
+        stepNumberOfNotesOn_ = 0;
     }
 
 private:
@@ -191,53 +191,57 @@ private:
     void loadStateVersion1(uint8_t* buffer);
     void loadStateVersion2(uint8_t* buffer);
 
-    char sequenceName[13];
-    uint16_t lastFreeAction;
-    Synth * synth;
-    FMDisplaySequencer* displaySequencer;
+    char sequenceName_[13];
+    uint16_t lastFreeAction_;
+    Synth * synth_;
+    FMDisplaySequencer* displaySequencer_;
 
-    bool externalClock;
-    float tempo;
-    float oneBitInMillis;
-    float millisInBits;
-    uint32_t millisTimer;
-    float midiClockTimer;
-    uint16_t current16bitTimer;
-    uint16_t previousCurrent16bitTimer;
-    uint32_t sequenceDuration;
-    bool running;
-    bool extMidiRunning;
-    float precount;
-    uint16_t lastBeat;
-    uint32_t ledTimer;
-    int songPosition;
-    int lastSongPositionSent;
+    bool externalClock_;
+    float tempo_;
+    float oneBitInMillis_;
+    float millisInBits_;
+    uint32_t millisTimer_;
+    float midiClockTimer_;
+    uint16_t current16bitTimer_;
+    uint16_t previousCurre_nt16bitTimer;
+    uint32_t sequenceDuration_;
+    bool running_;
+    bool extMidiRunning_;
+    float precount_;
+    uint16_t lastBeat_;
+    uint32_t ledTimer_;
+
+    // Send midi tick and songPosition_ to synth
+    // to allow LFO and arpeggiator sync
+    float midiTickCounter_;
+    int midiTickCounterLastSent_;
+    float midiTickCounterInc_;
+    int songPosition_;
 
     // Step sequencer
-    int stepCurrentInstrumentNONO;
-    bool stepMode;
-    int stepNumberOfNotesOn;
+    bool stepMode_;
+    int stepNumberOfNotesOn_;
 
     // Per instrument
-    uint16_t stepUniqueValue[NUMBER_OF_TIMBRES];
-    bool seqActivated[NUMBER_OF_TIMBRES];
+    uint16_t stepUniqueValue_[NUMBER_OF_TIMBRES];
+    bool seqActivated_[NUMBER_OF_TIMBRES];
     // Per sequence
-    bool stepActivated[NUMBER_OF_STEP_SEQUENCES];
-    uint16_t nextActionIndex[NUMBER_OF_TIMBRES];
-    uint16_t previousActionIndex[NUMBER_OF_TIMBRES];
-    bool nextActionTimerOutOfSync[NUMBER_OF_TIMBRES];
-    bool recording[NUMBER_OF_TIMBRES];
-    bool muted[NUMBER_OF_TIMBRES];
+    bool stepActivated_[NUMBER_OF_STEP_SEQUENCES];
+    uint16_t nextActionIndex_[NUMBER_OF_TIMBRES];
+    uint16_t previousActionIndex_[NUMBER_OF_TIMBRES];
+    bool nextActionTimerOutOfSync_[NUMBER_OF_TIMBRES];
+    bool recording_[NUMBER_OF_TIMBRES];
+    bool muted_[NUMBER_OF_TIMBRES];
     //uint16_t nextLastActionTimer[NUMBER_OF_TIMBRES];;
-    uint16_t instrumentTimerMask[NUMBER_OF_TIMBRES];
-    uint16_t lastInstrument16bitTimer[NUMBER_OF_TIMBRES];
-    uint8_t instrumentStepIndex[NUMBER_OF_TIMBRES];
-    uint8_t instrumentStepLastUnique[NUMBER_OF_TIMBRES];
+    uint16_t instrumentTimerMask_[NUMBER_OF_TIMBRES];
+    uint16_t lastInstrument16bitTimer_[NUMBER_OF_TIMBRES];
+    uint8_t instrumentStepIndex_[NUMBER_OF_TIMBRES];
+    uint8_t instrumentStepLastUnique_[NUMBER_OF_TIMBRES];
     // Each instrument points to its own step seq
-    uint8_t instrumentStepSeq[NUMBER_OF_TIMBRES];
+    uint8_t instrumentStepSeq_[NUMBER_OF_TIMBRES];
 
     // Tmp step seq to store current pressed midi keys
-    StepSeqValue tmpStepValue;
+    StepSeqValue tmpStepValue_;
 };
 
 #endif /* MIDI_SEQUENCER_H_ */

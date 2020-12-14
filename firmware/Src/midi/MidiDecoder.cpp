@@ -75,17 +75,17 @@ void MidiDecoder::newByte(unsigned char byte) {
         case MIDI_CLOCK:
             this->midiClockCpt++;
             this->synth->midiTick(true);
-            if (this->midiClockCpt == 6) {
+            if (unlikely(this->midiClockCpt == 6)) {
                 if (this->isExternalMidiClockStarted) {
                     this->songPosition++;
                 }
                 this->midiClockCpt = 0;
                 this->synth->midiClockSongPositionStep(this->songPosition);
 
-                if ((this->songPosition & 0x3) == 0) {
+                if (unlikely((this->songPosition & 0x3) == 0)) {
                     this->visualInfo->midiClock(true);
                 }
-                if ((this->songPosition & 0x3) == 0x2) {
+                if (unlikely((this->songPosition & 0x3) == 0x2)) {
                     this->visualInfo->midiClock(false);
                 }
             }
@@ -116,7 +116,7 @@ void MidiDecoder::newByte(unsigned char byte) {
     } else {
         switch (currentEventState.eventState) {
         case MIDI_EVENT_WAITING:
-            if (byte >= 0x80) {
+            if (unlikely(byte >= 0x80)) {
                 // Running status is cleared later in newMEssageType() if byte >= 0xF0
                 this->runningStatus = byte;
                 newMessageType(byte);
@@ -132,7 +132,7 @@ void MidiDecoder::newByte(unsigned char byte) {
             newMessageData(byte);
             break;
         case MIDI_EVENT_SYSEX:
-            if (currentEventState.index < SYSEX_BUFFER_SIZE) {
+            if (likely(currentEventState.index < SYSEX_BUFFER_SIZE)) {
                 sysexBuffer[currentEventState.index++] = byte;
             }
             if (byte == MIDI_SYSEX_END) {

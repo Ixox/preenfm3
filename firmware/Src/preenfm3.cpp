@@ -282,7 +282,7 @@ void preenfm3Tic() {
         return;
     }
 
-    // In case of sequencer runnin on internal BPM
+    // In case of sequencer running on internal BPM
     sequencer.ticMillis();
 
     // TFT DMA2D opertations
