@@ -66,7 +66,7 @@ public:
     }
     void setPresetModified(int timbre, bool state);
     void resetAllPresetModified();
-    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param, float newFloatValue);
+    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param,  float oldValue, float newFloatValue);
 
     void updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue);
     void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
@@ -102,7 +102,8 @@ private:
 
     // Remember curent editPage in mainPage
     uint8_t editPageSelected_[6];
-
+    // Remember previous lfo freq value
+    float lfoFreqPreviousValue[5];
 };
 
 #endif

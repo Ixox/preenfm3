@@ -70,7 +70,9 @@ enum {
     ENCODER_ENGINE_PLAY_MODE,
     ENCODER_ENGINE_GLIDE_SPEED,
 	ENCODER_NONE, // Define only once !
-	ENCODER_INVISIBLE
+	ENCODER_INVISIBLE,
+    ENCODER_MODULATOR_SYNC_LFO,
+    ENCODER_MODULATOR_SYNC_STEPS
 };
 
 
@@ -335,9 +337,9 @@ struct ParameterRowDisplay {
     struct ParameterDisplay params[4];
 };
 
-
+// +1 for dummy oscillator sync
 struct AllParameterRowsDisplay {
-    struct ParameterRowDisplay* row[NUMBER_OF_ROWS];
+    struct ParameterRowDisplay* row[NUMBER_OF_ROWS + 1];
 };
 
 
