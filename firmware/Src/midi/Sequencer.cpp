@@ -128,12 +128,14 @@ void Sequencer::stop() {
 void Sequencer::setMuted(uint8_t instrument, bool mute) {
     muted_[instrument] = mute;
     if (mute) {
+        synth_->stopArpegiator(instrument);
         synth_->allNoteOff(instrument);
     }
 }
 
 void Sequencer::toggleMuted(uint8_t instrument) {
     if (!muted_[instrument]) {
+        synth_->stopArpegiator(instrument);
         synth_->allNoteOff(instrument);
     }
     muted_[instrument] = !muted_[instrument];
