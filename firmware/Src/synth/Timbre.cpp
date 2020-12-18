@@ -1180,7 +1180,7 @@ void Timbre::setMatrixSource(enum SourceEnum source, float newValue) {
 }
 
 
-void Timbre::setMatrixChannelPressureSource(uint8_t note, float newValue) {
+void Timbre::setMatrixPolyAfterTouch(uint8_t note, float newValue) {
     for (int k = 0; k < numberOfVoices_; k++) {
         int voiceIndex = voiceNumber_[k];
         if (unlikely(voices_[voiceIndex]->isPlaying() && voices_[voiceIndex]->getNote() == note)) {

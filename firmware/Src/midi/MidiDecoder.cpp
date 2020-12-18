@@ -168,7 +168,7 @@ void MidiDecoder::newMessageType(unsigned char byte) {
     case MIDI_NOTE_ON:
     case MIDI_CONTROL_CHANGE:
     case MIDI_PITCH_BEND:
-    case MIDI_CHANNEL_PRESSURE:
+    case MIDI_POLY_AFTER_TOUCH:
         currentEventState.numberOfBytes = 2;
         currentEventState.eventState = MIDI_EVENT_IN_PROGRESS;
         break;
@@ -282,9 +282,9 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
             controlChange(timbres[tk], midiEvent);
         }
         break;
-    case MIDI_CHANNEL_PRESSURE:
+    case MIDI_POLY_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
-            this->synth->getTimbre(timbres[tk])->setMatrixChannelPressureSource(midiEvent.value[0], INV127 * midiEvent.value[1]);
+            this->synth->getTimbre(timbres[tk])->setMatrixPolyAfterTouch(midiEvent.value[0], INV127 * midiEvent.value[1]);
         }
         break;
     case MIDI_AFTER_TOUCH:
