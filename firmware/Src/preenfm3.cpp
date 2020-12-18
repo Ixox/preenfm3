@@ -477,6 +477,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0x9:
             case 0x8:
             case 0xb:
+            case 0xa:
             case 0xe:
             case 0x3:
                 if (synthState.mixerState.midiThru_ != 0) {
