@@ -3106,7 +3106,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         }
         case 13:
             tft_->setCursorInPixel(54, 60);
-            tft_->print("E d i t o r", COLOR_DARK_BLUE, COLOR_BLACK);
+            tft_->print("E d i t o r", COLOR_CYAN, COLOR_BLACK);
             break;
 
         case 11:
