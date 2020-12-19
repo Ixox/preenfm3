@@ -39,6 +39,27 @@ HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[2]) {
     return ret;
 }
 
+HAL_StatusTypeDef ILI9341_ReadDisplayStatus(uint8_t buff[2]) {
+    static uint8_t readPowerModeCommand[5] = { 0x09, 0xFF, 0xFF, 0xFF, 0xFF  };
+
+    ILI9341_Select();
+    // We send a command
+    PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
+    HAL_StatusTypeDef ret = HAL_SPI_TransmitReceive(&ILI9341_SPI_PORT, readPowerModeCommand, buff, 5, HAL_MAX_DELAY);
+    ILI9341_Unselect();
+    return ret;
+}
+
+HAL_StatusTypeDef ILI9341_ReadPixelFormat(uint8_t buff[3]) {
+    static uint8_t readPixelFormatCommand[3] = { 0x0C, 0xFF, 0xFF };
+
+    ILI9341_Select();
+    // We send a command
+    PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
+    HAL_StatusTypeDef ret = HAL_SPI_TransmitReceive(&ILI9341_SPI_PORT, readPixelFormatCommand, buff, 3, HAL_MAX_DELAY);
+    ILI9341_Unselect();
+    return ret;
+}
 
 
 

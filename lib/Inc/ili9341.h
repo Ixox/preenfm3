@@ -79,7 +79,10 @@ extern "C" {
 #define ILI9341_Unselect() PFM_SET_PIN(ILI9341_CS_GPIO_Port, ILI9341_CS_Pin)
 
 void ILI9341_Init(void);
-HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[2]);
+HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[1]);
+HAL_StatusTypeDef ILI9341_ReadDisplayStatus(uint8_t buff[5]);
+HAL_StatusTypeDef ILI9341_ReadPixelFormat(uint8_t buff[1]);
+
 HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1);
 
 #ifdef __cplusplus
