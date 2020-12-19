@@ -241,7 +241,7 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_USB;
   PeriphClkInitStruct.PLL2.PLL2M = 1;
   PeriphClkInitStruct.PLL2.PLL2N = 40;
-  PeriphClkInitStruct.PLL2.PLL2P = 4;
+  PeriphClkInitStruct.PLL2.PLL2P = 5;
   PeriphClkInitStruct.PLL2.PLL2Q = 40;
   PeriphClkInitStruct.PLL2.PLL2R = 2;
   PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
