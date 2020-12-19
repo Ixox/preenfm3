@@ -340,7 +340,7 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
 
 
 
-void TftDisplay::tic() {
+void TftDisplay::tic(bool checkDisplayPower) {
 
     uint32_t offset;
     uint32_t currentMillis = HAL_GetTick();
@@ -348,23 +348,20 @@ void TftDisplay::tic() {
     if (unlikely((currentMillis - tftPushMillis) > 20)) {
 
         // Only if previous DMA pushed is finished
-        if ((currentMillis - tftGetStatusMillis) > 500) {
-            status_[0] = 1;
+        if (checkDisplayPower && (currentMillis - tftGetStatusMillis) > 500) {
             status_[1] = 1;
             if (ILI9341_ReadPowerMode(status_) != HAL_OK) {
-                status_[0] = 1;
                 status_[1] = 1;
             }
             // Try to detect when TFT is BLANK
-            if ((status_[0] & 0b11111100) != 0b11011100) {
-                if(status_[2] == status_[0]) {
+            if (status_[1] != 222 && status_[1] != 156) {
+                if(status_[3] == status_[1]) {
                     clearActions();
-                    fillArea(0, 0,  240,  320,  COLOR_RED);
                     tftMustBeReset_ = true;
                 }
             }
             // status_2 allows to make sure we got 2 wrong number in a row
-            status_[2] = status_[0];
+            status_[3] = status_[1];
             tftGetStatusMillis = currentMillis;
             return;
         }

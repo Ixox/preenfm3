@@ -286,7 +286,7 @@ void preenfm3Tic() {
     sequencer.ticMillis();
 
     // TFT DMA2D opertations
-    tft.tic();
+    tft.tic(synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 0);
 
     // Pfm3 Misc tics
     switch (tftCpt++ & 0xff) {

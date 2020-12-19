@@ -108,7 +108,7 @@ public:
     void init(TftAlgo* tftAlgo);
     void initWaveFormExt(int index, float* waveform, int size);
 
-    void tic();
+    void tic(bool checkDisplayPower);
     bool pushToTft();
     void pushToTftFinished();
 
@@ -245,7 +245,7 @@ private:
     uint8_t part;
 
     // 3 bytes to deal with power status
-    uint8_t status_[3];
+    uint8_t status_[4];
     // Set to true if there is a TFT problem
     bool tftMustBeReset_;
 };

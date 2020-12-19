@@ -6,6 +6,9 @@ extern uint8_t dmaReady;
 
 uint16_t windowLastX = 9999;
 
+uint8_t dummyDataOut[] = { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 };
+uint8_t dummyDataIn[16];
+
 static void ILI9341_Reset() {
     HAL_GPIO_WritePin(ILI9341_RES_GPIO_Port, ILI9341_RES_Pin, GPIO_PIN_RESET);
     ILI9341_Unselect();
@@ -17,37 +20,26 @@ static void ILI9341_Reset() {
 
 static HAL_StatusTypeDef ILI9341_WriteCommand(uint8_t cmd) {
     PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
-    return HAL_SPI_Transmit(&ILI9341_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
+    return HAL_SPI_TransmitReceive(&ILI9341_SPI_PORT, &cmd, dummyDataIn, 1, HAL_MAX_DELAY);
 }
 
 static HAL_StatusTypeDef ILI9341_WriteData(uint8_t *buff, size_t buff_size) {
     PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
-    return HAL_SPI_Transmit(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
-}
-
-
-static HAL_StatusTypeDef ILI9341_ReadData(uint8_t *buff, size_t buff_size) {
-    PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
-    return HAL_SPI_Receive(&ILI9341_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
-
-}
-
-
-HAL_StatusTypeDef ILI9341_ReadStatus(uint8_t buff[5]) {
-    ILI9341_Select();
-    ILI9341_WriteCommand(0x09);
-    HAL_StatusTypeDef ret = ILI9341_ReadData(buff, 5);
-    ILI9341_Unselect();
-    return ret;
+    return HAL_SPI_TransmitReceive(&ILI9341_SPI_PORT, buff, dummyDataIn, buff_size, HAL_MAX_DELAY);
 }
 
 HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[2]) {
+    static uint8_t readPowerModeCommand[2] = { 0x0A, 0xff};
+
     ILI9341_Select();
-    ILI9341_WriteCommand(0x0A);
-    HAL_StatusTypeDef ret = ILI9341_ReadData(buff, 3);
+    // We send a command
+    PFM_CLEAR_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
+    HAL_StatusTypeDef ret = HAL_SPI_TransmitReceive(&ILI9341_SPI_PORT, readPowerModeCommand, buff, 2, HAL_MAX_DELAY);
     ILI9341_Unselect();
     return ret;
 }
+
+
 
 
 HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1) {
