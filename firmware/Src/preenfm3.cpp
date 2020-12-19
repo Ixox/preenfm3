@@ -225,7 +225,7 @@ void preenfm3Loop() {
     }
 
 
-    if (synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 0) {
+    if (synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1) {
         // Detect TFT errors
         if (unlikely(tft.mustBeReset())) {
             tft.reset();
@@ -286,7 +286,7 @@ void preenfm3Tic() {
     sequencer.ticMillis();
 
     // TFT DMA2D opertations
-    tft.tic(synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 0);
+    tft.tic(synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
 
     // Pfm3 Misc tics
     switch (tftCpt++ & 0xff) {
