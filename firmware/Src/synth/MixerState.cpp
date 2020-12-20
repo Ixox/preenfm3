@@ -137,7 +137,7 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
 
     // User CC
     for (int u = 0; u < 4; u++) {
-        userCC_[u] = 34 + u;
+        buffer[index++] = 34 + u;
     }
     *size = index;
 }
@@ -359,11 +359,8 @@ void MixerState::restoreFullStateVersion4(char *buffer) {
 char* MixerState::getMixNameFromFile(char *buffer) {
     uint8_t version = buffer[0];
     switch (version) {
-        case MIXER_BANK_VERSION1:
-            return buffer + 1;
-        case MIXER_BANK_VERSION2:
-            return buffer + 1;
-        case MIXER_BANK_VERSION3:
+        // All version have the name at the same place
+        default:
             return buffer + 1;
     }
 }
