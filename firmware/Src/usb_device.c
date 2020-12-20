@@ -93,6 +93,9 @@ void MX_USB_DEVICE_Init(void)
   /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
 #endif
 
+  HAL_PWREx_EnableUSBVoltageDetector();
+
+
   /* Init Device Library, add supported class and start the library. */
   if (USBD_Init(&hUsbDeviceFS, &FS_Desc_Midi, DEVICE_FS) != USBD_OK)
   {
@@ -106,6 +109,7 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
+
   if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
   {
     Error_Handler();

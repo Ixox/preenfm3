@@ -225,7 +225,7 @@ void preenfm3Loop() {
     }
 
 
-    if (synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 0) {
+    if (synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1) {
         // Detect TFT errors
         if (unlikely(tft.mustBeReset())) {
             tft.reset();
@@ -282,11 +282,11 @@ void preenfm3Tic() {
         return;
     }
 
-    // In case of sequencer runnin on internal BPM
+    // In case of sequencer running on internal BPM
     sequencer.ticMillis();
 
     // TFT DMA2D opertations
-    tft.tic();
+    tft.tic(synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
 
     // Pfm3 Misc tics
     switch (tftCpt++ & 0xff) {
@@ -477,6 +477,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0x9:
             case 0x8:
             case 0xb:
+            case 0xa:
             case 0xe:
             case 0x3:
                 if (synthState.mixerState.midiThru_ != 0) {

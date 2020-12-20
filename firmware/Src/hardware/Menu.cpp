@@ -31,7 +31,7 @@ const char* midiSends [] = { "None", "CC", "NRPN" };
 const char* encoderType [] = { "12", "24", "12i", "24i" };
 const char* usbMidiText[] = { "Off", "In", "In/Out" };
 const char* version[] = { PFM3_FIRMWARE_VERSION };
-const char* tftReinit [] = { "Auto", "Off" };
+const char* tftAutoReinit [] = { "Off", "Auto" };
 
 
 
@@ -414,9 +414,9 @@ const struct MidiConfig midiConfig[]  = {
         },
         {
                 "TFT Reinit",
-                "tftreinit",
+                "tftautoreinit",
                 2,
-                tftReinit
+                tftAutoReinit
         },
         {
                 "Encoder Push",

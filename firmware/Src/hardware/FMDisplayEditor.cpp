@@ -152,6 +152,53 @@ struct ParameterRowDisplay engine2ParameterRow = {
             nullNamesOrder } } };
 
 
+const char *syncNames[] = {
+    "Int",
+    "Ext"
+};
+
+
+struct ParameterRowDisplay lfoSyncParameterRow = {
+    "",
+    {
+        "Sync",
+        "",
+        "",
+        "" },
+    {
+        {
+            0,
+            1,
+            2,
+            DISPLAY_TYPE_STRINGS,
+            syncNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder } } };
+
 
 
 
@@ -1314,9 +1361,10 @@ struct ParameterRowDisplay lfoEnv2ParameterRow = {
 
 const char *matrixSourceNames[MATRIX_SOURCE_MAX] = { /* 0 */ "none ", "Lfo 1", "Lfo 2", "Lfo 3", "Env 1", "Env 2", "Seq 1", "Seq 2",
     /* 8 */  "ModWl", "PitBe", "AftTo", "Veloc", "Note1", "Perf1", "Perf2",
-    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "CC 74", "RandK" };
+    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "CC 74", "RandK", "PolyA",
+    /* 22 */ "UsCC1", "UsCC2", "UsCC3", "UsCC4"};
 
-const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 11, 18, 13, 14, 15, 16, 19, 20 };
+const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 21, 11, 18, 13, 14, 15, 16, 19, 20, 22, 23, 24, 25 };
 unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
 
 const char *matrixDestNames[DESTINATION_MAX] = { "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4", "Pan 4",
@@ -1377,15 +1425,15 @@ struct ParameterRowDisplay matrixParameterRow = {
             matrixTargetPosition } } };
 
 const char *lfoOscMidiClock[] = {
-    "M/16",
-    "MC/8",
-    "MC/4",
-    "MC/2",
-    "MClk",
-    "MC*2",
-    "MC*3",
-    "MC*4",
-    "MC*8" };
+    "C/16",
+    "Ck/8",
+    "Ck/4",
+    "Ck/2",
+    "Ck  ",
+    "Ck*2",
+    "Ck*3",
+    "Ck*4",
+    "Ck*8" };
 const char *lfoShapeNames[] = {
     "Sin ",
     "Saw ",
@@ -1435,11 +1483,11 @@ struct ParameterRowDisplay lfoParameterRow = {
             nullNamesOrder } } };
 
 const char *lfoSeqMidiClock[] = {
-    "MC/4",
-    "MC/2",
-    "MC  ",
-    "MC*2",
-    "MC*4" };
+    "Ck/4",
+    "Ck/2",
+    "Ck  ",
+    "Ck*2",
+    "Ck*4" };
 
 struct ParameterRowDisplay lfoStepParameterRow = {
     "Step Seq",
@@ -2455,6 +2503,9 @@ const struct Pfm3OneButtonState pfm3ButtonLfoState1 = {
             ROW_LFOOSC1,
             ENCODER_LFO_SHAPE },
         {
+            ROW_NONE,
+            ENCODER_MODULATOR_SYNC_LFO },
+        {
             ROW_LFOOSC1,
             ENCODER_LFO_FREQ },
         {
@@ -2465,10 +2516,9 @@ const struct Pfm3OneButtonState pfm3ButtonLfoState1 = {
             ENCODER_LFO_BIAS },
         {
             ROW_LFOPHASES,
-            ENCODER_LFO_PHASE1 },
-        {
-            ROW_NONE,
-            ENCODER_NONE } } };
+            ENCODER_LFO_PHASE1 }
+    }
+};
 
 const struct Pfm3OneButtonState pfm3ButtonLfoState2 = {
     "LFO 2",
@@ -2477,6 +2527,9 @@ const struct Pfm3OneButtonState pfm3ButtonLfoState2 = {
             ROW_LFOOSC2,
             ENCODER_LFO_SHAPE },
         {
+            ROW_NONE,
+            ENCODER_MODULATOR_SYNC_LFO },
+        {
             ROW_LFOOSC2,
             ENCODER_LFO_FREQ },
         {
@@ -2487,10 +2540,7 @@ const struct Pfm3OneButtonState pfm3ButtonLfoState2 = {
             ENCODER_LFO_BIAS },
         {
             ROW_LFOPHASES,
-            ENCODER_LFO_PHASE2 },
-        {
-            ROW_NONE,
-            ENCODER_NONE } } };
+            ENCODER_LFO_PHASE2 } } };
 const struct Pfm3OneButtonState pfm3ButtonLfoState3 = {
     "LFO 3",
     {
@@ -2498,6 +2548,9 @@ const struct Pfm3OneButtonState pfm3ButtonLfoState3 = {
             ROW_LFOOSC3,
             ENCODER_LFO_SHAPE },
         {
+            ROW_NONE,
+            ENCODER_MODULATOR_SYNC_LFO },
+        {
             ROW_LFOOSC3,
             ENCODER_LFO_FREQ },
         {
@@ -2508,10 +2561,7 @@ const struct Pfm3OneButtonState pfm3ButtonLfoState3 = {
             ENCODER_LFO_BIAS },
         {
             ROW_LFOPHASES,
-            ENCODER_LFO_PHASE3 },
-        {
-            ROW_NONE,
-            ENCODER_NONE } } };
+            ENCODER_LFO_PHASE3 } } };
 
 const struct Pfm3OneButton pfm3ButtonLfos = {
     "Lfos",
@@ -2578,14 +2628,14 @@ const struct Pfm3OneButtonState pfm3ButtonStepSeqStep1 = {
     "Step Sequencer 1",
     {
         {
+            ROW_NONE,
+            ENCODER_MODULATOR_SYNC_STEPS },
+        {
             ROW_LFOSEQ1,
             ENCODER_STEPSEQ_BPM },
         {
             ROW_LFOSEQ1,
             ENCODER_STEPSEQ_GATE },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
         {
             ROW_LFOSEQ1,
             2 },
@@ -2600,14 +2650,14 @@ const struct Pfm3OneButtonState pfm3ButtonStepSeqStep2 = {
     "Step Sequencer 2",
     {
         {
+            ROW_NONE,
+            ENCODER_MODULATOR_SYNC_STEPS },
+        {
             ROW_LFOSEQ2,
             ENCODER_STEPSEQ_BPM },
         {
             ROW_LFOSEQ2,
             ENCODER_STEPSEQ_GATE },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
         {
             ROW_LFOSEQ2,
             2 },
@@ -2790,6 +2840,11 @@ FMDisplayEditor::FMDisplayEditor() {
     position = 0;
     for (int i = 0; i < MATRIX_SOURCE_MAX; i++) {
         matrixSourcePosition[matrixSourceOrder[i]] = position++;
+    }
+
+    // Init frequency to reach when changing Int/Ext
+    for (int l = 0; l < 5; l++) {
+        lfoFreqPreviousValue[l] = -1.0f;
     }
 }
 
@@ -2978,7 +3033,7 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             tft_->setCharColor(COLOR_GREEN);
         }
         valueChangedCounter_[encoder6] = 4;
-        updateEncoderValueWithoutCursor(currentRow, encoder, param, newValue);
+        updateEncoderValueWithoutCursor(currentRow, encoder, param, oldValue, newValue);
     }
 
 }
@@ -2993,7 +3048,7 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
 
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
 
-    if (rowEncoder.row != ROW_NONE && !hideParam_[encoder]) {
+    if (rowEncoder.encoder < ENCODER_INVISIBLE && !hideParam_[encoder]) {
         int row = rowEncoder.row;
         // Operator page
         if (synthState_->fullState.mainPage == 1) {
@@ -3009,10 +3064,22 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
 
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
-        updateEncoderValueWithoutCursor(row, rowEncoder.encoder, param, newValue);
+        updateEncoderValueWithoutCursor(row, rowEncoder.encoder, param, newValue, newValue);
     } else {
-        if (rowEncoder.encoder != ENCODER_INVISIBLE) {
+        if (hideParam_[encoder]) {
             tft_->print("     ");
+        } else if (rowEncoder.encoder == ENCODER_MODULATOR_SYNC_LFO) {
+            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharColor(color);
+            struct LfoParams * lfoParams = &synthState_->params->lfoOsc1;
+            int lfoButtonState = synthState_->fullState.buttonState[BUTTONID_EDIT_LFOS];
+            tft_->print(lfoSyncParameterRow.params[0].valueName[lfoParams[lfoButtonState].freq < 100.0f ? 0 : 1]);
+        } else if (rowEncoder.encoder == ENCODER_MODULATOR_SYNC_STEPS) {
+            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharColor(color);
+            struct StepSequencerParams * stepParams = &synthState_->params->lfoSeq1;
+            int stepButtonState = synthState_->fullState.buttonState[BUTTONID_EDIT_STEPS];
+            tft_->print(lfoSyncParameterRow.params[0].valueName[stepParams[stepButtonState].bpm < 240.5f ? 0 : 1]);
         }
     }
 }
@@ -3039,7 +3106,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         }
         case 13:
             tft_->setCursorInPixel(54, 60);
-            tft_->print("E d i t o r", COLOR_DARK_BLUE, COLOR_BLACK);
+            tft_->print("E d i t o r", COLOR_CYAN, COLOR_BLACK);
             break;
 
         case 11:
@@ -3176,6 +3243,11 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                }
+            } else {
+                // Special case
+                if (rowEncoder.encoder >= ENCODER_MODULATOR_SYNC_LFO) {
+                    tft_->print(lfoSyncParameterRow.paramName[0]);
                 }
             }
             break;
@@ -3332,7 +3404,7 @@ void FMDisplayEditor::updateStepSequencer(int currentRow, int encoder, int oldVa
 }
 
 void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param,
-    float newFloatValue) {
+    float oldValue, float newFloatValue) {
 
     int newValue = (int) newFloatValue;
 
@@ -3354,34 +3426,37 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
         break;
     case DISPLAY_TYPE_FLOAT_LFO_FREQUENCY:
         if (newFloatValue * 10.0f > LFO_FREQ_MAX_TIMES_10) {
-            int stringIndex = newFloatValue * 10.0f + .005f;
-#ifdef DEBUG
-            if (likely(stringIndex <= LFO_MIDICLOCK_MC_TIME_8)) {
-#endif
 
-                tft_->print(' ');
-                tft_->print(lfoOscMidiClock[stringIndex - LFO_FREQ_MAX_TIMES_10 - 1]);
-#ifdef DEBUG
-            } else {
-                tft_->print("#ER#");
+            int stringIndex = newFloatValue * 10.0f + .005f;
+            tft_->print(' ');
+            tft_->print(lfoOscMidiClock[stringIndex - LFO_FREQ_MAX_TIMES_10 - 1]);
+
+            if (oldValue * 10.0f <= ((float)LFO_FREQ_MAX_TIMES_10) + .5f) {
+                // Update Sync : Second button in the page
+                displayParamValue(1, COLOR_WHITE);
             }
-#endif
         } else {
             tft_->printFloatWithSpace(newFloatValue);
+            if (oldValue * 10.0f > LFO_FREQ_MAX_TIMES_10) {
+                // Update Sync : Second button in the page
+                displayParamValue(1, COLOR_WHITE);
+            }
         }
         break;
     case DISPLAY_TYPE_STEP_SEQ_BPM:
-#ifdef DEBUG
-        if (unlikely(newValue > LFO_SEQ_MIDICLOCK_TIME_4)) {
-            tft_->print("#ER#");
-            break;
-        }
-#endif
-        if (newValue > 240) {
+        if (newValue > 240.5f) {
             tft_->print(lfoSeqMidiClock[newValue - 241]);
-            break;
+            if (oldValue < 240.5f) {
+                // Update Sync : Second button in the page
+                displayParamValue(0, COLOR_WHITE);
+            }
+        } else {
+            tft_->printValueWithSpace(newValue);
+            if (oldValue > 240.5f) {
+                // Update Sync : Second button in the page
+                displayParamValue(0, COLOR_WHITE);
+            }
         }
-        tft_->printValueWithSpace(newValue);
         break;
     case DISPLAY_TYPE_LFO_KSYN:
         if (unlikely(newFloatValue < 0.0f)) {
@@ -3522,7 +3597,8 @@ void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
  */
 void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase) {
 
-    if (row == ROW_NONE) {
+    // SYNC_LFO & SYNC_STEPS are 2 special case
+    if (unlikely(row == ROW_NONE && encoder4 < ENCODER_MODULATOR_SYNC_LFO)) {
         return;
     }
     if (unlikely(row == ROW_ARPEGGIATOR3)) {
@@ -3539,6 +3615,78 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber * multiplier]->params[encoder4]);
         row += synthState_->fullState.operatorNumber * multiplier;
+    } else if (unlikely(encoder4 == ENCODER_MODULATOR_SYNC_LFO)) {
+        // Simulate we're Osc freq
+        int lfoButtonState = synthState_->fullState.buttonState[BUTTONID_EDIT_LFOS];
+
+        row =  ROW_LFOOSC1 + lfoButtonState;
+        encoder4 = ENCODER_LFO_FREQ;
+        num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+        param = &(allParameterRows.row[row]->params[encoder4]);
+
+        // Block if necessary
+        if ((ticks > 0 && ((float*) synthState_->params)[num] > 99.95f)
+            || (ticks < 0 && ((float*) synthState_->params)[num] < 99.95f)) {
+            return;
+        }
+
+        float freqToSet;
+        if (lfoFreqPreviousValue[lfoButtonState] == -1.0f) {
+            freqToSet = ticks > 0 ? 100.4f : 2.0f;
+        } else {
+            freqToSet = lfoFreqPreviousValue[lfoButtonState];
+            // User arrive in Ext/Int area with Freq encoder ?
+            if (ticks < 0 && freqToSet > 99.95f) {
+                freqToSet = 99.9f;
+            } else if (ticks > 0 && freqToSet < 99.95f) {
+                freqToSet = 100.0f;
+            }
+        }
+        lfoFreqPreviousValue[lfoButtonState] = ((float*) synthState_->params)[num];
+
+        if (ticks > 0) {
+            ticks = 20;
+            ((float*) synthState_->params)[num] = freqToSet - .1f * ticks;
+        } else {
+            ticks = - 1000;
+            ((float*) synthState_->params)[num] = freqToSet - .1f * ticks;
+        }
+    } else  if (unlikely(encoder4 == ENCODER_MODULATOR_SYNC_STEPS)) {
+        // Simulate we're Osc freq
+        int stepButtonState = synthState_->fullState.buttonState[BUTTONID_EDIT_STEPS];
+
+        row =  ROW_LFOSEQ1 + stepButtonState;
+        encoder4 = ENCODER_STEPSEQ_BPM;
+        num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+        param = &(allParameterRows.row[row]->params[encoder4]);
+
+        // Block if necessary
+        if ((ticks > 0 && ((float*) synthState_->params)[num] > 240.5f)
+            || (ticks < 0 && ((float*) synthState_->params)[num] < 240.5f)) {
+            return;
+        }
+
+        float bpmToSet;
+        if (lfoFreqPreviousValue[3 + stepButtonState] == -1.0f) {
+            bpmToSet = ticks > 0 ? 243.0f : 120.0f;
+        } else {
+            bpmToSet = lfoFreqPreviousValue[3 + stepButtonState];
+            // User arrive in Ext/Int area with BPM encoder ?
+            if (ticks < 0 && bpmToSet > 240.5f) {
+                bpmToSet = 240.0f;
+            } else if (ticks > 0 && bpmToSet < 240.5f) {
+                bpmToSet = 241.0f;
+            }
+        }
+        lfoFreqPreviousValue[3 + stepButtonState] = ((float*) synthState_->params)[num];
+
+        if (ticks > 0) {
+            ticks = 50;
+            ((float*) synthState_->params)[num] = bpmToSet -  ticks;
+        } else {
+            ticks = -240;
+            ((float*) synthState_->params)[num] = bpmToSet -  ticks;
+        }
     } else {
         num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row]->params[encoder4]);

@@ -293,10 +293,8 @@ void bootloaderTftTic() {
     }
 
     pfm3Millis++;
-    tft.tic();
+    tft.tic(false);
 }
-
-
 
 
 void dependencyInjection() {

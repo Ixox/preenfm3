@@ -38,6 +38,16 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+
+
+/*
+ * ====================================================
+ *   Preenfm3 midi does not work with -O3 in this file
+ *   http://ixox.fr/forum/index.php?topic=69747.0
+ */
+#pragma GCC optimize ("-O2")
+
+
 #include "stm32h7xx_hal.h"
 
 /** @addtogroup STM32H7xx_LL_USB_DRIVER

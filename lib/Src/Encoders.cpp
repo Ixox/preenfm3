@@ -102,6 +102,10 @@ int Encoders::getRegisterBits(uint8_t encoderPush) {
         registerBits |= (HAL_GPIO_ReadPin(HC165_DATA_GPIO_Port, HC165_DATA_Pin) << i);
         HAL_GPIO_WritePin(HC165_CLK_GPIO_Port, HC165_CLK_Pin, GPIO_PIN_SET);
     }
+    // User selected pushed ancoder and he doesn't have pushed encoders
+    if (numberOfPins == 32 && (registerBits & 0xFF000000) == 0) {
+        registerBits |= 0xFF000000;
+    }
     return registerBits;
 }
 
