@@ -72,8 +72,8 @@ const struct Pfm3MixerButtonState outButtonState = {
 
 const struct Pfm3MixerButton outButton = {
   "Out",
-  2,
-  { &compButtonState, &outButtonState }
+  1,
+  { &outButtonState  }
 };
 
 
@@ -84,8 +84,8 @@ const struct Pfm3MixerButtonState voiceButtonState = {
 
 const struct Pfm3MixerButton voiceButton = {
   "Voices",
-  1,
-  { &voiceButtonState }
+  2,
+  { &voiceButtonState, &compButtonState }
 };
 
 
@@ -187,7 +187,7 @@ const struct Pfm3MixerButton globalButton = {
 
 
 const struct PfmMixerMenu mixerMenu = {
-      { &volumeButton, &outButton, &voiceButton, &midiButton, &scalaButton, &globalButton }
+      { &volumeButton, &voiceButton, &outButton, &midiButton, &scalaButton, &globalButton }
 };
 
 
