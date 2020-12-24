@@ -463,8 +463,6 @@ void dependencyInjection() {
     sdCard.getUserWaveform()->loadUserWaveforms();
     synthState.propagateAfterNewMixerLoad();
 
-    // sdCard and hexter needs to know if arpeggiator must be loaded and saved
-    hexter.setArpeggiatorPartOfThePreset(&synthState.fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
 }
 
 void preenfm3_usbDataReceive(uint8_t *buffer) {

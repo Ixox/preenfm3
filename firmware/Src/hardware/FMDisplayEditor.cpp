@@ -2000,7 +2000,7 @@ const struct Pfm3OneButtonState pfm3ButtonArpeggiator2State = {
             ENCODER_ARPEGGIATOR_LATCH },
         {
             ROW_NONE,
-            ROW_NONE },
+            ENCODER_NONE },
         {
             ROW_ARPEGGIATOR3,
             0 },

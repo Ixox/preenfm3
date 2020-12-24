@@ -56,7 +56,7 @@ SynthState::SynthState() {
     fullState.midiConfigValue[MIDICONFIG_TEST_NOTE] = 60;
     fullState.midiConfigValue[MIDICONFIG_TEST_VELOCITY] = 120;
     fullState.midiConfigValue[MIDICONFIG_ENCODER] = 1;
-    fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET] = 0;
+    fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET] = 1;
     fullState.midiConfigValue[MIDICONFIG_CPU_USAGE] = 0;
     fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] = 0;
     fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH] = 0;

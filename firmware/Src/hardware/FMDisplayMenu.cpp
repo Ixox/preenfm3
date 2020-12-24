@@ -107,6 +107,9 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
                         case 4:
                             tft_->drawSimpleButton("'a'", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
                             return;
+                        case 5:
+                            tft_->drawSimpleButton(">", 270, 29, button, COLOR_GRAY, COLOR_DARK_RED);
+                            return;
                     }
                     // Then draw Load button 0 => so no break
                 case MENUTYPE_FILESELECT_LOAD:
@@ -265,7 +268,7 @@ void FMDisplayMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
         case MENU_PRESET_SAVE_ENTER_NAME:
         case MENU_SEQUENCER_SAVE_ENTER_NAME:
             if (encoder == 0) {
-                changePresetSelect(&fullState->menuSelect, ticks, 12);
+                changePresetSelect(&fullState->menuSelect, ticks, 11);
             } else if (encoder == 3) {
                 changeCharSelect(&fullState->name[fullState->menuSelect], ticks);
             }
@@ -401,11 +404,19 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
     }
 
     // Enter name ?
-    if (fullState->currentMenuItem->menuType == MENUTYPE_ENTERNAME && button >= 1 && button <= 4) {
-        char staticChars[4] = { ' ', '0', 'A', 'a' };
-        fullState->name[fullState->menuSelect] = staticChars[button - 1];
-        synthState_->propagateNewMenuSelect();
-        return;
+    if (fullState->currentMenuItem->menuType == MENUTYPE_ENTERNAME) {
+        if (button >= 1 && button <= 4) {
+            char staticChars[4] = { ' ', '0', 'A', 'a' };
+            fullState->name[fullState->menuSelect] = staticChars[button - 1];
+            synthState_->propagateNewMenuSelect();
+            return;
+        } else if (button == 5) {
+            if (fullState->menuSelect < 11) {
+                fullState->menuSelect++;
+            }
+            synthState_->propagateNewMenuSelect();
+            return;
+        }
     }
 
     // Next menu

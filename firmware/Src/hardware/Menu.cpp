@@ -402,7 +402,7 @@ const struct MidiConfig midiConfig[]  = {
         },
         {
                 "Arp in Preset",
-                "arpinpreset",
+                "arpinpreset2",
                 2,
                 noYes
         },
