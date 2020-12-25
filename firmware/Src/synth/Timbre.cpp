@@ -28,8 +28,8 @@ float midiNoteScale[2][NUMBER_OF_TIMBRES][128] __attribute__((section(".ram_d1")
 
 #define CALLED_PER_SECOND (PREENFM_FREQUENCY / 32.0f)
 
-// Static to all 4 timbres
-uint8_t Timbre::voiceIndex_;
+// Static to all 6 instrument
+uint32_t Timbre::voiceIndex_;
 
 enum ArpeggiatorDirection {
     ARPEGGIO_DIRECTION_UP = 0,
@@ -248,7 +248,7 @@ void Timbre::preenNoteOn(char note, char velocity) {
     // Frequency depends on the current instrument scale
     float noteFrequency = mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note];
 
-    unsigned int indexMin = UINT32_MAX;
+    uint32_t indexMin = UINT32_MAX;
     int voiceToUse = -1;
 
     int newNoteType = NEW_NOTE_NONE;
@@ -291,7 +291,7 @@ void Timbre::preenNoteOn(char note, char velocity) {
             }
 
             if (voices_[n]->isReleased()) {
-                unsigned int indexVoice = voices_[n]->getIndex();
+                uint32_t indexVoice = voices_[n]->getIndex();
                 if (indexVoice < indexMin) {
                     indexMin = indexVoice;
                     voiceToUse = n;

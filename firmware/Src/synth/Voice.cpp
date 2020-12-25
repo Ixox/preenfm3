@@ -431,7 +431,7 @@ void Voice::glideToNote(short newNote, float newNoteFrequency) {
     currentTimbre->osc6_.glideToNote(&oscState6_, newNoteFrequency);
 }
 
-void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short velocity, unsigned int index) {
+void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short velocity, uint32_t index) {
     // Update index : so that few chance to be chosen again during the quick dying
     this->index = index;
     // We can glide in mono and unison
@@ -493,7 +493,7 @@ float Voice::getNoteRealFrequencyEstimation(float newNoteFrequency) {
     return currentTimbre->osc1_.getNoteRealFrequencyEstimation(&oscState1_, newNoteFrequency);
 }
 
-void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, unsigned int index) {
+void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32_t index) {
 
 
     // On noteOn we can only glide in mono and unison with glideType ALWAYS

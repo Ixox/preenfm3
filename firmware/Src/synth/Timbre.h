@@ -223,7 +223,7 @@ private:
     float lowerNoteFrequency;
     bool lowerNoteReleased_;
     // static
-    static uint8_t voiceIndex_;
+    static uint32_t voiceIndex_;
 };
 
 #endif /* TIMBRE_H_ */

@@ -52,8 +52,8 @@ public:
     void endNoteOrBeginNextOne();
     void setNewEffectParam(int encoder);
 
-    void noteOnWithoutPop(short note, float newNoteFrequency, short velocity, unsigned int index);
-    void noteOn(short note, float newNoteFrequency, short velocity, unsigned int index);
+    void noteOnWithoutPop(short note, float newNoteFrequency, short velocity, uint32_t index);
+    void noteOn(short note, float newNoteFrequency, short velocity, uint32_t index);
     void glideToNote(short newNote, float newNoteFrequency);
     void killNow();
     void noteOff();
@@ -70,7 +70,7 @@ public:
     bool isNewNotePending() {
         return this->newNotePending;
     }
-    unsigned int getIndex() {
+    uint32_t getIndex() {
         return this->index;
     }
     char getNote() {
@@ -348,7 +348,7 @@ private:
     bool released;
     bool playing;
     bool isFullOfZero;
-    unsigned int index;
+    uint32_t index;
     char note;
     char midiVelocity;
     float noteFrequency;

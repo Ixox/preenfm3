@@ -235,15 +235,19 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
     case BUTTON_NEXT_INSTRUMENT:
         if (button2 == BUTTON_PREVIOUS_INSTRUMENT) {
             propagateNoteOff();
-            propagateBeforeNewParamsLoad(currentTimbre);
-            propagateAfterNewParamsLoad(currentTimbre);
+            for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+                propagateBeforeNewParamsLoad(t);
+            }
+            propagateAfterNewMixerLoad();
         }
         break;
     case BUTTON_PREVIOUS_INSTRUMENT:
         if (button2 == BUTTON_NEXT_INSTRUMENT) {
             propagateNoteOff();
-            propagateBeforeNewParamsLoad(currentTimbre);
-            propagateAfterNewParamsLoad(currentTimbre);
+            for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+                propagateBeforeNewParamsLoad(t);
+            }
+            propagateAfterNewMixerLoad();
         }
         break;
     }
