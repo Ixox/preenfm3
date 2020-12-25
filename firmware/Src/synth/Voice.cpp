@@ -552,7 +552,8 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32
 
 void Voice::endNoteOrBeginNextOne() {
     if (this->newNotePending) {
-        if (pendingNote >= 0) {
+        // pendingNote can be 255 : see Voice:noteOff
+        if (pendingNote <= 127) {
             noteOn(pendingNote, pendingNoteFrequency, pendingNoteVelocity, index);
         } else {
             // Note off have already been received....
@@ -608,7 +609,7 @@ void Voice::noteOff() {
         lfoNoteOff();
     } else {
         // We receive a note off before the note actually started
-        this->pendingNote = -1;
+        this->pendingNote = 255;
     }
 }
 
