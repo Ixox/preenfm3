@@ -544,7 +544,7 @@ uint8_t Timbre::voicesNextBlock() {
         if (likely(voices_[voiceNumber_[0]]->isPlaying())) {
             for (int vv = 0; vv < numberOfVoices_; vv++) {
                 int v = voiceNumber_[vv];
-                // We simulate other voices but we use always the same
+
                 for (int op = 0; op < 6; op ++) {
                     if ((op & 0x1) == 0x0) {
                         *pans[op] = opPan;

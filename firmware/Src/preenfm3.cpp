@@ -197,7 +197,7 @@ void preenfm3Loop() {
         previousCpuUsage = 101;
     }
 
-    if ((currentMillis - encoderMillis) >= 2) {
+    if ((currentMillis - encoderMillis) >= 1) {
         encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
         encoderMillis = currentMillis;
     }

@@ -11,9 +11,9 @@
 
 
 
-uint8_t usbMidiBuffAll[128];
-uint8_t *usbMidiBuffWrt = usbMidiBuffAll;
-uint8_t *usbMidiBuffRead = usbMidiBuffAll;
+uint8_t usbMidiInBuffAll[128];
+uint8_t *usbMidiInBuffWrt = usbMidiInBuffAll;
+uint8_t *usbMidiInBuffRead = usbMidiInBuffAll;
 
 
 static uint8_t  USBD_MIDI_Init (USBD_HandleTypeDef *pdev,
@@ -233,7 +233,7 @@ static uint8_t  USBD_MIDI_Init (USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 	USBD_LL_OpenEP(pdev, MIDI_OUT_EP, USBD_EP_TYPE_BULK, MIDI_OUT_PACKET);
 	pdev->ep_out[MIDI_OUT_EP & 0xFU].is_used = 1U;
 
-	USBD_LL_PrepareReceive(pdev, MIDI_OUT_EP, usbMidiBuffWrt,  MIDI_OUT_PACKET);
+	USBD_LL_PrepareReceive(pdev, MIDI_OUT_EP, usbMidiInBuffWrt,  MIDI_OUT_PACKET);
 
 	return USBD_OK;
 }
@@ -370,16 +370,16 @@ static uint8_t  USBD_MIDI_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
 static uint8_t  USBD_MIDI_DataOut (USBD_HandleTypeDef *pdev,
 		uint8_t epnum)
 {
-	usbMidiBuffWrt += 64;
-	if (usbMidiBuffWrt >= (usbMidiBuffAll + 128)) {
-		usbMidiBuffWrt = usbMidiBuffAll;
+	usbMidiInBuffWrt += 64;
+	if (usbMidiInBuffWrt >= (usbMidiInBuffAll + 128)) {
+		usbMidiInBuffWrt = usbMidiInBuffAll;
 	}
 
-	USBD_LL_PrepareReceive(pdev, MIDI_OUT_EP, usbMidiBuffWrt,  MIDI_OUT_PACKET);
+	USBD_LL_PrepareReceive(pdev, MIDI_OUT_EP, usbMidiInBuffWrt,  MIDI_OUT_PACKET);
 
-	((USBD_MIDI_ItfTypeDef *)pdev->pUserData)->dataReceived(usbMidiBuffRead);
+	((USBD_MIDI_ItfTypeDef *)pdev->pUserData)->dataReceived(usbMidiInBuffRead);
 
-	 usbMidiBuffRead = usbMidiBuffWrt;
+	 usbMidiInBuffRead = usbMidiInBuffWrt;
 
 	return USBD_OK;
 }
