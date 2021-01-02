@@ -46,7 +46,6 @@ public:
 
     void init();
     void nextBlock();
-    void detuneForUnisons(int voiceNumber, float numberOfVoicesInv, float numberOfOscInv);
     void emptyBuffer();
     void fxAfterBlock();
     void endNoteOrBeginNextOne();
@@ -391,6 +390,9 @@ private:
     bool newGlide; // Firs gliding note in "Always" mode
     // Used by 'glide always'
     float nextMainFrequency;
+    // Used when note Off is received during Quick Release
+    uint8_t noteAlreadyFinished;
+
 
     // env Value
     float env1ValueMem;

@@ -404,7 +404,7 @@ Voice::~Voice(void) {
 void Voice::init() {
     this->currentTimbre = 0;
     this->playing = false;
-    this->isFullOfZero = true;
+    this->isFullOfZero = false;
     this->newNotePending = false;
     this->note = 0;
     this->midiVelocity = 0;
@@ -556,21 +556,13 @@ void Voice::endNoteOrBeginNextOne() {
         if (pendingNote <= 127) {
             noteOn(pendingNote, pendingNoteFrequency, pendingNoteVelocity, index);
         } else {
-            // Note off have already been received....
-            this->playing = false;
-            this->pendingNote = 0;
-            this->newNotePending = false;
+            noteOn(pendingNote - 128, pendingNoteFrequency, pendingNoteVelocity, index);
+            this->noteAlreadyFinished = 1;
         }
     } else {
         this->playing = false;
         this->released = false;
     }
-    this->env1ValueMem = 0;
-    this->env2ValueMem = 0;
-    this->env3ValueMem = 0;
-    this->env4ValueMem = 0;
-    this->env5ValueMem = 0;
-    this->env6ValueMem = 0;
     this->freqAi = 0.0f;
     this->freqAo = 0.0f;
     this->freqBi = 0.0f;
@@ -592,7 +584,8 @@ void Voice::noteOff() {
     if (likely(!this->newNotePending)) {
         if (this->newNotePlayed) {
             // Note hasn't played
-            killNow();
+            // Let's give it a chance to create one block then noteOff
+            this->noteAlreadyFinished = 1;
             return;
         }
         this->released = true;
@@ -608,8 +601,8 @@ void Voice::noteOff() {
 
         lfoNoteOff();
     } else {
-        // We receive a note off before the note actually started
-        this->pendingNote = 255;
+        // We receive a note off before the note actually started, let's flag it
+        this->pendingNote += 128;
     }
 }
 
@@ -667,40 +660,19 @@ void Voice::emptyBuffer() {
     }
 }
 
-// Must be decided at noteOn !!!!!!
-// Must be decided at noteOn !!!!!!
-// Must be decided at noteOn !!!!!!
-// Must be decided at noteOn !!!!!!
-void Voice::detuneForUnisons(int  voice, float numberOfVoicesInv, float numberOfOscInv)  {
-
-    float detune = -.05f + (voice * numberOfVoicesInv) * .1f;
-
-    oscState1_.mainFrequency *= 1.0f + (detune + .01f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
-    oscState2_.mainFrequency *= 1.0f + (detune - .01f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
-
-    oscState3_.mainFrequency *= 1.0f + (detune + .02f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
-    oscState4_.mainFrequency *= 1.0f + (detune - .02f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
-
-    oscState4_.mainFrequency *= 1.0f + (detune + .03f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
-    oscState5_.mainFrequency *= 1.0f + (detune - .03f * numberOfOscInv) * currentTimbre->params_.engine2.unisonDetune;
-
-}
-
 void Voice::nextBlock() {
-
-    updateAllMixOscsAndPans();
-
     // After matrix
     if (unlikely(this->newNotePlayed)) {
         this->newNotePlayed = false;
-
-        currentTimbre->env1_.noteOnAfterMatrixCompute(&envState1_, &matrix);
-        currentTimbre->env2_.noteOnAfterMatrixCompute(&envState2_, &matrix);
-        currentTimbre->env3_.noteOnAfterMatrixCompute(&envState3_, &matrix);
-        currentTimbre->env4_.noteOnAfterMatrixCompute(&envState4_, &matrix);
-        currentTimbre->env5_.noteOnAfterMatrixCompute(&envState5_, &matrix);
-        currentTimbre->env6_.noteOnAfterMatrixCompute(&envState6_, &matrix);
+        this->env1ValueMem  = currentTimbre->env1_.noteOnAfterMatrixCompute(&envState1_, &matrix);
+        this->env2ValueMem  = currentTimbre->env2_.noteOnAfterMatrixCompute(&envState2_, &matrix);
+        this->env3ValueMem  = currentTimbre->env3_.noteOnAfterMatrixCompute(&envState3_, &matrix);
+        this->env4ValueMem  = currentTimbre->env4_.noteOnAfterMatrixCompute(&envState4_, &matrix);
+        this->env5ValueMem  = currentTimbre->env5_.noteOnAfterMatrixCompute(&envState5_, &matrix);
+        this->env6ValueMem  = currentTimbre->env6_.noteOnAfterMatrixCompute(&envState6_, &matrix);
     }
+
+    updateAllMixOscsAndPans();
 
     float env1Value;
     float env2Value;
@@ -720,7 +692,7 @@ void Voice::nextBlock() {
     float *sample = sampleBlock;
     float inv32 = .03125f;
 
-    if (matrix.getDestination(ALL_OSC_FREQ_HARM) != targetFreqHarm) {
+    if (unlikely(matrix.getDestination(ALL_OSC_FREQ_HARM) != targetFreqHarm)) {
         targetFreqHarm = matrix.getDestination(ALL_OSC_FREQ_HARM);
         float findex = 512 + targetFreqHarm * 20;
         int index = findex;
@@ -3645,6 +3617,17 @@ void Voice::nextBlock() {
             break;
 
     } // End switch
+
+
+    if (unlikely(this->noteAlreadyFinished > 0)) {
+        if (noteAlreadyFinished == 2) {
+            this->noteAlreadyFinished = 0;
+            noteOff();
+        } else {
+            noteAlreadyFinished++;
+        }
+    }
+
 }
 
 void Voice::setCurrentTimbre(Timbre *timbre) {
@@ -3677,6 +3660,48 @@ void Voice::setCurrentTimbre(Timbre *timbre) {
     }
 
     setNewEffectParam(0);
+
+    // init pan
+    int *opInfo = algoOpInformation[(int) timbre->getParamRaw()->engine1.algo];
+    if (likely(opInfo[0] == 1)) {
+        float pan1 = timbre->getParamRaw()->engineMix1.panOsc1 + 1.0f;
+        int pan = __USAT((int )(pan1 * 128), 8);
+        pan1Left = panTable[pan];
+        pan1Right = panTable[256 - pan];
+    }
+    if (likely(opInfo[1] == 1)) {
+        float pan1 = timbre->getParamRaw()->engineMix1.panOsc2 + 1.0f;
+        int pan = __USAT((int )(pan1 * 128), 8);
+        pan2Left = panTable[pan];
+        pan2Right = panTable[256 - pan];
+    }
+    if (likely(opInfo[2] == 1)) {
+        float pan1 = timbre->getParamRaw()->engineMix2.panOsc3 + 1.0f;
+        int pan = __USAT((int )(pan1 * 128), 8);
+        pan3Left = panTable[pan];
+        pan3Right = panTable[256 - pan];
+    }
+    if (likely(opInfo[3] == 1)) {
+        float pan1 = timbre->getParamRaw()->engineMix2.panOsc4 + 1.0f;
+        int pan = __USAT((int )(pan1 * 128), 8);
+        pan4Left = panTable[pan];
+        pan4Right = panTable[256 - pan];
+    }
+    if (likely(opInfo[4] == 1)) {
+        float pan1 = timbre->getParamRaw()->engineMix3.panOsc5 + 1.0f;
+        int pan = __USAT((int )(pan1 * 128), 8);
+        pan5Left = panTable[pan];
+        pan5Right = panTable[256 - pan];
+    }
+    if (likely(opInfo[5] == 1)) {
+        float pan1 = timbre->getParamRaw()->engineMix3.panOsc6 + 1.0f;
+        int pan = __USAT((int )(pan1 * 128), 8);
+        pan6Left = panTable[pan];
+        pan6Right = panTable[256 - pan];
+    }
+
+    // init mixer gain
+    mixerGain = currentTimbre->params_.effect.param3;
 }
 
 void Voice::fxAfterBlock() {
