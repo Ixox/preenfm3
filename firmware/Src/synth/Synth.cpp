@@ -268,7 +268,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         }
     }
 
-    // Dispatch the timbres ont the different out !!
+    // Dispatch the timbres on the different out !!
 
     int32_t *cb1 = buffer1;
     const int32_t *endcb1 = buffer1 + 64;
@@ -443,7 +443,7 @@ int Synth::getNumberOfFreeVoicesForThisTimbre(int timbre) {
 
 void Synth::beforeNewParamsLoad(int timbre) {
 
-    for (int k = 0; k < NUMBER_OF_STORED_NOT; k++) {
+    for (int k = 0; k < NUMBER_OF_STORED_NOTES; k++) {
         noteBeforeNewParalsLoad_[k] = 0;
         velocityBeforeNewParalsLoad_[k] = 0;
     }
@@ -451,14 +451,14 @@ void Synth::beforeNewParamsLoad(int timbre) {
     if (this->synthState_->params->engineArp1.clock > 0) {
         // Arpegiator : we store pressed key
         int numberOfPressedNote = timbres_[timbre].note_stack_.size();
-        for (int k = 0; k < numberOfPressedNote && k < NUMBER_OF_STORED_NOT; k++) {
+        for (int k = 0; k < numberOfPressedNote && k < NUMBER_OF_STORED_NOTES; k++) {
             const NoteEntry &noteEntry = timbres_[timbre].note_stack_.played_note(k);
             noteBeforeNewParalsLoad_[k] = noteEntry.note;
             velocityBeforeNewParalsLoad_[k] = noteEntry.velocity;
         }
     } else {
         int numberOfVoices = this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices;
-        for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOT; k++) {
+        for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOTES; k++) {
             // voice number k of timbre
             int n = timbres_[timbre].voiceNumber_[k];
             if (voices_[n].isPlaying() && !voices_[n].isReleased()) {
@@ -473,7 +473,7 @@ void Synth::beforeNewParamsLoad(int timbre) {
     allNoteOffQuick(timbre);
     // Let's allow the buffer to catch up
     // We can do that because we're in the lower priority thread
-    HAL_Delay(2);
+    HAL_Delay(5);
 }
 ;
 
@@ -483,7 +483,7 @@ void Synth::afterNewParamsLoad(int timbre) {
     // values to force check lfo used
     timbres_[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
 
-    for (int k = 0; k < NUMBER_OF_STORED_NOT; k++) {
+    for (int k = 0; k < NUMBER_OF_STORED_NOTES; k++) {
         if (noteBeforeNewParalsLoad_[k] != 0) {
             timbres_[timbre].noteOn(noteBeforeNewParalsLoad_[k], velocityBeforeNewParalsLoad_[k]);
             noteBeforeNewParalsLoad_[k] = 0;

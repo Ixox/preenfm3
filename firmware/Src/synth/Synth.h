@@ -31,7 +31,7 @@
 #include "SimpleComp.h"
 
 #define UINT_MAX  4294967295
-#define NUMBER_OF_STORED_NOT 6
+#define NUMBER_OF_STORED_NOTES 6
 
 class Sequencer;
 
@@ -169,8 +169,8 @@ private:
     Sequencer *sequencer_;
 
     // remember notes before changing timbre
-    char noteBeforeNewParalsLoad_[NUMBER_OF_STORED_NOT];
-    char velocityBeforeNewParalsLoad_[NUMBER_OF_STORED_NOT];
+    char noteBeforeNewParalsLoad_[NUMBER_OF_STORED_NOTES];
+    char velocityBeforeNewParalsLoad_[NUMBER_OF_STORED_NOTES];
 
     float smoothPan_[NUMBER_OF_TIMBRES];
     float smoothVolume_[NUMBER_OF_TIMBRES];
