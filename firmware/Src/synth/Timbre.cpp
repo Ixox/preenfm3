@@ -288,9 +288,7 @@ void Timbre::preenNoteOn(char note, char velocity) {
             if (!voices_[n]->isPlaying()) {
                 voiceToUse = n;
                 newNoteType = NEW_NOTE_FREE;
-            }
-
-            if (voices_[n]->isReleased()) {
+            } else if (voices_[n]->isReleased()) {
                 uint32_t indexVoice = voices_[n]->getIndex();
                 if (indexVoice < indexMin) {
                     indexMin = indexVoice;
@@ -534,12 +532,9 @@ uint8_t Timbre::voicesNextBlock() {
             &params_.engineMix3.panOsc6
         };
 
-        int algoNumberOfMix = algoInformation[(int)params_.engine1.algo].mix;
-
         float numberOfCarrierOp = numberOfVoices_ * 6;
         float opPan = - params_.engine2.unisonSpread;
         float opPanInc = 2.0f / numberOfCarrierOp * params_.engine2.unisonSpread;
-        float numberOfVoicesInv = 1 / numberOfVoices_;
 
         if (likely(voices_[voiceNumber_[0]]->isPlaying())) {
             for (int vv = 0; vv < numberOfVoices_; vv++) {
