@@ -78,8 +78,6 @@ extern "C" {
 
 volatile bool readyForTFT = false;
 uint32_t tftCpt = 0;
-uint32_t tftPushMillis = 1;
-uint32_t encoderMillis = 1;
 uint32_t oscilloMillis = 1;
 uint32_t cpuUsageMillis = 1;
 uint32_t saturatedOutputMillis = 0;
@@ -160,6 +158,9 @@ void preenfm3Loop() {
      */
     midiDecoder.processAsyncActions();
 
+    // Always process actions if any from the encoders and button
+    encoders.processActions();
+
     bool tftHasJustBeenCleared = tft.hasJustBeenCleared();
 
     if (unlikely(saturatedOutput > 0)) {
@@ -195,11 +196,6 @@ void preenfm3Loop() {
         // force cpu usage refresh
         cpuUsageMillis = 0;
         previousCpuUsage = 101;
-    }
-
-    if ((currentMillis - encoderMillis) >= 1) {
-        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
-        encoderMillis = currentMillis;
     }
 
     if (fmDisplay3.needRefresh() && tft.getNumberOfPendingActions() < 100) {
@@ -282,6 +278,13 @@ void preenfm3Tic() {
         return;
     }
 
+	tftCpt++;
+
+	// check encoder/buttons status : 500 times per seconds
+    if ((tftCpt & 0x1) == 0) {
+        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
+    }
+
     // In case of sequencer running on internal BPM
     sequencer.ticMillis();
 
@@ -289,7 +292,7 @@ void preenfm3Tic() {
     tft.tic(synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
 
     // Pfm3 Misc tics
-    switch (tftCpt++ & 0xff) {
+    switch (tftCpt & 0xff) {
     case 0:
         synthState.tempoClick();
         fmDisplay3.tempoClick();

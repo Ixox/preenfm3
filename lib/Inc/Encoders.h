@@ -32,6 +32,25 @@ enum LastEncoderMove {
     LAST_MOVE_NONE = 0, LAST_MOVE_INC, LAST_MOVE_DEC
 };
 
+enum EncoderActionType {
+	ENCODER_TURNED = 0,
+	ENCODER_TURNED_WHILE_BUTTON_PRESSED,
+	ENCODER_BUTTON_PRESSED,
+	ENCODER_TWO_BUTTON_PRESSED,
+	ENCODER_LONG_BUTTON_PRESSED
+};
+
+
+
+
+struct EncoderAction {
+	uint8_t actionType;
+	uint8_t encoder;
+	int8_t ticks;
+	uint8_t button1;
+	uint8_t button2;
+};
+
 struct EncoderStatus {
     char value;
     bool b1;
@@ -43,7 +62,8 @@ public:
     ~Encoders();
     void checkStatus(uint8_t encoderType, uint8_t encoderPush);
     void checkSimpleStatus();
-    int getRegisterBits(uint8_t encoderPush);
+    uint32_t getRegisterBits(uint8_t encoderPush);
+    void processActions();
 
     void insertListener(EncodersListener *listener) {
         if (firstListener != 0) {
@@ -53,22 +73,15 @@ public:
     }
 
     void encoderTurned(int encoder, int ticks) {
-        if (firstButtonDown_ == -1) {
-            for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
-                listener->encoderTurned(encoder, ticks);
-            }
-        } else {
-            for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
-                listener->encoderTurnedWhileButtonPressed(encoder, ticks, firstButtonDown_);
-            }
-            buttonUsedFromSomethingElse_[firstButtonDown_] = true;
-        }
+		for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+			listener->encoderTurned(encoder, ticks);
+		}
     }
 
-    void encoderTurnedWileButtonDown(int encoder, int ticks) {
-        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
-            listener->encoderTurned(encoder, ticks);
-        }
+    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
+		for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+			listener->encoderTurnedWhileButtonPressed(encoder, ticks, button);
+		}
     }
 
     void buttonPressed(int button) {
@@ -90,22 +103,24 @@ public:
     }
 
 private:
-    int action_[2][16];
-    int encoderBit1_[NUMBER_OF_ENCODERS];
-    int encoderBit2_[NUMBER_OF_ENCODERS];
-    int encoderState_[NUMBER_OF_ENCODERS];
-    int timerAction_[NUMBER_OF_ENCODERS];
+    uint8_t action_[2][16];
+    uint32_t encoderBit1_[NUMBER_OF_ENCODERS];
+    uint32_t encoderBit2_[NUMBER_OF_ENCODERS];
+    uint32_t encoderState_[NUMBER_OF_ENCODERS];
+    uint32_t timerAction_[NUMBER_OF_ENCODERS];
 
     LastEncoderMove lastMove_[NUMBER_OF_ENCODERS];
-    int tickSpeed_[NUMBER_OF_ENCODERS];
+    int8_t tickSpeed_[NUMBER_OF_ENCODERS];
 
-    int buttonBit_[NUMBER_OF_BUTTONS_MAX];
-    int buttonTimer_[NUMBER_OF_BUTTONS_MAX];
+    uint32_t buttonBit_[NUMBER_OF_BUTTONS_MAX];
+    uint32_t buttonTimer_[NUMBER_OF_BUTTONS_MAX];
     bool buttonUsedFromSomethingElse_[NUMBER_OF_BUTTONS_MAX];
     bool buttonPreviousState_[NUMBER_OF_BUTTONS_MAX];
-    int firstButtonDown_;
+    int8_t firstButtonDown_;
 
-    int encoderTimer_;
+    uint32_t encoderTimer_;
+    // execute action can be async
+    RingBuffer<EncoderAction, 16> actions_;
 
     EncodersListener *firstListener;
 };
