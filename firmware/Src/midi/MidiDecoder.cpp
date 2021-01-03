@@ -23,6 +23,8 @@ extern "C" {
 #include "RingBuffer.h"
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
+
+// Let's call it MidiOut despite USB spec
 uint8_t usbMidiOutBuffAll[128];
 uint8_t *usbMidiOutBuffWrt;
 uint8_t *usbMidiOutBuffWrtStart;
@@ -1046,8 +1048,8 @@ void MidiDecoder::flushMidiOut() {
 
     if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
 
-        USBD_LL_FlushEP(&hUsbDeviceFS, 0x81);
-        USBD_LL_Transmit(&hUsbDeviceFS, 0x81, usbMidiOutBuffWrtStart, usbMidiOutBuffWrt - usbMidiOutBuffWrtStart);
+        USBD_LL_FlushEP(&hUsbDeviceFS, MIDI_IN_EP);
+        USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, usbMidiOutBuffWrtStart, usbMidiOutBuffWrt - usbMidiOutBuffWrtStart);
 
         usbMidiOutBuffWrtStart += 64;
         if (usbMidiOutBuffWrtStart >= usbMidiOutBuffAll + 128) {

@@ -219,15 +219,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
     encoderTimer_++;
 }
 
-
-int maxAction = 0;
-
 void Encoders::processActions() {
-
-	if (actions_.getCount() > maxAction) {
-		maxAction = actions_.getCount();
-	}
-
 	while (actions_.getCount() > 0) {
 		EncoderAction ea = actions_.remove();
 		switch (ea.actionType) {

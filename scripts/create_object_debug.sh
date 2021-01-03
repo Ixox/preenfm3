@@ -21,7 +21,7 @@ read -r firmwareVersionLine < "${FIRMWARE_DIR}/${versionFile}"
 read -r bootloaderVersionLine < "${BOOTLOADER_DIR}/${versionFile}"
 
 # firmware has a v
-regexFirmware='\"v([0-9\.]+)\"'
+regexFirmware='\"v([0-9\.a-z]+)\"'
 regexBootloader='\"([0-9\.]+)\"'
 
 [[ $firmwareVersionLine =~ $regexFirmware ]]
@@ -31,7 +31,7 @@ firmwareVersion=${BASH_REMATCH[1]}
 bootloaderVersion=${BASH_REMATCH[1]}
 
 
-buildFolder="pfm3_firmware_${firmwareVersion}"
+buildFolder="pfm3_firmware_beta_${firmwareVersion}"
 mkdir -p $buildFolder 
 rm -f ${buildFolder}/*
 
@@ -57,5 +57,4 @@ echo ""
 echo "dfu-util -a0 -d 0x0483:0xdf11 -D ${binBootloader} -s 0x8000000" > ${buildFolder}/flash_bootloader.cmd
 echo "dfu-util -a0 -d 0x0483:0xdf11 -D ${binFirmware} -s 0x8020000" > ${buildFolder}/flash_firmware.cmd
 zip ${buildFolder}.zip ${buildFolder}/*.bin ${buildFolder}/*.cmd
-
 
