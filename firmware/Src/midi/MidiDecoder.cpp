@@ -23,9 +23,12 @@ extern "C" {
 #include "RingBuffer.h"
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
-extern uint8_t usbMidiBuffAll[128];
-extern uint8_t *usbMidiBuffWrt;
-extern uint8_t *usbMidiBuffRead;
+
+// Let's call it MidiOut despite USB spec
+uint8_t usbMidiOutBuffAll[128];
+uint8_t *usbMidiOutBuffWrt;
+uint8_t *usbMidiOutBuffWrtStart;
+
 extern UART_HandleTypeDef huart1;
 
 #define INV127 .00787401574803149606f
@@ -53,8 +56,11 @@ MidiDecoder::MidiDecoder() {
     }
 
     for (int k = 0; k < 128; k++) {
-        usbMidiBuffAll[k] = 0;
+        usbMidiOutBuffAll[k] = 0;
     }
+
+    usbMidiOutBuffWrt = usbMidiOutBuffAll;
+    usbMidiOutBuffWrtStart = usbMidiOutBuffAll;
 }
 
 MidiDecoder::~MidiDecoder() {
@@ -1022,10 +1028,10 @@ void MidiDecoder::sendMidiCCOut(struct MidiEvent *toSend, bool flush) {
     // We don't send midi to both USB and USART at the same time...
     if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
         // usbBuf[0] = [number of cable on 4 bits] [event type on 4 bites]
-        *usbMidiBuffWrt++ = 0x00 | (toSend->eventType >> 4);
-        *usbMidiBuffWrt++ = toSend->eventType + toSend->channel;
-        *usbMidiBuffWrt++ = toSend->value[0];
-        *usbMidiBuffWrt++ = toSend->value[1];
+        *usbMidiOutBuffWrt++ = 0x00 | (toSend->eventType >> 4);
+        *usbMidiOutBuffWrt++ = toSend->eventType + toSend->channel;
+        *usbMidiOutBuffWrt++ = toSend->value[0];
+        *usbMidiOutBuffWrt++ = toSend->value[1];
 
     }
 
@@ -1042,10 +1048,15 @@ void MidiDecoder::flushMidiOut() {
 
     if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
 
-        USBD_LL_FlushEP(&hUsbDeviceFS, 0x1);
-        USBD_LL_Transmit(&hUsbDeviceFS, 0x1, usbMidiBuffRead, 64);
+        USBD_LL_FlushEP(&hUsbDeviceFS, MIDI_IN_EP);
+        USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, usbMidiOutBuffWrtStart, usbMidiOutBuffWrt - usbMidiOutBuffWrtStart);
 
-        usbMidiBuffWrt = usbMidiBuffRead;
+        usbMidiOutBuffWrtStart += 64;
+        if (usbMidiOutBuffWrtStart >= usbMidiOutBuffAll + 128) {
+        	usbMidiOutBuffWrtStart = usbMidiOutBuffAll;
+        }
+
+        usbMidiOutBuffWrt = usbMidiOutBuffWrtStart;
     }
 
     // Enable interupt to send Midi buffer :

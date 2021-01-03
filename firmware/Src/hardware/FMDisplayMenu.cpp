@@ -413,6 +413,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
         } else if (button == 5) {
             if (fullState->menuSelect < 11) {
                 fullState->menuSelect++;
+				fullState->name[fullState->menuSelect] = fullState->name[fullState->menuSelect-1];
             }
             synthState_->propagateNewMenuSelect();
             return;

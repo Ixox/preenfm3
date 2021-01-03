@@ -62,8 +62,6 @@ class Env
 {
 public:
     Env() {
-        stateTarget[ENV_STATE_ON_QUICK_R] = 0.0f;
-        stateTarget[ENV_STATE_DEAD] = 0.0f;
 
         nextState[ENV_STATE_ON_A] = ENV_STATE_ON_D;
         nextState[ENV_STATE_ON_D] = ENV_STATE_ON_S;
@@ -84,6 +82,12 @@ public:
         tables[ENV_STATE_ON_R].size = 63;
         tables[ENV_STATE_ON_QUICK_R].table = envLinear;
         tables[ENV_STATE_ON_QUICK_R].size = 1;
+
+        // Quick release reaches 0 in 6 blocks
+        stateTarget[ENV_STATE_ON_QUICK_R] = 0.0f;
+        stateInc[ENV_STATE_ON_QUICK_R] = 0.166667f;
+
+        stateTarget[ENV_STATE_DEAD] = 0.0f;
     }
 
     virtual ~Env(void) {
@@ -129,7 +133,6 @@ public:
     }
 
     void newState(struct EnvData* env) {
-
         env->previousStateValue = env->currentValue;
         env->nextStateValue = stateTarget[env->envState];
         env->currentPhase = 0;
@@ -181,10 +184,7 @@ public:
 		return env->currentValue;
       }
 
-    void noteOnAfterMatrixCompute(struct EnvData* env, Matrix* matrix) {
-        env->currentValue = 0;
-        env->envState = ENV_STATE_ON_A;
-        newState(env);
+    float noteOnAfterMatrixCompute(struct EnvData* env, Matrix* matrix) {
 
         float attack = envParamsA->attackTime + matrix->getDestination((enum DestinationEnum)(ENV1_ATTACK + envNumber));
         float decay = envParamsA->decayTime;
@@ -207,19 +207,30 @@ public:
         //stateInc[ENV_STATE_ON_A] = incTab[(int)(attack * 100.0f)];
         env->stateIncAttack = incTab[(int)(attack * 100.0f)];
         env->stateIncDecay= incTab[(int)(decay * 100.0f)];
+
+
+        // For Later / XH 2 Jan 2020
+        //        if (attack != 0.0f) {
+        //            env->currentValue = 0.0f;
+        //        } else {
+        //            // Attack 0s, so set currentValue and start in Decay state
+        //            env->currentValue = envParamsA->attackLevel;;
+        //        }
+        //        env->envState = ENV_STATE_ON_A;
+        //        newState(env);
+        //
+        //        return env->currentValue;
+
+        // But in the meantime
+        env->currentValue = 0.0f;
+        env->envState = ENV_STATE_ON_A;
+        newState(env);
+        return 0.0f;
     }
 
     void noteOffQuick(struct EnvData* env) {
         env->envState = ENV_STATE_ON_QUICK_R;
         newState(env);
-
-        int duration = 6 * env->currentValue ;
-
-        if (duration == 0) {
-        	stateInc[ENV_STATE_ON_QUICK_R] = 1.0f;
-        } else {
-        	stateInc[ENV_STATE_ON_QUICK_R] = 1.0f / (float)duration;
-        }
 
     }
 
