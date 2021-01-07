@@ -69,7 +69,9 @@ public:
     }
 
     void refreshInstrument(int instrument) {
-        refresh(14 - instrument, 14 - instrument);
+    	if(seqMode_ != SEQ_MODE_STEP) {
+    		refresh(14 - instrument, 14 - instrument);
+    	}
     }
 
     void refreshActivated() {

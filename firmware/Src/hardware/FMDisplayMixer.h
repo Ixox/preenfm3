@@ -72,6 +72,11 @@ public:
         refreshStatusP_ = refreshStatus;
         endRefreshStatusP_ = endRefreshStatus;
     }
+
+    void refreshInstrument(int instrument) {
+    	refresh(19 - instrument, 19 - instrument);
+    }
+
     void refresh(int startRefreshStatus, int endRefreshStatus) {
         // if we're already refreshing we keep the endRefreshStatus
         int rs = *refreshStatusP_;

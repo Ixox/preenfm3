@@ -25,9 +25,8 @@ extern "C" {
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 // Let's call it MidiOut despite USB spec
-uint8_t usbMidiOutBuffAll[128];
+uint8_t usbMidiOutBuff[64];
 uint8_t *usbMidiOutBuffWrt;
-uint8_t *usbMidiOutBuffWrtStart;
 
 extern UART_HandleTypeDef huart1;
 
@@ -55,12 +54,11 @@ MidiDecoder::MidiDecoder() {
         bankNumberLSB[t] = 0;
     }
 
-    for (int k = 0; k < 128; k++) {
-        usbMidiOutBuffAll[k] = 0;
+    for (int k = 0; k < 64; k++) {
+        usbMidiOutBuff[k] = 0;
     }
 
-    usbMidiOutBuffWrt = usbMidiOutBuffAll;
-    usbMidiOutBuffWrtStart = usbMidiOutBuffAll;
+    usbMidiOutBuffWrt = usbMidiOutBuff;
 }
 
 MidiDecoder::~MidiDecoder() {
@@ -648,23 +646,24 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     cc.channel = channel;
 
     // Send the title
-    for (unsigned int k = 0; k < 12; k++) {
+    for (int k = 0; k < 12; k++) {
         int valueToSend = paramsToSend->presetName[k];
         cc.value[0] = 99;
         cc.value[1] = 1;
-        sendMidiCCOut(&cc, false);
+        writeMidiCCOut(&cc);
         cc.value[0] = 98;
         cc.value[1] = 100 + k;
-        sendMidiCCOut(&cc, false);
+        writeMidiCCOut(&cc);
         cc.value[0] = 6;
         cc.value[1] = (unsigned char) (valueToSend >> 7);
-        sendMidiCCOut(&cc, false);
+        writeMidiCCOut(&cc);
         cc.value[0] = 38;
-        cc.value[1] = (unsigned char) (valueToSend & 127);
-        sendMidiCCOut(&cc, false);
+        cc.value[1] = (unsigned char) (valueToSend & 0x7f);
+        writeMidiCCOut(&cc);
 
-        flushMidiOut();
-        // Wait for midi to be flushed
+        sendMidiDin5Out();
+        sendMidiUsbOutIfBufferFull();
+        // Wait for midi (USART) to be all sent
         while (usartBufferOut.getCount() > 0) {
         }
     }
@@ -690,19 +689,20 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
             // NRPN is 4 control change
             cc.value[0] = 99;
             cc.value[1] = (unsigned char) (paramNumber >> 7);
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 98;
-            cc.value[1] = (unsigned char) (paramNumber & 127);
-            sendMidiCCOut(&cc, false);
+            cc.value[1] = (unsigned char) (paramNumber & 0x7F);
+            writeMidiCCOut(&cc);
             cc.value[0] = 6;
             cc.value[1] = (unsigned char) (valueToSend >> 7);
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 38;
-            cc.value[1] = (unsigned char) (valueToSend & 127);
-            sendMidiCCOut(&cc, false);
+            cc.value[1] = (unsigned char) (valueToSend & 0x7F);
+            writeMidiCCOut(&cc);
 
-            flushMidiOut();
-            // Wait for midi to be flushed
+            sendMidiDin5Out();
+            sendMidiUsbOutIfBufferFull();
+            // Wait for midi (USART) to be all sent
             while (usartBufferOut.getCount() > 0) {
             }
         }
@@ -713,25 +713,28 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
         for (int step = 0; step < 16; step++) {
             cc.value[0] = 99;
             cc.value[1] = whichStepSeq + 2;
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 98;
             cc.value[1] = step;
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 6;
             cc.value[1] = 0;
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 38;
             StepSequencerSteps * seqSteps = &((StepSequencerSteps *) (&paramsToSend->lfoSteps1))[whichStepSeq];
             cc.value[1] = seqSteps->steps[step];
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
 
-            flushMidiOut();
-            // Wait for midi to be flushed
+            sendMidiDin5Out();
+            sendMidiUsbOutIfBufferFull();
+            // Wait for midi (USART) to be all sent
             while (usartBufferOut.getCount() > 0) {
             }
         }
     }
 
+    // send Usb Anyway
+    sendMidiUsbOut();
 }
 
 void MidiDecoder::decodeNrpn(int timbre) {
@@ -751,7 +754,7 @@ void MidiDecoder::decodeNrpn(int timbre) {
 
             this->synth->setNewValueFromMidi(timbre, row, encoder, value);
         } else if (index >= 228 && index < 240) {
-            this->synth->setNewSymbolInPresetName(timbre, index - 228, value);
+            this->synth->setNewSymbolInPresetName(timbre, index - 228, (char)value);
             if (index == 239) {
                 this->synthState_->propagateNewPresetName(timbre);
             }
@@ -805,18 +808,19 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 // NRPN is 4 control change
                 cc.value[0] = 99;
                 cc.value[1] = currentStepSeq + 2;
-                sendMidiCCOut(&cc, false);
+                writeMidiCCOut(&cc);
                 cc.value[0] = 98;
                 cc.value[1] = this->synthState_->stepSelect[currentStepSeq];
-                sendMidiCCOut(&cc, false);
+                writeMidiCCOut(&cc);
                 cc.value[0] = 6;
                 cc.value[1] = 0;
-                sendMidiCCOut(&cc, false);
+                writeMidiCCOut(&cc);
                 cc.value[0] = 38;
                 cc.value[1] = (unsigned char) newValue;
-                sendMidiCCOut(&cc, false);
+                writeMidiCCOut(&cc);
 
-                flushMidiOut();
+                sendMidiDin5Out();
+                sendMidiUsbOut();
             }
         } else {
             int valueToSend;
@@ -834,18 +838,19 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
             // NRPN is 4 control change
             cc.value[0] = 99;
             cc.value[1] = (unsigned char) (paramNumber >> 7);
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 98;
-            cc.value[1] = (unsigned char) (paramNumber & 127);
-            sendMidiCCOut(&cc, false);
+            cc.value[1] = (unsigned char) (paramNumber & 0x7F);
+            writeMidiCCOut(&cc);
             cc.value[0] = 6;
             cc.value[1] = (unsigned char) (valueToSend >> 7);
-            sendMidiCCOut(&cc, false);
+            writeMidiCCOut(&cc);
             cc.value[0] = 38;
-            cc.value[1] = (unsigned char) (valueToSend & 127);
-            sendMidiCCOut(&cc, false);
+            cc.value[1] = (unsigned char) (valueToSend & 0x7F);
+            writeMidiCCOut(&cc);
 
-            flushMidiOut();
+            sendMidiDin5Out();
+            sendMidiUsbOut();
         }
     }
 
@@ -1015,7 +1020,9 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
             }
 
             if (lastSentCC.value[1] != cc.value[1] || lastSentCC.value[0] != cc.value[0] || lastSentCC.channel != cc.channel) {
-                sendMidiCCOut(&cc, true);
+                writeMidiCCOut(&cc);
+                sendMidiDin5Out();
+                sendMidiUsbOut();
                 lastSentCC = cc;
             }
         }
@@ -1023,7 +1030,7 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
 }
 
 /** Only send control change */
-void MidiDecoder::sendMidiCCOut(struct MidiEvent *toSend, bool flush) {
+void MidiDecoder::writeMidiCCOut(struct MidiEvent *toSend) {
 
     // We don't send midi to both USB and USART at the same time...
     if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
@@ -1038,30 +1045,30 @@ void MidiDecoder::sendMidiCCOut(struct MidiEvent *toSend, bool flush) {
     usartBufferOut.insert(toSend->eventType + toSend->channel);
     usartBufferOut.insert(toSend->value[0]);
     usartBufferOut.insert(toSend->value[1]);
-
-    if (flush) {
-        flushMidiOut();
-    }
 }
 
-void MidiDecoder::flushMidiOut() {
-
-    if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
-
-        USBD_LL_FlushEP(&hUsbDeviceFS, MIDI_IN_EP);
-        USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, usbMidiOutBuffWrtStart, usbMidiOutBuffWrt - usbMidiOutBuffWrtStart);
-
-        usbMidiOutBuffWrtStart += 64;
-        if (usbMidiOutBuffWrtStart >= usbMidiOutBuffAll + 128) {
-        	usbMidiOutBuffWrtStart = usbMidiOutBuffAll;
-        }
-
-        usbMidiOutBuffWrt = usbMidiOutBuffWrtStart;
-    }
-
+void MidiDecoder::sendMidiDin5Out() {
     // Enable interupt to send Midi buffer :
     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
 }
+
+
+void MidiDecoder::sendMidiUsbOutIfBufferFull() {
+	if ((usbMidiOutBuffWrt - usbMidiOutBuff) == 64) {
+		sendMidiUsbOut();
+	}
+}
+
+
+void MidiDecoder::sendMidiUsbOut() {
+    if (usbMidiOutBuffWrt != usbMidiOutBuff && this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
+
+        USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, usbMidiOutBuff, usbMidiOutBuffWrt - usbMidiOutBuff);
+        // go back to begining of buffer
+        usbMidiOutBuffWrt = usbMidiOutBuff;
+    }
+}
+
 
 int MidiDecoder::getNrpnRowFromParamRow(int paramRow) {
     switch (paramRow) {

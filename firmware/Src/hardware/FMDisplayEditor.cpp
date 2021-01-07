@@ -1942,22 +1942,22 @@ const struct Pfm3OneButtonState pfm3ButtonMixer456State = {
     {
         {
             ROW_OSC_MIX2,
-            ENCODER_ENGINE_MIX2 },
+            ENCODER_ENGINE_MIX4 },
         {
             ROW_OSC_MIX3,
-            ENCODER_ENGINE_MIX1 },
+            ENCODER_ENGINE_MIX5 },
         {
             ROW_OSC_MIX3,
-            ENCODER_ENGINE_MIX2 },
+            ENCODER_ENGINE_MIX6 },
         {
             ROW_OSC_MIX2,
-            ENCODER_ENGINE_PAN2 },
+            ENCODER_ENGINE_PAN4 },
         {
             ROW_OSC_MIX3,
-            ENCODER_ENGINE_PAN1 },
+            ENCODER_ENGINE_PAN5 },
         {
             ROW_OSC_MIX3,
-            ENCODER_ENGINE_PAN2 } } };
+            ENCODER_ENGINE_PAN6 } } };
 
 const struct Pfm3OneButton pfm3ButtonMixer = {
     "Mix",

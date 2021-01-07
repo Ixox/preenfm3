@@ -133,18 +133,12 @@ void FMDisplay3::refreshAllScreenByStep() {
 }
 
 void FMDisplay3::newPresetName(int timbre) {
-    if (currentTimbre_ == timbre && this->synthState_->getSynthMode() == SYNTH_MODE_EDIT_PFM3) {
-        int l = getLength(this->synthState_->params->presetName);
-
-        tft_->setCursor(3, 0);
-        tft_->print(this->synthState_->params->presetName);
-        if (displayEditor_->isPresetModifed(timbre)) {
-            tft_->print('*');
-            l++;
-        }
-        for (int k = l; k < 13; k++) {
-            tft_->print(' ');
-        }
+	if (this->synthState_->getSynthMode() == SYNTH_MODE_MIXER) {
+		displayMixer_->refreshInstrument(timbre);
+	} else if (this->synthState_->getSynthMode() == SYNTH_MODE_SEQUENCER) {
+		displaySequencer_->refreshInstrument(timbre);
+	} else if (currentTimbre_ == timbre && this->synthState_->getSynthMode() == SYNTH_MODE_EDIT_PFM3) {
+    	displayEditor_->displayPreset();
     }
 }
 
