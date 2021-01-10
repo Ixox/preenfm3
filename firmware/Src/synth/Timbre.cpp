@@ -1179,7 +1179,7 @@ void Timbre::setMatrixPolyAfterTouch(uint8_t note, float newValue) {
     for (int k = 0; k < numberOfVoices_; k++) {
         int voiceIndex = voiceNumber_[k];
         if (unlikely(voices_[voiceIndex]->isPlaying() && voices_[voiceIndex]->getNote() == note)) {
-            voices_[voiceNumber_[k]]->matrix.setSource(MATRIX_SOURCE_CHANNEL_PRESSURE, newValue);
+            voices_[voiceNumber_[k]]->matrix.setSource(MATRIX_SOURCE_POLYPHONIC_AFTERTOUCH, newValue);
             break;
         }
     }

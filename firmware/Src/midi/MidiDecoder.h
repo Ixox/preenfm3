@@ -194,8 +194,10 @@ public:
     void showIMInformation() {
     }
 
-    void sendMidiCCOut(struct MidiEvent *toSend, bool flush);
-    void flushMidiOut();
+    void writeMidiCCOut(struct MidiEvent *toSend);
+    void sendMidiDin5Out();
+    void sendMidiUsbOut();
+    void sendMidiUsbOutIfBufferFull();
     void playNote(int timbre, char note, char velocity) {
     }
     void stopNote(int timbre, char note) {

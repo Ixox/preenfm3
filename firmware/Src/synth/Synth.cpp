@@ -772,8 +772,8 @@ void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int 
     }
 }
 
-void Synth::setNewSymbolInPresetName(int timbre, int index, int value) {
-    this->timbres_[timbre].getParamRaw()->presetName[index] = value;
+void Synth::setNewSymbolInPresetName(int timbre, int index, char newchar) {
+    this->timbres_[timbre].getParamRaw()->presetName[index] = newchar;
 }
 
 void Synth::setCurrentInstrument(int value) {
