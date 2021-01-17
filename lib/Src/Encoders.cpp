@@ -24,7 +24,7 @@
 Encoders::Encoders() {
     // PreenFM Control board 1.2 (pushable encoder)
     uint8_t encoderPins[] = { 17, 18, 15, 16, 9, 10, 20, 19, 14, 13, 12, 11 };
-    uint8_t buttonPins[] = { 23, 21, 4, 24, 3, 2, 22, 5, 6, 7, 8, 1, 32, 31, 30, 27, 28, 29 };
+    uint8_t buttonPins[] = { 23, 21, 4, 24, 3, 2, 22, 5, 6, 7, 8, 1, 32, 31, 30, 28, 27, 29 };
 
     /*
      0: 0000 = 00

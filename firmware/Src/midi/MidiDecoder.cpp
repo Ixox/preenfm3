@@ -257,10 +257,12 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
     case MIDI_NOTE_OFF:
         for (int tk = 0; tk < timbreIndex; tk++) {
             int timbre = timbres[tk];
+            char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
             if (likely(
                     midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
-                            && midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)) {
-                this->synth->noteOff(timbre, midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote);
+                    && midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)
+                    && note >= 0 && note <= 127) {
+                this->synth->noteOff(timbre, note);
             }
         }
         break;
@@ -268,14 +270,15 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
         // Some keyboards send note-off this way
         for (int tk = 0; tk < timbreIndex; tk++) {
             int timbre = timbres[tk];
+            char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
             if (likely(
                     midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
-                            && midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)) {
+                    && midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote
+                    && note >= 0 && note <= 127)) {
                 if (midiEvent.value[1] == 0) {
-                    this->synth->noteOff(timbre, midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote);
+                    this->synth->noteOff(timbre, note);
                 } else {
-                    this->synth->noteOn(timbre, midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote,
-                            midiEvent.value[1]);
+                    this->synth->noteOn(timbre, note, midiEvent.value[1]);
                     visualInfo->noteOn(timbre, true);
                 }
             }
@@ -288,7 +291,11 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
         break;
     case MIDI_POLY_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
-            this->synth->getTimbre(timbres[tk])->setMatrixPolyAfterTouch(midiEvent.value[0], INV127 * midiEvent.value[1]);
+            int timbre = timbres[tk];
+            char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+            if (likely(note >= 0 && note <= 127)) {
+                this->synth->getTimbre(timbres[tk])->setMatrixPolyAfterTouch(note, INV127 * midiEvent.value[1]);
+            }
         }
         break;
     case MIDI_AFTER_TOUCH:
