@@ -57,7 +57,7 @@ void Sequencer::setDisplaySequencer(FMDisplaySequencer* displaySequencer) {
 void Sequencer::reset(bool synthNoteOff) {
     millisTimer_ = 0;
     current16bitTimer_ = 0;
-    previousCurre_nt16bitTimer = MAX_TIME;
+    previousCurrent16bitTimer_ = MAX_TIME;
     stepNumberOfNotesOn_ = 0;
 
     for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
@@ -274,12 +274,16 @@ void Sequencer::mainSequencerTic(uint16_t counter) {
             return;
         }
         rewind();
-        previousCurre_nt16bitTimer = 1;
+        counter = 0;
+        previousCurrent16bitTimer_ = 1;
         lastBeat_ = 1;
         // Midi clock real start
         if (!externalClock_) {
             songPosition_ = 0;
             synth_->midiClockStart(false);
+        }
+        for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
+            lastInstrument16bitTimer_[i] = 0;
         }
     }
 
@@ -287,10 +291,10 @@ void Sequencer::mainSequencerTic(uint16_t counter) {
 
 
     // at 120 BPM we're called (.5 / 16 = 0.031ms) 31 times before a new current16bitTimer value
-    if (likely(previousCurre_nt16bitTimer == current16bitTimer_)) {
+    if (likely(previousCurrent16bitTimer_ == current16bitTimer_)) {
         return;
     } else {
-        previousCurre_nt16bitTimer = current16bitTimer_;
+        previousCurrent16bitTimer_ = current16bitTimer_;
     }
 
     //

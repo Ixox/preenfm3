@@ -203,7 +203,7 @@ private:
     uint32_t millisTimer_;
     float midiClockTimer_;
     uint16_t current16bitTimer_;
-    uint16_t previousCurre_nt16bitTimer;
+    uint16_t previousCurrent16bitTimer_;
     uint32_t sequenceDuration_;
     bool running_;
     bool extMidiRunning_;

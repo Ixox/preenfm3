@@ -77,7 +77,7 @@ const struct MenuItem allMenus[]  = {
         },
         {
                 MENU_MIXER_SAVE_ENTER_NAME,
-                "!Mixer",
+                "Mixer",
                 MENUTYPE_ENTERNAME,
                 12,
                 {MENU_DONE}
@@ -106,7 +106,7 @@ const struct MenuItem allMenus[]  = {
         },
         {
                 MENU_PRESET_SAVE_ENTER_NAME,
-                "!Preset",
+                "Preset",
                 MENUTYPE_ENTERNAME,
                 12,
                 {MENU_DONE}
@@ -157,7 +157,7 @@ const struct MenuItem allMenus[]  = {
         },
         {
                 MENU_SEQUENCER_SAVE_ENTER_NAME,
-                "!Seq",
+                "Seq",
                 MENUTYPE_ENTERNAME,
                 12,
                 {MENU_DONE}
