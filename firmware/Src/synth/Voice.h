@@ -149,66 +149,71 @@ public:
     }
 
     void updateAllMixOscsAndPans() {
-        int *opInfo = algoOpInformation[(int) currentTimbre->getParamRaw()->engine1.algo];
         float inv65535 = .0000152587890625; // 1/ 65535
         int pan;
+        int numberOfMix = algoInformation[(int) (currentTimbre->getParamRaw()->engine1.algo)].mix;
 
-        if (likely(opInfo[0] == 1)) {
-            mix1 = currentTimbre->getParamRaw()->engineMix1.mixOsc1 + matrix.getDestination(MIX_OSC1) + matrix.getDestination(ALL_MIX);
-            // Optimization to check mix1 is between 0 and 1
-            mix1 = __USAT((int)(mix1 * 65536) , 16) * inv65535;
-            float pan1 = currentTimbre->getParamRaw()->engineMix1.panOsc1 + matrix.getDestination(PAN_OSC1) + matrix.getDestination(ALL_PAN) + 1.0f;
-            // pan1 is between -1 and 1 : Scale from 0.0 to 256
-            pan = __USAT((int )(pan1 * 128), 8);
-            pan1Left = panTable[pan] * .05f + pan1Left * .95f;
-            pan1Right = panTable[256 - pan] * .05f + pan1Right * .95f;
+
+        mix1 = currentTimbre->getParamRaw()->engineMix1.mixOsc1 + matrix.getDestination(MIX_OSC1) + matrix.getDestination(ALL_MIX);
+        // Optimization to check mix1 is between 0 and 1
+        mix1 = __USAT((int)(mix1 * 65536) , 16) * inv65535;
+        float pan1 = currentTimbre->getParamRaw()->engineMix1.panOsc1 + matrix.getDestination(PAN_OSC1) + matrix.getDestination(ALL_PAN) + 1.0f;
+        // pan1 is between -1 and 1 : Scale from 0.0 to 256
+        pan = __USAT((int )(pan1 * 128), 8);
+        pan1Left = panTable[pan] * .05f + pan1Left * .95f;
+        pan1Right = panTable[256 - pan] * .05f + pan1Right * .95f;
+
+        if (numberOfMix == 1) {
+            return;
         }
 
-        if (likely(opInfo[1] == 1)) {
-            mix2 = currentTimbre->getParamRaw()->engineMix1.mixOsc2 + matrix.getDestination(MIX_OSC2) + matrix.getDestination(ALL_MIX);
-            mix2 = __USAT((int)(mix2 * 65535) , 16) * inv65535;
-            float pan2 = currentTimbre->getParamRaw()->engineMix1.panOsc2 + matrix.getDestination(PAN_OSC2) + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int )(pan2 * 128), 8);
-            pan2Left = panTable[pan] * .05f + pan2Left * .95f;
-            pan2Right = panTable[256 - pan] * .05f + pan2Right * .95f;
+        mix2 = currentTimbre->getParamRaw()->engineMix1.mixOsc2 + matrix.getDestination(MIX_OSC2) + matrix.getDestination(ALL_MIX);
+        mix2 = __USAT((int)(mix2 * 65535) , 16) * inv65535;
+        float pan2 = currentTimbre->getParamRaw()->engineMix1.panOsc2 + matrix.getDestination(PAN_OSC2) + matrix.getDestination(ALL_PAN) + 1.0f;
+        pan = __USAT((int )(pan2 * 128), 8);
+        pan2Left = panTable[pan] * .05f + pan2Left * .95f;
+        pan2Right = panTable[256 - pan] * .05f + pan2Right * .95f;
+
+        if (numberOfMix == 2) {
+            return;
         }
 
-        if (likely(opInfo[2] == 1)) {
-            mix3 = currentTimbre->getParamRaw()->engineMix2.mixOsc3 + matrix.getDestination(MIX_OSC3) + matrix.getDestination(ALL_MIX);
-            mix3 = __USAT((int)(mix3 * 65535) , 16) * inv65535;
-            float pan3 = currentTimbre->getParamRaw()->engineMix2.panOsc3 + matrix.getDestination(PAN_OSC3) + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int )(pan3 * 128), 8);
-            pan3Left = panTable[pan] * .05f + pan3Left * .95f;
-            pan3Right = panTable[256 - pan] * .05f + pan3Right * .95f;
+        mix3 = currentTimbre->getParamRaw()->engineMix2.mixOsc3 + matrix.getDestination(MIX_OSC3) + matrix.getDestination(ALL_MIX);
+        mix3 = __USAT((int)(mix3 * 65535) , 16) * inv65535;
+        float pan3 = currentTimbre->getParamRaw()->engineMix2.panOsc3 + matrix.getDestination(PAN_OSC3) + matrix.getDestination(ALL_PAN) + 1.0f;
+        pan = __USAT((int )(pan3 * 128), 8);
+        pan3Left = panTable[pan] * .05f + pan3Left * .95f;
+        pan3Right = panTable[256 - pan] * .05f + pan3Right * .95f;
+
+        if (numberOfMix == 3) {
+            return;
         }
 
-        if (likely(opInfo[3] == 1)) {
-            // No matrix for mix4 and pan4
-            mix4 = currentTimbre->getParamRaw()->engineMix2.mixOsc4 + matrix.getDestination(MIX_OSC4) + matrix.getDestination(ALL_MIX);
-            mix4 = __USAT((int)(mix4 * 65535) , 16) * inv65535;
-            float pan4 = currentTimbre->getParamRaw()->engineMix2.panOsc4 + matrix.getDestination(PAN_OSC4) + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int )(pan4 * 128), 8);
-            pan4Left = panTable[pan] * .05f + pan4Left * .95f;
-            pan4Right = panTable[256 - pan] * .05f + pan4Right * .95f;
+        // No matrix for mix4 and pan4
+        mix4 = currentTimbre->getParamRaw()->engineMix2.mixOsc4 + matrix.getDestination(MIX_OSC4) + matrix.getDestination(ALL_MIX);
+        mix4 = __USAT((int)(mix4 * 65535) , 16) * inv65535;
+        float pan4 = currentTimbre->getParamRaw()->engineMix2.panOsc4 + matrix.getDestination(PAN_OSC4) + matrix.getDestination(ALL_PAN) + 1.0f;
+        pan = __USAT((int )(pan4 * 128), 8);
+        pan4Left = panTable[pan] * .05f + pan4Left * .95f;
+        pan4Right = panTable[256 - pan] * .05f + pan4Right * .95f;
+
+        if (numberOfMix == 4) {
+            return;
         }
 
-        if (likely(opInfo[4] == 1)) {
-            mix5 = currentTimbre->getParamRaw()->engineMix3.mixOsc5 + matrix.getDestination(ALL_MIX);
-            mix5 = __USAT((int)(mix5 * 65535) , 16) * inv65535;
-            float pan5 = currentTimbre->getParamRaw()->engineMix3.panOsc5 + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int )(pan5 * 128), 8);
-            pan5Left = panTable[pan] * .05f + pan5Left * .95f;
-            pan5Right = panTable[256 - pan] * .05f + pan5Right * .95f;
-        }
+        mix5 = currentTimbre->getParamRaw()->engineMix3.mixOsc5 + matrix.getDestination(ALL_MIX);
+        mix5 = __USAT((int)(mix5 * 65535) , 16) * inv65535;
+        float pan5 = currentTimbre->getParamRaw()->engineMix3.panOsc5 + matrix.getDestination(ALL_PAN) + 1.0f;
+        pan = __USAT((int )(pan5 * 128), 8);
+        pan5Left = panTable[pan] * .05f + pan5Left * .95f;
+        pan5Right = panTable[256 - pan] * .05f + pan5Right * .95f;
 
-        if (likely(opInfo[5] == 1)) {
-            mix6 = currentTimbre->getParamRaw()->engineMix3.mixOsc6 + matrix.getDestination(ALL_MIX);
-            mix6 = __USAT((int)(mix6 * 65535) , 16) * inv65535;
-            float pan6 = currentTimbre->getParamRaw()->engineMix3.panOsc6 + matrix.getDestination(ALL_PAN) + 1.0f;
-            pan = __USAT((int )(pan6 * 128), 8);
-            pan6Left = panTable[pan] * .05f + pan6Left * .95f;
-            pan6Right = panTable[256 - pan] * .05f + pan6Right * .95f;
-        }
+        mix6 = currentTimbre->getParamRaw()->engineMix3.mixOsc6 + matrix.getDestination(ALL_MIX);
+        mix6 = __USAT((int)(mix6 * 65535) , 16) * inv65535;
+        float pan6 = currentTimbre->getParamRaw()->engineMix3.panOsc6 + matrix.getDestination(ALL_PAN) + 1.0f;
+        pan = __USAT((int )(pan6 * 128), 8);
+        pan6Left = panTable[pan] * .05f + pan6Left * .95f;
+        pan6Right = panTable[256 - pan] * .05f + pan6Right * .95f;
     }
 
     void midiClockSongPositionStep(int songPosition, bool recomputeNext);

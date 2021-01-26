@@ -1268,13 +1268,13 @@ void Voice::nextBlock() {
                 float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div3TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm3 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div3TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix3 * div3TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car3 * pan3Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car3 * pan3Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car3 * pan2Right + car5 * pan3Right;
+                *sample++ = car1 * pan1Left + car3 * pan2Left + car5 * pan3Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -1378,10 +1378,10 @@ void Voice::nextBlock() {
                 float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div2TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car5 * pan2Right;
+                *sample++ = car1 * pan1Left + car5 * pan2Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -1493,10 +1493,10 @@ void Voice::nextBlock() {
                 f5xm1 = f5x;
 
                 oscState4_.frequency = freq5 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div2TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car4 * pan4Right + car1 * pan1Right;
-                *sample++ = car4 * pan4Left + car1 * pan1Left;
+                *sample++ = car4 * pan2Right + car1 * pan1Right;
+                *sample++ = car4 * pan2Left + car1 * pan1Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -1617,10 +1617,10 @@ void Voice::nextBlock() {
                 f4xm1 = f4x;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car3 * pan3Right + car1 * pan1Right;
-                *sample++ = car3 * pan3Left + car1 * pan1Left;
+                *sample++ = car3 * pan2Right + car1 * pan1Right;
+                *sample++ = car3 * pan2Left + car1 * pan1Left;
 
                 env1Value += env1Inc;
                 env3Value += env3Inc;
@@ -1740,10 +1740,10 @@ void Voice::nextBlock() {
                 f5xm1 = f5x;
 
                 oscState4_.frequency = freq5 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div2TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car4 * pan4Right + car1 * pan1Right;
-                *sample++ = car4 * pan4Left + car1 * pan1Left;
+                *sample++ = car4 * pan2Right + car1 * pan1Right;
+                *sample++ = car4 * pan2Left + car1 * pan1Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -1846,13 +1846,13 @@ void Voice::nextBlock() {
                 float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div3TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm3 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div3TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix3 * div3TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car3 * pan3Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car3 * pan3Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car3 * pan2Right + car5 * pan3Right;
+                *sample++ = car1 * pan1Left + car3 * pan2Left + car5 * pan3Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -1959,10 +1959,10 @@ void Voice::nextBlock() {
                 f5xm1 = f5x;
 
                 oscState3_.frequency = freq4 * voiceIm2 + freq5 * voiceIm3 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car3 * pan3Right;
-                *sample++ = car1 * pan1Left + car3 * pan3Left;
+                *sample++ = car1 * pan1Right + car3 * pan2Right;
+                *sample++ = car1 * pan1Left + car3 * pan2Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -2074,10 +2074,10 @@ void Voice::nextBlock() {
                 float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
 
                 oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div2TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car4 * pan4Right + car1 * pan1Right;
-                *sample++ = car4 * pan4Left + car1 * pan1Left;
+                *sample++ = car4 * pan2Right + car1 * pan1Right;
+                *sample++ = car4 * pan2Left + car1 * pan1Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -2183,10 +2183,10 @@ void Voice::nextBlock() {
                 float freq6 = osc6Values[k];
 
                 oscState3_.frequency = freq4 * voiceIm2 + freq5 * voiceIm3 + freq6 * voiceIm4 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car3 * pan3Right + car1 * pan1Right;
-                *sample++ = car3 * pan3Left + car1 * pan1Left;
+                *sample++ = car3 * pan2Right + car1 * pan1Right;
+                *sample++ = car3 * pan2Left + car1 * pan1Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -2295,10 +2295,10 @@ void Voice::nextBlock() {
                 f4xm1 = f4x;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
 
-                *sample++ = car3 * pan3Right + car1 * pan1Right;
-                *sample++ = car3 * pan3Left + car1 * pan1Left;
+                *sample++ = car3 * pan2Right + car1 * pan1Right;
+                *sample++ = car3 * pan2Left + car1 * pan1Left;
 
                 env1Value += env1Inc;
                 env3Value += env3Inc;
@@ -2658,13 +2658,13 @@ void Voice::nextBlock() {
                 float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div3TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div3TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div3TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix3 * div3TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car4 * pan4Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car4 * pan4Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car4 * pan2Right + car5 * pan3Right;
+                *sample++ = car1 * pan1Left  + car4 * pan2Left  + car5 * pan3Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -2766,10 +2766,10 @@ void Voice::nextBlock() {
                 float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div3TimesVelocity;
 
                 oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div3TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix3 * div3TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car2 * pan2Right + car4 * pan4Right;
-                *sample++ = car1 * pan1Left + car2 * pan2Left + car4 * pan4Left;
+                *sample++ = car1 * pan1Right + car2 * pan2Right + car4 * pan3Right;
+                *sample++ = car1 * pan1Left + car2 * pan2Left + car4 * pan3Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -2861,13 +2861,13 @@ void Voice::nextBlock() {
                 float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div4TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div4TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix3 * div4TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div4TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix4 * div4TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car2 * pan2Right + car4 * pan4Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car2 * pan2Left + car4 * pan4Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car2 * pan2Right + car4 * pan3Right + car5 * pan4Right;
+                *sample++ = car1 * pan1Left + car2 * pan2Left + car4 * pan3Left + car5 * pan4Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -2960,13 +2960,13 @@ void Voice::nextBlock() {
                 float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div4TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div4TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix3 * div4TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div4TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix4 * div4TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car3 * pan3Right + car4 * pan4Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car3 * pan3Left + car4 * pan4Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car3 * pan2Right + car4 * pan3Right + car5 * pan4Right;
+                *sample++ = car1 * pan1Left  + car3 * pan2Left  + car4 * pan3Left  + car5 * pan4Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -3174,12 +3174,12 @@ void Voice::nextBlock() {
                 float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div3TimesVelocity;
 
-                float car6 = osc6Values[k] * env6Value * mix6 * div3TimesVelocity;
+                float car6 = osc6Values[k] * env6Value * mix3 * div3TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car3 * pan3Right + car6 * pan6Right;
-                *sample++ = car1 * pan1Left + car3 * pan3Left + car6 * pan6Left;
+                *sample++ = car1 * pan1Right + car3 * pan2Right + car6 * pan3Right;
+                *sample++ = car1 * pan1Left + car3 * pan2Left + car6 * pan3Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -3282,10 +3282,10 @@ void Voice::nextBlock() {
                 float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div4TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm2 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div4TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix4 * div4TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car5 * pan5Right;
-                *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car5 * pan5Left;
+                *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car5 * pan4Right;
+                *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car5 * pan4Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;
@@ -3394,10 +3394,10 @@ void Voice::nextBlock() {
                 oscState3_.frequency = freq4 * voiceIm1 + oscState3_.mainFrequencyPlusMatrix;
                 float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div4TimesVelocity;
 
-                float car6 = osc6Values[k] * env6Value * mix6 * div4TimesVelocity;
+                float car6 = osc6Values[k] * env6Value * mix4 * div4TimesVelocity;
 
-                *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car6 * pan6Right;
-                *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car6 * pan6Left;
+                *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car6 * pan4Right;
+                *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car6 * pan4Left;
 
                 env1Value += env1Inc;
                 env2Value += env2Inc;

@@ -154,9 +154,11 @@ public:
     void oscilloRecord32Samples(float *samples);
 
     void drawAlgo(int algo);
-    void highlightOperator(int algo, int op);
+    void highlightOperator(int op);
+    void eraseHighlightOperator(int op);
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
+    void clearAlgoFG();
 
     void setCharColor(TFT_COLOR newColor) {
         charColor = (uint8_t) newColor;

@@ -854,7 +854,9 @@ void FMDisplayMenu::newMenuState(FullState *fullState) {
         case MENU_PRESET_SAVE_SELECT:
         case MENU_PRESET_RANDOMIZER:
             tft_->print(" ");
+            tft_->setCharColor(COLOR_YELLOW);
             tft_->print(synthState_->params->presetName);
+            tft_->setCharColor(COLOR_RED);
             break;
 
         case MENU_DEFAULT_MIXER_LOAD:
@@ -901,63 +903,63 @@ void FMDisplayMenu::displayMenuState(FullState *fullState) {
     switch (synthState_->fullState.currentMenuItem->menuState) {
         case MENU_PRESET_LOAD_SELECT:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - bank");
+            tft_->printSmallChars("a - bank");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - preset");
+            tft_->printSmallChars("d - preset");
             break;
         case MENU_PRESET_SAVE_SELECT:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - save in file");
+            tft_->printSmallChars("a - save in file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - save in preset");
+            tft_->printSmallChars("d - save in preset");
             break;
         case MENU_SEQUENCER_SAVE_SELECT:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - save in file");
+            tft_->printSmallChars("a - save in file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - save in sequence");
+            tft_->printSmallChars("d - save in sequence");
             break;
         case MENU_SEQUENCER_LOAD_SELECT:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - load from file");
+            tft_->printSmallChars("a - load from file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - sequence");
+            tft_->printSmallChars("d - sequence");
             break;
         case MENU_MIXER_LOAD_SELECT:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - mixer file");
+            tft_->printSmallChars("a - mixer file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - mixer");
+            tft_->printSmallChars("d - mixer");
             break;
         case MENU_MIXER_SAVE_SELECT:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - save in mixer file");
+            tft_->printSmallChars("a - save in mixer file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - save in mixer");
+            tft_->printSmallChars("d - save in mixer");
             break;
         case MENU_PRESET_LOAD_SELECT_DX7_BANK:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - dx7 sysex file");
+            tft_->printSmallChars("a - dx7 sysex file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("4 - preset");
+            tft_->printSmallChars("d - preset");
             break;
         case MENU_PRESET_SAVE_ENTER_NAME:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
             tft_->printSmallChars("    save in file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         case MENU_MIXER_SAVE_ENTER_NAME:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
             tft_->printSmallChars("    save in mixer file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         case MENU_SEQUENCER_SAVE_ENTER_NAME:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 6 * TFT_BIG_CHAR_HEIGHT + 6);
             tft_->printSmallChars("    save in sequence file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         case MENU_PRESET_RANDOMIZER:
             tft_->setCharBackgroundColor(COLOR_BLACK);
@@ -974,25 +976,25 @@ void FMDisplayMenu::displayMenuState(FullState *fullState) {
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 7 * TFT_BIG_CHAR_HEIGHT + 6);
             tft_->printSmallChars("    Create preset bank");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         case MENU_SD_CREATE_MIXER_FILE:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 7 * TFT_BIG_CHAR_HEIGHT + 6);
             tft_->printSmallChars("    Create mixer bank");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         case MENU_SD_CREATE_SEQUENCE_FILE:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 7 * TFT_BIG_CHAR_HEIGHT + 6);
             tft_->printSmallChars("    Create sequence file");
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         case MENU_SD_RENAME_MIXER_ENTER_NAME:
         case MENU_SD_RENAME_PRESET_ENTER_NAME:
         case MENU_SD_RENAME_SEQUENCE_ENTER_NAME:
             tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 8 * TFT_BIG_CHAR_HEIGHT + 6);
-            tft_->printSmallChars("1 - move    4 - change char");
+            tft_->printSmallChars("a - move    d - change char");
             break;
         default:
             break;

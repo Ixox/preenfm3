@@ -214,6 +214,7 @@ extern const struct OneSynthParams defaultPreset;
 extern const struct OneSynthParams newPresetParams;
 
 extern struct AlgoInformation algoInformation[];
+extern const uint8_t* allAlgos[];
 
 #define OPERATOR_CARRIER 1
 #define OPERATOR_MODULATOR 2

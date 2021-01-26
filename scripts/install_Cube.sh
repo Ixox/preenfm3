@@ -6,7 +6,7 @@ echo "=============================="
 echo "  Flash preenfm2 bootloader"
 echo "=============================="
 
-${BINPATH} -c port=SWD -w ./p3_boot_1.07.bin 0x8000000
+${BINPATH} -c port=SWD -w ./p3_boot_1_07.bin 0x8000000
 
 echo ""
 echo ""
@@ -14,5 +14,5 @@ echo "=============================="
 echo "  Flash preenfm2 firmware..."
 echo "=============================="
  
-${BINPATH} -c port=SWD -w ./p3_0101z.bin 0x8020000
+${BINPATH} -c port=SWD -w ./p3_0_104.bin 0x8020000
 

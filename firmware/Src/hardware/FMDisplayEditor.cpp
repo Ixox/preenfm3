@@ -2966,6 +2966,21 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             imChangedCounter_[encoder6] = 4;
             break;
         }
+        case ROW_OSC_MIX1:
+        case ROW_OSC_MIX3:
+        case ROW_OSC_MIX2: {
+            if (hideParam_[encoder6]) {
+                return;
+            }
+            int mixNumber = (currentRow - ROW_OSC_MIX1) * 2 + ((encoder & 0x2) >> 1);
+            int currentAlgo = (int) synthState_->params->engine1.algo;
+            int operatorNumber = allAlgos[currentAlgo][mixNumber * 2 + 1] - 1;
+
+            tft_->highlightOperator(operatorNumber);
+            mixChangedCounter_[encoder6] = 4;
+            mixChangeOperatorNumber_[encoder6] = operatorNumber;
+            break;
+        }
         case ROW_OSC1:
         case ROW_OSC2:
         case ROW_OSC3:
@@ -3143,8 +3158,8 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                 tft_->print(synthState_->fullState.operatorNumber + 1);
                 tft_->print(" ");
                 // Highlight operator in the algo schema
-                tft_->highlightOperator(synthState_->params->engine1.algo,
-                    synthState_->fullState.operatorNumber);
+                tft_->clearAlgoFG();
+                tft_->highlightOperator(synthState_->fullState.operatorNumber);
             }
             tft_->print(page->states[synthState_->fullState.buttonState[page->buttonId]]->stateLabel);
             resetHideParams();
@@ -3200,23 +3215,30 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     } else {
                         if (button < 5) {
                             tft_->print((int) im.source);
-                            tft_->print("-");
+                            tft_->print('-');
                             tft_->print((int) im.destination);
                         } else {
                             tft_->print("Fdbk");
                         }
                     }
                 } else if (rowEncoder.row >= ROW_OSC_MIX1 && rowEncoder.row <= ROW_OSC_MIX3) {
-                    // Add 1 if encoder >= 2
                     int mixNumber = (rowEncoder.row - ROW_OSC_MIX1) * 2 + ((rowEncoder.encoder & 0x2) >> 1);
+                    int currentAlgo = (int) synthState_->params->engine1.algo;
+                    int numberOfMix = algoInformation[currentAlgo].mix;
 
-                    // Let's hide modulator operator in the MIX page
-                    if (!carrierOperator[(int) synthState_->params->engine1.algo][mixNumber]) {
+
+                    if (mixNumber < numberOfMix) {
+                        // Let's display the operator number associated to the mix number
+                        tft_->print(paramRow->paramName[rowEncoder.encoder]);
+
+                        tft_->printSmallChar('(');
+                        tft_->printSmallChar(allAlgos[currentAlgo][mixNumber * 2 + 1]);
+                        tft_->printSmallChar(')');
+                    } else {
                         tft_->setCharColor(COLOR_DARK_GRAY);
-                        hideParam_[button] = true;
+                        tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                        hideParam_[button] = true;    hideParam_[button] = true;
                     }
-                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
-
                 } else if (rowEncoder.row == ROW_EFFECT && rowEncoder.encoder > 0) {
                     int effect = synthState_->params->effect.type;
                     if (filterRowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
@@ -3294,6 +3316,12 @@ void FMDisplayEditor::tempoClick() {
             if (imChangedCounter_[e] == 0) {
                 struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][e];
                 tft_->eraseHighlightIM(e, im.source, im.destination);
+            }
+        }
+        if (mixChangedCounter_[e] > 0) {
+            mixChangedCounter_[e]--;
+            if (mixChangedCounter_[e] == 0) {
+                tft_->eraseHighlightOperator(mixChangeOperatorNumber_[e]);
             }
         }
     }

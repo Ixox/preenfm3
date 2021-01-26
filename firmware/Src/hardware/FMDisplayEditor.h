@@ -97,6 +97,8 @@ private:
     // Value Changed info
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
     uint8_t imChangedCounter_[NUMBER_OF_ENCODERS];
+    uint8_t mixChangedCounter_[NUMBER_OF_ENCODERS];
+    uint8_t mixChangeOperatorNumber_[NUMBER_OF_ENCODERS];
     int currentTimbre_;
     bool multipleEdition_;
 
