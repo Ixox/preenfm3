@@ -713,7 +713,16 @@ void TftAlgo::drawNumber(int x, int y, int opNum) {
     }
 }
 
-void TftAlgo::highlightOperator(uint8_t opPosition) {
+void TftAlgo::highlightOperator(bool draw, uint8_t opNum) {
+
+    uint8_t opPosition = operatorPosition_[opNum];
+
+    if (unlikely(opPosition == 0)) {
+        return;
+    }
+
+    int32_t color32 = draw ? 0xffffffff : 0x0;
+    int16_t color16 = draw ? 0xffff : 0x0;
 
     int x1 = GETX1(opPosition) - 2;
     int y1 = GETY1(opPosition) - 2;
@@ -726,14 +735,14 @@ void TftAlgo::highlightOperator(uint8_t opPosition) {
     }
 
     for (int x = x1; x < x1 + 20; x += 4) {
-        *((int32_t*) (&fgBuffer_[(x) + (y1) * 80])) = 0xffffffff;
-        *((int32_t*) (&fgBuffer_[(x) + (y1 + 1) * 80])) = 0xffffffff;
-        *((int32_t*) (&fgBuffer_[(x) + (y1 + 19) * 80])) = 0xffffffff;
-        *((int32_t*) (&fgBuffer_[(x) + (y1 + 20) * 80])) = 0xffffffff;
+        *((int32_t*) (&fgBuffer_[(x) + (y1) * 80])) = color32;
+        *((int32_t*) (&fgBuffer_[(x) + (y1 + 1) * 80])) = color32;
+        *((int32_t*) (&fgBuffer_[(x) + (y1 + 19) * 80])) = color32;
+        *((int32_t*) (&fgBuffer_[(x) + (y1 + 20) * 80])) = color32;
     }
     for (int y = y1; y < y1 + 20; y++) {
-        *((int16_t*) (&fgBuffer_[(x1) + (y) * 80])) = 0xffff;
-        *((int16_t*) (&fgBuffer_[(x1 + 19) + (y) * 80])) = 0xffff;
+        *((int16_t*) (&fgBuffer_[(x1) + (y) * 80])) = color16;
+        *((int16_t*) (&fgBuffer_[(x1 + 19) + (y) * 80])) = color16;
     }
 }
 
@@ -793,11 +802,6 @@ void TftAlgo::drawMix(uint8_t imNum) {
     setColor(0x0ff0);
 }
 
-void TftAlgo::drawAlgoOperator(int algo, int op) {
-    if (operatorPosition_[op] != 0) {
-        highlightOperator (operatorPosition_[op]);
-    }
-}
 
 void TftAlgo::drawAlgo(int algo) {
     int idx = 0;

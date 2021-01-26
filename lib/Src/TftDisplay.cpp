@@ -55,6 +55,7 @@ enum {
     TFT_DRAW_OSCILLO,
     TFT_DRAW_ALGO,
     TFT_HIGHLIGHT_ALGO_OPERATOR,
+    TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR,
     TFT_HIGHTLIGHT_ALGO_IM,
     TFT_ERASE_HIGHTLIGHT_ALGO_IM,
     TFT_CLEAR_ALGO_FG,
@@ -563,34 +564,25 @@ void TftDisplay::tic(bool checkDisplayPower) {
         }
 
         break;
+    case TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR:
+        this->tftAlgo->setFGBufferAdress(fgAlgo);
+        this->tftAlgo->highlightOperator(false, currentAction.param1);
+
+        // Switch to draw_algo step 2
+        // To copy ALGO to TFT
+        fgAlgoDirty = true;
+        currentAction.actionType = TFT_DRAW_ALGO;
+        currentAction.param3 = 3;
+        break;
     case TFT_HIGHLIGHT_ALGO_OPERATOR:
-        switch (currentAction.param3) {
-        case 0:
-            // Clear ALGO ON Foreground
-            if (PFM_IS_DMA2D_READY()) {
-                MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_R2M);
-                WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[COLOR_BLACK]);
+        this->tftAlgo->setFGBufferAdress(fgAlgo);
+        this->tftAlgo->highlightOperator(true, currentAction.param1);
 
-                MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
-                // 40 and not 80 because fgAlgo is a 8 bits buffer
-                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo));
-                PFM_START_DMA2D();
-
-                currentAction.param3 = 1;
-            }
-            break;
-        case 1:
-            this->tftAlgo->setFGBufferAdress(fgAlgo);
-            this->tftAlgo->drawAlgoOperator(currentAction.param1, currentAction.param2);
-
-            // Switch to draw_algo step 2
-            // To copy ALGO to TFT
-            fgAlgoDirty = true;
-            currentAction.actionType = TFT_DRAW_ALGO;
-            currentAction.param3 = 3;
-            break;
-        }
+        // Switch to draw_algo step 2
+        // To copy ALGO to TFT
+        fgAlgoDirty = true;
+        currentAction.actionType = TFT_DRAW_ALGO;
+        currentAction.param3 = 3;
         break;
     case TFT_CLEAR_ALGO_FG:
         // Clear ALGO ON Foreground
@@ -1107,11 +1099,24 @@ void TftDisplay::drawAlgo(int algo) {
     tftActions.insert(newAction);
 }
 
-void TftDisplay::highlightOperator(int algo, int op) {
+void TftDisplay::clearAlgoFG() {
+    TFTAction newAction;
+    newAction.actionType = TFT_CLEAR_ALGO_FG;
+    tftActions.insert(newAction);
+}
+
+void TftDisplay::highlightOperator(int op) {
     TFTAction newAction;
     newAction.actionType = TFT_HIGHLIGHT_ALGO_OPERATOR;
-    newAction.param1 = algo;
-    newAction.param2 = op;
+    newAction.param1 = op;
+    newAction.param3 = 0;
+    tftActions.insert(newAction);
+}
+
+void TftDisplay::eraseHighlightOperator(int op) {
+    TFTAction newAction;
+    newAction.actionType = TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR;
+    newAction.param1 = op;
     newAction.param3 = 0;
     tftActions.insert(newAction);
 }

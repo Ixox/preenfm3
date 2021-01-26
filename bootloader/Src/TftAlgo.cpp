@@ -28,7 +28,7 @@ void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t
 void TftAlgo::drawNumber(int x, int y, int opNum) {
 }
 
-void TftAlgo::highlightOperator(uint8_t opPosition) {
+void TftAlgo::highlightOperator(bool draw, uint8_t opPosition) {
 }
 
 void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
@@ -42,9 +42,6 @@ void TftAlgo::highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t op
 }
 
 void TftAlgo::drawMix(uint8_t imNum) {
-}
-
-void TftAlgo::drawAlgoOperator(int algo, int op) {
 }
 
 void TftAlgo::drawAlgo(int algo) {
