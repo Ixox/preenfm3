@@ -146,6 +146,13 @@ public:
         return numberOfVoiceInverse_;
     }
 
+    bool isUnisonMode() {
+    	return params_.engine1.playMode == PLAY_MODE_UNISON;
+    }
+
+    void stopPlayingNow();
+
+
 private:
 
     // MiniPal Arpegiator
@@ -224,6 +231,9 @@ private:
     bool lowerNoteReleased_;
     // static
     static uint32_t voiceIndex_;
+
+    // Unison phase
+    static float unisonPhase[14];
 };
 
 #endif /* TIMBRE_H_ */

@@ -179,9 +179,9 @@ void Osc::init(SynthState* synthState, struct OscillatorParams *oscParams, Desti
 
 
 
-void Osc::newNote(struct OscState* oscState, float newNoteFrequency) {
+void Osc::newNote(struct OscState* oscState, float newNoteFrequency, float phase) {
 
-    oscState->index = waveTables[(int) oscillator->shape].max * .25f;
+    oscState->index = waveTables[(int) oscillator->shape].max * phase;
     switch ((int)oscillator->frequencyType) {
     case OSC_FT_KEYBOARD:
         oscState->mainFrequency = newNoteFrequency * oscillator->frequencyMul * (1.0f + oscillator->detune * .05f) * (synthState_->mixerState.tuning_ * INV440);
