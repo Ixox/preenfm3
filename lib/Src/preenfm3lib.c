@@ -93,14 +93,6 @@ void preenfm3ForceTftBacklight() {
 }
 
 
-void preenfm3TurnOnTftBacklight() {
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET);
-}
-
-void preenfm3TurnOffTftBacklight() {
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
-}
-
 uint32_t preenfm3LibInitSD() {
     uint32_t sdReturn = ADAFRUIT_802_SD_Init(0);
     uint32_t sdReturn2  = 0;

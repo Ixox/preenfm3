@@ -641,6 +641,11 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
             allNoteOff(timbre);
             break;
         case MIXER_VALUE_NUMBER_OF_VOICES:
+            // If unison stop sound !
+            if (timbres_[timbre].isUnisonMode()) {
+                timbres_[timbre].stopPlayingNow();
+            }
+
             if (newValue == oldValue) {
                 return;
             } else if (newValue > oldValue) {
@@ -653,6 +658,7 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
                     timbres_[timbre].setVoiceNumber(v, -1);
                 }
             }
+
             timbres_[timbre].numberOfVoicesChanged(newValue);
             break;
         case MIXER_VALUE_COMPRESSOR:

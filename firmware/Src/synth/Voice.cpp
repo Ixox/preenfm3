@@ -431,7 +431,7 @@ void Voice::glideToNote(short newNote, float newNoteFrequency) {
     currentTimbre->osc6_.glideToNote(&oscState6_, newNoteFrequency);
 }
 
-void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short velocity, uint32_t index) {
+void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short velocity, uint32_t index, float phase) {
     // Update index : so that few chance to be chosen again during the quick dying
     this->index = index;
     // We can glide in mono and unison
@@ -449,6 +449,8 @@ void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short veloci
         this->pendingNoteVelocity = velocity;
         this->pendingNote = newNote;
         this->pendingNoteFrequency = newNoteFrequency;
+        this->phase_ = phase;
+
         // Not release anymore... not available for new notes...
         this->released = false;
 
@@ -493,7 +495,7 @@ float Voice::getNoteRealFrequencyEstimation(float newNoteFrequency) {
     return currentTimbre->osc1_.getNoteRealFrequencyEstimation(&oscState1_, newNoteFrequency);
 }
 
-void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32_t index) {
+void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32_t index, float phase) {
 
 
     // On noteOn we can only glide in mono and unison with glideType ALWAYS
@@ -512,12 +514,17 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32
         this->note = newNote;
         this->noteFrequency = newNoteFrequency;
 
-        currentTimbre->osc1_.newNote(&oscState1_, newNoteFrequency);
-        currentTimbre->osc2_.newNote(&oscState2_, newNoteFrequency);
-        currentTimbre->osc3_.newNote(&oscState3_, newNoteFrequency);
-        currentTimbre->osc4_.newNote(&oscState4_, newNoteFrequency);
-        currentTimbre->osc5_.newNote(&oscState5_, newNoteFrequency);
-        currentTimbre->osc6_.newNote(&oscState6_, newNoteFrequency);
+        if (unlikely(currentTimbre->params_.engine2.unisonDetune < 0.0f)) {
+            phase = 0.25f;
+        }
+
+        currentTimbre->osc1_.newNote(&oscState1_, newNoteFrequency, phase);
+        currentTimbre->osc1_.newNote(&oscState1_, newNoteFrequency, phase);
+        currentTimbre->osc2_.newNote(&oscState2_, newNoteFrequency, phase);
+        currentTimbre->osc3_.newNote(&oscState3_, newNoteFrequency, phase);
+        currentTimbre->osc4_.newNote(&oscState4_, newNoteFrequency, phase);
+        currentTimbre->osc5_.newNote(&oscState5_, newNoteFrequency, phase);
+        currentTimbre->osc6_.newNote(&oscState6_, newNoteFrequency, phase);
     }
 
     this->midiVelocity = velocity;
@@ -554,9 +561,9 @@ void Voice::endNoteOrBeginNextOne() {
     if (this->newNotePending) {
         // pendingNote can be 255 : see Voice:noteOff
         if (pendingNote <= 127) {
-            noteOn(pendingNote, pendingNoteFrequency, pendingNoteVelocity, index);
+            noteOn(pendingNote, pendingNoteFrequency, pendingNoteVelocity, index, phase_);
         } else {
-            noteOn(pendingNote - 128, pendingNoteFrequency, pendingNoteVelocity, index);
+            noteOn(pendingNote - 128, pendingNoteFrequency, pendingNoteVelocity, index, phase_);
             this->noteAlreadyFinished = 1;
         }
     } else {
