@@ -27,10 +27,12 @@ enum MIXER_BANK_VERSION {
     // Compressor
     MIXER_BANK_VERSION3,
     // User CC
-    MIXER_BANK_VERSION4
+    MIXER_BANK_VERSION4,
+    // MPE
+    MIXER_BANK_VERSION5
 };
 
-#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION4
+#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION5
 
 struct MixerInstrumentState {
     uint8_t out;
@@ -67,12 +69,14 @@ public:
     uint8_t levelMeterWhere_;
     struct MixerInstrumentState instrumentState_[NUMBER_OF_TIMBRES];
     uint8_t userCC_[4];
+    bool MPE_inst1_;
 
 private:
     void restoreFullStateVersion1(char *buffer);
     void restoreFullStateVersion2(char *buffer);
     void restoreFullStateVersion3(char *buffer);
     void restoreFullStateVersion4(char *buffer);
+    void restoreFullStateVersion5(char *buffer);
     void setDefaultValues();
 };
 

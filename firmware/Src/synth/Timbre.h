@@ -78,6 +78,9 @@ public:
     void noteOn(char note, char velocity);
     void noteOff(char note);
 
+    void noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity);
+    void noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff);
+
     void preenNoteOn(char note, char velocity);
     inline void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
     void preenNoteOff(char note);
@@ -96,7 +99,10 @@ public:
     void setHoldPedal(int value);
 
     void resetMatrixDestination(float oldValue);
+
     void setMatrixSource(enum SourceEnum source, float newValue);
+    void setMatrixSourceMPE(uint8_t channel, enum SourceEnum source, float newValue);
+
     void setMatrixPolyAfterTouch(uint8_t note, float newValue);
     void verifyLfoUsed(int encoder, float oldValue, float newValue);
 

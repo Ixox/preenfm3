@@ -33,6 +33,7 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     for (int i = 0; i < 12; i++) {
         buffer[index++] = mixName_[i];
     }
+    buffer[index++] = MPE_inst1_ ? 1 : 0;
     buffer[index++] = currentChannel_;
     buffer[index++] = globalChannel_;
     buffer[index++] = midiThru_;
@@ -94,9 +95,10 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     for (int i = 0; i < 12; i++) {
         buffer[index++] = defaultMixName[i];
     }
-    buffer[index++] = currentChannel_;
-    buffer[index++] = globalChannel_;
-    buffer[index++] = midiThru_;
+    buffer[index++] = 0;
+    buffer[index++] = 0;
+    buffer[index++] = 0;
+    buffer[index++] = 0;
 
     float defaultTuning = 440.0f;
     uint8_t *tuningUint8 = (uint8_t*) &defaultTuning;
@@ -158,6 +160,9 @@ void MixerState::restoreFullState(char *buffer) {
         case MIXER_BANK_VERSION4:
             restoreFullStateVersion4(buffer);
             break;
+        case MIXER_BANK_VERSION5:
+            restoreFullStateVersion5(buffer);
+            break;
     }
 }
 
@@ -173,6 +178,7 @@ void MixerState::setDefaultValues() {
     for (int u = 0; u < 4; u++) {
         userCC_[u] = 34 + u;
     }
+    MPE_inst1_ = 0;
 }
 
 void MixerState::restoreFullStateVersion1(char *buffer) {
@@ -314,6 +320,58 @@ void MixerState::restoreFullStateVersion4(char *buffer) {
     for (int i = 0; i < 12; i++) {
         mixName_[i] = buffer[index++];
     }
+    currentChannel_ = buffer[index++];
+    globalChannel_ = buffer[index++];
+    midiThru_ = buffer[index++];
+
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    tuningUint8[0] = buffer[index++];
+    tuningUint8[1] = buffer[index++];
+    tuningUint8[2] = buffer[index++];
+    tuningUint8[3] = buffer[index++];
+
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        instrumentState_[t].out = buffer[index++];
+        instrumentState_[t].midiChannel = buffer[index++];
+        instrumentState_[t].firstNote = buffer[index++];
+        instrumentState_[t].lastNote = buffer[index++];
+        instrumentState_[t].shiftNote = buffer[index++];
+        instrumentState_[t].numberOfVoices = buffer[index++];
+        instrumentState_[t].scalaEnable = buffer[index++];
+        instrumentState_[t].scalaMapping = buffer[index++];
+        instrumentState_[t].scaleScaleNumber = buffer[index++] << 8;
+        instrumentState_[t].scaleScaleNumber += buffer[index++];
+        for (int s = 0; s < 12; s++) {
+            instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
+        }
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        volumeUint8[0] = buffer[index++];
+        volumeUint8[1] = buffer[index++];
+        volumeUint8[2] = buffer[index++];
+        volumeUint8[3] = buffer[index++];
+        instrumentState_[t].pan = buffer[index++];
+        instrumentState_[t].compressorType = buffer[index++];
+    }
+
+    levelMeterWhere_ = buffer[index++];
+
+    // User CC
+    for (int u = 0; u < 4; u++) {
+        userCC_[u] = buffer[index++];
+    }
+}
+
+/*
+ * Version 4 has MPE
+ */
+void MixerState::restoreFullStateVersion5(char *buffer) {
+    int index = 0;
+    index++; // version
+
+    for (int i = 0; i < 12; i++) {
+        mixName_[i] = buffer[index++];
+    }
+    MPE_inst1_ = (buffer[index++] == 1);
     currentChannel_ = buffer[index++];
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];

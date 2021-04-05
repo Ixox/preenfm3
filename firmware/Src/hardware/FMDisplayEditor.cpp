@@ -1361,10 +1361,11 @@ struct ParameterRowDisplay lfoEnv2ParameterRow = {
 
 const char *matrixSourceNames[MATRIX_SOURCE_MAX] = { /* 0 */ "none ", "Lfo 1", "Lfo 2", "Lfo 3", "Env 1", "Env 2", "Seq 1", "Seq 2",
     /* 8 */  "ModWl", "PitBe", "AftTo", "Veloc", "Note1", "Perf1", "Perf2",
-    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "CC 74", "RandK", "PolyA",
-    /* 22 */ "UsCC1", "UsCC2", "UsCC3", "UsCC4"};
+    /* 15 */  "Perf3", "Perf4", "Note2", "Brth ", "74MPE", "RandK", "PolyA",
+    /* 22 */ "UsCC1", "UsCC2", "UsCC3", "UsCC4",
+    /* 26 */  "pbMPE", "atMPE"};
 
-const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 21, 11, 18, 13, 14, 15, 16, 19, 20, 22, 23, 24, 25 };
+const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 21, 11, 18, 13, 14, 15, 16, 20, 26, 27, 19, 22, 23, 24, 25 };
 unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
 
 const char *matrixDestNames[DESTINATION_MAX] = { "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4", "Pan 4",
@@ -1400,13 +1401,12 @@ struct ParameterRowDisplay matrixParameterRow = {
             matrixSourcePosition },
         {
             -10,
-            10,
-            2001,
+            24,
+            3401,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
             nullNamesOrder },
-// We removed 8 destination target in firmware 2.0
         {
             DESTINATION_NONE,
             DESTINATION_MAX - 1,
@@ -3438,8 +3438,16 @@ void FMDisplayEditor::updateEncoderValueWithoutCursor(int row, int encoder, Para
 
     switch (param->displayType) {
     case DISPLAY_TYPE_STRINGS:
-        tft_->print(param->valueName[newValue]);
-        if (unlikely(param->valueName == polyMonoNames)) {
+
+    	// Special case for play mode (mono, poly, unis)
+        if (likely(param->valueName != polyMonoNames)) {
+        	tft_->print(param->valueName[newValue]);
+        } else {
+        	// Display color error information
+        	if (synthState_->mixerState.MPE_inst1_ && newValue != 1) {
+                tft_->setCharColor(COLOR_RED);
+            }
+            tft_->print(param->valueName[newValue]);
             int numberOfVoices = synthState_->mixerState.instrumentState_[currentTimbre_].numberOfVoices;
             if (numberOfVoices == 0 || (newValue == 1 && numberOfVoices == 1)
                 || (newValue == 0 && numberOfVoices > 1) || (newValue == 2 && numberOfVoices == 1)) {

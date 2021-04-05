@@ -171,7 +171,8 @@ public:
     void newByte(unsigned char byte);
     void newMessageType(unsigned char byte);
     void newMessageData(unsigned char byte);
-    void midiEventReceived(MidiEvent midiEvent);
+    void midiEventReceived(MidiEvent& midiEvent);
+    void midiEventForInstrument1MPE(MidiEvent& midiEvent);
     void controlChange(int timbre, MidiEvent& midiEvent);
     void decodeNrpn(int timbre);
     void setSynth(Synth* synth);
