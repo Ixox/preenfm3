@@ -362,11 +362,11 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
 		case MIDI_PITCH_BEND: {
 			int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
 			// PITCH BEND in MPE mode we devide by 819.2 and not 8192 to have a x10 value
-			this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_PITCHBEND_GLOBAL, (float) pb * .00012207031250000000f);
+			this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
 			break;
 		}
 	    case MIDI_AFTER_TOUCH: {
-	        this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH_GLOBAL, INV127 * midiEvent.value[0]);
+	        this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
 	        break;
 	    }
 		}
@@ -401,7 +401,7 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         break;
     }
     case MIDI_AFTER_TOUCH: {
-        this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
+        this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, INV127 * midiEvent.value[0]);
         break;
     }
     case MIDI_CONTROL_CHANGE:
@@ -412,7 +412,7 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         break;
     case MIDI_PITCH_BEND:
 		int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
-		this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f * .5f);
+		this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_PITCHBEND_MPE, (float) pb * .00012207031250000000f);
         break;
 	}
 }
@@ -675,7 +675,10 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
             break;
         case CC_MPE_SLIDE_CC74:
-			this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+        	// No CC74 on global midi channel
+        	if (!this->synthState_->mixerState.MPE_inst1_ || timbre != 0) {
+        		this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+        	}
             break;
         case CC_UNISON_DETUNE:
             this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_DETUNE,
