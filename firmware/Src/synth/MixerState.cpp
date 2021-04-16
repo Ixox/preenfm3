@@ -33,7 +33,7 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     for (int i = 0; i < 12; i++) {
         buffer[index++] = mixName_[i];
     }
-    buffer[index++] = MPE_inst1_ ? 1 : 0;
+    buffer[index++] = MPE_inst1_;
     buffer[index++] = currentChannel_;
     buffer[index++] = globalChannel_;
     buffer[index++] = midiThru_;
@@ -371,7 +371,7 @@ void MixerState::restoreFullStateVersion5(char *buffer) {
     for (int i = 0; i < 12; i++) {
         mixName_[i] = buffer[index++];
     }
-    MPE_inst1_ = (buffer[index++] == 1);
+    MPE_inst1_ = buffer[index++];
     currentChannel_ = buffer[index++];
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];

@@ -237,10 +237,11 @@ void Timbre::noteOff(char note) {
 }
 
 void Timbre::noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity)  {
-	uint8_t voiceToUse = channel -1;
-	if (unlikely(voiceToUse >= numberOfVoices_)) {
-		return;
-	}
+	int voiceToUse = voiceNumber_[channel -1];
+
+    if (unlikely(voiceToUse == -1)) {
+        return;
+    }
 
     preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
     float noteFrequency = mixerState_->instrumentState_[0].scaleFrequencies[(int) note];
@@ -254,9 +255,9 @@ void Timbre::noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity)  {
 
 
 void Timbre::noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff) {
+    int voiceToUse = voiceNumber_[channel -1];
 
-	uint8_t voiceToUse = channel -1;
-	if (unlikely(voiceToUse >= numberOfVoices_)) {
+    if (unlikely(voiceToUse == -1)) {
 		return;
 	}
 
@@ -1222,10 +1223,11 @@ void Timbre::setMatrixSource(enum SourceEnum source, float newValue) {
 }
 
 void Timbre::setMatrixSourceMPE(uint8_t channel, enum SourceEnum source, float newValue) {
-	uint8_t voiceToUse = channel -1;
-	if (unlikely(voiceToUse >= numberOfVoices_)) {
-		return;
-	}
+    int voiceToUse = voiceNumber_[channel -1];
+
+    if (unlikely(voiceToUse == -1)) {
+        return;
+    }
 
 	voices_[voiceToUse]->matrix.setSource(source, newValue);
 }

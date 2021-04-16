@@ -69,7 +69,7 @@ public:
     uint8_t levelMeterWhere_;
     struct MixerInstrumentState instrumentState_[NUMBER_OF_TIMBRES];
     uint8_t userCC_[4];
-    bool MPE_inst1_;
+    uint8_t MPE_inst1_;
 
 private:
     void restoreFullStateVersion1(char *buffer);

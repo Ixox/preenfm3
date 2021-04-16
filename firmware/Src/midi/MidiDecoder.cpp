@@ -213,7 +213,7 @@ void MidiDecoder::newMessageType(unsigned char byte) {
 void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
     int timbreIndex = 0;
     int timbres[6];
-    bool isInst1MPE = this->synthState_->mixerState.MPE_inst1_;
+    bool isInst1MPE = this->synthState_->mixerState.MPE_inst1_ > 0;
 
     if (unlikely(isInst1MPE)) {
     	// Special MPE Case
@@ -381,7 +381,7 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
 				midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
 				&& midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)
 				&& note >= 0 && note <= 127) {
-			this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, midiEvent.value[0], midiEvent.value[1]);
+			this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
 		}
         break;
     }
@@ -392,9 +392,9 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
 				&& midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote
 				&& note >= 0 && note <= 127)) {
 			if (midiEvent.value[1] == 0) {
-				this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, midiEvent.value[0], midiEvent.value[1]);
+				this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
 			} else {
-				this->synth->getTimbre(0)->noteOnMPE(midiEvent.channel, midiEvent.value[0], midiEvent.value[1]);
+				this->synth->getTimbre(0)->noteOnMPE(midiEvent.channel, note, midiEvent.value[1]);
 				visualInfo->noteOn(0, true);
 			}
 		}
@@ -676,7 +676,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             break;
         case CC_MPE_SLIDE_CC74:
         	// No CC74 on global midi channel
-        	if (!this->synthState_->mixerState.MPE_inst1_ || timbre != 0) {
+        	if (!this->synthState_->mixerState.MPE_inst1_ > 0 || timbre != 0) {
         		this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
         	}
             break;

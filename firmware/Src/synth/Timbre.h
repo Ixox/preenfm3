@@ -159,6 +159,14 @@ public:
     void stopPlayingNow();
 
 
+    void setMPESetting(uint8_t mpeSetting) {
+        mpeSetting_ = mpeSetting;
+    }
+
+    uint8_t getMPESetting() {
+        return mpeSetting_;
+    }
+
 private:
 
     // MiniPal Arpegiator
@@ -240,6 +248,9 @@ private:
 
     // Unison phase
     static float unisonPhase[14];
+
+    uint8_t mpeSetting_;
+
 };
 
 #endif /* TIMBRE_H_ */

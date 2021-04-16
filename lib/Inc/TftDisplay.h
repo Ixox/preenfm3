@@ -159,7 +159,10 @@ public:
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void clearAlgoFG();
-
+    void setCursoraddXY(uint8_t x, uint16_t y) {
+        cursorX +=x;
+        cursorY +=y;
+    }
     void setCharColor(TFT_COLOR newColor) {
         charColor = (uint8_t) newColor;
     }

@@ -444,6 +444,9 @@ private:
     float fxPhase;
     // save float fxParam1 to detect modification
     float fxParam1PlusMatrix;
+
+    static float mpeBitchBend[6];
+
 };
 
 #endif
