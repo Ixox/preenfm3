@@ -9,7 +9,7 @@ Kicad files are in the topsurface sub folder
 
 The 2 stl files are in this folder  
 
-<img src="./3DprintedCase.png" width="600" />
+<img src="./3DPrintedCase.png" width="600" />
 
 The result can look like this depending of your components (PCB color, 3D filament color, button etc..)
 
