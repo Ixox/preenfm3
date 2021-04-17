@@ -26,8 +26,6 @@ extern "C" {
 
 void preenfm3LibInitGpio();
 void preenfm3ForceTftBacklight();
-void preenfm3TurnOnTftBacklight();
-void preenfm3TurnOffTftBacklight();
 uint32_t preenfm3LibInitSD();
 
 #ifdef __cplusplus

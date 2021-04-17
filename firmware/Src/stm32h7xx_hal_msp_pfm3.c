@@ -657,10 +657,40 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
     HAL_DMA_DeInit(hsai->hdmatx);
     }
 }
+/**
+* @brief TIM_PWM MSP Initialization
+* This function configures the hardware resources used in this example
+* @param htim_pwm: TIM_PWM handle pointer
+* @retval None
+*/
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim_pwm) {
+	if (htim_pwm->Instance == TIM1) {
+		__HAL_RCC_TIM1_CLK_ENABLE();
+	}
+}
 
 
+
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim) {
+	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+	if (htim->Instance == TIM1) {
+		__HAL_RCC_GPIOE_CLK_ENABLE();
+		/**TIM1 GPIO Configuration
+		 PE11     ------> TIM1_CH2
+		 */
+		GPIO_InitStruct.Pin = GPIO_PIN_11;
+		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+		GPIO_InitStruct.Pull = GPIO_NOPULL;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
+		HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+	}
+
+}
 
 /* USER CODE BEGIN 1 */
+
 
 /* USER CODE END 1 */
 

@@ -46,7 +46,7 @@ public:
 
     void init(SynthState* synthState, struct OscillatorParams *oscParams, DestinationEnum df);
 
-    void newNote(struct OscState* oscState, float newNoteFrequency);
+    void newNote(struct OscState* oscState, float newNoteFrequency, float phase);
     float getNoteRealFrequencyEstimation(struct OscState* oscState, float newNoteFrequency);
     void glideToNote(struct OscState* oscState, float newNoteFrequency);
     void glideStep(struct OscState* oscState, float phase);

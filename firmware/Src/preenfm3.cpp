@@ -139,7 +139,11 @@ void preenfm3Init() {
     HAL_Delay(400);
 
     // the TFT should be ready, we can turn on the led backlight
-    preenfm3ForceTftBacklight();
+    // the TFT should be ready, we can turn on the led backlight
+    uint8_t tft_bl =  synthState.fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
+
+    TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 
     if (erreurSD > 0) {
         HAL_Delay(2000);

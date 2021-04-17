@@ -135,9 +135,9 @@ struct ParameterRowDisplay engine2ParameterRow = {
             nullNamesOrder,
             nullNamesOrder },
         {
-            0,
+            -1,
             1,
-            101,
+            201,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
@@ -1845,10 +1845,10 @@ const struct Pfm3OneButtonState pfm3ButtonMonoState = {
             ENCODER_NONE },
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE2_SPREAD },
+            ENCODER_ENGINE2_UNISON_SPREAD },
         {
             ROW_ENGINE2,
-            ENCODER_ENGINE2_UNISON },
+            ENCODER_ENGINE2_UNISON_DETUNE },
         {
             ROW_NONE,
             ENCODER_NONE }
@@ -3251,7 +3251,7 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     }
                 } else if (rowEncoder.row == ROW_ENGINE2
                      && ((synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE)
-                        || (synthState_->params->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_SPREAD))) {
+                        || (synthState_->params->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD))) {
                     // Hide Engine2 GlideType if play mode poly
                     // and Engine2 Spread and Detune if play mode is not uison
                     hideParam_[button] = true;

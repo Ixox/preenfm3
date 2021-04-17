@@ -24,6 +24,7 @@
 #define INV16 .0625
 // Regular memory
 float midiNoteScale[2][NUMBER_OF_TIMBRES][128] __attribute__((section(".ram_d1")));
+float Timbre::unisonPhase[14] = { .37f, .11f, .495f, .53f, .03f, .19f, .89f, 0.23f, .71f, .19f, .31f, .43f, .59f, .97f };
 
 
 #define CALLED_PER_SECOND (PREENFM_FREQUENCY / 32.0f)
@@ -53,43 +54,43 @@ enum ArpeggiatorDirection {
 // TODO Maybe add something like struct ArpDirectionParams { dir, can_change, use_start_step }
 
 inline static int __getDirection( int _direction ) {
-	switch( _direction ) {
-	case ARPEGGIO_DIRECTION_DOWN:
-	case ARPEGGIO_DIRECTION_ROTATE_DOWN:
-	case ARPEGGIO_DIRECTION_SHIFT_DOWN:
-		return -1;
-	default:
-		return 1;
-	}
+    switch( _direction ) {
+    case ARPEGGIO_DIRECTION_DOWN:
+    case ARPEGGIO_DIRECTION_ROTATE_DOWN:
+    case ARPEGGIO_DIRECTION_SHIFT_DOWN:
+        return -1;
+    default:
+        return 1;
+    }
 }
 
 inline static int __canChangeDir( int _direction ) {
-	switch( _direction ) {
-	case ARPEGGIO_DIRECTION_UP_DOWN:
-	case ARPEGGIO_DIRECTION_ROTATE_UP_DOWN:
-	case ARPEGGIO_DIRECTION_SHIFT_UP_DOWN:
-		return 1;
-	default:
-		return 0;
-	}
+    switch( _direction ) {
+    case ARPEGGIO_DIRECTION_UP_DOWN:
+    case ARPEGGIO_DIRECTION_ROTATE_UP_DOWN:
+    case ARPEGGIO_DIRECTION_SHIFT_UP_DOWN:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 inline static int __canTranspose( int _direction ) {
-	switch( _direction ) {
-	case ARPEGGIO_DIRECTION_SHIFT_UP:
-	case ARPEGGIO_DIRECTION_SHIFT_DOWN:
-	case ARPEGGIO_DIRECTION_SHIFT_UP_DOWN:
-		return 1;
-	default:
-		return 0;
-	}
+    switch( _direction ) {
+    case ARPEGGIO_DIRECTION_SHIFT_UP:
+    case ARPEGGIO_DIRECTION_SHIFT_DOWN:
+    case ARPEGGIO_DIRECTION_SHIFT_UP_DOWN:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 enum NewNoteType {
-	NEW_NOTE_FREE = 0,
-	NEW_NOTE_RELEASE,
-	NEW_NOTE_OLD,
-	NEW_NOTE_NONE
+    NEW_NOTE_FREE = 0,
+    NEW_NOTE_RELEASE,
+    NEW_NOTE_OLD,
+    NEW_NOTE_NONE
 };
 
 
@@ -119,32 +120,32 @@ extern float noise[32];
 
 
 float panTable[]  = {
-		0.0000, 0.0007, 0.0020, 0.0036, 0.0055, 0.0077, 0.0101, 0.0128, 0.0156, 0.0186,
-		0.0218, 0.0252, 0.0287, 0.0324, 0.0362, 0.0401, 0.0442, 0.0484, 0.0527, 0.0572,
-		0.0618, 0.0665, 0.0713, 0.0762, 0.0812, 0.0863, 0.0915, 0.0969, 0.1023, 0.1078,
-		0.1135, 0.1192, 0.1250, 0.1309, 0.1369, 0.1430, 0.1492, 0.1554, 0.1618, 0.1682,
-		0.1747, 0.1813, 0.1880, 0.1947, 0.2015, 0.2085, 0.2154, 0.2225, 0.2296, 0.2369,
-		0.2441, 0.2515, 0.2589, 0.2664, 0.2740, 0.2817, 0.2894, 0.2972, 0.3050, 0.3129,
-		0.3209, 0.3290, 0.3371, 0.3453, 0.3536, 0.3619, 0.3703, 0.3787, 0.3872, 0.3958,
-		0.4044, 0.4131, 0.4219, 0.4307, 0.4396, 0.4485, 0.4575, 0.4666, 0.4757, 0.4849,
-		0.4941, 0.5034, 0.5128, 0.5222, 0.5316, 0.5411, 0.5507, 0.5604, 0.5700, 0.5798,
-		0.5896, 0.5994, 0.6093, 0.6193, 0.6293, 0.6394, 0.6495, 0.6597, 0.6699, 0.6802,
-		0.6905, 0.7009, 0.7114, 0.7218, 0.7324, 0.7430, 0.7536, 0.7643, 0.7750, 0.7858,
-		0.7967, 0.8076, 0.8185, 0.8295, 0.8405, 0.8516, 0.8627, 0.8739, 0.8851, 0.8964,
-		0.9077, 0.9191, 0.9305, 0.9420, 0.9535, 0.9651, 0.9767, 0.9883, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
-		1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000
+        0.0000, 0.0007, 0.0020, 0.0036, 0.0055, 0.0077, 0.0101, 0.0128, 0.0156, 0.0186,
+        0.0218, 0.0252, 0.0287, 0.0324, 0.0362, 0.0401, 0.0442, 0.0484, 0.0527, 0.0572,
+        0.0618, 0.0665, 0.0713, 0.0762, 0.0812, 0.0863, 0.0915, 0.0969, 0.1023, 0.1078,
+        0.1135, 0.1192, 0.1250, 0.1309, 0.1369, 0.1430, 0.1492, 0.1554, 0.1618, 0.1682,
+        0.1747, 0.1813, 0.1880, 0.1947, 0.2015, 0.2085, 0.2154, 0.2225, 0.2296, 0.2369,
+        0.2441, 0.2515, 0.2589, 0.2664, 0.2740, 0.2817, 0.2894, 0.2972, 0.3050, 0.3129,
+        0.3209, 0.3290, 0.3371, 0.3453, 0.3536, 0.3619, 0.3703, 0.3787, 0.3872, 0.3958,
+        0.4044, 0.4131, 0.4219, 0.4307, 0.4396, 0.4485, 0.4575, 0.4666, 0.4757, 0.4849,
+        0.4941, 0.5034, 0.5128, 0.5222, 0.5316, 0.5411, 0.5507, 0.5604, 0.5700, 0.5798,
+        0.5896, 0.5994, 0.6093, 0.6193, 0.6293, 0.6394, 0.6495, 0.6597, 0.6699, 0.6802,
+        0.6905, 0.7009, 0.7114, 0.7218, 0.7324, 0.7430, 0.7536, 0.7643, 0.7750, 0.7858,
+        0.7967, 0.8076, 0.8185, 0.8295, 0.8405, 0.8516, 0.8627, 0.8739, 0.8851, 0.8964,
+        0.9077, 0.9191, 0.9305, 0.9420, 0.9535, 0.9651, 0.9767, 0.9883, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000
 } ;
 
 
@@ -268,12 +269,12 @@ void Timbre::preenNoteOn(char note, char velocity) {
                 voices_[n]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
             } else {
                 // Unison !!
-                float noteFrequencyUnison = noteFrequency  + ((k & 0x1 == 0) ? 1 : -1) * noteFrequency * params_.engine2.unisonDetune * .1f;
-                float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * .2f / numberOfVoices_;
+                float noteFrequencyUnison = noteFrequency  + noteFrequency * params_.engine2.unisonDetune * .05f;
+                float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * numberOfVoiceInverse_ * .1f;
                 for (int k = 0; k < numberOfVoices_; k++) {
                     int n = voiceNumber_[k];
                     preenNoteOnUpdateMatrix(n, note, velocity);
-                    voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++);
+                    voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
                     noteFrequencyUnison += noteFrequencyUnisonInc;
                 }
             }
@@ -328,9 +329,8 @@ void Timbre::preenNoteOn(char note, char velocity) {
             }
         } else {
             // Unisons : we start all voices with different frequency
-
-            float noteFrequencyUnison = noteFrequency * (1 - params_.engine2.unisonDetune * .05f);
-            float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * .1f / numberOfVoices_;
+            float noteFrequencyUnison = noteFrequency  + noteFrequency * params_.engine2.unisonDetune * .05f;
+            float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * numberOfVoiceInverse_ * .1f;
 
             for (int k = 0; k < numberOfVoices_; k++) {
                 int n = voiceNumber_[k];
@@ -339,11 +339,11 @@ void Timbre::preenNoteOn(char note, char velocity) {
 
                 switch (newNoteType) {
                     case NEW_NOTE_FREE:
-                        voices_[n]->noteOn(note, noteFrequencyUnison, velocity, voiceIndex_++);
+                        voices_[n]->noteOn(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
                         break;
                     case NEW_NOTE_OLD:
                     case NEW_NOTE_RELEASE:
-                        voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++);
+                        voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
                         break;
                 }
                 noteFrequencyUnison += noteFrequencyUnisonInc;
@@ -419,6 +419,17 @@ void Timbre::preenNoteOff(char note) {
                     return;
                 }
             }
+        }
+    }
+}
+
+
+void Timbre::stopPlayingNow() {
+    for (int k = 0; k < numberOfVoices_; k++) {
+        // voice number k of timbre
+        int n = voiceNumber_[k];
+        if (n != -1) {
+            voices_[n]->killNow();
         }
     }
 }
@@ -532,21 +543,29 @@ uint8_t Timbre::voicesNextBlock() {
             &params_.engineMix3.panOsc6
         };
 
-        float numberOfCarrierOp = numberOfVoices_ * 6;
+        int currentAlgo = (int)params_.engine1.algo;
+        float algoNumberOfMix = algoInformation[currentAlgo].mix;
+        float numberOfCarrierOp = numberOfVoices_ * algoNumberOfMix;
         float opPan = - params_.engine2.unisonSpread;
         float opPanInc = 2.0f / numberOfCarrierOp * params_.engine2.unisonSpread;
 
         if (likely(voices_[voiceNumber_[0]]->isPlaying())) {
             for (int vv = 0; vv < numberOfVoices_; vv++) {
                 int v = voiceNumber_[vv];
-
+                if (unlikely(v < 0)) {
+                    continue;
+                }
+                bool otherSide = false;
                 for (int op = 0; op < 6; op ++) {
-                    if ((op & 0x1) == 0x0) {
-                        *pans[op] = opPan;
-                    } else {
-                        *pans[op] = -opPan;
+                    if (algoOpInformation[currentAlgo][op] == 1) {
+                        if (otherSide) {
+                            *pans[op] = -opPan;
+                        } else {
+                            *pans[op] = opPan;
+                        }
+                        opPan += opPanInc;
+                        otherSide =! otherSide;
                     }
-                    opPan += opPanInc;
                 }
                 voices_[v]->nextBlock();
 
@@ -573,8 +592,6 @@ uint8_t Timbre::voicesNextBlock() {
         params_.engineMix2.panOsc4 = pansSav[3];
         params_.engineMix3.panOsc5 = pansSav[4];
         params_.engineMix3.panOsc6 = pansSav[5];
-
-
     } else {
         for (int k = 0; k < numberOfVoices_; k++) {
             int v = voiceNumber_[k];

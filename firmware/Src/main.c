@@ -83,6 +83,8 @@ static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
+// PW for TFT backlight
+static void MX_TIM1_Init(void);
 void MPU_RegionConfig();
 
 #define USE_DMA_FOR_SD_ACCESS true
@@ -156,6 +158,7 @@ int main(void)
   MX_FATFS_Init(USE_DMA_FOR_SD_ACCESS);
   MX_USB_DEVICE_Init();
   MX_USART1_UART_Init();
+  MX_TIM1_Init();
 
   MPU_RegionConfig();
 
@@ -537,6 +540,7 @@ static void MX_SPI2_Init(void)
 }
 
 
+
 /**
   * @brief USART1 Initialization Function
   * @param None
@@ -630,7 +634,46 @@ static void MX_DMA_Init(void)
 
 
 
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
 
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  // We call it htim3 to use same timer as LQFP100 version but it's a 1
+
+  htim3.Instance = TIM1;
+  htim3.Init.Prescaler = 240;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 100;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 50;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  HAL_TIM_MspPostInit(&htim3);
+
+}
 
 void MPU_RegionConfig(void) {
     MPU_Region_InitTypeDef MPU_InitStruct;

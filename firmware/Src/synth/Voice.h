@@ -51,8 +51,8 @@ public:
     void endNoteOrBeginNextOne();
     void setNewEffectParam(int encoder);
 
-    void noteOnWithoutPop(short note, float newNoteFrequency, short velocity, uint32_t index);
-    void noteOn(short note, float newNoteFrequency, short velocity, uint32_t index);
+    void noteOnWithoutPop(short note, float newNoteFrequency, short velocity, uint32_t index, float phase = 0.25f);
+    void noteOn(short note, float newNoteFrequency, short velocity, uint32_t index, float phase = 0.25f);
     void glideToNote(short newNote, float newNoteFrequency);
     void killNow();
     void noteOff();
@@ -388,6 +388,7 @@ private:
     char pendingNoteVelocity;
     float pendingNoteFrequency;
     unsigned int nextIndex;
+    float phase_;
 
     // Gliding ?
     bool gliding;
