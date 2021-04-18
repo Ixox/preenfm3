@@ -236,6 +236,37 @@ void Timbre::noteOff(char note) {
     }
 }
 
+void Timbre::noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity)  {
+	int voiceToUse = voiceNumber_[channel -1];
+
+    if (unlikely(voiceToUse == -1)) {
+        return;
+    }
+
+    preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
+    float noteFrequency = mixerState_->instrumentState_[0].scaleFrequencies[(int) note];
+
+	if (voices_[voiceToUse]->isPlaying()) {
+        voices_[voiceToUse]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
+	} else {
+        voices_[voiceToUse]->noteOn(note, noteFrequency, velocity, voiceIndex_++);
+	}
+}
+
+
+void Timbre::noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff) {
+    int voiceToUse = voiceNumber_[channel -1];
+
+    if (unlikely(voiceToUse == -1)) {
+		return;
+	}
+
+	if (voices_[voiceToUse]->isPlaying()) {
+		voices_[voiceToUse]->noteOff();
+	}
+}
+
+
 void Timbre::preenNoteOn(char note, char velocity) {
     // NumberOfVoice = 0 or no mapping in scala frequencies
     if (unlikely(numberOfVoices_ == 0 || mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note] == 0.0f)) {
@@ -1189,6 +1220,16 @@ void Timbre::setMatrixSource(enum SourceEnum source, float newValue) {
     for (int k = 0; k < numberOfVoices_; k++) {
         voices_[voiceNumber_[k]]->matrix.setSource(source, newValue);
     }
+}
+
+void Timbre::setMatrixSourceMPE(uint8_t channel, enum SourceEnum source, float newValue) {
+    int voiceToUse = voiceNumber_[channel -1];
+
+    if (unlikely(voiceToUse == -1)) {
+        return;
+    }
+
+	voices_[voiceToUse]->matrix.setSource(source, newValue);
 }
 
 

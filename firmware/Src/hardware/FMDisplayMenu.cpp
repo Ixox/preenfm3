@@ -38,22 +38,6 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
     // Because of "return" in this method we must have the test here
     // We do that when refreshStatus ==6 so that we get the correct button
 
-    // It was not a good idea, it makes things more complicated
-    //    if (refreshStatus == 6 && previousSynthMode > 0) {
-    //        switch (previousSynthMode) {
-    //        case SYNTH_MODE_MIXER:
-    //            buttonPressed(currentTimbre, BUTTON_PFM3_1);
-    //            break;
-    //        case SYNTH_MODE_EDIT_PFM3:
-    //            buttonPressed(currentTimbre, BUTTON_PFM3_2);
-    //            break;
-    //        case SYNTH_MODE_SEQUENCER:
-    //            buttonPressed(currentTimbre, BUTTON_PFM3_3);
-    //            break;
-    //        }
-    //        previousSynthMode = -1;
-    //    }
-
     switch (refreshStatus) {
         case 20:
             tft_->pauseRefresh();

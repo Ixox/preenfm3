@@ -22,7 +22,7 @@
 
 
 float Voice::glidePhaseInc[13];
-
+float Voice::mpeBitchBend[6];
 
 //for bitwise manipulations
 #define FLOAT2SHORT 32768.f
@@ -386,6 +386,16 @@ Voice::Voice(void) {
             glidePhaseInc[k] = 1.0f / tmp[k];
         }
     }
+
+
+    // We multiply by 10 the number of semitone to have the direct index in exp2_harm
+    if (mpeBitchBend[1] != 480.0f) {
+        float tmp[] = { 0.0f, 480.0f, 360.0f, 240.0f, 120.0, 0.0f };
+        for (int k = 0; k < 6; k++) {
+            mpeBitchBend[k] = tmp[k];
+        }
+    }
+
     freqAi = freqAo = 0.0f;
     freqBi = freqBo = 0.0f;
     freqHarm = 1.0f;
@@ -699,13 +709,21 @@ void Voice::nextBlock() {
     float *sample = sampleBlock;
     float inv32 = .03125f;
 
-    if (unlikely(matrix.getDestination(ALL_OSC_FREQ_HARM) != targetFreqHarm)) {
-        targetFreqHarm = matrix.getDestination(ALL_OSC_FREQ_HARM);
-        float findex = 512 + targetFreqHarm * 20;
+
+    if (unlikely( matrix.getDestination(ALL_OSC_FREQ_HARM) != targetFreqHarm) || currentTimbre->getMPESetting() > 0) {
+        // * 20 so that we have a full tone for full pitchbend
+        targetFreqHarm = matrix.getDestination(ALL_OSC_FREQ_HARM) * 20;
+        targetFreqHarm += (matrix.getSource(MATRIX_SOURCE_PITCHBEND_MPE) * mpeBitchBend[currentTimbre->getMPESetting()]);
+
+        float findex = 512 + targetFreqHarm;
         int index = findex;
+        // Max = 1024
+        index &= 0x3ff;
         float fp = findex - index;
         freqHarm = (exp2_harm[index] * (1.0f - fp) + exp2_harm[index + 1] * fp);
     }
+
+
 
     switch ((int) currentTimbre->params_.engine1.algo) {
 

@@ -511,6 +511,10 @@ void Synth::afterNewMixerLoad() {
         newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, -1,
             this->synthState_->mixerState.instrumentState_[timbre].compressorType);
     }
+
+    // Update MPE
+    newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_1, 0, -1, this->synthState_->mixerState.MPE_inst1_);
+
 }
 
 int Synth::getFreeVoice() {
@@ -633,6 +637,16 @@ void Synth::newTimbre(int timbre) {
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     switch (valueType) {
+        case MIXER_VALUE_GLOBAL_SETTINGS_1: {
+            // Timbre is the settings number we Set
+            uint8_t setting = timbre;
+            // Did we change MPE Inst1
+            if (setting == 0) {
+                // Only Inst1 is impacted
+                timbres_[0].setMPESetting((uint8_t) newValue);
+            }
+            break;
+        }
         case MIXER_VALUE_MIDI_CHANNEL:
         case MIXER_VALUE_MIDI_FIRST_NOTE:
         case MIXER_VALUE_MIDI_LAST_NOTE:

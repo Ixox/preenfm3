@@ -208,12 +208,24 @@ void MidiDecoder::newMessageType(unsigned char byte) {
     }
 }
 
-void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
+
+
+void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
     int timbreIndex = 0;
     int timbres[6];
+    bool isInst1MPE = this->synthState_->mixerState.MPE_inst1_ > 0;
+
+    if (unlikely(isInst1MPE)) {
+    	// Special MPE Case
+    	midiEventForInstrument1MPE(midiEvent);
+    }
+
     if (unlikely(midiEvent.channel == (this->synthState_->mixerState.globalChannel_ - 1))) {
         // Midi global => all timbres
-        timbres[timbreIndex++] = 0;
+    	// add instrument 1 if not MPE
+    	if (likely(!isInst1MPE)) {
+    			timbres[timbreIndex++] = 0;
+    	}
         timbres[timbreIndex++] = 1;
         timbres[timbreIndex++] = 2;
         timbres[timbreIndex++] = 3;
@@ -225,7 +237,9 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
     } else {
         if (omniOn[0] || this->synthState_->mixerState.instrumentState_[0].midiChannel == 0
                 || (this->synthState_->mixerState.instrumentState_[0].midiChannel - 1) == midiEvent.channel) {
-            timbres[timbreIndex++] = 0;
+        	if (likely(!isInst1MPE)) {
+        		timbres[timbreIndex++] = 0;
+        	}
         }
         if (omniOn[1] || this->synthState_->mixerState.instrumentState_[1].midiChannel == 0
                 || (this->synthState_->mixerState.instrumentState_[1].midiChannel - 1) == midiEvent.channel) {
@@ -304,12 +318,13 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
             this->synth->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
         }
         break;
-    case MIDI_PITCH_BEND:
+    case MIDI_PITCH_BEND: {
+        int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
         for (int tk = 0; tk < timbreIndex; tk++) {
-            int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
             this->synth->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
         }
         break;
+    }
     case MIDI_PROGRAM_CHANGE:
         if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE]) {
             AsyncAction newAction;
@@ -330,6 +345,78 @@ void MidiDecoder::midiEventReceived(MidiEvent midiEvent) {
         break;
     }
 }
+
+
+void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
+
+	// MPE only available on instrument
+	int timbre = 0;
+
+	if (midiEvent.channel == 0) {
+		// special case for global midi
+    	// CC74 is per voice, the rest is only on channel 0
+		switch (midiEvent.eventType) {
+	    case MIDI_CONTROL_CHANGE: {
+			controlChange(0, midiEvent);
+	    }
+		case MIDI_PITCH_BEND: {
+			int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
+			// PITCH BEND in MPE mode we devide by 819.2 and not 8192 to have a x10 value
+			this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
+			break;
+		}
+	    case MIDI_AFTER_TOUCH: {
+	        this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
+	        break;
+	    }
+		}
+		return;
+	}
+
+
+	switch (midiEvent.eventType) {
+    case MIDI_NOTE_OFF: {
+		char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+		if (likely(
+				midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
+				&& midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)
+				&& note >= 0 && note <= 127) {
+			this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
+		}
+        break;
+    }
+    case MIDI_NOTE_ON: {
+		char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+		if (likely(
+				midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
+				&& midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote
+				&& note >= 0 && note <= 127)) {
+			if (midiEvent.value[1] == 0) {
+				this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
+			} else {
+				this->synth->getTimbre(0)->noteOnMPE(midiEvent.channel, note, midiEvent.value[1]);
+				visualInfo->noteOn(0, true);
+			}
+		}
+        break;
+    }
+    case MIDI_AFTER_TOUCH: {
+        this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, INV127 * midiEvent.value[0]);
+        break;
+    }
+    case MIDI_CONTROL_CHANGE:
+		switch (midiEvent.value[0]) {
+		case CC_MPE_SLIDE_CC74:
+			this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+		}
+        break;
+    case MIDI_PITCH_BEND:
+		int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
+		this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_PITCHBEND_MPE, (float) pb * .00012207031250000000f);
+        break;
+	}
+}
+
 
 
 void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
@@ -588,7 +675,10 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
             break;
         case CC_MPE_SLIDE_CC74:
-            this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+        	// No CC74 on global midi channel
+        	if (!this->synthState_->mixerState.MPE_inst1_ > 0 || timbre != 0) {
+        		this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+        	}
             break;
         case CC_UNISON_DETUNE:
             this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_DETUNE,

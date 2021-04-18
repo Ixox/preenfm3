@@ -122,6 +122,11 @@ public:
         return this->destinations[destination];
     }
 
+    // Usefull for MPE to retrieve PITCHBEND
+    float getSource(SourceEnum source) {
+        return this->sources[source];
+    }
+
 private:
     float sources[MATRIX_SOURCE_MAX];
     float destinations[DESTINATION_MAX];

@@ -33,6 +33,7 @@ const char* compDisplay[]= { "Off", "Slow", "Medium", "Fast"};
 const char* enableNames[] = { "Off", "On" };
 const char* levelMeterWhere[] = { "Off", "Mix", "All" };
 const char* scalaMapNames[] = { "Keybrd", "Continu" };
+const char* mpeOptions[] = { "No", "MPE48", "MPE36", "MPE24", "MPE12", "MPE0"};
 static const char* nullNames[] = { };
 
 const char* midiWithNone [] = { "None", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
@@ -149,14 +150,14 @@ const struct Pfm3MixerButton scalaButton = {
 // ==
 
 
-const uint8_t numberOfGlobalSettings[2] = { 5, 4 };
+const uint8_t numberOfGlobalSettings[2] = { 6, 4 };
 const struct Pfm3MixerButtonStateParam globalSettings[2][6] = { {
+   { 0, 5, 6, DISPLAY_TYPE_STRINGS, mpeOptions },
    { 0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithNone },
    { 0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithNone },
    { 0, 1, 2, DISPLAY_TYPE_STRINGS, enableNames },
    { 420, 460, 401, DISPLAY_TYPE_FLOAT, nullNames },
    { 0, 2, 3, DISPLAY_TYPE_STRINGS, levelMeterWhere },
-   { 0, 0, 0, DISPLAY_TYPE_FLOAT, nullNames }
 },
 {
    { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
@@ -242,22 +243,25 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
             break;
         case MIXER_VALUE_GLOBAL_SETTINGS_1:
             switch (encoder) {
-                case 0:
+            	case 0:
+            		valueP = (void*) &synthState_->mixerState.MPE_inst1_;
+            		break;
+                case 1:
                     valueP = (void*) &synthState_->mixerState.globalChannel_;
                     break;
-                case 1:
+                case 2:
                     valueP = (void*) &synthState_->mixerState.currentChannel_;
                     break;
-                case 2:
+                case 3:
                     valueP = (void*) &synthState_->mixerState.midiThru_;
                     break;
-                case 3:
+                case 4:
                     valueP = (void*) &synthState_->mixerState.tuning_;
                     break;
-                case 4:
+                case 5:
                     valueP = (void*) &synthState_->mixerState.levelMeterWhere_;
                     break;
-                case 5:
+                case 6:
                     break;
             }
             break;
@@ -304,6 +308,22 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
         int buttonState = synthState_->fullState.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState.mixerCurrentEdit];
         buttonStateParam = &currentButton->state[buttonState]->buttonState;
         mixerValueType = currentButton->state[buttonState]->mixerValueType;
+
+        // Instrument 1 / MIDI MPE special case
+        if (unlikely(synthState_->mixerState.MPE_inst1_ > 0 && timbre == 0 && mixerValueType == MIXER_VALUE_MIDI_CHANNEL)) {
+        	int numberOfVoice = 1 + synthState_->mixerState.instrumentState_[0].numberOfVoices;
+            tft_->setCursorInPixel(238 - (numberOfVoice >= 10 ? 4 : 3)  * 11 , Y_MIXER);
+
+            // RED if not poly play mode
+            if (synthState_->getTimbrePlayMode(timbre) == 1) {
+                tft_->setCharColor(COLOR_GRAY);
+            } else {
+                tft_->setCharColor(COLOR_RED);
+            }
+            tft_->print("1-");
+            tft_->print(numberOfVoice > 16 ? 16 : numberOfVoice);
+            return;
+        }
     } else {
         int globalSettingPage = synthState_->fullState.buttonState[BUTTONID_MIXER_GLOBAL];
         if (timbre >= numberOfGlobalSettings[globalSettingPage]) {
@@ -407,18 +427,19 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
         case 17:
         case 16:
         case 15:
-        case 14:
+        case 14: {
+            int timbre = 19 - refreshStatus;
             // Display row : timbre number + preset name
             tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCursorInPixel(2, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
-            if (currentTimbre != (19 - refreshStatus)) {
-                if (synthState_->mixerState.instrumentState_[19 - refreshStatus].numberOfVoices == 0) {
+            tft_->setCursorInPixel(2, Y_MIXER + (timbre) * HEIGHT_MIXER_LINE);
+            if (currentTimbre != (timbre)) {
+                if (synthState_->mixerState.instrumentState_[timbre].numberOfVoices == 0) {
                     tft_->setCharColor(COLOR_DARK_GRAY);
                 } else {
                     tft_->setCharColor(COLOR_LIGHT_GRAY);
                 }
             } else {
-                if (synthState_->mixerState.instrumentState_[19 - refreshStatus].numberOfVoices == 0) {
+                if (synthState_->mixerState.instrumentState_[timbre].numberOfVoices == 0) {
                     tft_->setCharColor(COLOR_DARK_YELLOW);
                 } else {
                     tft_->setCharColor(COLOR_YELLOW);
@@ -426,18 +447,26 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
             }
             tft_->print(20 - refreshStatus);
 
-            tft_->setCursorInPixel(22, Y_MIXER + (19 - refreshStatus) * HEIGHT_MIXER_LINE);
+            tft_->setCursorInPixel(22, Y_MIXER + (timbre) * HEIGHT_MIXER_LINE);
             if (!isGlobalSettings) {
-                tft_->print(synthState_->getTimbreName(19 - refreshStatus));
+                if (unlikely(timbre == 0 && synthState_->mixerState.MPE_inst1_ > 0)) {
+                    // If MPE instrument 1, limit chars to 10
+                    tft_->print(synthState_->getTimbreName(timbre), 10);
+                    tft_->setCursoraddXY(4, 4);
+                    tft_->setCharColor(COLOR_LIGHT_GRAY);
+                    tft_->printSmallChars("MPE");
+                } else {
+                    tft_->print(synthState_->getTimbreName(timbre));
+                }
             } else {
-                int line = 19 - refreshStatus;
                 int globalSettingPage = synthState_->fullState.buttonState[BUTTONID_MIXER_GLOBAL];
 
-                if (line < numberOfGlobalSettings[globalSettingPage]) {
-                    refreshMixerRowGlobalOptions(globalSettingPage, 19 - refreshStatus);
+                if (timbre < numberOfGlobalSettings[globalSettingPage]) {
+                    refreshMixerRowGlobalOptions(globalSettingPage, timbre);
                 }
             }
             break;
+        }
         case 12:
         case 11:
         case 10:
@@ -487,22 +516,25 @@ void FMDisplayMixer::refreshMixerRowGlobalOptions(int page, int row) {
     switch (page) {
         case 0:
         switch (row) {
-            case 0:
+        	case 0:
+        		tft_->print("MPE Inst1");
+        		break;
+            case 1:
                 tft_->print("Global midi");
                 break;
-            case 1:
+            case 2:
                 tft_->print("Current midi");
                 break;
-            case 2:
+            case 3:
                 tft_->print("Midi thru");
                 break;
-            case 3:
+            case 4:
                 tft_->print("Tuning");
                 break;
-            case 4:
+            case 5:
                 tft_->print("Level meter");
                 break;
-            case 5:
+            case 6:
                 break;
         }
         break;
@@ -602,6 +634,11 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
         int buttonState = synthState_->fullState.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState.mixerCurrentEdit];
         buttonStateParam = &currentButton->state[buttonState]->buttonState;
         mixerValueType = currentButton->state[buttonState]->mixerValueType;
+
+        // Instrument 1 / MIDI MPE special case
+        if (unlikely(synthState_->mixerState.MPE_inst1_ > 0 && encoder == 0 && mixerValueType == MIXER_VALUE_MIDI_CHANNEL)) {
+        	return;
+        }
     } else {
         int globalSettingPage = synthState_->fullState.buttonState[BUTTONID_MIXER_GLOBAL];
         if (encoder >= numberOfGlobalSettings[globalSettingPage]) {
@@ -611,10 +648,6 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
         buttonStateParam = &globalSettings[globalSettingPage][encoder];
     }
     valueP = getValuePointer(mixerValueType, encoder);
-
-//    uint8_t buttonState = synthState->fullState.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState->fullState.mixerCurrentEdit];
-//    uint8_t mixerValueType = currentButton->state[buttonState]->mixerValueType;
-//    void* valueP = getValuePointer(mixerValueType, encoder);
 
     switch (buttonStateParam->displayType) {
         case DISPLAY_TYPE_INT:
