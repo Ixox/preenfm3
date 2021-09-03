@@ -29,10 +29,12 @@ enum MIXER_BANK_VERSION {
     // User CC
     MIXER_BANK_VERSION4,
     // MPE
-    MIXER_BANK_VERSION5
+    MIXER_BANK_VERSION5,
+    // REVERB
+    MIXER_BANK_VERSION6
 };
 
-#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION5
+#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION6
 
 struct MixerInstrumentState {
     uint8_t out;
@@ -69,6 +71,8 @@ public:
     float tuning_;
     uint8_t levelMeterWhere_;
     uint8_t reverbPreset_;
+    uint8_t reverbOutput_;
+    float reverbLevel_;
     struct MixerInstrumentState instrumentState_[NUMBER_OF_TIMBRES];
     uint8_t userCC_[4];
     uint8_t MPE_inst1_;
@@ -79,6 +83,7 @@ private:
     void restoreFullStateVersion3(char *buffer);
     void restoreFullStateVersion4(char *buffer);
     void restoreFullStateVersion5(char *buffer);
+    void restoreFullStateVersion6(char *buffer);
     void setDefaultValues();
 };
 

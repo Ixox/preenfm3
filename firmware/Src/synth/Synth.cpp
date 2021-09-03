@@ -22,6 +22,7 @@
 
 extern RNG_HandleTypeDef hrng;
 extern float noise[32];
+extern FxBus fxBus;
 
 Synth::Synth(void) {
 }
@@ -73,9 +74,6 @@ void Synth::init(SynthState *synthState) {
         instrumentCompressor_[t].setAttack(10.0);
         instrumentCompressor_[t].setRelease(100.0);
     }
-
-    // Fx bus
-    fxBus.init(synthState);
 
     // Cpu usage
     cptCpuUsage_ = 0;
@@ -338,7 +336,17 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
     }
 
     // fxBus - mixing block process
-    fxBus.processBlock(buffer1);
+    switch (synthState_->mixerState.reverbOutput_) {
+    case 0:
+        fxBus.processBlock(buffer1);
+        break;
+    case 1:
+        fxBus.processBlock(buffer2);
+        break;
+    case 2:
+        fxBus.processBlock(buffer3);
+        break;
+    }
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         float *sampleFromTimbre = timbres_[timbre].getSampleBlock();
@@ -544,8 +552,8 @@ void Synth::afterNewMixerLoad() {
     // Update MPE
     newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_1, 0, -1, this->synthState_->mixerState.MPE_inst1_);
 
-    // Update PRESET
-    //newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_3, 0, -1, this->synthState_->fullState.masterfxConfig[GLOBALFX_PRESETNUM]);
+    // Update Reverb
+    newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_3, 0, -1, this->synthState_->mixerState.reverbPreset_);
 
 }
 
@@ -680,9 +688,9 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
             break;
         }
         case MIXER_VALUE_GLOBAL_SETTINGS_3:
+        	// Did we change the reverb preset
         	if(timbre == 0) {
-                this->synthState_->mixerState.reverbPreset_ = newValue;
-                this->synthState_->fullState.masterfxConfig[GLOBALFX_PRESETNUM] = newValue;
+                fxBus.presetChanged(this->synthState_->mixerState.reverbPreset_);
         	}
         	break;
         case MIXER_VALUE_MIDI_CHANNEL:

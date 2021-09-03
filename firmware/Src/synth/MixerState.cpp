@@ -18,12 +18,10 @@
 #include <MixerState.h>
 
 MixerState::MixerState() {
-    // TODO Auto-generated constructor stub
 
 }
 
 MixerState::~MixerState() {
-    // TODO Auto-generated destructor stub
 }
 
 void MixerState::getFullState(char *buffer, uint32_t *size) {
@@ -67,6 +65,8 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
         buffer[index++] = instrumentState_[t].pan;
         // Compressor
         buffer[index++] = instrumentState_[t].compressorType;
+        // FX send
+        buffer[index++] = (char)(instrumentState_[t].send * 100.0f);
     }
 
     // levelMetter: default mixer only
@@ -77,6 +77,10 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
         buffer[index++] =  userCC_[u];
     }
 
+    // reverb preset, output, volume
+    buffer[index++] = reverbPreset_;
+    buffer[index++] = reverbOutput_;
+    buffer[index++] = (char)(100.0f * reverbLevel_) ;
 
     *size = index;
 }
@@ -133,6 +137,8 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
         buffer[index++] = 0;
         // Compressor (instrument 0 has a medium default comp)
         buffer[index++] = (t == 0 ? 2 : 0);
+        // FX send
+        buffer[index++] = 0;
     }
     // levelMetter: default mixer only
     buffer[index++] = 1;
@@ -141,6 +147,11 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     for (int u = 0; u < 4; u++) {
         buffer[index++] = 34 + u;
     }
+
+    // reverb preset, output, volume
+    buffer[index++] = 7;
+    buffer[index++] = 0;
+    buffer[index++] = 100;
     *size = index;
 }
 
@@ -163,6 +174,9 @@ void MixerState::restoreFullState(char *buffer) {
         case MIXER_BANK_VERSION5:
             restoreFullStateVersion5(buffer);
             break;
+        case MIXER_BANK_VERSION6:
+            restoreFullStateVersion6(buffer);
+            break;
     }
 }
 
@@ -180,6 +194,12 @@ void MixerState::setDefaultValues() {
         userCC_[u] = 34 + u;
     }
     MPE_inst1_ = 0;
+
+    reverbPreset_ = 7;
+    reverbLevel_ = 1.0f;
+    // Default output = 1&2
+    reverbOutput_ = 0;
+
 }
 
 void MixerState::restoreFullStateVersion1(char *buffer) {
@@ -412,6 +432,64 @@ void MixerState::restoreFullStateVersion5(char *buffer) {
     for (int u = 0; u < 4; u++) {
         userCC_[u] = buffer[index++];
     }
+}
+
+/*
+ * With FX send + reverb global params
+ */
+void MixerState::restoreFullStateVersion6(char *buffer) {
+    int index = 0;
+    index++; // version
+
+    for (int i = 0; i < 12; i++) {
+        mixName_[i] = buffer[index++];
+    }
+    MPE_inst1_ = buffer[index++];
+    currentChannel_ = buffer[index++];
+    globalChannel_ = buffer[index++];
+    midiThru_ = buffer[index++];
+
+    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    tuningUint8[0] = buffer[index++];
+    tuningUint8[1] = buffer[index++];
+    tuningUint8[2] = buffer[index++];
+    tuningUint8[3] = buffer[index++];
+
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        instrumentState_[t].out = buffer[index++];
+        instrumentState_[t].midiChannel = buffer[index++];
+        instrumentState_[t].firstNote = buffer[index++];
+        instrumentState_[t].lastNote = buffer[index++];
+        instrumentState_[t].shiftNote = buffer[index++];
+        instrumentState_[t].numberOfVoices = buffer[index++];
+        instrumentState_[t].scalaEnable = buffer[index++];
+        instrumentState_[t].scalaMapping = buffer[index++];
+        instrumentState_[t].scaleScaleNumber = buffer[index++] << 8;
+        instrumentState_[t].scaleScaleNumber += buffer[index++];
+        for (int s = 0; s < 12; s++) {
+            instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
+        }
+        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        volumeUint8[0] = buffer[index++];
+        volumeUint8[1] = buffer[index++];
+        volumeUint8[2] = buffer[index++];
+        volumeUint8[3] = buffer[index++];
+        instrumentState_[t].pan = buffer[index++];
+        instrumentState_[t].compressorType = buffer[index++];
+        instrumentState_[t].send = 0.01f * buffer[index++];
+    }
+
+    levelMeterWhere_ = buffer[index++];
+
+    // User CC
+    for (int u = 0; u < 4; u++) {
+        userCC_[u] = buffer[index++];
+    }
+
+    reverbPreset_ = buffer[index++];
+    reverbOutput_ = buffer[index++];
+    reverbLevel_ = .01f * buffer[index++] ;
+
 }
 
 
