@@ -120,7 +120,7 @@ const struct OneSynthParams preenMainPreset  = {
         { OSC_SHAPE_RAND, OSC_FT_KEYBOARD , 2.5, 0} ,
         // Enveloppe
         { 0, 1, 0, 1 },
-        { 0, 1, 2.56 , 0},
+        { 0, 1, 1.00 , 0},
 
         { .5, 1, .1, .8 },
         { 0, .8, 4, 0},

@@ -178,7 +178,6 @@ private:
     float *fxSample;
 
     chunkware_simple::SimpleComp instrumentCompressor_[NUMBER_OF_TIMBRES];
-    FxBus fxBus;
 };
 
 #endif
