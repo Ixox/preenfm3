@@ -440,6 +440,32 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         return;
     }
 
+    if(midiEvent.channel == this->synthState_->mixerState.globalChannel_ - 1) {
+        // treat global channel CC
+        switch (midiEvent.value[0])
+        {
+        case CC_MFX_PRESET:
+            this->synthState_->fullState.masterfxConfig[GLOBALFX_PRESETNUM] = midiEvent.value[1];
+            this->synthState_->mixerState.reverbPreset_ = midiEvent.value[1];
+            break;
+        case CC_MFX_PREDELAYTIME:
+            this->synthState_->fullState.masterfxConfig[GLOBALFX_PREDELAYTIME] = INV127 * midiEvent.value[1];
+            break;
+        case CC_MFX_PREDELAYMIX:
+            this->synthState_->fullState.masterfxConfig[GLOBALFX_PREDELAYMIX] = INV127 * midiEvent.value[1];
+            break;
+        case CC_MFX_INPUTTILT:
+            this->synthState_->fullState.masterfxConfig[GLOBALFX_INPUTBASE] = INV127 * midiEvent.value[1];
+            break;
+        case CC_MFX_MOD_SPEED:
+            this->synthState_->fullState.masterfxConfig[GLOBALFX_LFOSPEED] = INV127 * midiEvent.value[1];
+            break;
+        case CC_MFX_MOD_DEPTH:
+            this->synthState_->fullState.masterfxConfig[GLOBALFX_LFODEPTH] = INV127 * midiEvent.value[1];
+            break;
+        }
+    }
+
     // the following one should always been treated...
     switch (midiEvent.value[0]) {
     case CC_BANK_SELECT:
@@ -674,6 +700,9 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_MIXER_PAN:
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
             break;
+        case CC_MIXER_SEND:
+            this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, (float) midiEvent.value[1] * INV127);
+            break;
         case CC_MPE_SLIDE_CC74:
         	// No CC74 on global midi channel
         	if (!this->synthState_->mixerState.MPE_inst1_ > 0 || timbre != 0) {
@@ -688,8 +717,6 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_SPREAD,
                     (float)midiEvent.value[1] * INV127);
             break;
-
-
         }
     }
 

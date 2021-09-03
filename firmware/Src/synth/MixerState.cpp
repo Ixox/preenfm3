@@ -169,6 +169,7 @@ void MixerState::restoreFullState(char *buffer) {
 void MixerState::setDefaultValues() {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         instrumentState_[t].pan = 0;
+        instrumentState_[t].send = 0;
         instrumentState_[t].compressorType = 0;
     }
     // Let's set instrument 1 to Medium comp by default

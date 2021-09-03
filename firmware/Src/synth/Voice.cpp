@@ -6567,7 +6567,7 @@ void Voice::fxAfterBlock() {
             float _ly1L = v3L, _ly1R = v3R;
             float _lx1L = v7L, _lx1R = v7R;
 
-            const float f1 = clamp(0.3f + cut * cut * 0.47f, filterWindowMin, filterWindowMax);
+            const float f1 = clamp(0.37f + cut * cut * 0.047f, filterWindowMin, filterWindowMax);
             float coef1 = (1.0f - f1) / (1.0f + f1);
 
             float finalGain = mixerGain * (1 + fxParam2 * 0.75f) * 2.27f;
@@ -6987,7 +6987,7 @@ void Voice::fxAfterBlock() {
             } else {
                 fxParamA2 *= gr;
                 fxParamB2 = 720; // = accent dur
-                fxParamA1 = (fxParamA1 * 49 + fxParamA2) * 0.02f; //smooth release
+                fxParamA1 = (fxParamA1 * 24 + fxParamA2) * 0.04f; //smooth release
             }
 
             fxParamA2 = clamp(fxParamA2, 0, 1.5f);

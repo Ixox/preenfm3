@@ -34,6 +34,27 @@ const char* enableNames[] = { "Off", "On" };
 const char* levelMeterWhere[] = { "Off", "Mix", "All" };
 const char* scalaMapNames[] = { "Keybrd", "Continu" };
 const char* mpeOptions[] = { "No", "MPE48", "MPE36", "MPE24", "MPE12", "MPE0"};
+const char *reverbPresets[] = {
+    "XSmal1",
+    "XSmal2",
+    "XSmal3",
+    "SmlDrk",
+    "SmlWrm",
+    "SmlBrt",
+    "MedDrk",
+    "MedWrm",
+    "MedBrt",
+    "LrgDrk",
+    "LrgWrm",
+    "LrgBrt",
+    "XLgDrk",
+    "XLgWrm",
+    "XLgBrt",
+    "Glue",
+    "Hall",
+    "Cave",
+    "Aptmnt"
+};
 static const char* nullNames[] = { };
 
 const char* midiWithNone [] = { "None", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
@@ -52,11 +73,15 @@ const struct Pfm3MixerButtonState panButtonState = {
       {-63, 63, 127, DISPLAY_TYPE_INT, nullNames }
 };
 
+const struct Pfm3MixerButtonState fxButtonState = {
+      "Fx dry/wet", MIXER_VALUE_SEND,
+      {0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames }
+};
 
 const struct Pfm3MixerButton volumeButton = {
   "Mix",
-  2,
-  { &volumeButtonState, &panButtonState }
+  3,
+  { &volumeButtonState, &panButtonState, &fxButtonState }
 };
 
 const struct Pfm3MixerButtonState compButtonState = {
@@ -76,7 +101,6 @@ const struct Pfm3MixerButton outButton = {
   1,
   { &outButtonState  }
 };
-
 
 const struct Pfm3MixerButtonState voiceButtonState = {
       "Number of voices", MIXER_VALUE_NUMBER_OF_VOICES,
@@ -150,23 +174,49 @@ const struct Pfm3MixerButton scalaButton = {
 // ==
 
 
-const uint8_t numberOfGlobalSettings[2] = { 6, 4 };
-const struct Pfm3MixerButtonStateParam globalSettings[2][6] = { {
-   { 0, 5, 6, DISPLAY_TYPE_STRINGS, mpeOptions },
-   { 0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithNone },
-   { 0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithNone },
-   { 0, 1, 2, DISPLAY_TYPE_STRINGS, enableNames },
-   { 420, 460, 401, DISPLAY_TYPE_FLOAT, nullNames },
-   { 0, 2, 3, DISPLAY_TYPE_STRINGS, levelMeterWhere },
-},
-{
-   { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
-   { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
-   { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
-   { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
-   { 0, 0, 0, DISPLAY_TYPE_FLOAT, nullNames },
-   { 0, 0, 0, DISPLAY_TYPE_FLOAT, nullNames }
-}};
+const uint8_t numberOfGlobalSettings[5] = { 5, 4, 6, 6, 3 };
+const struct Pfm3MixerButtonStateParam globalSettings[5][6] = {
+    {
+        { 0, 5, 6, DISPLAY_TYPE_STRINGS, mpeOptions },
+        { 0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithNone },
+        { 0, 16, 17, DISPLAY_TYPE_STRINGS, midiWithNone },
+        { 0, 1, 2, DISPLAY_TYPE_STRINGS, enableNames },
+        { 420, 460, 401, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 2, 3, DISPLAY_TYPE_STRINGS, levelMeterWhere },
+    },
+    {
+        { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
+        { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
+        { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
+        { 0, 127, 128, DISPLAY_TYPE_INT, nullNames },
+        { 0, 0, 0, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 0, 0, DISPLAY_TYPE_FLOAT, nullNames }
+    },
+    {
+        { 0, 18, 19, DISPLAY_TYPE_STRINGS, reverbPresets },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+    },
+    {
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+    },
+    {
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+        { 0, 1, 101, DISPLAY_TYPE_FLOAT, nullNames },
+    }
+};
 
 
 const struct Pfm3MixerButtonState globalSettingsDetect = {
@@ -179,11 +229,25 @@ const struct Pfm3MixerButtonState globalSettingsUserCC = {
       MIXER_VALUE_GLOBAL_SETTINGS_2
 };
 
+const struct Pfm3MixerButtonState globalSettingsMasterFx = {
+      "Reverb 1",
+      MIXER_VALUE_GLOBAL_SETTINGS_3
+};
+
+const struct Pfm3MixerButtonState globalSettingsMasterFx2 = {
+      "Reverb 2",
+      MIXER_VALUE_GLOBAL_SETTINGS_4
+};
+
+const struct Pfm3MixerButtonState globalSettingsMasterFx3 = {
+      "Reverb 3",
+      MIXER_VALUE_GLOBAL_SETTINGS_5
+};
 
 const struct Pfm3MixerButton globalButton = {
   "Global",
-  2,
-  { &globalSettingsDetect, &globalSettingsUserCC }
+  5,
+  { &globalSettingsDetect, &globalSettingsUserCC, &globalSettingsMasterFx, &globalSettingsMasterFx2 , &globalSettingsMasterFx3 }
 };
 
 
@@ -213,6 +277,9 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
             break;
         case MIXER_VALUE_PAN:
             valueP = (void*) &synthState_->mixerState.instrumentState_[encoder].pan;
+            break;
+        case MIXER_VALUE_SEND:
+            valueP = (void*) &synthState_->mixerState.instrumentState_[encoder].send;
             break;
         case MIXER_VALUE_VOLUME:
             valueP = (void*) &synthState_->mixerState.instrumentState_[encoder].volume;
@@ -265,19 +332,83 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
                     break;
             }
             break;
-            case MIXER_VALUE_GLOBAL_SETTINGS_2:
-                switch (encoder) {
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                        valueP = (void*) &synthState_->mixerState.userCC_[encoder];
-                        break;
-                    case 4:
-                    case 5:
-                        break;
-                }
-                break;
+        case MIXER_VALUE_GLOBAL_SETTINGS_2:
+            switch (encoder) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                    valueP = (void*) &synthState_->mixerState.userCC_[encoder];
+                    break;
+                case 4:
+                case 5:
+                    break;
+            }
+            break;
+        case MIXER_VALUE_GLOBAL_SETTINGS_3:
+            switch (encoder) {
+                case 0:
+                    valueP = (void*) &synthState_->mixerState.reverbPreset_;
+                    break;
+                case 1:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_PREDELAYTIME];
+                    break;
+                case 2:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_PREDELAYMIX];
+                    break;
+                case 3:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_INPUTBASE];
+                    break;
+                case 4:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_INPUTWIDTH];
+                    break;
+                case 5:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_NOTCHSPREAD];
+                    break;
+            }
+            break;
+        case MIXER_VALUE_GLOBAL_SETTINGS_4:
+            switch (encoder) {
+                case 0:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_LOOPHP];
+                    //valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_DIFFUSION];
+                    break;
+                case 1:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_LFODEPTH];
+                    break;
+                case 2:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_LFOSPEED];
+                    break;
+                case 3:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_DIFFUSION];
+                    break;
+                case 4:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_NOTCHBASE];
+                    break;
+                case 5:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_DAMPING];
+                    break;
+            }
+            break;
+        case MIXER_VALUE_GLOBAL_SETTINGS_5:
+            switch (encoder) {
+                case 0:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_SIZE];
+                    break;
+                case 1:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_DECAY];
+                    break;
+                case 2:
+                    valueP = (void*) &synthState_->fullState.masterfxConfig[GLOBALFX_NOTCHBASE];
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+                case 5:
+                    break;
+            }
+            break;
     }
     return valueP;
 }
@@ -297,8 +428,12 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
 
     const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
-    bool isGlobalSettings = (currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1
-        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_2);
+    bool isGlobalSettings = (
+           currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_2
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_3
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_4
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_5);
 
     const Pfm3MixerButtonStateParam *buttonStateParam;
     void *valueP;
@@ -411,7 +546,13 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
 void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus) {
     uint8_t buttonState = synthState_->fullState.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState.mixerCurrentEdit];
     uint8_t mixerValueType = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit]->state[buttonState]->mixerValueType;
-    bool isGlobalSettings = (mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1 || mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_2);
+    bool isGlobalSettings = (
+        mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1 ||
+        mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_2 ||
+        mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_3 ||
+        mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_4 ||
+        mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_5 
+    );
 
     switch (refreshStatus) {
         case 20:
@@ -557,6 +698,69 @@ void FMDisplayMixer::refreshMixerRowGlobalOptions(int page, int row) {
                     break;
             }
             break;
+        case 2:
+            switch (row) {
+                case 0:
+                    tft_->print("Preset");
+                    break;
+                case 1:
+                    tft_->print("Pre delay");
+                    break;
+                case 2:
+                    tft_->print("Pre delay Mix");
+                    break;
+                case 3:
+                    tft_->print("Filter base");
+                    break;
+                case 4:
+                    tft_->print("Filter width");
+                    break;
+                case 5:
+                    tft_->print("Notch Spread");
+                    break;
+            }
+            break;
+        case 3:
+            switch (row) {
+                case 0:
+                    tft_->print("Tank hp");
+                    break;
+                case 1:
+                    tft_->print("Mod Depth");
+                    break;
+                case 2:
+                    tft_->print("Mod Speed");
+                    break;
+                case 3:
+                    tft_->print("Diffusion");
+                    break;
+                case 4:
+                    tft_->print("Notch Base");
+                    break;
+                case 5:
+                    tft_->print("Damping");
+                    break;
+            }
+        break;
+        case 4:
+            switch (row) {
+                case 0:
+                    tft_->print("Size");
+                    break;
+                case 1:
+                    tft_->print("Decay");
+                    break;
+                case 2:
+                    tft_->print("Notch Base");
+                    break;
+                case 3:
+                    break;
+                case 4:
+                   break;
+                case 5:
+                    break;
+            }
+        break;
     }
 }
 
@@ -623,7 +827,11 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
 
     const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
     bool isGlobalSettings = (currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1
-        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_2);
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_2
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_3
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_4
+        || currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_5
+    );
     bool isScalaButton = (currentButton->state[0]->mixerValueType == MIXER_VALUE_SCALA_ENABLE);
 
     const Pfm3MixerButtonStateParam *buttonStateParam;
