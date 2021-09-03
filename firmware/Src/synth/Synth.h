@@ -29,6 +29,7 @@
 #include "dwt.h"
 
 #include "SimpleComp.h"
+#include "FxBus.h"
 
 #define UINT_MAX  4294967295
 #define NUMBER_OF_STORED_NOTES 6
@@ -174,8 +175,10 @@ private:
 
     float smoothPan_[NUMBER_OF_TIMBRES];
     float smoothVolume_[NUMBER_OF_TIMBRES];
+    float *fxSample;
 
     chunkware_simple::SimpleComp instrumentCompressor_[NUMBER_OF_TIMBRES];
+    FxBus fxBus;
 };
 
 #endif

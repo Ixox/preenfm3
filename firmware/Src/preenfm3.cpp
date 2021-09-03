@@ -19,6 +19,7 @@
 #include "fatfs.h"
 #include "Synth.h"
 #include "SynthState.h"
+#include "FxBus.h"
 #include "MidiDecoder.h"
 #include "FMDisplay3.h"
 #include "FMDisplayMixer.h"
@@ -46,6 +47,7 @@ extern TIM_HandleTypeDef htim1;
 #define RAM_D3_SECTION __attribute__((section(".ram_d3")))
 
 SynthState synthState;
+FxBus fxBus;
 FMDisplay3 fmDisplay3;
 FMDisplayEditor displayEditor;
 FMDisplayMenu displayMenu;
@@ -426,6 +428,9 @@ void dependencyInjection() {
     midiDecoder.setVisualInfo(&fmDisplay3);
     midiDecoder.setSynth(&synth);
     midiDecoder.setStorage(&sdCard);
+
+    //master fx bus
+    fxBus.init(&synthState);
 
     // Init child display
     displayMixer.init(&synthState, &tft);
