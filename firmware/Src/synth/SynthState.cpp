@@ -107,11 +107,13 @@ SynthState::SynthState() {
     fullState.operatorNumber = 0;
 }
 
-void SynthState::setDisplays(FMDisplayMixer* displayMixer, FMDisplayEditor* displayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer) {
+void SynthState::init(FMDisplayMixer* displayMixer, FMDisplayEditor* displayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer) {
     this->displayMixer = displayMixer;
     this->displayEditor = displayEditor;
     this->displayMenu = displayMenu;
     this->displaySequencer = displaySequencer;
+
+    mixerState.fxBus_.init();
 }
 
 
