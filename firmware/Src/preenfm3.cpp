@@ -409,7 +409,7 @@ void dependencyInjection() {
     // to SynthStateAware Class
     // MidiDecoder, Synth (Env,Osc, Lfo, Matrix, Voice ), tft, PresetUtil...
 
-    synthState.setDisplays(&displayMixer, &displayEditor, &displayMenu, &displaySequencer);
+    synthState.init(&displayMixer, &displayEditor, &displayMenu, &displaySequencer);
 
     synth.setSynthState(&synthState);
 

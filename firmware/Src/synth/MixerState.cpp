@@ -19,7 +19,6 @@
 #include "FxBus.h"
 
 MixerState::MixerState() {
-    fxBus_.init();
 }
 
 MixerState::~MixerState() {

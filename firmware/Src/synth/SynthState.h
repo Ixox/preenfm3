@@ -404,7 +404,7 @@ public:
         this->timbres = timbres;
     }
 
-    void setDisplays(FMDisplayMixer* displayMixer, FMDisplayEditor* dDisplayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer);
+    void init(FMDisplayMixer* displayMixer, FMDisplayEditor* dDisplayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer);
 
     void encoderTurned(int encoder, int ticks);
 

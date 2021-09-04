@@ -27,7 +27,7 @@ inline float fold(float x4) {
 }
 inline
 int modulo(int d, int max) {
-  return unlikely(d >= max) ? d - max : d;
+    return unlikely(d >= max) ? d - max : d;
 }
 inline
 float modulo2(float readPos, int bufferLen) {
@@ -37,30 +37,30 @@ float modulo2(float readPos, int bufferLen) {
 }
 inline
 float clamp(float d, float min, float max) {
-  const float t = unlikely(d < min) ? min : d;
-  return unlikely(t > max) ? max : t;
+    const float t = unlikely(d < min) ? min : d;
+    return unlikely(t > max) ? max : t;
 }
 inline
 float sqrt3(const float x)
 {
-  union
-  {
-    int i;
-    float x;
-  } u;
+    union
+    {
+        int i;
+        float x;
+    } u;
 
-  u.x = x;
-  u.i = (1 << 29) + (u.i >> 1) - (1 << 22);
-  return u.x;
+    u.x = x;
+    u.i = (1 << 29) + (u.i >> 1) - (1 << 22);
+    return u.x;
 }
 inline
 float fastroot(float f,int n)
 {
- long *lp,l;
- lp=(long*)(&f);
- l=*lp;l-=0x3F800000l;l>>=(n-1);l+=0x3F800000l;
- *lp=l;
- return f;
+    long *lp,l;
+    lp=(long*)(&f);
+    l=*lp;l-=0x3F800000l;l>>=(n-1);l+=0x3F800000l;
+    *lp=l;
+    return f;
 }
 inline
 float sigmoid(float x)
@@ -177,8 +177,8 @@ void FxBus::mixSumInit() {
     totalSent = 0.0f;
 }
 
- void FxBus::presetChanged(int presetNum) {
-     setDefaultValue();
+void FxBus::presetChanged(int presetNum) {
+    setDefaultValue();
     if (presetNum < 15)
     {
         int size = presetNum * 0.333333333f;
@@ -213,48 +213,48 @@ void FxBus::mixSumInit() {
                 break;
             }
             break;
-        case 1:
-            //small
-            masterfxConfig[GLOBALFX_SIZE] = 0.26f;
-            masterfxConfig[GLOBALFX_DECAY] = 0.1f;
-            masterfxConfig[GLOBALFX_DIFFUSION] = 0.68f;
-            masterfxConfig[GLOBALFX_LFOSPEED] = 0.55f;
-            masterfxConfig[GLOBALFX_LFODEPTH] = 0.35f;
-            masterfxConfig[GLOBALFX_NOTCHBASE] = 0.05f;
-            masterfxConfig[GLOBALFX_LOOPHP] = 0.3f;
-            break;
-        case 2:
-            //medium
-            masterfxConfig[GLOBALFX_SIZE] = 0.465f;
-            masterfxConfig[GLOBALFX_DECAY] = 0.18f;
-            masterfxConfig[GLOBALFX_DIFFUSION] = 0.57f;
-            masterfxConfig[GLOBALFX_LFOSPEED] = 0.57f;
-            masterfxConfig[GLOBALFX_LFODEPTH] = 0.28f;
-            masterfxConfig[GLOBALFX_NOTCHBASE] = 0.22f;
-            masterfxConfig[GLOBALFX_LOOPHP] = 0.3f;
-            break;
-        case 3:
-            //large
-            masterfxConfig[GLOBALFX_SIZE] = 0.775f;
-            masterfxConfig[GLOBALFX_DECAY] = 0.38f;
-            masterfxConfig[GLOBALFX_DIFFUSION] = 0.56f;
-            masterfxConfig[GLOBALFX_LFOSPEED] = 0.57f;
-            masterfxConfig[GLOBALFX_LFODEPTH] = 0.21f;
-            masterfxConfig[GLOBALFX_NOTCHBASE] = 0.05f;
-            masterfxConfig[GLOBALFX_LOOPHP] = 0.3f;
-            break;
-        case 4:
-            //xtra large
-            masterfxConfig[GLOBALFX_SIZE] = 0.87f;
-            masterfxConfig[GLOBALFX_DECAY] = 0.72f;
-            masterfxConfig[GLOBALFX_DIFFUSION] = 0.68f;
-            masterfxConfig[GLOBALFX_LFOSPEED] = 0.57f;
-            masterfxConfig[GLOBALFX_LFODEPTH] = 0.21f;
-            masterfxConfig[GLOBALFX_NOTCHBASE] = 0.02f;
-            masterfxConfig[GLOBALFX_LOOPHP] = 0.35f;
-            break;
-        default:
-            break;
+            case 1:
+                //small
+                masterfxConfig[GLOBALFX_SIZE] = 0.26f;
+                masterfxConfig[GLOBALFX_DECAY] = 0.1f;
+                masterfxConfig[GLOBALFX_DIFFUSION] = 0.68f;
+                masterfxConfig[GLOBALFX_LFOSPEED] = 0.55f;
+                masterfxConfig[GLOBALFX_LFODEPTH] = 0.35f;
+                masterfxConfig[GLOBALFX_NOTCHBASE] = 0.05f;
+                masterfxConfig[GLOBALFX_LOOPHP] = 0.3f;
+                break;
+            case 2:
+                //medium
+                masterfxConfig[GLOBALFX_SIZE] = 0.465f;
+                masterfxConfig[GLOBALFX_DECAY] = 0.18f;
+                masterfxConfig[GLOBALFX_DIFFUSION] = 0.57f;
+                masterfxConfig[GLOBALFX_LFOSPEED] = 0.57f;
+                masterfxConfig[GLOBALFX_LFODEPTH] = 0.28f;
+                masterfxConfig[GLOBALFX_NOTCHBASE] = 0.22f;
+                masterfxConfig[GLOBALFX_LOOPHP] = 0.3f;
+                break;
+            case 3:
+                //large
+                masterfxConfig[GLOBALFX_SIZE] = 0.775f;
+                masterfxConfig[GLOBALFX_DECAY] = 0.38f;
+                masterfxConfig[GLOBALFX_DIFFUSION] = 0.56f;
+                masterfxConfig[GLOBALFX_LFOSPEED] = 0.57f;
+                masterfxConfig[GLOBALFX_LFODEPTH] = 0.21f;
+                masterfxConfig[GLOBALFX_NOTCHBASE] = 0.05f;
+                masterfxConfig[GLOBALFX_LOOPHP] = 0.3f;
+                break;
+            case 4:
+                //xtra large
+                masterfxConfig[GLOBALFX_SIZE] = 0.87f;
+                masterfxConfig[GLOBALFX_DECAY] = 0.72f;
+                masterfxConfig[GLOBALFX_DIFFUSION] = 0.68f;
+                masterfxConfig[GLOBALFX_LFOSPEED] = 0.57f;
+                masterfxConfig[GLOBALFX_LFODEPTH] = 0.21f;
+                masterfxConfig[GLOBALFX_NOTCHBASE] = 0.02f;
+                masterfxConfig[GLOBALFX_LOOPHP] = 0.35f;
+                break;
+            default:
+                break;
         }
 
         switch (brightness)
@@ -326,11 +326,11 @@ void FxBus::mixSumInit() {
         }
     }
     paramChanged();
- }
+}
 
 
- void FxBus::paramChanged() {
-     float temp;
+void FxBus::paramChanged() {
+    float temp;
 
     inputWidth         =     masterfxConfig[GLOBALFX_INPUTWIDTH];
     float filterBase = masterfxConfig[GLOBALFX_INPUTBASE];
@@ -680,7 +680,7 @@ void FxBus::processBlock(int32_t *outBuff) {
         float inSum4     =     ap4In + int4 * diffuserCoef2;
         ap4Out             =     int4 - inSum4 * diffuserCoef2;
         diffuserBuffer4[diffuserWritePos4]         = inSum4;
-           int4 = delayAllpassInterpolation(diffuserReadPos4, diffuserBuffer4, diffuserBufferLen4M1, int4);
+        int4 = delayAllpassInterpolation(diffuserReadPos4, diffuserBuffer4, diffuserBufferLen4M1, int4);
 
         // ----------------------------------------------< inject in delay4
         delay4Buffer[ delay4WritePos ]         = ap4Out;
@@ -746,7 +746,7 @@ void FxBus::processBlock(int32_t *outBuff) {
         lfoProcess(&lfo3, &lfo3tri, &lfo3Inc);
         lfoProcess(&lfo4, &lfo4tri, &lfo4Inc);
 
-         // -------- mods :
+        // -------- mods :
 
         timeCvControl1 = clamp(diffuserBufferLen1 - diffuserBuffer1ReadLen      +      lfo1      * lfoDepth * diffuserBuffer1ReadLen_b, -diffuserBufferLen1M1, diffuserBufferLen1);
         timeCvControl2 = clamp(diffuserBufferLen2 - diffuserBuffer2ReadLen      +     lfo2     * lfoDepth * diffuserBuffer2ReadLen_b, -diffuserBufferLen2M1, diffuserBufferLen2);
