@@ -19,6 +19,7 @@
 #define SYNTH_MIXERSTATE_H_
 
 #include "Common.h"
+#include "FxBus.h"
 
 enum MIXER_BANK_VERSION {
     MIXER_BANK_VERSION1 = 1,
@@ -35,6 +36,8 @@ enum MIXER_BANK_VERSION {
 };
 
 #define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION6
+
+
 
 struct MixerInstrumentState {
     uint8_t out;
@@ -53,6 +56,7 @@ struct MixerInstrumentState {
     int8_t pan;
     float send;
 };
+
 
 class MixerState {
 public:
@@ -76,6 +80,7 @@ public:
     struct MixerInstrumentState instrumentState_[NUMBER_OF_TIMBRES];
     uint8_t userCC_[4];
     uint8_t MPE_inst1_;
+    FxBus fxBus_;
 
 private:
     void restoreFullStateVersion1(char *buffer);

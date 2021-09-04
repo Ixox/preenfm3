@@ -1180,9 +1180,16 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
             break;
         case 4:
             fillArea(left, y + 19, BUTTON_WIDTH/4, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/4, y + BUTTON_WIDTH/4, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH/4, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
             fillArea(x, y + 19, BUTTON_WIDTH/4, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
             fillArea(left + BUTTON_WIDTH/4*3, y + 19, BUTTON_WIDTH/4, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
+            break;
+        case 5:
+            fillArea(left, y + 19, BUTTON_WIDTH/5, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH/5, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH/5*2, y + 19, BUTTON_WIDTH/5, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH/5*3, y + 19, BUTTON_WIDTH/5, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH/5*4, y + 19, BUTTON_WIDTH/5, 2, activeState == 5 ? COLOR_WHITE : COLOR_GRAY);
             break;
         }
     } else {

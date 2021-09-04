@@ -19,7 +19,6 @@
 #include "fatfs.h"
 #include "Synth.h"
 #include "SynthState.h"
-#include "FxBus.h"
 #include "MidiDecoder.h"
 #include "FMDisplay3.h"
 #include "FMDisplayMixer.h"
@@ -47,7 +46,6 @@ extern TIM_HandleTypeDef htim3;
 #define RAM_D3_SECTION __attribute__((section(".ram_d3")))
 
 SynthState synthState;
-FxBus fxBus;
 FMDisplay3 fmDisplay3;
 FMDisplayEditor displayEditor;
 FMDisplayMenu displayMenu;
@@ -429,8 +427,6 @@ void dependencyInjection() {
     midiDecoder.setSynth(&synth);
     midiDecoder.setStorage(&sdCard);
 
-    //master fx bus
-    fxBus.init(&synthState);
 
     // Init child display
     displayMixer.init(&synthState, &tft);
@@ -462,7 +458,7 @@ void dependencyInjection() {
 
     sdCard.init(synth.getTimbre(0)->getParamRaw(), synth.getTimbre(1)->getParamRaw(), synth.getTimbre(2)->getParamRaw(),
             synth.getTimbre(3)->getParamRaw(), synth.getTimbre(4)->getParamRaw(), synth.getTimbre(5)->getParamRaw());
-    sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
+
     sdCard.getMixerBank()->setMixerState(&synthState.mixerState);
     sdCard.getMixerBank()->setScalaFile(sdCard.getScalaFile());
     sdCard.getMixerBank()->setSequencer(&sequencer);
@@ -474,6 +470,11 @@ void dependencyInjection() {
     sdCard.getSequenceBank()->loadDefaultSequence();
     sdCard.getUserWaveform()->loadUserWaveforms();
     synthState.propagateAfterNewMixerLoad();
+
+
+    // To call after config loaded
+    sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
+    displayMixer.setReverbParamVisible(synthState.fullState.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
 
 }
 

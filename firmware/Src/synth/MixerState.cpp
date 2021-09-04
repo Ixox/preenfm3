@@ -15,14 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <MixerState.h>
+#include "MixerState.h"
+#include "FxBus.h"
 
 MixerState::MixerState() {
-
+    fxBus_.init();
 }
 
 MixerState::~MixerState() {
 }
+
 
 void MixerState::getFullState(char *buffer, uint32_t *size) {
     uint32_t index = 0;
@@ -81,6 +83,21 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     buffer[index++] = reverbPreset_;
     buffer[index++] = reverbOutput_;
     buffer[index++] = (char)(100.0f * reverbLevel_) ;
+
+
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_DECAY]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_SIZE]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_DIFFUSION]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_DAMPING]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_LFODEPTH]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_LFOSPEED]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_INPUTBASE]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_LOOPHP]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_NOTCHBASE]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD]);
 
     *size = index;
 }
@@ -152,8 +169,26 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     buffer[index++] = 7;
     buffer[index++] = 0;
     buffer[index++] = 100;
+
+
+    // Master FX default value
+    buffer[index++] = (char)(GLOBALFX_PREDELAYTIME_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_PREDELAYMIX_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_SIZE_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_DIFFUSION_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_DAMPING_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_DECAY_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_LFODEPTH_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_LFOSPEED_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_INPUTBASE_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_INPUTWIDTH_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_NOTCHBASE_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_NOTCHSPREAD_DEFAULT * 100.0f);
+    buffer[index++] = (char)(GLOBALFX_LOOPHP_DEFAULT * 100.0f);
+
     *size = index;
 }
+
 
 void MixerState::restoreFullState(char *buffer) {
     uint8_t version = buffer[0];
@@ -200,7 +235,12 @@ void MixerState::setDefaultValues() {
     // Default output = 1&2
     reverbOutput_ = 0;
 
+    fxBus_.setDefaultValue();
+
 }
+
+
+
 
 void MixerState::restoreFullStateVersion1(char *buffer) {
     int index = 0;
@@ -490,6 +530,22 @@ void MixerState::restoreFullStateVersion6(char *buffer) {
     reverbOutput_ = buffer[index++];
     reverbLevel_ = .01f * buffer[index++] ;
 
+    // No loop in case we add/remove params later
+    fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_DECAY] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_SIZE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
+
+    fxBus_.paramChanged();
 }
 
 
