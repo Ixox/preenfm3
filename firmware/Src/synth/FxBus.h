@@ -19,9 +19,24 @@
 #ifndef FX_BUS_
 #define FX_BUS_
 
-#include "SynthStateAware.h"
+#include "Common.h"
+
+#define GLOBALFX_PREDELAYTIME_DEFAULT  0.54f
+#define GLOBALFX_PREDELAYMIX_DEFAULT  0.35f
+#define GLOBALFX_SIZE_DEFAULT  0.41f
+#define GLOBALFX_DIFFUSION_DEFAULT  0.84f
+#define GLOBALFX_DAMPING_DEFAULT  0.63f
+#define GLOBALFX_DECAY_DEFAULT  0.74f
+#define GLOBALFX_LFODEPTH_DEFAULT  0.28f
+#define GLOBALFX_LFOSPEED_DEFAULT  0.69f
+#define GLOBALFX_INPUTBASE_DEFAULT  0.36f
+#define GLOBALFX_INPUTWIDTH_DEFAULT  0.46f
+#define GLOBALFX_NOTCHBASE_DEFAULT  0.5f
+#define GLOBALFX_NOTCHSPREAD_DEFAULT  0.69f
+#define GLOBALFX_LOOPHP_DEFAULT  0.34f
 
 
+// Must not be changed after VERSION6
 enum MASTERFXPARAMS {
     GLOBALFX_PREDELAYTIME = 0,
     GLOBALFX_DECAY,
@@ -40,15 +55,20 @@ enum MASTERFXPARAMS {
 };
 
 
-class FxBus : public SynthStateAware {
+
+
+class FxBus {
+	friend class FMDisplayMixer;
+    friend class MixerState;
 public:
     FxBus();
     virtual ~FxBus() {}
-    void init(SynthState *synthState);
-
+    void init();
+    void setDefaultValue();
     void mixSumInit();
     void presetChanged(int presetNum);
-    void mixAdd(float *inStereo, int timbreNum);
+    void paramChanged();
+    void mixAdd(float *inStereo, float send, float reverbLevel);
     void processBlock(int32_t *outBuff);
     float delayInterpolation(float readPos, float buffer[], int bufferLenM1);
     void lfoProcess(float *lfo, float *lfotri, float *lfoInc);
@@ -61,11 +81,10 @@ public:
     }
 
 protected:
-    #define _dattorroSampleRateMod PREENFM_FREQUENCY / 29761.0f
-
-    // reverb parameters
+    // Reverb params
     float masterfxConfig[GLOBALFX_PARAMS_SIZE];
 
+    #define _dattorroSampleRateMod PREENFM_FREQUENCY / 29761.0f
 
     float headRoomMultiplier = 1;
     float headRoomDivider = 1;

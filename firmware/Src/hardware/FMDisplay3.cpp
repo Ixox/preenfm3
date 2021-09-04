@@ -362,7 +362,7 @@ void FMDisplay3::afterNewParamsLoad(int timbre) {
 }
 
 void FMDisplay3::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
-    displayMixer_->newMixerValue(valueType, timbre, oldValue, newValue);
+    displayMixer_->newMixerValue(valueType, timbre, oldValue, newValue, refreshStatus_);
 }
 
 void FMDisplay3::newPfm3Page(FullState *fullState) {

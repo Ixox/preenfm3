@@ -22,7 +22,6 @@
 
 extern RNG_HandleTypeDef hrng;
 extern float noise[32];
-extern FxBus fxBus;
 
 Synth::Synth(void) {
 }
@@ -302,7 +301,8 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
     }
 
     // fxBus - prepare empty mixing block
-    fxBus.mixSumInit();
+    FxBus* fxBus = &this->synthState_->mixerState.fxBus_;
+    fxBus->mixSumInit();
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         // numberOfVoices = 0; => timbre is disabled
@@ -332,19 +332,19 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         instrumentCompressor_[timbre].processPfm3(sampleFromTimbre);
 
         // Send to bus fx, to mix with other timbres
-        fxBus.mixAdd(timbres_[timbre].getSampleBlock(), timbre);
+        fxBus->mixAdd(timbres_[timbre].getSampleBlock(), synthState_->mixerState.instrumentState_[timbre].send, synthState_->mixerState.reverbLevel_);
     }
 
     // fxBus - mixing block process
     switch (synthState_->mixerState.reverbOutput_) {
     case 0:
-        fxBus.processBlock(buffer1);
+        fxBus->processBlock(buffer1);
         break;
     case 1:
-        fxBus.processBlock(buffer2);
+        fxBus->processBlock(buffer2);
         break;
     case 2:
-        fxBus.processBlock(buffer3);
+        fxBus->processBlock(buffer3);
         break;
     }
 
@@ -552,9 +552,8 @@ void Synth::afterNewMixerLoad() {
     // Update MPE
     newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_1, 0, -1, this->synthState_->mixerState.MPE_inst1_);
 
-    // Update Reverb
-    newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_3, 0, -1, this->synthState_->mixerState.reverbPreset_);
-
+    // Update Reverb local variables
+    this->synthState_->mixerState.fxBus_.paramChanged();
 }
 
 int Synth::getFreeVoice() {
@@ -690,8 +689,14 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
         case MIXER_VALUE_GLOBAL_SETTINGS_3:
         	// Did we change the reverb preset
         	if(timbre == 0) {
-                fxBus.presetChanged(this->synthState_->mixerState.reverbPreset_);
+        	    this->synthState_->mixerState.fxBus_.presetChanged(this->synthState_->mixerState.reverbPreset_);
+        	} else if (timbre >= 3 && timbre <= 5) {
+        	    this->synthState_->mixerState.fxBus_.paramChanged();
         	}
+        	break;
+        case MIXER_VALUE_GLOBAL_SETTINGS_4:
+        case MIXER_VALUE_GLOBAL_SETTINGS_5:
+            this->synthState_->mixerState.fxBus_.paramChanged();
         	break;
         case MIXER_VALUE_MIDI_CHANNEL:
         case MIXER_VALUE_MIDI_FIRST_NOTE:

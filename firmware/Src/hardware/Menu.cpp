@@ -32,6 +32,7 @@ const char* encoderType [] = { "12", "24", "12i", "24i" };
 const char* usbMidiText[] = { "Off", "In", "In/Out" };
 const char* version[] = { PFM3_FIRMWARE_VERSION };
 const char* tftAutoReinit [] = { "Off", "Auto" };
+const char* reverbParam[] = { "Hide", "Show" };
 
 
 
@@ -429,7 +430,13 @@ const struct MidiConfig midiConfig[]  = {
                 "tftbacklight",
                 101,
                 0
-        },        // Don't count in MIDICONFIG_SIZE
+        },
+        {
+                "Reverb params",
+                "reverbparams",
+                2,
+                reverbParam
+        },
         {
                 "Firmware Version",
                 "",

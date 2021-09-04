@@ -60,10 +60,12 @@ public:
         tft_ = tft;
     }
 
+    void setReverbParamVisible(bool visible);
+
     void displayMixerValue(int timbre);
     void refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus);
     void tempoClick();
-    void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
+    void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue, int &refreshStatus);
     void newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
     void encoderTurned(int encoder, int ticks);
     void buttonPressed(int button);
@@ -97,6 +99,7 @@ private:
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
     int *refreshStatusP_;
     int *endRefreshStatusP_;
+    bool reverbParamVisible_;
 };
 
 #endif

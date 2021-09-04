@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FxBus.h"
 
+#include <math.h>
+#include "FxBus.h"
 
 inline float fold(float x4) {
     // https://www.desmos.com/calculator/ge2wvg2wgj
@@ -87,25 +88,7 @@ float FxBus::diffuserBuffer4[diffuserBufferLen4] __attribute__((section(".ram_d2
 
 FxBus::FxBus() {}
 
-void FxBus::init(SynthState *synthState) {
-
-    // Master FX default value
-    masterfxConfig[GLOBALFX_PREDELAYTIME] = 0.54f;
-    masterfxConfig[GLOBALFX_PREDELAYMIX] = 0.35f;
-    masterfxConfig[GLOBALFX_SIZE] = 0.41f;
-    masterfxConfig[GLOBALFX_DIFFUSION] = 0.84f;
-    masterfxConfig[GLOBALFX_DAMPING] = 0.63f;
-    masterfxConfig[GLOBALFX_DECAY] = 0.74f;
-    masterfxConfig[GLOBALFX_LFODEPTH] = 0.28f;
-    masterfxConfig[GLOBALFX_LFOSPEED] = 0.69f;
-    masterfxConfig[GLOBALFX_INPUTBASE] = 0.36f;
-    masterfxConfig[GLOBALFX_INPUTWIDTH] = 0.46f;
-    masterfxConfig[GLOBALFX_NOTCHBASE] = 0.5f;
-    masterfxConfig[GLOBALFX_NOTCHSPREAD] = 0.69f;
-    masterfxConfig[GLOBALFX_LOOPHP] = 0.34f;
-
-
-    this->synthState_ = synthState;
+void FxBus::init() {
 
     for (int s = 0; s < predelayBufferSize; s++) {
         predelayBuffer[s] = 0;
@@ -148,8 +131,27 @@ void FxBus::init(SynthState *synthState) {
     for (int s = 0; s < diffuserBufferLen4; s++) {
         diffuserBuffer4[ s ] = 0;
     }
-
+    setDefaultValue();
 }
+
+
+void FxBus::setDefaultValue() {
+    // Master FX default value
+    masterfxConfig[GLOBALFX_PREDELAYTIME] = GLOBALFX_PREDELAYTIME_DEFAULT;
+    masterfxConfig[GLOBALFX_PREDELAYMIX] = GLOBALFX_PREDELAYMIX_DEFAULT;
+    masterfxConfig[GLOBALFX_SIZE] = GLOBALFX_SIZE_DEFAULT;
+    masterfxConfig[GLOBALFX_DIFFUSION] = GLOBALFX_DIFFUSION_DEFAULT;
+    masterfxConfig[GLOBALFX_DAMPING] = GLOBALFX_DAMPING_DEFAULT;
+    masterfxConfig[GLOBALFX_DECAY] = GLOBALFX_DECAY_DEFAULT;
+    masterfxConfig[GLOBALFX_LFODEPTH] = GLOBALFX_LFODEPTH_DEFAULT;
+    masterfxConfig[GLOBALFX_LFOSPEED] = GLOBALFX_LFOSPEED_DEFAULT;
+    masterfxConfig[GLOBALFX_INPUTBASE] = GLOBALFX_INPUTBASE_DEFAULT;
+    masterfxConfig[GLOBALFX_INPUTWIDTH] = GLOBALFX_INPUTWIDTH_DEFAULT;
+    masterfxConfig[GLOBALFX_NOTCHBASE] = GLOBALFX_NOTCHBASE_DEFAULT;
+    masterfxConfig[GLOBALFX_NOTCHSPREAD] = GLOBALFX_NOTCHSPREAD_DEFAULT;
+    masterfxConfig[GLOBALFX_LOOPHP] = GLOBALFX_LOOPHP_DEFAULT;
+}
+
 /**
  * init before timbres summing
  */
@@ -176,9 +178,7 @@ void FxBus::mixSumInit() {
 }
 
  void FxBus::presetChanged(int presetNum) {
-
-    float temp;
-
+     setDefaultValue();
     if (presetNum < 15)
     {
         int size = presetNum * 0.333333333f;
@@ -325,6 +325,12 @@ void FxBus::mixSumInit() {
             break;
         }
     }
+    paramChanged();
+ }
+
+
+ void FxBus::paramChanged() {
+     float temp;
 
     inputWidth         =     masterfxConfig[GLOBALFX_INPUTWIDTH];
     float filterBase = masterfxConfig[GLOBALFX_INPUTBASE];
@@ -398,8 +404,8 @@ void FxBus::mixSumInit() {
     diffusion         =     masterfxConfig[GLOBALFX_DIFFUSION];
     damping         =     masterfxConfig[GLOBALFX_DAMPING];
 
-    decayVal         =     masterfxConfig[ GLOBALFX_DECAY ];
-    notchBase         =     masterfxConfig[ GLOBALFX_NOTCHBASE ];
+    decayVal         =     masterfxConfig[GLOBALFX_DECAY ];
+    notchBase         =     masterfxConfig[GLOBALFX_NOTCHBASE ];
     notchSpread     =     masterfxConfig[GLOBALFX_NOTCHSPREAD];
 
     //------- some process
@@ -479,11 +485,9 @@ void FxBus::mixSumInit() {
 /**
  * add timbre block to bus mix
  */
-void FxBus::mixAdd(float *inStereo, int timbreNum) {
-    if(synthState_->mixerState.instrumentState_[timbreNum].send > 0) {
-
-        float send = synthState_->mixerState.instrumentState_[timbreNum].send;
-        const float level = - sqrt3(send) * headRoomDivider * synthState_->mixerState.reverbLevel_;
+void FxBus::mixAdd(float *inStereo, float send, float reverbLevel) {
+    if (send > 0) {
+        const float level = - sqrt3(send) * headRoomDivider * reverbLevel;
 
         totalSent += level;
 

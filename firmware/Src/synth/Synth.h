@@ -29,7 +29,6 @@
 #include "dwt.h"
 
 #include "SimpleComp.h"
-#include "FxBus.h"
 
 #define UINT_MAX  4294967295
 #define NUMBER_OF_STORED_NOTES 6
