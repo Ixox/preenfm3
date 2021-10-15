@@ -19,6 +19,7 @@
 #define SYNTH_MIXERSTATE_H_
 
 #include "Common.h"
+#include "FxBus.h"
 
 enum MIXER_BANK_VERSION {
     MIXER_BANK_VERSION1 = 1,
@@ -29,10 +30,14 @@ enum MIXER_BANK_VERSION {
     // User CC
     MIXER_BANK_VERSION4,
     // MPE
-    MIXER_BANK_VERSION5
+    MIXER_BANK_VERSION5,
+    // REVERB
+    MIXER_BANK_VERSION6
 };
 
-#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION5
+#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION6
+
+
 
 struct MixerInstrumentState {
     uint8_t out;
@@ -49,7 +54,9 @@ struct MixerInstrumentState {
     float volume;
     float *scaleFrequencies;
     int8_t pan;
+    float send;
 };
+
 
 class MixerState {
 public:
@@ -67,9 +74,13 @@ public:
     uint8_t midiThru_;
     float tuning_;
     uint8_t levelMeterWhere_;
+    uint8_t reverbPreset_;
+    uint8_t reverbOutput_;
+    float reverbLevel_;
     struct MixerInstrumentState instrumentState_[NUMBER_OF_TIMBRES];
     uint8_t userCC_[4];
     uint8_t MPE_inst1_;
+    FxBus fxBus_;
 
 private:
     void restoreFullStateVersion1(char *buffer);
@@ -77,6 +88,7 @@ private:
     void restoreFullStateVersion3(char *buffer);
     void restoreFullStateVersion4(char *buffer);
     void restoreFullStateVersion5(char *buffer);
+    void restoreFullStateVersion6(char *buffer);
     void setDefaultValues();
 };
 

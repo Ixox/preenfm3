@@ -409,7 +409,7 @@ void dependencyInjection() {
     // to SynthStateAware Class
     // MidiDecoder, Synth (Env,Osc, Lfo, Matrix, Voice ), tft, PresetUtil...
 
-    synthState.setDisplays(&displayMixer, &displayEditor, &displayMenu, &displaySequencer);
+    synthState.init(&displayMixer, &displayEditor, &displayMenu, &displaySequencer);
 
     synth.setSynthState(&synthState);
 
@@ -426,6 +426,7 @@ void dependencyInjection() {
     midiDecoder.setVisualInfo(&fmDisplay3);
     midiDecoder.setSynth(&synth);
     midiDecoder.setStorage(&sdCard);
+
 
     // Init child display
     displayMixer.init(&synthState, &tft);
@@ -457,7 +458,7 @@ void dependencyInjection() {
 
     sdCard.init(synth.getTimbre(0)->getParamRaw(), synth.getTimbre(1)->getParamRaw(), synth.getTimbre(2)->getParamRaw(),
             synth.getTimbre(3)->getParamRaw(), synth.getTimbre(4)->getParamRaw(), synth.getTimbre(5)->getParamRaw());
-    sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
+
     sdCard.getMixerBank()->setMixerState(&synthState.mixerState);
     sdCard.getMixerBank()->setScalaFile(sdCard.getScalaFile());
     sdCard.getMixerBank()->setSequencer(&sequencer);
@@ -469,6 +470,11 @@ void dependencyInjection() {
     sdCard.getSequenceBank()->loadDefaultSequence();
     sdCard.getUserWaveform()->loadUserWaveforms();
     synthState.propagateAfterNewMixerLoad();
+
+
+    // To call after config loaded
+    sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
+    displayMixer.setReverbParamVisible(synthState.fullState.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
 
 }
 

@@ -591,13 +591,16 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                     (float) midiEvent.value[1] * .01f);
             break;
         case CC_ENV_ATK_OP1:
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV1a, ENCODER_ENV_A,
+                    (float)midiEvent.value[1] * .01562500000000000000f);
+            break;
         case CC_ENV_ATK_OP2:
         case CC_ENV_ATK_OP3:
         case CC_ENV_ATK_OP4:
         case CC_ENV_ATK_OP5:
         case CC_ENV_ATK_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1a + (midiEvent.value[0] - CC_ENV_ATK_OP1) * 2, ENCODER_ENV_A,
-                    (float) midiEvent.value[1] * .01562500000000000000f);
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV2a + (midiEvent.value[0] - CC_ENV_ATK_OP2)* 2, ENCODER_ENV_A,
+            		(float) midiEvent.value[1] * .01562500000000000000f);
             break;
         case CC_ENV_ATK_ALL:
         case CC_ENV_ATK_ALL_MODULATOR: {
@@ -673,6 +676,9 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             break;
         case CC_MIXER_PAN:
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
+            break;
+        case CC_MIXER_SEND:
+            this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, (float) midiEvent.value[1] * INV127);
             break;
         case CC_MPE_SLIDE_CC74:
         	// No CC74 on global midi channel
@@ -1063,13 +1069,18 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
             }
             break;
         case ROW_ENV1a:
+            if (encoder == ENCODER_ENV_A) {
+                cc.value[0] = CC_ENV_ATK_OP1;
+                cc.value[1] = newValue * 64.0f + .1f;
+            }
+            break;
         case ROW_ENV2a:
         case ROW_ENV3a:
         case ROW_ENV4a:
         case ROW_ENV5a:
         case ROW_ENV6a:
             if (encoder == ENCODER_ENV_A) {
-                cc.value[0] = CC_ENV_ATK_OP1 + ((currentrow - ROW_ENV1a) >> 1);
+                cc.value[0] = CC_ENV_ATK_OP2 + ((currentrow - ROW_ENV2a) >> 1);
                 cc.value[1] = newValue * 64.0f + .1f;
             }
             break;

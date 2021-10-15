@@ -61,6 +61,7 @@ SynthState::SynthState() {
     fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT] = 100;
     fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] = 0;
     fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH] = 0;
+    fullState.midiConfigValue[MIDICONFIG_REVERB_PARAMS] = 0;
     // Init randomizer values to 1
     fullState.randomizer.Oper = 1;
     fullState.randomizer.EnvT = 1;
@@ -106,11 +107,13 @@ SynthState::SynthState() {
     fullState.operatorNumber = 0;
 }
 
-void SynthState::setDisplays(FMDisplayMixer* displayMixer, FMDisplayEditor* displayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer) {
+void SynthState::init(FMDisplayMixer* displayMixer, FMDisplayEditor* displayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer) {
     this->displayMixer = displayMixer;
     this->displayEditor = displayEditor;
     this->displayMenu = displayMenu;
     this->displaySequencer = displaySequencer;
+
+    mixerState.fxBus_.init();
 }
 
 
@@ -179,7 +182,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         switch (encoder) {
         case 1:
             bitsToModify = 0x1 << patternSelect;
-            break;	   // modify single note
+            break;       // modify single note
         case 2:
             bitsToModify = 0x1111 << (patternSelect & 3);
             break; // modify all
@@ -224,7 +227,7 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
                 propagateNoteOn(-10);
                 break;
             case BUTTON_PREVIOUS_INSTRUMENT: {
-            	SynthEditMode previousMode = fullState.synthMode;
+                SynthEditMode previousMode = fullState.synthMode;
                 fullState.synthMode = SYNTH_MODE_REINIT_TFT;
                 propagateNewPfm3Page();
                 fullState.synthMode = previousMode;
@@ -335,6 +338,10 @@ void SynthState::encoderTurned(int encoder, int ticks) {
         break;
     case SYNTH_MODE_MENU:
         displayMenu->encoderTurned(currentTimbre, encoder, ticks);
+        // Did we modify reverb visibility ?
+        if (unlikely(fullState.currentMenuItem->menuState == MENU_CONFIG_SETTINGS && encoder == 3 &&  fullState.menuSelect == MIDICONFIG_REVERB_PARAMS)) {
+            displayMixer->setReverbParamVisible(fullState.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
+        }
         break;
     case SYNTH_MODE_MIXER:
         displayMixer->encoderTurned(encoder, ticks);
@@ -916,7 +923,7 @@ bool SynthState::scalaSettingsChanged(int timbre) {
 }
 
 const char* SynthState::getSequenceName() {
-	return displaySequencer->getSequenceName();
+    return displaySequencer->getSequenceName();
 }
 
 
