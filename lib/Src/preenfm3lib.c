@@ -16,22 +16,70 @@
 /** Functions ----------------------------------------------------------------*/
 
 
-void preenfm3LibInitGpio() {
+enum pfm3STM32H7Type pfm3_stm32H7_type;
 
+int HC165_DATA_Pin;
+GPIO_TypeDef * HC165_DATA_GPIO_Port;
+int HC165_LOAD_Pin;
+GPIO_TypeDef * HC165_LOAD_GPIO_Port;
+int HC165_CLK_Pin;
+GPIO_TypeDef * HC165_CLK_GPIO_Port;
+
+
+
+int preenfm3LibInitGpio() {
+
+    //
+    // We must first read PD0-4 to check which STM32H743 we are using
+    // LQFP100 : doesn't have FPIO F G and H
     GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    // Read preenfm3 board ID
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    /*Configure GPIO pins : SD_CS_Pin LED_Pin */
+    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+
+    int typeId =
+          (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_0) ==  GPIO_PIN_SET ? 8 : 0)
+        + (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1) ==  GPIO_PIN_SET ? 4 : 0)
+        + (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) ==  GPIO_PIN_SET ? 2 : 0)
+        + (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_3) ==  GPIO_PIN_SET ? 1 : 0);
+
 
     /* GPIO Ports Clock Enable */
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
-#ifdef LQFP144
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOG_CLK_ENABLE();
-#endif
     __HAL_RCC_GPIOH_CLK_ENABLE();
 
+    switch (typeId) {
+    case PFM3_LQFP100_ID:
+        HC165_DATA_Pin = GPIO_PIN_0;
+        HC165_DATA_GPIO_Port = GPIOA;
+        HC165_LOAD_Pin = GPIO_PIN_1;
+        HC165_LOAD_GPIO_Port = GPIOA;
+        HC165_CLK_Pin = GPIO_PIN_2;
+        HC165_CLK_GPIO_Port = GPIOA;
+        break;
+    case PFM3_LQFP144_ID:
+    case PFM3_LQFP176_ID:
+        __HAL_RCC_GPIOF_CLK_ENABLE();
+        __HAL_RCC_GPIOG_CLK_ENABLE();
+
+        HC165_DATA_Pin = GPIO_PIN_2;
+        HC165_DATA_GPIO_Port = GPIOF;
+        HC165_LOAD_Pin = GPIO_PIN_1;
+        HC165_LOAD_GPIO_Port = GPIOF;
+        HC165_CLK_Pin = GPIO_PIN_0;
+        HC165_CLK_GPIO_Port = GPIOF;
+        break;
+    }
 
     /*Configure GPIO pin : HC165_DATA_Pin */
     GPIO_InitStruct.Pin = HC165_DATA_Pin;
@@ -74,9 +122,10 @@ void preenfm3LibInitGpio() {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(LED_CONTROL_GPIO_Port, &GPIO_InitStruct);
 
-
     HAL_GPIO_WritePin(GPIOE, LED_TEST_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_SET);
+
+    return typeId;
 }
 
 void preenfm3ForceTftBacklight() {

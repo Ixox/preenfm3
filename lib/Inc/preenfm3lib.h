@@ -24,7 +24,7 @@ extern "C" {
 
 #include "preenfm3_pins.h"
 
-void preenfm3LibInitGpio();
+int preenfm3LibInitGpio();
 void preenfm3ForceTftBacklight();
 uint32_t preenfm3LibInitSD();
 
