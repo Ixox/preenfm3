@@ -38,7 +38,7 @@ extern SAI_HandleTypeDef hsai_BlockB1;
 extern SAI_HandleTypeDef hsai_BlockA2;
 extern RingBuffer<uint8_t, 64> usartBufferOut;
 extern RingBuffer<uint8_t, 64> usartBufferIn;
-extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim1;
 
 #define RAM_D1_SECTION __attribute__((section(".ram_d1")))
 #define RAM_D2_SECTION __attribute__((section(".ram_d2")))
@@ -143,7 +143,7 @@ void preenfm3Init() {
     uint8_t tft_bl =  synthState.fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
 
     TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
     if (erreurSD > 0) {
         HAL_Delay(2000);
