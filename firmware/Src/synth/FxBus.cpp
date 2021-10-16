@@ -371,7 +371,7 @@ void FxBus::paramChanged() {
 
 
     fxTimeLinear = masterfxConfig[GLOBALFX_PREDELAYTIME];
-    if (prevFxTimeLinear == fxTimeLinear)
+    if (prevFxTimeLinear != fxTimeLinear)
     {
         fxTime     = clamp(fxTimeLinear, 0.0003f, 0.9996f);
         fxTime     *= fxTime * fxTime;
@@ -383,7 +383,7 @@ void FxBus::paramChanged() {
     predelayMixAttn = predelayMixLevel * (1 - (predelayMixLevel * predelayMixLevel * 0.1f));
 
     lfoSpeedLinear = masterfxConfig[GLOBALFX_LFOSPEED];
-    if (prevLfoSpeedLinear == lfoSpeedLinear)
+    if (prevLfoSpeedLinear != lfoSpeedLinear)
     {
         temp = lfoSpeedLinear;
         temp *= temp * temp;
@@ -408,12 +408,6 @@ void FxBus::paramChanged() {
 
     //------- some process
 
-    if(diffusion != prevDiffusion) {
-        //diffuserCoef1     =     -(0.01f + diffusion * 0.67f);
-        //diffuserCoef2     =     -(0.01f + diffusion * 0.5f);
-    }
-    prevDiffusion = diffusion;
-
     if(damping != prevDamping) {
         damp_b = 1 - damping  * damping;
         damp_a = 1 - damp_b;
@@ -432,12 +426,9 @@ void FxBus::paramChanged() {
     prevDecayVal = decayVal;
 
     if(notchBase != prevNotchBase || notchSpread != prevNotchSpread) {
-        //float offset = sqrt3(notchSpread) * 0.25f;
         float notchB =  notchBase * 0.25f;
         float offset = (notchSpread) * 0.125f;
         float range = 0.67f;
-
-        //notchBase = clamp( notchBase + 0.22f * notchSpread, windowMin, windowMax);
 
         f1L = clamp( fold(notchB + offset)             * range, windowMin, windowMax);
         f2L = clamp( fold(notchB - offset)             * range, windowMin, windowMax);
