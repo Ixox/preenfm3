@@ -371,35 +371,33 @@ void FxBus::paramChanged() {
 
 
     fxTimeLinear = masterfxConfig[GLOBALFX_PREDELAYTIME];
-    if (prevFxTimeLinear == fxTimeLinear)
+    if (prevFxTimeLinear != fxTimeLinear)
     {
-        prevTime     = clamp(fxTimeLinear, 0.0003f, 0.9996f);
-        prevTime     *= prevTime * prevTime;
-        fxTime         = fxTime * 0.9f + prevTime * 0.1f;
+        fxTime     = clamp(fxTimeLinear, 0.0003f, 0.9996f);
+        fxTime     *= fxTime * fxTime;
         predelaySize = fxTimeLinear * predelayBufferSizeM1;
-    }
+   }
     prevFxTimeLinear = fxTimeLinear;
 
     predelayMixLevel = masterfxConfig[GLOBALFX_PREDELAYMIX];
     predelayMixAttn = predelayMixLevel * (1 - (predelayMixLevel * predelayMixLevel * 0.1f));
 
     lfoSpeedLinear = masterfxConfig[GLOBALFX_LFOSPEED];
-    if (prevLfoSpeedLinear == lfoSpeedLinear)
+    if (prevLfoSpeedLinear != lfoSpeedLinear)
     {
         temp = lfoSpeedLinear;
         temp *= temp * temp;
-        lfoSpeed = lfoSpeed * 0.9f + temp * 0.1f;
+        lfoSpeed = temp;
     }
     prevLfoSpeedLinear = lfoSpeedLinear;
 
     temp = masterfxConfig[GLOBALFX_LFODEPTH];
     temp = temp * (1 - lfoSpeedLinear * 0.5f) * (1 - sizeParam * 0.5f);
-    lfoDepth = lfoDepth * 0.9f + temp * 0.1f;
+    lfoDepth = temp;
 
     // ------ page 2
 
-    nextSizeParam     = clamp(masterfxConfig[GLOBALFX_SIZE], 0.03f, 1);
-    sizeParam         = sizeParam * 0.99f + nextSizeParam * 0.01f;
+    sizeParam     = clamp(masterfxConfig[GLOBALFX_SIZE], 0.03f, 1);
 
     diffusion         =     masterfxConfig[GLOBALFX_DIFFUSION];
     damping         =     masterfxConfig[GLOBALFX_DAMPING];
@@ -409,12 +407,6 @@ void FxBus::paramChanged() {
     notchSpread     =     masterfxConfig[GLOBALFX_NOTCHSPREAD];
 
     //------- some process
-
-    if(diffusion != prevDiffusion) {
-        //diffuserCoef1     =     -(0.01f + diffusion * 0.67f);
-        //diffuserCoef2     =     -(0.01f + diffusion * 0.5f);
-    }
-    prevDiffusion = diffusion;
 
     if(damping != prevDamping) {
         damp_b = 1 - damping  * damping;
@@ -434,12 +426,9 @@ void FxBus::paramChanged() {
     prevDecayVal = decayVal;
 
     if(notchBase != prevNotchBase || notchSpread != prevNotchSpread) {
-        //float offset = sqrt3(notchSpread) * 0.25f;
         float notchB =  notchBase * 0.25f;
         float offset = (notchSpread) * 0.125f;
         float range = 0.67f;
-
-        //notchBase = clamp( notchBase + 0.22f * notchSpread, windowMin, windowMax);
 
         f1L = clamp( fold(notchB + offset)             * range, windowMin, windowMax);
         f2L = clamp( fold(notchB - offset)             * range, windowMin, windowMax);
