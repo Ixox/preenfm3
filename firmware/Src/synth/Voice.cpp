@@ -3744,7 +3744,7 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = currentTimbre->params_.effect.param1 + matrixFilterFrequency;
             fxParamTmp *= fxParamTmp;
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(-matrixFilterParam2 * 0.27f + fxParam2, 0, 1);
 
             // Low pass... on the Frequency
             fxParam1 = (fxParamTmp + fxParam1) * .5f;
@@ -3805,7 +3805,7 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = currentTimbre->params_.effect.param1 + matrixFilterFrequency;
             fxParamTmp *= fxParamTmp;
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(-matrixFilterParam2 * 0.27f + fxParam2, 0, 1);
 
             // Low pass... on the Frequency
             fxParam1 = (fxParamTmp + 9.0f * fxParam1) * .1f;
@@ -3886,12 +3886,12 @@ void Voice::fxAfterBlock() {
             float localv0L = v0L;
             float localv0R = v0R;
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam1 = clamp(matrixFilterParam2 + fxParam1, 0, 1);
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
-                localv0L = ((*sp) + localv0L * fxParam1) * fxParam3;
-                (*sp) = ((*sp) + localv0L * filterParam2) * mixerGain;
+                localv0L = ((*sp) + localv0L * filterParam1) * fxParam3;
+                (*sp) = ((*sp) + localv0L * fxParam2) * mixerGain;
 
                 if (unlikely(*sp > ratioTimbres)) {
                     *sp = ratioTimbres;
@@ -3902,8 +3902,8 @@ void Voice::fxAfterBlock() {
 
                 sp++;
 
-                localv0R = ((*sp) + localv0R * fxParam1) * fxParam3;
-                (*sp) = ((*sp) + localv0R * filterParam2) * mixerGain;
+                localv0R = ((*sp) + localv0R * filterParam1) * fxParam3;
+                (*sp) = ((*sp) + localv0R * fxParam2) * mixerGain;
 
                 if (unlikely(*sp > ratioTimbres)) {
                     *sp = ratioTimbres;
@@ -3989,7 +3989,7 @@ void Voice::fxAfterBlock() {
             //        localStep = fxParam2 = 1 / fxParam1;
 
             register float localPower = fxParam1;
-            register float localStep = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            register float localStep = fxParam2;
 
             register float localv0L = v0L;
             register float localv0R = v0R;
@@ -4105,7 +4105,7 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(-matrixFilterParam2 * 0.267f + fxParam2, 0, 1);
 
             const float f = (fxParam1);
             const float pattern = (1 - filterParam2 * f * 0.997f);
@@ -4165,7 +4165,7 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(-matrixFilterParam2 * 0.267f + fxParam2, 0, 1);
 
             const float f = (fxParam1);
             const float pattern = (1 - filterParam2 * f);
@@ -4813,7 +4813,7 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(0.27f - matrixFilterParam2 * 0.267f + fxParam2, 0.003f , 0.27f);
 
             const int mixWet = (fxParam1 * 122);
             const float mixA = (1 + filterParam2 * 2) * panTable[122 - mixWet];
@@ -5194,7 +5194,7 @@ void Voice::fxAfterBlock() {
 
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 * matrixFilterParam2 + fxParam2, 0, 1);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -5240,7 +5240,7 @@ void Voice::fxAfterBlock() {
 
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 * matrixFilterParam2 + fxParam2, 0, 1);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -5299,7 +5299,7 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 * matrixFilterParam2 + fxParam2, 0, 1);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -7035,6 +7035,7 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
 
             float velocity = this->velocity;
 
@@ -7060,7 +7061,7 @@ void Voice::fxAfterBlock() {
             float state0L = v0L, state1L = v1L, state2L = v2L, state3L = v3L, state4L = v4L;
             float state0R = v0R, state1R = v1R, state2R = v2R, state3R = v3R, state4R = v4R;
 
-            float vcf_reso = fxParam2 * 1.065f;
+            float vcf_reso = filterParam2 * 1.065f;
             float vcf_cutoff = clamp(fxParam1 * 1.2f + 0.2f * fxParamA1, 0, 2);
 
             float vcf_e1 = expf_fast(5.55921003f + 2.17788267f * vcf_cutoff + 0.47f * fxParamA1) + 103;
@@ -7127,11 +7128,11 @@ void Voice::fxAfterBlock() {
             f2a1 = -2 * exp_p2r * cosf(p2i);
             f2a2 = exp_p2r * exp_p2r;
             f2b = (f2a0 + f2a1 + f2a2);
-            float fdbck = ((1 - fxParam1 * fxParam1) * (0.8f - fxParamA1 * 0.05f)) * fxParam2 * 0.45f;
+            float fdbck = ((1 - fxParam1 * fxParam1) * (0.8f - fxParamA1 * 0.05f)) * filterParam2 * 0.45f;
 
             float in, y;
             float invAttn = sqrt3(currentTimbre->getNumberOfVoiceInverse());
-            float drive2 = 1.05f - fxParam1 * fxParam1 * 0.05f + (fxParam2 * 0.17f - fxParamA1 * fxParamA1 * 0.051f) * invAttn;
+            float drive2 = 1.05f - fxParam1 * fxParam1 * 0.05f + (filterParam2 * 0.17f - fxParamA1 * fxParamA1 * 0.051f) * invAttn;
             float finalGain = (mixerGain * (1 - fxParam1 * 0.2f) + fxParamA1) * 0.75f;
 
             float r = 0.989f;
