@@ -3887,11 +3887,12 @@ void Voice::fxAfterBlock() {
             float localv0R = v0R;
 
             float filterParam1 = clamp(matrixFilterParam2 + fxParam1, 0, 1);
+            float filterParam2 = clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2 , 0, 1) * 4;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
                 localv0L = ((*sp) + localv0L * filterParam1) * fxParam3;
-                (*sp) = ((*sp) + localv0L * fxParam2) * mixerGain;
+                (*sp) = ((*sp) + localv0L * filterParam2) * mixerGain;
 
                 if (unlikely(*sp > ratioTimbres)) {
                     *sp = ratioTimbres;
@@ -3903,7 +3904,7 @@ void Voice::fxAfterBlock() {
                 sp++;
 
                 localv0R = ((*sp) + localv0R * filterParam1) * fxParam3;
-                (*sp) = ((*sp) + localv0R * fxParam2) * mixerGain;
+                (*sp) = ((*sp) + localv0R * filterParam2) * mixerGain;
 
                 if (unlikely(*sp > ratioTimbres)) {
                     *sp = ratioTimbres;
@@ -5866,10 +5867,10 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = (currentTimbre->params_.effect.param1 + matrixFilterFrequency);
             fxParamTmp *= fxParamTmp;
 
-            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
 
             const float bipolarf = (fxParam1 - 0.5f);
-            const float folded = fold(sigmoid(bipolarf * 13 * fxParam2)) * 4; // - < folded < 1
+            const float folded = fold(sigmoid(bipolarf * 13 * filterParam2)) * 4; // - < folded < 1
 
             fxParam1 = ((fxParamTmp + 9.0f * fxParam1) * .1f);
 
