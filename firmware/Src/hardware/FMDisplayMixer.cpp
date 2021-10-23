@@ -372,21 +372,20 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
                      valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX];
                      break;
                  case 5:
-                     valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_INPUTBASE];
+                     valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD];
                      break;
              }
              break;
          case MIXER_VALUE_GLOBAL_SETTINGS_4:
              switch (encoder) {
                  case 0:
-                     valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH];
+                     valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_INPUTBASE];
                      break;
                  case 1:
-                     valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD];
+                     valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH];
                      break;
                  case 2:
                      valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_LOOPHP];
-                     //valueP = (void*) &synthState_->mixerState.masterfxConfig[GLOBALFX_DIFFUSION];
                      break;
                  case 3:
                      valueP = (void*) &synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_LFODEPTH];
@@ -710,17 +709,17 @@ void FMDisplayMixer::refreshMixerRowGlobalOptions(int page, int row) {
                     tft_->print("Pre delay Mix");
                     break;
                 case 5:
-                    tft_->print("Filter base");
+                    tft_->print("Notch Spread");
                     break;
             }
             break;
         case 3:
             switch (row) {
                 case 0:
-                    tft_->print("Filter width");
+                    tft_->print("Filter base");
                     break;
                 case 1:
-                    tft_->print("Notch Spread");
+                    tft_->print("Filter width");
                     break;
                 case 2:
                     tft_->print("Tank hp");

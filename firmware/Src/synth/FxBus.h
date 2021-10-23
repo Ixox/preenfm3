@@ -117,7 +117,7 @@ protected:
     float prevdecayVal = 0;
     float decayVal = 0.5, prevDecayVal = -1, decayFdbck = 0;
     const float decayMaxVal = 0.96f;
-    float sizeParam, prevSizeParam, nextSizeParam;
+    float sizeParam, prevSizeParam;
     float inputDiffusion, prevInputDiffusion;
     float diffusion, prevDiffusion;
     float damping, prevDamping = -1;
