@@ -614,6 +614,13 @@ enum MixerValueType {
     MIXER_VALUE_GLOBAL_SETTINGS_5
 };
 
+enum SeqValueType {
+    SEQ_VALUE_PLAY_ALL = 0,
+    SEQ_VALUE_PLAY_INST,
+    SEQ_VALUE_RECORD_INST,
+    SEQ_VALUE_SEQUENCE_NUMBER,
+    SEQ_VALUE_TRANSPOSE
+};
 
 enum Algorithm {
     ALGO1 = 0,

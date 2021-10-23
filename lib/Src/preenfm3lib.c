@@ -92,8 +92,7 @@ int preenfm3LibInitGpio() {
     HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOD, TFT_DC_Pin|TFT_RESET_Pin|TFT_CS_Pin|HC165_LOAD_Pin
-                            |HC165_CLK_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, TFT_DC_Pin|TFT_RESET_Pin|TFT_CS_Pin, GPIO_PIN_RESET);
 
     /*Configure GPIO pins : SD_CS_Pin LED_Pin */
     GPIO_InitStruct.Pin = SD_CS_Pin | LED_TEST_Pin ;
@@ -114,7 +113,8 @@ int preenfm3LibInitGpio() {
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+    // Load and clock are on the same port on ALL PCB versions
+    HAL_GPIO_Init(HC165_LOAD_GPIO_Port, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = LED_CONTROL_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -148,6 +148,12 @@ uint32_t preenfm3LibInitSD() {
     if (sdReturn == 0) {
         sdReturn2 = f_mount(&USERFatFS, USERPath, 1);
     }
+    return sdReturn + sdReturn2 * 1000;
+}
+
+uint32_t preenfm3LibDeInitSD() {
+    uint32_t sdReturn2 = f_mount(NULL, USERPath, 1);
+    uint32_t sdReturn = ADAFRUIT_802_SD_DeInit(0);
     return sdReturn + sdReturn2 * 1000;
 }
 

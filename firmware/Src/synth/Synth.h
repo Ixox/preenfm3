@@ -51,8 +51,8 @@ public:
 
     void noteOn(int timbre, char note, char velocity);
     void noteOff(int timbre, char note);
-    void noteOnFromSequencer(int timbre, char note, char velocity);
-    void noteOffFromSequencer(int timbre, char note);
+    void noteOnFromSequencer(uint8_t timbre, int16_t note, uint8_t velocity);
+    void noteOffFromSequencer(uint8_t timbre, int16_t note);
     void stopArpegiator(int timbre);
     void allNoteOff(int timbre);
     void allNoteOffQuick(int timbre);
@@ -121,6 +121,7 @@ public:
 
     void setNewValueFromMidi(int timbre, int row, int encoder, float newValue);
     void setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue);
+    void setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue);
     void setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int value);
     void setNewSymbolInPresetName(int timbre, int index, char newchar);
     void loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber);
