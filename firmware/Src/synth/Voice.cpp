@@ -3886,13 +3886,12 @@ void Voice::fxAfterBlock() {
             float localv0L = v0L;
             float localv0R = v0R;
 
-            float filterParam1 = clamp(matrixFilterParam2 + fxParam1, 0, 1);
-            float filterParam2 = clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2 , 0, 1) * 4;
+            fxParam2 = clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1) * 4;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
-                localv0L = ((*sp) + localv0L * filterParam1) * fxParam3;
-                (*sp) = ((*sp) + localv0L * filterParam2) * mixerGain;
+                localv0L = ((*sp) + localv0L * fxParam1) * fxParam3;
+                (*sp) = ((*sp) + localv0L * fxParam2) * mixerGain;
 
                 if (unlikely(*sp > ratioTimbres)) {
                     *sp = ratioTimbres;
@@ -3903,8 +3902,8 @@ void Voice::fxAfterBlock() {
 
                 sp++;
 
-                localv0R = ((*sp) + localv0R * filterParam1) * fxParam3;
-                (*sp) = ((*sp) + localv0R * filterParam2) * mixerGain;
+                localv0R = ((*sp) + localv0R * fxParam1) * fxParam3;
+                (*sp) = ((*sp) + localv0R * fxParam2) * mixerGain;
 
                 if (unlikely(*sp > ratioTimbres)) {
                     *sp = ratioTimbres;
@@ -5080,10 +5079,8 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = fabsf(currentTimbre->params_.effect.param1 + matrixFilterFrequency);
             fxParam1 = ((fxParamTmp + 19.0f * fxParam1) * .05f);
 
-            float filterParam2 = clamp(matrixFilterParam2 + fxParam2, 0, 1);
-
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
-            fxParam2 = ((OffsetTmp + 19.0f * filterParam2) * .05f);
+            float OffsetTmp = clamp(fabsf(matrixFilterParam2 + currentTimbre->params_.effect.param2), 0, 1);
+            fxParam2 = ((OffsetTmp + 19.0f * fxParam2) * .05f);
 
             const float offset = fxParam2 * 0.66f - 0.33f;
 
