@@ -7494,7 +7494,7 @@ void Voice::recomputeBPValues(float q, float fSquare) {
 
 void Voice::setNewEffectParam(int encoder) {
     if (encoder == 0) {
-        v0L = v1L = v2L = v3L = v4L = v5L = v6L = v7L = v8L = v0R = v1R = v2R = v3R = v4R = v5R = v6R = v7R = v8R = v8R = 0.0f;
+        v0L = v1L = v2L = v3L = v4L = v5L = v6L = v7L = v8L = v0R = v1R = v2R = v3R = v4R = v5R = v6R = v7R = v8R = 0.0f;
         fxParamA1 = fxParamA2 = fxParamB2 = 0;
 
         for (int k = 1; k < NUMBER_OF_ENCODERS_PFM2; k++) {
@@ -7509,12 +7509,6 @@ void Voice::setNewEffectParam(int encoder) {
             fxParam1 = 50 + 200 * currentTimbre->params_.effect.param1;
             fxParam3 = 1.0f / (fxParam1 + 1.0f);
             break;
-        case FILTER_CRUSHER: {
-            if (encoder == ENCODER_EFFECT_PARAM2) {
-                fxParam1 = pow(2, (int) (1.0f + 15.0f * currentTimbre->params_.effect.param2));
-            }
-            break;
-        }
         case FILTER_BP:
         case FILTER_BP2: {
             fxParam1PlusMatrix = -1.0f;
