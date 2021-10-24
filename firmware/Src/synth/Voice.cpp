@@ -3733,10 +3733,11 @@ void Voice::fxAfterBlock() {
     float ratioTimbres = 1.0f;
     float matrixFilterFrequency = matrix.getDestination(FILTER_FREQUENCY);
     float matrixFilterParam2 = matrix.getDestination(FILTER_PARAM2);
+    float matrixFilterAmp = matrix.getDestination(FILTER_AMP);
 
     // LP Algo
     int effectType = currentTimbre->params_.effect.type;
-    float gainTmp = currentTimbre->params_.effect.param3;
+    float gainTmp = clamp(currentTimbre->params_.effect.param3 + matrixFilterAmp, 0, 16);
     mixerGain = 0.02f * gainTmp + .98 * mixerGain;
 
     switch (effectType) {
