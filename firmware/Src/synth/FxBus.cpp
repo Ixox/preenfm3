@@ -420,7 +420,6 @@ void FxBus::paramChanged() {
         float decayValSquare = decayVal * decayVal;
 
         headRoomMultiplier = (1 - decayValSquare * 0.5f) * 5.5f;
-        headRoomDivider = 0.0625f;
         sampleMultipler = headRoomMultiplier * (float) 0x7fffff;
     }
     prevDecayVal = decayVal;
@@ -476,7 +475,7 @@ void FxBus::paramChanged() {
  */
 void FxBus::mixAdd(float *inStereo, float send, float reverbLevel) {
     if (send > 0) {
-        const float level = - sqrt3(send) * headRoomDivider * reverbLevel;
+        const float level = - send * 0.0625f * reverbLevel;
 
         totalSent += level;
 

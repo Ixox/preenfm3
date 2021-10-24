@@ -7494,7 +7494,7 @@ void Voice::recomputeBPValues(float q, float fSquare) {
 
 void Voice::setNewEffectParam(int encoder) {
     if (encoder == 0) {
-        v0L = v1L = v2L = v3L = v4L = v5L = v6L = v7L = v8L = v0R = v1R = v2R = v3R = v4R = v5R = v6R = v7R = v8R = v8R = 0.0f;
+        v0L = v1L = v2L = v3L = v4L = v5L = v6L = v7L = v8L = v0R = v1R = v2R = v3R = v4R = v5R = v6R = v7R = v8R = 0.0f;
         fxParamA1 = fxParamA2 = fxParamB2 = 0;
 
         for (int k = 1; k < NUMBER_OF_ENCODERS_PFM2; k++) {

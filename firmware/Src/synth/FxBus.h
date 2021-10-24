@@ -87,7 +87,6 @@ protected:
     #define _dattorroSampleRateMod PREENFM_FREQUENCY / 29761.0f
 
     float headRoomMultiplier = 1;
-    float headRoomDivider = 1;
     float sampleMultipler;
 
     float totalSent = 0;

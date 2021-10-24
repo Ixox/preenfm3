@@ -693,8 +693,21 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_UNISON_SPREAD:
             this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_SPREAD,
                     (float)midiEvent.value[1] * INV127);
+        case CC_SEQ_START_ALL:
+            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_ALL, midiEvent.value[1]);
             break;
-
+        case CC_SEQ_START_INST:
+            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_INST, midiEvent.value[1]);
+            break;
+        case CC_SEQ_RECORD_INST:
+            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_RECORD_INST, midiEvent.value[1]);
+            break;
+        case CC_SEQ_TRANSPOSE:
+            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_TRANSPOSE, midiEvent.value[1]);
+            break;
+        case CC_SEQ_SET_SEQUENCE:
+            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_SEQUENCE_NUMBER, midiEvent.value[1]);
+            break;
 
         }
     }

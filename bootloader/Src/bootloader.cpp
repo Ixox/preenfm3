@@ -124,8 +124,8 @@ void bootloaderInit() {
     tft.fillArea(0, 0, 240, 23, COLOR_DARK_BLUE);
     tft.setCharBackgroundColor(COLOR_DARK_BLUE);
     tft.setCharColor(COLOR_YELLOW);
-    tft.setCursorInPixel(37, 3);
-    tft.print("Bootloader ");
+    tft.setCursorInPixel(10, 3);
+    tft.print("pfm3 BootLoader ");
     tft.print(PFM3_BOOTLOADER_VERSION);
     tft.setCharBackgroundColor(COLOR_BLACK);
 
@@ -541,6 +541,10 @@ void SDCardAccess() {
 
     fileSelect = 0;
     firmwares.reset();
+
+    // Reset SD Card to make sure we see the new files in the menu
+    preenfm3LibDeInitSD();
+    preenfm3LibInitSD();
 
     state = STATE_INIT;
 }

@@ -98,12 +98,16 @@ void Synth::noteOff(int timbre, char note) {
     timbres_[timbre].noteOff(note);
 }
 
-void Synth::noteOnFromSequencer(int timbre, char note, char velocity) {
-    timbres_[timbre].noteOn(note, velocity);
+void Synth::noteOnFromSequencer(uint8_t timbre, int16_t note, uint8_t velocity) {
+    if (likely(note > 0 & note < 127)) {
+        timbres_[timbre].noteOn(note, velocity);
+    }
 }
 
-void Synth::noteOffFromSequencer(int timbre, char note) {
-    timbres_[timbre].noteOff(note);
+void Synth::noteOffFromSequencer(uint8_t timbre, int16_t note) {
+    if (likely(note > 0 & note < 127)) {
+        timbres_[timbre].noteOff(note);
+    }
 }
 
 void Synth::midiClockContinue(int songPosition, bool tellSequencer) {
@@ -353,7 +357,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
         // Max is 0x7fffff * [-1:1]
         //float sampleMultipler = (float) 0x7fffff;
-        float sampleMultipler = sqrt3(1 - synthState_->mixerState.instrumentState_[timbre].send) * (float) 0x7fffff;
+        float sampleMultipler = (1 - synthState_->mixerState.instrumentState_[timbre].send) * (float) 0x7fffff;
 
         switch (synthState_->mixerState.instrumentState_[timbre].out) {
             // 0 => out1+out2, 1 => out1, 2=> out2
@@ -825,6 +829,11 @@ void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue)
             break;
        }
     }
+}
+
+
+void Synth::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
+    sequencer_->setNewSeqValueFromMidi(timbre, seqValue, newValue);
 }
 
 void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int newValue) {

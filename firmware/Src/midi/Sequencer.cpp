@@ -40,6 +40,9 @@ Sequencer::Sequencer() {
             stepNotes[i][s].full = 0l;
         }
     }
+    for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
+        transpose_[i] = 0;
+    }
     reset(false);
 }
 
@@ -107,8 +110,6 @@ bool Sequencer::setSeqActivated(uint8_t instrument) {
     return false;
 }
 
-
-
 void Sequencer::setExternalClock(bool enable) {
     externalClock_ = enable;
 }
@@ -141,7 +142,13 @@ void Sequencer::toggleMuted(uint8_t instrument) {
     muted_[instrument] = !muted_[instrument];
 }
 
-
+void Sequencer::setTranspose(uint8_t instrument, int16_t newValue) {
+    if (likely(newValue > -48 && newValue < 48 && transpose_[instrument] != newValue)) {
+        synth_->stopArpegiator(instrument);
+        synth_->allNoteOff(instrument);
+        transpose_[instrument] = newValue;
+    }
+}
 
 void Sequencer::setTempo(float newTempo) {
     tempo_ = newTempo;
@@ -378,19 +385,19 @@ void Sequencer::processActionBetwen(int instrument, uint16_t startTimer, uint16_
                     if ((stepNotes[seqNumber][previousIndex].full & 0xffffff00) != 0l) {
                         // Note off
                         for (int n = 0; stepNotes[seqNumber][previousIndex].values[3 + n] != 0 && n < 6; n++) {
-                            synth_->noteOffFromSequencer(instrument, stepNotes[seqNumber][previousIndex].values[3 + n]);
+                            synth_->noteOffFromSequencer(instrument, stepNotes[seqNumber][previousIndex].values[3 + n] + transpose_[instrument]);
                         }
                     }
                 } else {
                     // Note off
                     if ((stepNotes[seqNumber][previousIndex].full & 0xffffff00) != 0l) {
                         for (int n = 0; stepNotes[seqNumber][previousIndex].values[3 + n] != 0 && n < 6; n++) {
-                            synth_->noteOffFromSequencer(instrument, stepNotes[seqNumber][previousIndex].values[3 + n]);
+                            synth_->noteOffFromSequencer(instrument, stepNotes[seqNumber][previousIndex].values[3 + n] + transpose_[instrument]);
                         }
                     }
                     // Note on
                     for (int n = 0; stepNotes[seqNumber][currentIndex].values[3 + n] != 0 && n < 6; n++) {
-                        synth_->noteOnFromSequencer(instrument, stepNotes[seqNumber][currentIndex].values[3 + n],
+                        synth_->noteOnFromSequencer(instrument, stepNotes[seqNumber][currentIndex].values[3 + n]  + transpose_[instrument],
                             stepNotes[seqNumber][currentIndex].values[2]);
                     }
                 }
@@ -407,9 +414,9 @@ void Sequencer::processActionBetwen(int instrument, uint16_t startTimer, uint16_
                 switch (actions[nextActionIndex_[instrument]].actionType) {
                 case SEQ_ACTION_NOTE:
                     if (actions[nextActionIndex_[instrument]].param2 > 0) {
-                        synth_->noteOnFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1, actions[nextActionIndex_[instrument]].param2);
+                        synth_->noteOnFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1  + transpose_[instrument] , actions[nextActionIndex_[instrument]].param2);
                     } else {
-                        synth_->noteOffFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1);
+                        synth_->noteOffFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1  + transpose_[instrument]);
                     }
                     break;
                 }
@@ -789,9 +796,43 @@ char* Sequencer::getSequenceNameInBuffer(char* buffer) {
     return "##";
 }
 
+void Sequencer::setInstrumentStepSeq(int instrument, int index) {
+    synth_->stopArpegiator(instrument);
+    synth_->allNoteOff(instrument);
+    instrumentStepSeq_[instrument] = (uint8_t)index;
+}
+
+
 void Sequencer::setSequenceName(const char* newName) {
     for (int n = 0; n < 12; n++) {
         sequenceName_[n] = newName[n];
     }
     sequenceName_[12] = 0;
 }
+
+
+void Sequencer::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
+    switch (seqValue) {
+    case SEQ_VALUE_PLAY_ALL:
+        if (newValue > 0) {
+            start();
+        } else  {
+            stop();
+        }
+        break;
+    case SEQ_VALUE_PLAY_INST:
+        setMuted(timbre, newValue == 0);
+        break;
+    case SEQ_VALUE_RECORD_INST:
+        setRecording(timbre, newValue > 0);
+        break;
+    case SEQ_VALUE_SEQUENCE_NUMBER:
+        setInstrumentStepSeq(timbre, newValue % NUMBER_OF_STEP_SEQUENCES);
+        break;
+    case SEQ_VALUE_TRANSPOSE:
+        setTranspose(timbre, newValue - 64);
+        break;
+    };
+    displaySequencer_->sequencerWasUpdated(timbre, seqValue, newValue);
+}
+
