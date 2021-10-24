@@ -7509,12 +7509,6 @@ void Voice::setNewEffectParam(int encoder) {
             fxParam1 = 50 + 200 * currentTimbre->params_.effect.param1;
             fxParam3 = 1.0f / (fxParam1 + 1.0f);
             break;
-        case FILTER_CRUSHER: {
-            if (encoder == ENCODER_EFFECT_PARAM2) {
-                fxParam1 = pow(2, (int) (1.0f + 15.0f * currentTimbre->params_.effect.param2));
-            }
-            break;
-        }
         case FILTER_BP:
         case FILTER_BP2: {
             fxParam1PlusMatrix = -1.0f;
