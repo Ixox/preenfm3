@@ -3732,16 +3732,20 @@ void Voice::setCurrentTimbre(Timbre *timbre) {
 void Voice::fxAfterBlock() {
     float ratioTimbres = 1.0f;
     float matrixFilterFrequency = matrix.getDestination(FILTER_FREQUENCY);
+    float matrixFilterParam2 = matrix.getDestination(FILTER_PARAM2);
+    float matrixFilterAmp = matrix.getDestination(FILTER_AMP);
 
     // LP Algo
     int effectType = currentTimbre->params_.effect.type;
-    float gainTmp = currentTimbre->params_.effect.param3;
+    float gainTmp = clamp(currentTimbre->params_.effect.param3 + matrixFilterAmp, 0, 16);
     mixerGain = 0.02f * gainTmp + .98 * mixerGain;
 
     switch (effectType) {
         case FILTER_LP: {
             float fxParamTmp = currentTimbre->params_.effect.param1 + matrixFilterFrequency;
             fxParamTmp *= fxParamTmp;
+
+            float filterParam2 = 0.27f - clamp(currentTimbre->params_.effect.param2 + matrixFilterParam2, 0, 1) * 0.27f;
 
             // Low pass... on the Frequency
             fxParam1 = (fxParamTmp + fxParam1) * .5f;
@@ -3752,7 +3756,7 @@ void Voice::fxAfterBlock() {
                 fxParam1 = 0.0f;
             }
 
-            float pattern = (1 - fxParam2 * fxParam1);
+            float pattern = (1 - filterParam2 * fxParam1);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -3802,6 +3806,8 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = currentTimbre->params_.effect.param1 + matrixFilterFrequency;
             fxParamTmp *= fxParamTmp;
 
+            float filterParam2 = 0.27f - clamp(currentTimbre->params_.effect.param2 + matrixFilterParam2, 0, 1) * 0.27f;
+
             // Low pass... on the Frequency
             fxParam1 = (fxParamTmp + 9.0f * fxParam1) * .1f;
             if (unlikely(fxParam1 > 1.0)) {
@@ -3810,7 +3816,7 @@ void Voice::fxAfterBlock() {
             if (unlikely(fxParam1 < 0.0f)) {
                 fxParam1 = 0.0f;
             }
-            float pattern = (1 - fxParam2 * fxParam1);
+            float pattern = (1 - filterParam2 * fxParam1);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -3880,6 +3886,8 @@ void Voice::fxAfterBlock() {
             float *sp = this->sampleBlock;
             float localv0L = v0L;
             float localv0R = v0R;
+
+            fxParam2 = clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1) * 4;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
@@ -3980,6 +3988,13 @@ void Voice::fxAfterBlock() {
 
             //        localPower = fxParam1 = pow(2, (int)(1.0f + 15.0f * params.effect.param2));
             //        localStep = fxParam2 = 1 / fxParam1;
+
+            float param2Sum = matrixFilterParam2 + currentTimbre->params_.effect.param2;
+            if(param2Sum != fxParamB1) {
+                fxParam1 = 1 << (int) (1.0f + 15.0f * clamp(param2Sum, 0, 1) );
+                fxParam2 = 1 / fxParam1;
+            }
+            fxParamB1 = param2Sum;
 
             register float localPower = fxParam1;
             register float localStep = fxParam2;
@@ -4098,8 +4113,10 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = 0.27f - clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2, 0 ,1) * 0.267f;
+
             const float f = (fxParam1);
-            const float pattern = (1 - fxParam2 * f * 0.997f);
+            const float pattern = (1 - filterParam2 * f * 0.997f);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -4156,8 +4173,10 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = 0.27f - clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2, 0 ,1) * 0.267f;
+
             const float f = (fxParam1);
-            const float pattern = (1 - fxParam2 * f);
+            const float pattern = (1 - filterParam2 * f);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -4244,15 +4263,17 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f = fxParam1 * fxParam1 * SVFRANGE;
-            const float fb = sqrt3(1 - fxParam2 * 0.999f);
+            const float fb = sqrt3(1 - filterParam2 * 0.999f);
             const float scale = sqrt3(fb);
 
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
@@ -4305,15 +4326,17 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f = fxParam1 * fxParam1 * 0.93f;
-            const float fb = sqrt3(1 - fxParam2 * 0.999f);
+            const float fb = sqrt3(1 - filterParam2 * 0.999f);
             const float scale = sqrt3(fb);
 
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
@@ -4368,15 +4391,17 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f = fxParam1 * fxParam1 * SVFRANGE;
-            const float fb = sqrt3(0.5f - fxParam2 * 0.495f);
+            const float fb = sqrt3(0.5f - filterParam2 * 0.495f);
             const float scale = sqrt3(fb);
 
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
@@ -4439,15 +4464,17 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f = fxParam1 * fxParam1 * SVFRANGE;
-            const float fb = sqrt3(sqrt3(1 - fxParam2 * 0.999f));
+            const float fb = sqrt3(sqrt3(1 - filterParam2 * 0.999f));
             const float scale = sqrt3(fb);
 
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
@@ -4509,8 +4536,10 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f = fxParam1 * fxParam1 * SVFRANGE;
-            const float fb = sqrt3(1 - fxParam2 * 0.6f);
+            const float fb = sqrt3(1 - filterParam2 * 0.6f);
             const float scale = sqrt3(fb);
 
             float *sp = this->sampleBlock;
@@ -4569,8 +4598,10 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             //A = 10 ^ (db / 40)
-            const float A = (tanh3(fxParam2 * 2) * 1.5f) + 0.5f;
+            const float A = (tanh3(filterParam2 * 2) * 1.5f) + 0.5f;
 
             const float res = 0.6f;
             const float k = 1 / (0.0001f + res * A);
@@ -4641,8 +4672,10 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             //A = 10 ^ (db / 40)
-            const float A = (tanh3(fxParam2 * 2) * 1) + 0.5f;
+            const float A = (tanh3(filterParam2 * 2) * 1) + 0.5f;
 
             const float res = 0.5f;
             const float k = 1 / (0.0001f + res);
@@ -4713,8 +4746,10 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             //A = 10 ^ (db / 40)
-            const float A = (tanh3(fxParam2 * 2) * 1) + 0.5f;
+            const float A = (tanh3(filterParam2 * 2) * 1) + 0.5f;
 
             const float res = 0.5f;
             const float k = 1 / (0.0001f + res);
@@ -4786,12 +4821,14 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = 0.27f - clamp( matrixFilterParam2 + currentTimbre->params_.effect.param2, 0 ,1) * 0.267f;
+
             const int mixWet = (fxParam1 * 122);
-            const float mixA = (1 + fxParam2 * 2) * panTable[122 - mixWet];
+            const float mixA = (1 + filterParam2 * 2) * panTable[122 - mixWet];
             const float mixB = 2.5f * panTable[5 + mixWet];
 
             const float f = fxParam1 * fxParam1 * 1.5f;
-            const float pattern = (1 - fxParam2 * f);
+            const float pattern = (1 - filterParam2 * f);
 
             float *sp = this->sampleBlock;
             float localv0L = v0L;
@@ -4857,17 +4894,19 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f = fxParam1 * fxParam1 * SVFRANGE;
-            const float fb = sqrt3(0.5f - fxParam2 * 0.4995f);
+            const float fb = sqrt3(0.5f - filterParam2 * 0.4995f);
             const float scale = sqrt3(fb);
 
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
 
-            const float sat = 1 + fxParam2;
+            const float sat = 1 + filterParam2;
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
@@ -4921,6 +4960,7 @@ void Voice::fxAfterBlock() {
 
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             const float a = 1.f - fxParam1;
             const float b = 1.f - a;
@@ -4929,7 +4969,7 @@ void Voice::fxAfterBlock() {
             float localv0L = v0L;
             float localv0R = v0R;
 
-            const int mixWet = (currentTimbre->params_.effect.param2 * 127);
+            const int mixWet = (filterParam2 * 127);
             const float mixA = panTable[mixWet] * mixerGain;
             const float mixB = panTable[127 - mixWet] * mixerGain;
 
@@ -4970,6 +5010,7 @@ void Voice::fxAfterBlock() {
 
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = 0.27f - clamp(currentTimbre->params_.effect.param2 + matrixFilterParam2, 0, 1) * 0.27f;
 
             const float f1 = clamp(fxParam1 * 0.24f + 0.09f, filterWindowMin, filterWindowMax);
             float coef1 = (1.0f - f1) / (1.0f + f1);
@@ -4977,7 +5018,7 @@ void Voice::fxAfterBlock() {
             const float res = 0.85f;
 
             const float amp = 19.93f;
-            const float gain = (currentTimbre->params_.effect.param2 - 0.5f);
+            const float gain = (filterParam2 - 0.5f);
             const float gfactor = 10;
             float g1, g2;
             if (gain > 0) {
@@ -5046,7 +5087,7 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = fabsf(currentTimbre->params_.effect.param1 + matrixFilterFrequency);
             fxParam1 = ((fxParamTmp + 19.0f * fxParam1) * .05f);
 
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float OffsetTmp = clamp(fabsf(matrixFilterParam2 + currentTimbre->params_.effect.param2), 0, 1);
             fxParam2 = ((OffsetTmp + 19.0f * fxParam2) * .05f);
 
             const float offset = fxParam2 * 0.66f - 0.33f;
@@ -5115,6 +5156,8 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float f1 = clamp((fxParam1), 0.001f, 1); // allpass F
             float coef1 = (1.0f - f1) / (1.0f + f1);
 
@@ -5123,7 +5166,7 @@ void Voice::fxAfterBlock() {
             float localv0L = v0L;
             float localv0R = v0R;
 
-            const float a = 0.95f - fxParam2 * 0.599999f;
+            const float a = 0.95f - filterParam2 * 0.599999f;
             const float b = 1.f - a;
 
             const float threshold = (sqrt3(fxParam1) * 0.4f) * 1.0f;
@@ -5158,13 +5201,16 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float param2SumClip = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float filterParam2 = 0.1f + (param2SumClip * param2SumClip);
+
             float *sp = this->sampleBlock;
             float localv0L = v0L;
             float localv1L = v1L;
             float localv0R = v0R;
             float localv1R = v1R;
 
-            float f = fxParam2 * 0.5f + 0.12f;
+            float f = filterParam2 * 0.5f + 0.12f;
             float pattern = (1 - 0.7f * f);
             float invAttn = sqrt3(currentTimbre->getNumberOfVoiceInverse());
             int drive = clamp(27 + sqrt3(fxParam1) * 86, 0, 255);
@@ -5203,13 +5249,16 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float param2SumClip = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float filterParam2 = 0.1f + (param2SumClip * param2SumClip);
+
             float *sp = this->sampleBlock;
             float localv0L = v0L;
             float localv1L = v1L;
             float localv0R = v0R;
             float localv1R = v1R;
 
-            float f = fxParam2;
+            float f = filterParam2;
             float f4 = f * 4; //optimisation
             float pattern = (1 - 0.6f * f);
 
@@ -5260,13 +5309,16 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float param2SumClip = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float filterParam2 = 0.1f + (param2SumClip * param2SumClip);
+
             float *sp = this->sampleBlock;
             float localv0L = v0L;
             float localv1L = v1L;
             float localv0R = v0R;
             float localv1R = v1R;
 
-            float f = fxParam2;
+            float f = filterParam2;
             float pattern = (1 - 0.6f * f);
 
             float drive = sqrt3(fxParam1);
@@ -5314,6 +5366,8 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             float pos;
             float p1sq = sqrt3(fxParam1);
             if (p1sq > 0.5f) {
@@ -5326,7 +5380,7 @@ void Voice::fxAfterBlock() {
             float localv0L = v0L;
             float localv0R = v0R;
 
-            const float a = 0.95f - fxParam2 * 0.5f;
+            const float a = 0.95f - filterParam2 * 0.5f;
             const float b = 1 - a;
 
             int digitsA, digitsB;
@@ -5395,13 +5449,15 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = sqrt3(1 - clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1) * 0.99f);
+
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
             float notch;
 
             const float f = (fxParam1 * fxParam1 * fxParam1) * 0.5f;
-            const float fb = fxParam2;
+            const float fb = filterParam2;
             const float scale = sqrt3(fb);
 
             const int highBits = 0xFFFFFD4F;
@@ -5485,13 +5541,15 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             float *sp = this->sampleBlock;
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
             float notch;
 
             const float f = (fxParam1 * fxParam1 * fxParam1) * 0.5f;
-            const float fb = fxParam2;
+            const float fb = filterParam2;
             const float scale = sqrt3(fb);
 
             const int highBits = 0xFFFFFFAF;
@@ -5589,6 +5647,8 @@ void Voice::fxAfterBlock() {
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float a = 1.f - fxParam1;
             const float a2f = a * SHORT2FLOAT;
             const float b = 1.f - a;
@@ -5598,7 +5658,7 @@ void Voice::fxAfterBlock() {
             float localv0R = v0R;
             float digitized;
 
-            float drive = (fxParam2 * fxParam2);
+            float drive = (filterParam2 * filterParam2);
             float gain = (1 + 2 * drive);
 
             int digitsAL, digitsBL, digitsAR, digitsBR;
@@ -5660,6 +5720,7 @@ void Voice::fxAfterBlock() {
 
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             const float a = 1.f - fxParam1;
             const float a2f = a * SHORT2FLOAT;
@@ -5670,7 +5731,7 @@ void Voice::fxAfterBlock() {
             float localv0R = v0R;
             float digitized;
 
-            float drive = (fxParam2 * fxParam2);
+            float drive = (filterParam2 * filterParam2);
             float gain = (1 + 8 * (drive)) * 0.25f;
 
             int digitsAL, digitsBL, digitsAR, digitsBR;
@@ -5726,8 +5787,9 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
-            const float f = fxParam2 * fxParam2 * fxParam2;
+            const float f = filterParam2 * filterParam2 * filterParam2;
             const float fb = 0.45f;
             const float scale = sqrt3(fb);
             const int pos = (int) (fxParam1 * 2060);
@@ -5736,7 +5798,7 @@ void Voice::fxAfterBlock() {
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
             float drive = fxParam1 * fxParam1 * 0.25f;
 
             for (int k = BLOCK_SIZE; k--;) {
@@ -5770,8 +5832,9 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
-            const float f = fxParam2 * fxParam2 * fxParam2;
+            const float f = filterParam2 * filterParam2 * filterParam2;
             const float fb = 0.94f;
             const float scale = sqrt3(fb);
             const int pos = (int) (fxParam1 * 2060);
@@ -5780,7 +5843,7 @@ void Voice::fxAfterBlock() {
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + SVFGAINOFFSET + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain;
             float drive = fxParam1 * fxParam1 * 0.25f;
 
             for (int k = BLOCK_SIZE; k--;) {
@@ -5814,16 +5877,18 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = (currentTimbre->params_.effect.param1 + matrixFilterFrequency);
             fxParamTmp *= fxParamTmp;
 
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+
             const float bipolarf = (fxParam1 - 0.5f);
-            const float folded = fold(sigmoid(bipolarf * 13 * fxParam2)) * 4; // - < folded < 1
+            const float folded = fold(sigmoid(bipolarf * 13 * filterParam2)) * 4; // - < folded < 1
 
             fxParam1 = ((fxParamTmp + 9.0f * fxParam1) * .1f);
 
             float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
-            fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
+            filterParam2 = ((OffsetTmp + 9.0f * filterParam2) * .1f);
 
-            const float offset = fxParam2 * fxParam2 * 0.17f;
-            const float spread = 0.8f + fxParam2 * 0.8f;
+            const float offset = filterParam2 * filterParam2 * 0.17f;
+            const float spread = 0.8f + filterParam2 * 0.8f;
             const float lrDelta = 0.005f * folded;
             const float range = 0.47f;
 
@@ -5918,8 +5983,9 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = (currentTimbre->params_.effect.param1 + matrixFilterFrequency);
             fxParamTmp *= fxParamTmp;
             fxParam1 = ((fxParamTmp + 9.0f * fxParam1) * .1f);
-
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            
+            float OffsetTmp = fabsf(filterParam2);
             fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
 
             const float bipolarf = (fxParam1 - 0.5f);
@@ -6015,8 +6081,9 @@ void Voice::fxAfterBlock() {
             float fxParamTmp = (currentTimbre->params_.effect.param1 + matrixFilterFrequency);
             fxParamTmp *= fxParamTmp;
             fxParam1 = ((fxParamTmp + 9.0f * fxParam1) * .1f);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float OffsetTmp = fabsf(filterParam2);
             fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
 
             const float bipolarf = (fxParam1 - 0.5f);
@@ -6118,7 +6185,8 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             fxParam1 = ((fxParamTmp + 9.0f * fxParam1) * .1f);
 
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float OffsetTmp = fabsf(filterParam2);
             fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
 
             const float offset = fxParam2 * fxParam2 * 0.17f;
@@ -6216,8 +6284,8 @@ void Voice::fxAfterBlock() {
             fxParamTmp = (fold((fxParamTmp - 0.5f) * 0.25f) + 0.25f) * 2;
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float param2Tmp = (currentTimbre->params_.effect.param2);
-            fxParam2 = ((param2Tmp + 19.0f * fxParam2) * .05f);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            fxParam2 = ((filterParam2 + 19.0f * fxParam2) * .05f);
             const float rootf = 0.011f + ((fxParam2 * fxParam2) - 0.005f) * 0.08f;
             const float frange = 0.14f;
             const float bipolarf = (fxParam1 - 0.5f);
@@ -6318,8 +6386,8 @@ void Voice::fxAfterBlock() {
             fxParamTmp = (fold((fxParamTmp - 0.5f) * 0.25f) + 0.25f) * 2;
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float param2Tmp = (currentTimbre->params_.effect.param2);
-            fxParam2 = ((param2Tmp + 19.0f * fxParam2) * .05f);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            fxParam2 = ((filterParam2 + 19.0f * fxParam2) * .05f);
             const float rootf = 0.031f + (fxParam2) * 0.0465f;
             const float frange = 0.22f;
             const float bipolarf = sigmoid(fxParam1 - 0.5f);
@@ -6430,8 +6498,8 @@ void Voice::fxAfterBlock() {
             fxParamTmp = (fold((fxParamTmp - 0.5f) * 0.25f) + 0.25f) * 2;
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
 
-            float param2Tmp = (currentTimbre->params_.effect.param2);
-            fxParam2 = ((param2Tmp + 19.0f * fxParam2) * .05f);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            fxParam2 = ((filterParam2 + 19.0f * fxParam2) * .05f);
             const float rootf = 0.011f + ((fxParam2 * fxParam2) - 0.005f) * 0.08f;
             const float frange = 0.14f;
             const float bipolarf = (fxParam1 - 0.5f);
@@ -6546,7 +6614,8 @@ void Voice::fxAfterBlock() {
             float attn = 0.37013f * cut2 * cut2;
             float inAtn = 0.3f;
 
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float OffsetTmp = fabsf(filterParam2);
             fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
             float res = fxParam2 * 6 + cut2 * 0.68f;
             float fb = res * (1 - 0.178f * (cut2 + (1 + fxParam1 * fxParam1 * 0.5f) * fxParam2 * 0.333333f));
@@ -6646,7 +6715,8 @@ void Voice::fxAfterBlock() {
             float attn = 0.35013f * cut2 * cut2;
             float inAtn = 0.3f;
 
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float OffsetTmp = fabsf(filterParam2);
             fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
             float res = fxParam2 * 4.5f * (0.8f + cut2 * 0.2f);
             float fb = res * (1 - 0.15f * cut2);
@@ -6729,7 +6799,8 @@ void Voice::fxAfterBlock() {
             fxParam1 = ((fxParamTmp + 9.0f * fxParam1) * .1f);
             float cut = clamp(sqrt3(fxParam1), filterWindowMin, filterWindowMax);
 
-            float OffsetTmp = fabsf(currentTimbre->params_.effect.param2);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
+            float OffsetTmp = fabsf(filterParam2);
             fxParam2 = ((OffsetTmp + 9.0f * fxParam2) * .1f);
             float res = fxParam2;
 
@@ -6810,10 +6881,11 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             const float f = fxParam1 * fxParam1;
             const float fmeta = f * sigmoid(f);
-            const float fb = sqrt3(0.7f - fxParam2 * 0.699f);
+            const float fb = sqrt3(0.7f - filterParam2 * 0.699f);
             const float scale = sqrt3(fb);
 
             float dc = f * 0.05f * fb;
@@ -6823,7 +6895,7 @@ void Voice::fxAfterBlock() {
             float lowL = v0L, highL = 0, bandL = v1L;
             float lowR = v0R, highR = 0, bandR = v1R;
 
-            const float svfGain = (1 + fxParam2 * fxParam2 * 0.75f) * mixerGain;
+            const float svfGain = (1 + filterParam2 * filterParam2 * 0.75f) * mixerGain;
 
             float attn = 0.05f + 0.2f * f * f * f;
             float r = 0.985f;
@@ -6870,6 +6942,7 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             const float wc = fxParam1 * fxParam1;
             const float wc2 = wc * wc;
@@ -6878,7 +6951,7 @@ void Voice::fxAfterBlock() {
             const float g = 0.9892f * wc - 0.4342f * wc2 + 0.1381f * wc3 - 0.0202f * wc2 * wc2;
             const float drive = 0.85f;
             const float gComp = 1;
-            const float resonance = fxParam2 * 0.52f - fxParam1 * 0.05f;
+            const float resonance = filterParam2 * 0.52f - fxParam1 * 0.05f;
             const float gRes = 1.5f * resonance * (1.0029f + 0.0526f * wc - 0.926f * wc2 + 0.0218f * wc3);
 
             float *sp = this->sampleBlock;
@@ -6971,6 +7044,7 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             float velocity = this->velocity;
 
@@ -6996,7 +7070,7 @@ void Voice::fxAfterBlock() {
             float state0L = v0L, state1L = v1L, state2L = v2L, state3L = v3L, state4L = v4L;
             float state0R = v0R, state1R = v1R, state2R = v2R, state3R = v3R, state4R = v4R;
 
-            float vcf_reso = fxParam2 * 1.065f;
+            float vcf_reso = filterParam2 * 1.065f;
             float vcf_cutoff = clamp(fxParam1 * 1.2f + 0.2f * fxParamA1, 0, 2);
 
             float vcf_e1 = expf_fast(5.55921003f + 2.17788267f * vcf_cutoff + 0.47f * fxParamA1) + 103;
@@ -7063,11 +7137,11 @@ void Voice::fxAfterBlock() {
             f2a1 = -2 * exp_p2r * cosf(p2i);
             f2a2 = exp_p2r * exp_p2r;
             f2b = (f2a0 + f2a1 + f2a2);
-            float fdbck = ((1 - fxParam1 * fxParam1) * (0.8f - fxParamA1 * 0.05f)) * fxParam2 * 0.45f;
+            float fdbck = ((1 - fxParam1 * fxParam1) * (0.8f - fxParamA1 * 0.05f)) * filterParam2 * 0.45f;
 
             float in, y;
             float invAttn = sqrt3(currentTimbre->getNumberOfVoiceInverse());
-            float drive2 = 1.05f - fxParam1 * fxParam1 * 0.05f + (fxParam2 * 0.17f - fxParamA1 * fxParamA1 * 0.051f) * invAttn;
+            float drive2 = 1.05f - fxParam1 * fxParam1 * 0.05f + (filterParam2 * 0.17f - fxParamA1 * fxParamA1 * 0.051f) * invAttn;
             float finalGain = (mixerGain * (1 - fxParam1 * 0.2f) + fxParamA1) * 0.75f;
 
             float r = 0.989f;
@@ -7131,16 +7205,17 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             const float f = 0.08f + fxParam1 * fxParam1 * 0.95f;
-            const float fb = sqrtf(1 - fxParam2 * 0.999f) * (0.33f + fxParam1 * 0.66f);
+            const float fb = sqrtf(1 - filterParam2 * 0.999f) * (0.33f + fxParam1 * 0.66f);
             const float scale = sqrtf(fb);
 
             float *sp = this->sampleBlock;
             float lowL = v0L, bandL = v1L, lowL2 = v2L, lowL3 = v3L;
             float lowR = v0R, bandR = v1R, lowR2 = v2R, lowR3 = v3R;
 
-            const float svfGain = (0.87f + fxParam2 * fxParam2 * 0.75f) * 1.5f * mixerGain;
+            const float svfGain = (0.87f + filterParam2 * filterParam2 * 0.75f) * 1.5f * mixerGain;
 
             float _ly1L = v4L, _ly1R = v4R;
             float _lx1L = v5L, _lx1R = v5R;
@@ -7154,9 +7229,9 @@ void Voice::fxAfterBlock() {
             const float f2 = clamp(0.33f + sqrt3(f) * 0.43f, filterWindowMin, filterWindowMax);
             float coef2 = (1.0f - f2) / (1.0f + f2);
 
-            float sat = 1 + fxParam2 * 0.33f;
+            float sat = 1 + filterParam2 * 0.33f;
 
-            float theta = 1 - fxParam1 * fxParam2 * 0.3f;
+            float theta = 1 - fxParam1 * filterParam2 * 0.3f;
             float arghp = (1 + 2 * cosf(theta));
             float p = (1 + 2 * cosf(theta)) - sqrtf(arghp * arghp - 1);
             //0 < theta < Pi/2
@@ -7235,6 +7310,7 @@ void Voice::fxAfterBlock() {
             fxParamTmp *= fxParamTmp;
             // Low pass... on the Frequency
             fxParam1 = clamp((fxParamTmp + 9.0f * fxParam1) * .1f, 0, 1);
+            float filterParam2 = clamp(matrixFilterParam2 + currentTimbre->params_.effect.param2, 0, 1);
 
             //const float f = 0.05f + clamp(sigmoid(fxParam1 + fxParam2) * 0.67f, 0, 0.85f);
             const float f = 0.55f + clamp(sigmoid(fxParam1) * 0.45f, 0, 0.45f);
@@ -7247,7 +7323,7 @@ void Voice::fxAfterBlock() {
             float bits2 = v8R;
 
             float b1inc = fxParam1 * fxParam1 * fxParam1;
-            float b2inc = clamp(fxParam2 * fxParam2 * fxParam2 * 0.95f + b1inc * 0.05f, 0, 1);
+            float b2inc = clamp(filterParam2 * filterParam2 * filterParam2 * 0.95f + b1inc * 0.05f, 0, 1);
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
@@ -7264,7 +7340,7 @@ void Voice::fxAfterBlock() {
             float nexDrift = *sp * 0.015f;
             float deltaD = (nexDrift - drift) * 0.000625f;
 
-            const float f1 = clamp(0.23f + fxParam2 * fxParam2 * 0.33f, filterWindowMin, filterWindowMax);
+            const float f1 = clamp(0.23f + filterParam2 * filterParam2 * 0.33f, filterWindowMin, filterWindowMax);
             float coef1 = (1.0f - f1) / (1.0f + f1);
 
             const float f2 = clamp(0.33f + fxParam1 * fxParam1 * 0.43f, filterWindowMin, filterWindowMax);
@@ -7431,43 +7507,11 @@ void Voice::setNewEffectParam(int encoder) {
             // ratio = fxParam2
             // gain1 = fxParam3
             fxParam1 = 50 + 200 * currentTimbre->params_.effect.param1;
-            fxParam2 = currentTimbre->params_.effect.param2 * 4;
             fxParam3 = 1.0f / (fxParam1 + 1.0f);
-            break;
-        case FILTER_HP:
-        case FILTER_LP:
-        case FILTER_TILT:
-            switch (encoder) {
-                case ENCODER_EFFECT_TYPE:
-                    fxParam2 = 0.3f - currentTimbre->params_.effect.param2 * 0.3f;
-                    break;
-                case ENCODER_EFFECT_PARAM1:
-                    // Done in every loop
-                    // fxParam1 = pow(0.5, (128- (currentTimbre->params.effect.param1 * 128))   / 16.0);
-                    break;
-                case ENCODER_EFFECT_PARAM2:
-                    // fxParam2 = pow(0.5, ((currentTimbre->params.effect.param2 * 127)+24) / 16.0);
-                    // => value from 0.35 to 0.0
-                    fxParam2 = 0.27f - currentTimbre->params_.effect.param2 * 0.27f;
-                    break;
-            }
-            break;
-        case FILTER_LP2:
-        case FILTER_HP2:
-        case FILTER_LPHP:
-            switch (encoder) {
-                case ENCODER_EFFECT_TYPE:
-                    fxParam2 = 0.27f - currentTimbre->params_.effect.param2 * 0.267f;
-                    break;
-                case ENCODER_EFFECT_PARAM2:
-                    fxParam2 = 0.27f - currentTimbre->params_.effect.param2 * 0.267f;
-                    break;
-            }
             break;
         case FILTER_CRUSHER: {
             if (encoder == ENCODER_EFFECT_PARAM2) {
                 fxParam1 = pow(2, (int) (1.0f + 15.0f * currentTimbre->params_.effect.param2));
-                fxParam2 = 1 / fxParam1;
             }
             break;
         }
@@ -7476,23 +7520,6 @@ void Voice::setNewEffectParam(int encoder) {
             fxParam1PlusMatrix = -1.0f;
             break;
         }
-        case FILTER_SIGMOID:
-        case FILTER_FOLD:
-        case FILTER_WRAP:
-            switch (encoder) {
-                case ENCODER_EFFECT_PARAM2:
-                    fxParam2 = 0.1f + (currentTimbre->params_.effect.param2 * currentTimbre->params_.effect.param2);
-                    break;
-            }
-            break;
-        case FILTER_TEXTURE1:
-        case FILTER_TEXTURE2:
-            switch (encoder) {
-                case ENCODER_EFFECT_PARAM2:
-                    fxParam2 = sqrt3(1 - currentTimbre->params_.effect.param2 * 0.99f);
-                    break;
-            }
-            break;
         default:
             switch (encoder) {
                 case ENCODER_EFFECT_TYPE:
@@ -7500,7 +7527,6 @@ void Voice::setNewEffectParam(int encoder) {
                 case ENCODER_EFFECT_PARAM1:
                     break;
                 case ENCODER_EFFECT_PARAM2:
-                    fxParam2 = currentTimbre->params_.effect.param2;
                     break;
             }
     }
