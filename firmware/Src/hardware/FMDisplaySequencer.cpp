@@ -725,3 +725,34 @@ void FMDisplaySequencer::tempoClick() {
 void FMDisplaySequencer::cleanCurrentState() {
     sequencer_->cleanCurrentState();
 }
+
+
+void FMDisplaySequencer::sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
+    if (this->synthState_->fullState.synthMode != SYNTH_MODE_SEQUENCER) {
+        return;
+    }
+
+    switch (seqValue) {
+    case SEQ_VALUE_PLAY_ALL:
+        refreshPlayButton();
+        refresh(17, 17);
+        break;
+    case SEQ_VALUE_PLAY_INST:
+    case SEQ_VALUE_RECORD_INST:
+        if (seqMode_ != SEQ_MODE_STEP) {
+            // We must refresh all instruments to fix a corner case:
+            // Several instrument on same midi port : instruments are not updated
+            refreshAllInstruments();
+        }
+        break;
+    case SEQ_VALUE_SEQUENCE_NUMBER:
+        if (seqMode_ == SEQ_MODE_STEP) {
+            tft_->pauseRefresh();
+            refresh(16, 13);
+        }
+    case SEQ_VALUE_TRANSPOSE:
+        // Do nothing : sequencer only
+        break;
+    };
+}
+

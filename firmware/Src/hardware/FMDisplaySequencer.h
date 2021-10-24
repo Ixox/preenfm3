@@ -68,6 +68,11 @@ public:
         *refreshStatusP_ = startRefreshStatus;
     }
 
+    void refreshAllInstruments() {
+        refresh(14, 7);
+    }
+
+
     void refreshInstrument(int instrument) {
     	if(seqMode_ != SEQ_MODE_STEP) {
     		refresh(14 - instrument, 14 - instrument);
@@ -101,6 +106,8 @@ public:
     const char* getSequenceName();
 
     void cleanCurrentState();
+
+    void sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, uint8_t newValue);
 
 private:
     void refreshStepSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus);

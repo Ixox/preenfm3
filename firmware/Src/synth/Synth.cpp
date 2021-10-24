@@ -98,12 +98,16 @@ void Synth::noteOff(int timbre, char note) {
     timbres_[timbre].noteOff(note);
 }
 
-void Synth::noteOnFromSequencer(int timbre, char note, char velocity) {
-    timbres_[timbre].noteOn(note, velocity);
+void Synth::noteOnFromSequencer(uint8_t timbre, int16_t note, uint8_t velocity) {
+    if (likely(note > 0 & note < 127)) {
+        timbres_[timbre].noteOn(note, velocity);
+    }
 }
 
-void Synth::noteOffFromSequencer(int timbre, char note) {
-    timbres_[timbre].noteOff(note);
+void Synth::noteOffFromSequencer(uint8_t timbre, int16_t note) {
+    if (likely(note > 0 & note < 127)) {
+        timbres_[timbre].noteOff(note);
+    }
 }
 
 void Synth::midiClockContinue(int songPosition, bool tellSequencer) {
@@ -825,6 +829,11 @@ void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue)
             break;
        }
     }
+}
+
+
+void Synth::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
+    sequencer_->setNewSeqValueFromMidi(timbre, seqValue, newValue);
 }
 
 void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int newValue) {

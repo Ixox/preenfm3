@@ -82,6 +82,8 @@ public:
     void start();
     void stop();
 
+    void setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue);
+
     void rewind() {
         millisTimer_ = 0;
         current16bitTimer_ = 0;
@@ -108,6 +110,7 @@ public:
     void setMuted(uint8_t instrument, bool mute);
 
     void toggleMuted(uint8_t instrument);
+    void setTranspose(uint8_t instrument, int16_t newValue);
 
     bool isRecording(uint8_t instrument) {
         return recording_[instrument];
@@ -119,7 +122,6 @@ public:
         recording_[instrument] = !recording_[instrument];
     }
     bool setSeqActivated(uint8_t instrument);
-
 
     bool isSeqActivated(uint8_t instrument) {
         return seqActivated_[instrument];
@@ -175,9 +177,7 @@ public:
     uint8_t getInstrumentStepSeq(int instrument) {
     	return instrumentStepSeq_[instrument];
     }
-    void setInstrumentStepSeq(int instrument, int index) {
-    	instrumentStepSeq_[instrument] = (uint8_t)index;
-    }
+    void setInstrumentStepSeq(int instrument, int index);
 
     void cleanCurrentState() {
         // Clean possibly not null value
@@ -232,6 +232,7 @@ private:
     bool nextActionTimerOutOfSync_[NUMBER_OF_TIMBRES];
     bool recording_[NUMBER_OF_TIMBRES];
     bool muted_[NUMBER_OF_TIMBRES];
+    int8_t transpose_[NUMBER_OF_TIMBRES];
     //uint16_t nextLastActionTimer[NUMBER_OF_TIMBRES];;
     uint16_t instrumentTimerMask_[NUMBER_OF_TIMBRES];
     uint16_t lastInstrument16bitTimer_[NUMBER_OF_TIMBRES];
