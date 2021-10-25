@@ -54,8 +54,7 @@ enum MASTERFXPARAMS {
     GLOBALFX_PARAMS_SIZE
 };
 
-
-
+extern float panTable[];
 
 class FxBus {
 	friend class FMDisplayMixer;
