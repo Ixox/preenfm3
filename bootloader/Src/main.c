@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include "bootloader.h"
 #include "preenfm3lib.h"
+#include "flash_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +72,7 @@ static void MX_DMA2D_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 bool dmaForSDAccess = true;
+void bootJumpToApplication(uint32_t applicationAddress);
 /* USER CODE END 0 */
 
 /**
@@ -111,10 +113,18 @@ int main(void)
   preenfm3LibInitGpio();
   dependencyInjection();
 
-  // 6 = Back button
-  if (getButtonPressed() != 6) {
+  uint32_t buttonPressed = getButtonPressed();
+  if (buttonPressed == 9) {
       MX_Deinit();
-      bootJumpToApplication();
+      bootJumpToApplication(APPLICATION2_ADDRESS);
+      return;
+  } else if (buttonPressed == 10) {
+      MX_Deinit();
+      bootJumpToApplication(APPLICATION3_ADDRESS);
+      return;
+  } else if (buttonPressed != 6) {
+      MX_Deinit();
+      bootJumpToApplication(APPLICATION_ADDRESS);
       return;
   }
 

@@ -301,12 +301,12 @@ void dependencyInjection() {
     encoders.insertListener(&bootloaderEncoderListener);
 }
 
-void bootJumpToApplication() {
-    uint32_t jumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
+void bootJumpToApplication(uint32_t applicationAddress) {
+    uint32_t jumpAddress = *(__IO uint32_t*) (applicationAddress + 4);
     pFunction jumpToApplication = (pFunction) jumpAddress;
 
     /* Initialize user application's Stack Pointer */
-    __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
+    __set_MSP(*(__IO uint32_t*) applicationAddress);
     jumpToApplication();
 }
 
