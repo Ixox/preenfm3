@@ -207,7 +207,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
                 if (buttonPreviousState_[k] && !buttonUsedFromSomethingElse_[k]) {
                     // Just released
                     if (buttonTimer_[k] > 15) {
-                        actions_.insert((EncoderAction){ ENCODER_BUTTON_PRESSED, 0, 0, k, 0});
+                        actions_.insert((EncoderAction){ ENCODER_BUTTON_CLICKED, 0, 0, k, 0});
                     }
                 }
                 buttonTimer_[k] = 0;
@@ -219,6 +219,77 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
     encoderTimer_++;
 }
 
+
+void Encoders::checkStatusUpDown(uint8_t encoderType, uint8_t encoderPush) {
+    uint32_t registerBits = getRegisterBits(encoderPush);
+
+    // target the right action row.
+    // encoderType : First bit for type, second bit for inversed
+    uint8_t *actionEnc = action_[encoderType & 0x1];
+    int8_t inversedEnc = (encoderType & 0x2) == 0 ? 1 : -1;
+
+    for (uint8_t k = 0; k < NUMBER_OF_ENCODERS; k++) {
+        bool b1 = ((registerBits & encoderBit1_[k]) == 0);
+        bool b2 = ((registerBits & encoderBit2_[k]) == 0);
+
+        encoderState_[k] <<= 2;
+        encoderState_[k] &= 0xf;
+        if (unlikely(b1)) {
+            encoderState_[k] |= 1;
+        }
+        if (unlikely(b2)) {
+            encoderState_[k] |= 2;
+        }
+
+        if (unlikely(actionEnc[encoderState_[k]] == 1 && lastMove_[k] != LAST_MOVE_DEC)) {
+            actions_.insert((EncoderAction){ ENCODER_TURNED, k, tickSpeed_[k] * inversedEnc, 0, 0});
+
+            tickSpeed_[k] += 3;
+            lastMove_[k] = LAST_MOVE_INC;
+            timerAction_[k] = 40;
+        } else if (unlikely(actionEnc[encoderState_[k]] == 2 && lastMove_[k] != LAST_MOVE_INC)) {
+            actions_.insert((EncoderAction){ ENCODER_TURNED, k, - tickSpeed_[k] * inversedEnc, 0, 0});
+            tickSpeed_[k] += 3;
+            lastMove_[k] = LAST_MOVE_DEC;
+            timerAction_[k] = 40;
+        } else {
+            if (timerAction_[k] > 1) {
+                timerAction_[k]--;
+            } else if (timerAction_[k] == 1) {
+                timerAction_[k]--;
+                lastMove_[k] = LAST_MOVE_NONE;
+            }
+            if (tickSpeed_[k] > 1 && ((encoderTimer_ & 0x3) == 0)) {
+                tickSpeed_[k]--;
+            }
+        }
+        if (unlikely(tickSpeed_[k] > 12)) {
+            tickSpeed_[k] = 12;
+        }
+    }
+
+    int numberOfButton = encoderPush == 0 ? NUMBER_OF_BUTTONS_MIN : NUMBER_OF_BUTTONS_MAX;
+    for (uint8_t k = 0; k < numberOfButton; k++) {
+        bool b1 = ((registerBits & buttonBit_[k]) == 0);
+
+        // button is pressed
+        if (unlikely(b1)) {
+            buttonTimer_[k]++;
+            // just pressed ?
+            if (!buttonPreviousState_[k]) {
+                actions_.insert((EncoderAction){ ENCODER_BUTTON_DOWN, 0, 0, k, 0});
+            }
+        } else {
+            // Just unpressed ?
+            if (unlikely(buttonPreviousState_[k])) {
+                actions_.insert((EncoderAction){ ENCODER_BUTTON_UP, 0, 0, k, 0});
+            }
+        }
+
+        buttonPreviousState_[k] = b1;
+    }
+    encoderTimer_++;
+}
 void Encoders::processActions() {
 	while (actions_.getCount() > 0) {
 		EncoderAction ea = actions_.remove();
@@ -229,7 +300,7 @@ void Encoders::processActions() {
 		case ENCODER_TURNED_WHILE_BUTTON_PRESSED:
 			encoderTurnedWhileButtonPressed(ea.encoder, ea.ticks, ea.button1);
 			break;
-		case ENCODER_BUTTON_PRESSED:
+		case ENCODER_BUTTON_CLICKED:
 			buttonPressed(ea.button1);
 			break;
 		case ENCODER_TWO_BUTTON_PRESSED:
@@ -238,6 +309,12 @@ void Encoders::processActions() {
 		case ENCODER_LONG_BUTTON_PRESSED:
 			buttonLongPressed(ea.button1);
 			break;
+        case ENCODER_BUTTON_DOWN:
+            buttonDown(ea.button1);
+            break;
+        case ENCODER_BUTTON_UP:
+            buttonUp(ea.button1);
+            break;
 		}
 	}
 }

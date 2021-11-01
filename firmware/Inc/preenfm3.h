@@ -23,6 +23,10 @@ extern "C" {
 
 void preenfm3Loop();
 void preenfm3Init();
+void preenfm3MidiControllerInit();
+void preenfm3MidiControllerLoop();
+bool isButton1Pressed();
+
 void preenfm3TftTic();
 void preenfm3_USART();
 void preenfm3_usbDataReceive(uint8_t *buffer);

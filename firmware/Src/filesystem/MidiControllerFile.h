@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Xavier Hosxe
+ * Copyright 2021 Xavier Hosxe
  *
  * Author: Xavier Hosxe (xavier <dot> hosxe (at) g m a i l <dot> com)
  *
@@ -16,26 +16,22 @@
  */
 
 
-#ifndef CONFIGURATIONFILE_H_
-#define CONFIGURATIONFILE_H_
+#ifndef MidiControllerFile_H_
+#define MIDICONTROLLERFILE_H
 
 #include "PreenFMFileType.h"
-#include "ScalaFile.h"
+#include "MidiControllerState.h"
 
-class ConfigurationFile: public PreenFMFileType {
+class MidiControllerFile: public PreenFMFileType {
 public:
-	ConfigurationFile();
-	virtual ~ConfigurationFile();
+	MidiControllerFile();
+	virtual ~MidiControllerFile();
 
-
-	void loadConfig(uint8_t* midiConfigBytes);
-	void saveConfig(uint8_t* midiConfigBytes);
-
+	void loadConfig(MidiControllerState* midiControllerState);
+	void saveConfig(MidiControllerState* midiControllerState);
 protected:
-	const char* getFolderName();
-	bool isCorrectFile(char *name, int size) { return true; }
-
-	void fillMidiConfig(uint8_t* midiConfigBytes, char* line);
+	const char* getFolderName() { return 0; }
+    bool isCorrectFile(char *name, int size) { return false; }
 };
 
-#endif /* CONFIGURATIONFILE_H_ */
+#endif /* MidiControllerFile_H_ */

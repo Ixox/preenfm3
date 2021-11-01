@@ -43,6 +43,45 @@
 
 #define NUMBER_OF_WAVETABLES 14
 
+
+#define BUTTON_PFM3_MIXER 9
+#define BUTTON_PFM3_EDIT 10
+#define BUTTON_PFM3_SEQUENCER 11
+
+// switch 1
+#define BUTTON_PFM3_1 0
+#define BUTTON_PFM3_2 1
+#define BUTTON_PFM3_3 2
+#define BUTTON_PFM3_4 3
+#define BUTTON_PFM3_5 4
+#define BUTTON_PFM3_6 5
+
+#define BUTTON_PFM3_MENU 6
+
+#define BUTTON_SYNTH  0
+#define BUTTON_OSC    1
+#define BUTTON_ENV    2
+#define BUTTON_MATRIX 3
+#define BUTTON_LFO    4
+
+#define BUTTON_PREVIOUS_INSTRUMENT 7
+#define BUTTON_NEXT_INSTRUMENT 8
+
+
+#define BUTTON_MENUSELECT   22
+#define BUTTON_ENCODER   23
+
+#define BUTTON_DUMP   0
+
+
+#define BUTTON_ENCODER_1 12
+#define BUTTON_ENCODER_2 13
+#define BUTTON_ENCODER_3 14
+#define BUTTON_ENCODER_4 15
+#define BUTTON_ENCODER_5 16
+#define BUTTON_ENCODER_6 17
+
+
 struct RowEncoder {
     uint8_t row;
     uint8_t encoder;

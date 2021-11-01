@@ -17,24 +17,24 @@
 
 
 #include "usbd_midi_if.h"
-#include "preenfm3.h"
 
 
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 // Only one function to register
-static int8_t dataReceived(uint8_t* buffer);
+void preenfm3_usbDataReceive(uint8_t *buffer);
+
+static int8_t dataReceived(uint8_t* buffer) {
+    preenfm3_usbDataReceive(buffer);
+
+    return USBD_OK;
+}
+
 
 USBD_MIDI_ItfTypeDef USBD_MIDI_fops_FS =
 {
 		dataReceived
 };
 
-
-static int8_t dataReceived(uint8_t* buffer) {
-	preenfm3_usbDataReceive(buffer);
-
-	return USBD_OK;
-}
 

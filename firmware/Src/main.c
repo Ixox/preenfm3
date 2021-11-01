@@ -69,6 +69,7 @@ UART_HandleTypeDef huart1;
 
 MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 /* USER CODE BEGIN PV */
+uint8_t midiControllerMode = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,6 +106,7 @@ void Reinit_SPI2(void)  {
   * @retval int
   */
 int main(void)
+
 {
   /* USER CODE BEGIN 1 */
 
@@ -161,6 +163,18 @@ int main(void)
   MX_TIM1_Init();
 
   MPU_RegionConfig();
+
+  // If button 1 is pressed => Midi controller mode
+  if (!isButton1Pressed()) {
+      midiControllerMode = 1;
+      preenfm3MidiControllerInit();
+      while (1)
+      {
+        preenfm3MidiControllerLoop();
+      }
+  }
+
+
 
   // main preenfm3 init
   preenfm3Init();

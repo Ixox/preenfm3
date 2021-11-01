@@ -47,6 +47,7 @@ public:
     void noteOn(int timbre, bool show);
     void tempoClick();
 
+    // Still used ??????
     int getRowNumberToDiplay(int row) {
         if (row <= ROW_ENGINE_LAST) {
             return row - ROW_ENGINE_FIRST + 1;
