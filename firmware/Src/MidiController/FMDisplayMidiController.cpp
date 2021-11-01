@@ -1,4 +1,5 @@
 /*
+ * Copyright 2021 Xavier Hosxe
  *
  * Author: Xavier Hosxe (xavier . hosxe (at) gmail . com)
  *
@@ -354,7 +355,11 @@ void FMDisplayMidiController::displayButtonValue(int button) {
         tft_->setCharBackgroundColor(COLOR_GREEN);
         tft_->setCharColor(COLOR_BLACK);
     } else {
-        tft_->fillArea(x, y, width, 22, COLOR_DARK_GRAY);
+        if (midiControllerState_->button_[button].buttonType == MIDI_BUTTON_TYPE_PUSH) {
+            tft_->fillArea(x, y, width, 22, COLOR_DARK_GRAY);
+        } else {
+            tft_->fillArea(x, y, width, 22, COLOR_GREEN);
+        }
         tft_->fillArea(x + 1, y + 1, width - 2, 20, COLOR_BLACK);
         tft_->setCharColor(COLOR_GRAY);
     }

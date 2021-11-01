@@ -1,8 +1,18 @@
 /*
- * MidiControllerState.cpp
+ * Copyright 2021 Xavier Hosxe
  *
- *  Created on: 31 oct. 2021
- *      Author: Xavier
+ * Author: Xavier Hosxe (xavier . hosxe (at) gmail . com)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "stm32h7xx_hal.h"
@@ -26,10 +36,10 @@ MidiControllerState::MidiControllerState() {
         button_[i].valueHigh = 127;
         button_[i].buttonType = (i % 2) == 0 ? MIDI_BUTTON_TYPE_PUSH : MIDI_BUTTON_TYPE_TOGGLE;
 
-        strcpy(encoder_[i].name, "Enc0  ", 5);
+        strcpy(encoder_[i].name, "Enc  ", 5);
         encoder_[i].name[3] = '0' + i;
 
-        strcpy(button_[i].name, "But0  ", 5);
+        strcpy(button_[i].name, "But  ", 5);
         button_[i].name[3] = '0' + i;
     }
 }
@@ -84,7 +94,7 @@ bool MidiControllerState::buttonUp(uint8_t globalMidiChannel, uint32_t button) {
 }
 
 
-void MidiControllerState::strcpy(char* dest, char *src, int len) {
+void MidiControllerState::strcpy(char* dest, const char *src, int len) {
     for (int l = 0; l < len; l++) {
         dest[l] = src[l];
     }
