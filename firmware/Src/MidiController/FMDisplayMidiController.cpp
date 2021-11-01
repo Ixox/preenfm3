@@ -20,7 +20,7 @@
 #include "TftDisplay.h"
 
 
-
+#define X_OFFSET 16
 
 FMDisplayMidiController::FMDisplayMidiController() {
     menuPressed_ = false;
@@ -83,7 +83,7 @@ void FMDisplayMidiController::refreshAllScreenByStep() {
         case 15:
         case 14: {
             int encoder = 19 - refreshStatus_;
-            uint8_t x = (encoder > 2 ? (encoder - 3) * 7 : encoder * 7) * TFT_BIG_CHAR_WIDTH + 8;
+            uint8_t x = (encoder > 2 ? (encoder - 3) * 7 : encoder * 7) * TFT_BIG_CHAR_WIDTH + X_OFFSET;
             uint16_t y = (encoder > 2 ? 6 : 3) * TFT_BIG_CHAR_HEIGHT;
 
             tft_->setCharColor(COLOR_WHITE);
@@ -95,6 +95,7 @@ void FMDisplayMidiController::refreshAllScreenByStep() {
             tft_->printSmallChars("cc");
             tft_->printSmallChar(midiControllerState_->encoder_[encoder].controller);
             if (midiControllerState_->encoder_[encoder].midiChannel != 16) {
+                tft_->setCharColor(COLOR_ORANGE);
                 tft_->printSmallChars(" ch");
                 tft_->printSmallChar(midiControllerState_->encoder_[encoder].midiChannel + 1);
             }
@@ -109,7 +110,7 @@ void FMDisplayMidiController::refreshAllScreenByStep() {
         case 9:
         case 8: {
             int button = 13 - refreshStatus_;
-            uint8_t x = (button > 2 ? (button - 3) * 7 : button * 7) * TFT_BIG_CHAR_WIDTH + 8;
+            uint8_t x = (button > 2 ? (button - 3) * 7 : button * 7) * TFT_BIG_CHAR_WIDTH + X_OFFSET;
             uint16_t y = (button > 2 ? 13 : 10) * TFT_BIG_CHAR_HEIGHT;
 
             tft_->setCharColor(COLOR_WHITE);
@@ -121,9 +122,9 @@ void FMDisplayMidiController::refreshAllScreenByStep() {
             tft_->printSmallChars("cc");
             tft_->printSmallChar(midiControllerState_->button_[button].controller);
             if (midiControllerState_->button_[button].midiChannel != 16) {
-                tft_->printSmallChars(" (");
+                tft_->setCharColor(COLOR_ORANGE);
+                tft_->printSmallChars(" ch");
                 tft_->printSmallChar(midiControllerState_->button_[button].midiChannel + 1);
-                tft_->printSmallChars(")");
             }
             displayButtonValue(button);
             break;
@@ -330,7 +331,7 @@ void FMDisplayMidiController::refreshAllScreenByStepSave() {
 
 
 void FMDisplayMidiController::displayEncoderValue(int encoder) {
-    uint8_t x = (encoder > 2 ? (encoder - 3) * 7 : encoder * 7) * TFT_BIG_CHAR_WIDTH + 8;
+    uint8_t x = (encoder > 2 ? (encoder - 3) * 7 : encoder * 7) * TFT_BIG_CHAR_WIDTH + X_OFFSET;
     uint8_t y = (encoder > 2 ? 6 : 3) * TFT_BIG_CHAR_HEIGHT;
 
     tft_->setCharColor(COLOR_YELLOW);
@@ -344,7 +345,7 @@ void FMDisplayMidiController::displayEncoderValue(int encoder) {
 }
 
 void FMDisplayMidiController::displayButtonValue(int button) {
-    uint8_t x = (button > 2 ? (button - 3) * 7 : button * 7) * TFT_BIG_CHAR_WIDTH + 8;
+    uint8_t x = (button > 2 ? (button - 3) * 7 : button * 7) * TFT_BIG_CHAR_WIDTH + X_OFFSET;
     uint16_t y = (button > 2 ? 13 : 10) * TFT_BIG_CHAR_HEIGHT  + TFT_BIG_CHAR_HEIGHT + TFT_SMALL_CHAR_HEIGHT ;
     uint8_t width = 55;
 
