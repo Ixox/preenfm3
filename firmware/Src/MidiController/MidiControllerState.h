@@ -20,6 +20,7 @@
 
 #include "Common.h"
 
+#define MIDI_NUMBER_OF_PAGES 5
 
 enum {
     MIDI_CONTROLLER_VERSION_1 = 1
@@ -52,32 +53,39 @@ struct MidiButton {
     char name[6];
     MidiButtonType buttonType;
     uint8_t midiChannel;
+    uint8_t value; // 0 : low, 1 : high
     uint16_t controller;
-    uint16_t value;
     uint16_t valueLow;
     uint16_t valueHigh;
+    // Utility
+    uint16_t getValue() { return value == 0 ? valueLow : valueHigh; }
+};
+
+struct MidiPage {
+    MidiEncoder encoder_[6];
+    MidiButton button_[6];
 };
 
 class FMDisplayMidiController;
 class MidiControllerFile;
 
 class MidiControllerState  {
-    friend FMDisplayMidiController;
-    friend MidiControllerFile;
 public:
     MidiControllerState();
     virtual ~MidiControllerState();
 
-    void encoderDelta(uint8_t globalMidiChannel, uint32_t encoder, int delta);
-    void buttonDown(uint8_t globalMidiChannel, uint32_t button);
-    bool buttonUp(uint8_t globalMidiChannel, uint32_t button);
+    void encoderDelta(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t encoderNumber, int delta);
+    void buttonDown(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t buttonNumber);
+    bool buttonUp(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t buttonNumber);
+
+    MidiPage* getMidiPage(int pageNumber) { return &midiPage_[pageNumber]; }
+    MidiEncoder* getEncoder(int pageNumber, int encoderNumber) { return &midiPage_[pageNumber].encoder_[encoderNumber]; }
+    MidiButton* getButton(int pageNumber, int buttonNumber) { return &midiPage_[pageNumber].button_[buttonNumber]; }
 
 private:
     void sendMidiDin5Out();
     void strcpy(char* dest, const char *src, int len);
-
-    MidiEncoder encoder_[6];
-    MidiButton button_[6];
+    MidiPage midiPage_[MIDI_NUMBER_OF_PAGES];
 };
 
 #endif /* MIDI_MIDICONTROLLERSTATE_H_ */

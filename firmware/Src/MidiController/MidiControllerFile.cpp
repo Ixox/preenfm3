@@ -36,40 +36,42 @@ void MidiControllerFile::loadConfig(MidiControllerState* midiControllerState) {
 
     load(MIDI_CONTROLLER_STATE, 0,  reachableProperties, size);
     // First int is the version
-    uint32_t* p = (uint32_t*)reachableProperties;
+    uint16_t* p = (uint16_t*)reachableProperties;
     int version = (int)*(p++);
 
     switch (version) {
     case MIDI_CONTROLLER_VERSION_1: {
-        for (int e = 0; e < 6; e++) {
-            char *nameP = (char*)p;
-            for (int c = 0; c < 6 ; c++) {
-                midiControllerState->encoder_[e].name[c] = *(nameP++);
+        for (int pageNumber = 0; pageNumber < MIDI_NUMBER_OF_PAGES; pageNumber++) {
+            for (int e = 0; e < 6; e++) {
+                MidiEncoder *encoder = midiControllerState->getEncoder(pageNumber, e);
+                char *nameP = (char*)p;
+                for (int c = 0; c < 6 ; c++) {
+                    encoder->name[c] = *(nameP++);
+                }
+                // Let skip 8 bytes
+                p += 4;
+                encoder->encoderType = (MidiEncoderType)*(p++);
+                encoder->midiChannel = *(p++);
+                encoder->controller = *(p++);
+                encoder->value = *(p++);
+                encoder->maxValue = *(p++);
+                encoder->minValue = *(p++);
             }
-            // Let skip 8
-            p++;
-            p++;
-            midiControllerState->encoder_[e].encoderType = (MidiEncoderType)*(p++);
-            midiControllerState->encoder_[e].midiChannel = *(p++);
-            midiControllerState->encoder_[e].controller = *(p++);
-            midiControllerState->encoder_[e].value = *(p++);
-            midiControllerState->encoder_[e].maxValue = *(p++);
-            midiControllerState->encoder_[e].minValue = *(p++);
-        }
-        for (int b = 0; b < 6; b++) {
-            char *nameP = (char*)p;
-            for (int c = 0; c < 6 ; c++) {
-                midiControllerState->button_[b].name[c] = *(nameP++);
+            for (int b = 0; b < 6; b++) {
+                MidiButton *button = midiControllerState->getButton(pageNumber, b);
+                char *nameP = (char*)p;
+                for (int c = 0; c < 6 ; c++) {
+                    button->name[c] = *(nameP++);
+                }
+                // Let skip 8 bytes
+                p += 4;
+                button->buttonType = (MidiButtonType)*(p++);
+                button->midiChannel = *(p++);
+                button->controller = *(p++);
+                button->value = *(p++);
+                button->valueLow = *(p++);
+                button->valueHigh = *(p++);
             }
-            // Let skip 8
-            p++;
-            p++;
-            midiControllerState->button_[b].buttonType = (MidiButtonType)*(p++);
-            midiControllerState->button_[b].midiChannel = *(p++);
-            midiControllerState->button_[b].controller = *(p++);
-            midiControllerState->button_[b].value = *(p++);
-            midiControllerState->button_[b].valueLow = *(p++);
-            midiControllerState->button_[b].valueHigh = *(p++);
         }
         break;
     }
@@ -84,39 +86,40 @@ void MidiControllerFile::saveConfig(MidiControllerState* midiControllerState) {
         reachableProperties[i] = 0;
     }
 
-    uint32_t* p = (uint32_t*)reachableProperties;
+    uint16_t* p = (uint16_t*)reachableProperties;
     *(p++) = MIDI_CONTROLLER_CURRENT_VERSION;
 
-
-    for (int e = 0; e < 6; e++) {
-        char *nameP = (char*)p;
-        for (int c = 0; c < 6 ; c++) {
-            *(nameP++) = midiControllerState->encoder_[e].name[c];
+    for (int pageNumber = 0; pageNumber < MIDI_NUMBER_OF_PAGES; pageNumber++) {
+        for (int e = 0; e < 6; e++) {
+            MidiEncoder *encoder = midiControllerState->getEncoder(pageNumber, e);
+            char *nameP = (char*)p;
+            for (int c = 0; c < 6 ; c++) {
+                *(nameP++) = encoder->name[c];
+            }
+            // Let skip 8 bytes
+            p += 4;
+            *(p++) = encoder->encoderType;
+            *(p++) = encoder->midiChannel;
+            *(p++) = encoder->controller;
+            *(p++) = encoder->value;
+            *(p++) = encoder->maxValue;
+            *(p++) = encoder->minValue;
         }
-        // Let skip 8
-        p++;
-        p++;
-        *(p++) = midiControllerState->encoder_[e].encoderType;
-        *(p++) = midiControllerState->encoder_[e].midiChannel;
-        *(p++) = midiControllerState->encoder_[e].controller;
-        *(p++) = midiControllerState->encoder_[e].value;
-        *(p++) = midiControllerState->encoder_[e].maxValue;
-        *(p++) = midiControllerState->encoder_[e].minValue;
-    }
-    for (int b = 0; b < 6; b++) {
-        char *nameP = (char*)p;
-        for (int c = 0; c < 6 ; c++) {
-            *(nameP++) = midiControllerState->button_[b].name[c];
+        for (int b = 0; b < 6; b++) {
+            MidiButton *button = midiControllerState->getButton(pageNumber, b);
+            char *nameP = (char*)p;
+            for (int c = 0; c < 6 ; c++) {
+                *(nameP++) = button->name[c];
+            }
+            // Let skip 8 bytes
+            p += 4;
+            *(p++) = button->buttonType;
+            *(p++) = button->midiChannel;
+            *(p++) = button->controller;
+            *(p++) = button->value;
+            *(p++) = button->valueLow;
+            *(p++) = button->valueHigh;
         }
-        // Let skip 8
-        p++;
-        p++;
-        *(p++) = midiControllerState->button_[b].buttonType;
-        *(p++) = midiControllerState->button_[b].midiChannel;
-        *(p++) = midiControllerState->button_[b].controller;
-        *(p++) = midiControllerState->button_[b].value;
-        *(p++) = midiControllerState->button_[b].valueLow;
-        *(p++) = midiControllerState->button_[b].valueHigh;
     }
 
     int size = ((uint32_t)p) -  ((uint32_t)reachableProperties);

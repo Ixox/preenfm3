@@ -106,12 +106,11 @@ void Reinit_SPI2(void)  {
   * @retval int
   */
 int main(void)
-
 {
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
+
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();

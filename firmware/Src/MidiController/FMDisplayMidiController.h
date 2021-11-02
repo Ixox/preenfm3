@@ -46,7 +46,8 @@ enum ButtonParamType {
     BUTTON_PARAM_MIDI_CHANNEL,
     BUTTON_PARAM_CONTROLLER,
     BUTTON_PARAM_BUTTON_TYPE,
-    BUTTON_PARAM_HIGH
+    BUTTON_PARAM_HIGH,
+    BUTTON_PARAM_LOW
 };
 
 class FMDisplayMidiController : public EncodersListener {
@@ -80,8 +81,8 @@ public:
     void buttonUp(int button);
     void buttonDown(int button);
 
-    void displayEncoderParam(int encoder, EncoderParamType paramType);
-    void displayButtonParam(int button, ButtonParamType paramType);
+    void displayEncoderParam(int encoderNumber, EncoderParamType paramType);
+    void displayButtonParam(int buttonNumber, ButtonParamType paramType);
     void displayMidiChannel();
 
 private:
@@ -95,7 +96,7 @@ private:
     uint8_t editLetterPosition_;
     bool menuPressed_;
     uint8_t midiChannel_;
-
+    uint8_t pageNumber_;
 private:
 };
 

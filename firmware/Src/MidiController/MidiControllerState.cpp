@@ -24,23 +24,33 @@ extern UART_HandleTypeDef huart1;
 
 
 MidiControllerState::MidiControllerState() {
-    for (int i = 0; i < 6; i++) {
-        encoder_[i].controller = 21 + i;
-        encoder_[i].value = 64;
-        encoder_[i].midiChannel = 16;
-        encoder_[i].maxValue = 127;
+    int cpt = 1;
+    for (int pageNumber = 0; pageNumber < MIDI_NUMBER_OF_PAGES; pageNumber++) {
+        for (int i = 0; i < 6; i++) {
+            midiPage_[pageNumber].encoder_[i].controller = 15 + cpt;
+            midiPage_[pageNumber].encoder_[i].value = (pageNumber & 0x1) == 0 ? 0 : 64;
+            midiPage_[pageNumber].encoder_[i].midiChannel = 16;
+            midiPage_[pageNumber].encoder_[i].maxValue = 127;
 
-        button_[i].controller = 41 + i;
-        button_[i].midiChannel = 16;
-        button_[i].valueLow = 0;
-        button_[i].valueHigh = 127;
-        button_[i].buttonType = (i % 2) == 0 ? MIDI_BUTTON_TYPE_PUSH : MIDI_BUTTON_TYPE_TOGGLE;
+            midiPage_[pageNumber].button_[i].controller = 59 + cpt;
+            midiPage_[pageNumber].button_[i].midiChannel = 16;
+            midiPage_[pageNumber].button_[i].value = 0;
+            midiPage_[pageNumber].button_[i].valueLow = 0;
+            midiPage_[pageNumber].button_[i].valueHigh = 127;
+            midiPage_[pageNumber].button_[i].buttonType = (pageNumber & 0x1) == 0 ? MIDI_BUTTON_TYPE_PUSH : MIDI_BUTTON_TYPE_TOGGLE;
 
-        strcpy(encoder_[i].name, "Enc  ", 5);
-        encoder_[i].name[3] = '0' + i;
+            strcpy(midiPage_[pageNumber].encoder_[i].name, "Enc00", 5);
+            strcpy(midiPage_[pageNumber].button_[i].name, "But00", 5);
 
-        strcpy(button_[i].name, "But  ", 5);
-        button_[i].name[3] = '0' + i;
+            int cptDdiz = cpt / 10;
+            int cptUnit = cpt % 10;
+            midiPage_[pageNumber].button_[i].name[3]  = '0' + cptDdiz;
+            midiPage_[pageNumber].encoder_[i].name[3] = '0' + cptDdiz;
+            midiPage_[pageNumber].button_[i].name[4]  = '0' + cptUnit;
+            midiPage_[pageNumber].encoder_[i].name[4] = '0' + cptUnit;
+
+            cpt++;
+        }
     }
 }
 
@@ -48,45 +58,48 @@ MidiControllerState::~MidiControllerState() {
 }
 
 
-void MidiControllerState::encoderDelta(uint8_t globalMidiChannel, uint32_t encoder, int delta) {
-    int newValue = encoder_[encoder].value + delta;
-    newValue = newValue < encoder_[encoder].minValue ? encoder_[encoder].minValue : newValue;
-    newValue = newValue > encoder_[encoder].maxValue ? encoder_[encoder].maxValue : newValue;
+void MidiControllerState::encoderDelta(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t encoderNumber, int delta) {
+    MidiEncoder* encoder =  &midiPage_[pageNumber].encoder_[encoderNumber];
+    int newValue = encoder->value + delta;
+    newValue = newValue < encoder->minValue ? encoder->minValue : newValue;
+    newValue = newValue > encoder->maxValue ? encoder->maxValue : newValue;
 
-    if (newValue != encoder_[encoder].value) {
-        encoder_[encoder].value = newValue;
-        uint8_t midiChannel = encoder_[encoder].midiChannel == 16 ? globalMidiChannel : encoder_[encoder].midiChannel;
+    if (newValue != encoder->value) {
+        encoder->value = newValue;
+        uint8_t midiChannel = encoder->midiChannel == 16 ? globalMidiChannel : encoder->midiChannel;
         usartBufferOut.insert((uint8_t)(0xb0 + midiChannel));
-        usartBufferOut.insert((uint8_t)encoder_[encoder].controller);
-        usartBufferOut.insert((uint8_t)encoder_[encoder].value);
+        usartBufferOut.insert((uint8_t)encoder->controller);
+        usartBufferOut.insert((uint8_t)encoder->value);
         sendMidiDin5Out();
     }
 }
 
 
 
-void MidiControllerState::buttonDown(uint8_t globalMidiChannel, uint32_t button) {
-    if (button_[button].buttonType == MIDI_BUTTON_TYPE_PUSH) {
-        button_[button].value = button_[button].valueHigh;
-    } else if (button_[button].buttonType == MIDI_BUTTON_TYPE_TOGGLE) {
-        button_[button].value = (button_[button].value == button_[button].valueHigh ? button_[button].valueLow : button_[button].valueHigh);
+void MidiControllerState::buttonDown(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t buttonNumber) {
+    MidiButton* button =  &midiPage_[pageNumber].button_[buttonNumber];
+    if (button->buttonType == MIDI_BUTTON_TYPE_PUSH) {
+        button->value = 1;
+    } else if (button->buttonType == MIDI_BUTTON_TYPE_TOGGLE) {
+        button->value = (button->value == 0? 1 : 0);
     }
-    uint8_t midiChannel = button_[button].midiChannel == 16 ? globalMidiChannel : button_[button].midiChannel;
+    uint8_t midiChannel = button->midiChannel == 16 ? globalMidiChannel : button->midiChannel;
 
     usartBufferOut.insert((uint8_t)(0xb0 + midiChannel));
-    usartBufferOut.insert((uint8_t)button_[button].controller);
-    usartBufferOut.insert((uint8_t)button_[button].value);
+    usartBufferOut.insert((uint8_t)button->controller);
+    usartBufferOut.insert((uint8_t)button->getValue());
     sendMidiDin5Out();
 }
 
-bool MidiControllerState::buttonUp(uint8_t globalMidiChannel, uint32_t button) {
-    if (button_[button].buttonType == MIDI_BUTTON_TYPE_PUSH) {
-        button_[button].value = button_[button].valueLow;
+bool MidiControllerState::buttonUp(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t buttonNumber) {
+    MidiButton* button =  &midiPage_[pageNumber].button_[buttonNumber];
+    if (button->buttonType == MIDI_BUTTON_TYPE_PUSH) {
+        button->value = 0;
 
-        uint8_t midiChannel = button_[button].midiChannel == 16 ? globalMidiChannel : button_[button].midiChannel;
+        uint8_t midiChannel = button->midiChannel == 16 ? globalMidiChannel : button->midiChannel;
         usartBufferOut.insert((uint8_t)(0xb0 + midiChannel));
-        usartBufferOut.insert((uint8_t)button_[button].controller);
-        usartBufferOut.insert((uint8_t)button_[button].value);
+        usartBufferOut.insert((uint8_t)button->controller);
+        usartBufferOut.insert((uint8_t)button->getValue());
         sendMidiDin5Out();
         return true;
     }
