@@ -53,12 +53,12 @@ struct MidiButton {
     char name[6];
     MidiButtonType buttonType;
     uint8_t midiChannel;
-    uint8_t value; // 0 : low, 1 : high
+    uint8_t value; // 0 : of, 1 : on
     uint16_t controller;
-    uint16_t valueLow;
-    uint16_t valueHigh;
+    uint16_t valueOff;
+    uint16_t valueOn;
     // Utility
-    uint16_t getValue() { return value == 0 ? valueLow : valueHigh; }
+    uint16_t getValue() { return value == 0 ? valueOff : valueOn; }
 };
 
 struct MidiPage {

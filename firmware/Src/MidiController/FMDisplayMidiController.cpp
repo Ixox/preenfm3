@@ -24,7 +24,7 @@
 #define X_OFFSET 16
 
 FMDisplayMidiController::FMDisplayMidiController() {
-    menuPressed_ = false;
+    editPressed_ = false;
     displayMode_ = DISPLAY_MIDI_CONTROLLER_MAIN;
     editLetterPosition_ = 0;
     midiChannel_ = 0;
@@ -330,8 +330,8 @@ void FMDisplayMidiController::refreshAllScreenByStepSave() {
         break;
         case 18:
             tft_->setCharColor(COLOR_WHITE);
-            tft_->setCursorInPixel(50, 180);
-            tft_->printSmallChars("'SEQ' again to save");
+            tft_->setCursorInPixel(47, 180);
+            tft_->printSmallChars("'MENU' again to save");
             tft_->setCursorInPixel(60, 210);
             tft_->printSmallChars("Any other button");
             tft_->setCursorInPixel(88, 220);
@@ -399,7 +399,7 @@ void FMDisplayMidiController::displayButtonValue(int buttonNumber) {
 void FMDisplayMidiController::encoderTurned(int encoderNumber, int ticks) {
     switch (displayMode_) {
         case DISPLAY_MIDI_CONTROLLER_MAIN: {
-            if (!menuPressed_) {
+            if (!editPressed_) {
                 midiControllerState_->encoderDelta(pageNumber_, midiChannel_, encoderNumber, ticks);
                 displayEncoderValue(encoderNumber);
             } else  {
@@ -532,11 +532,11 @@ void FMDisplayMidiController::encoderTurned(int encoderNumber, int ticks) {
                 break;
             }
             case 5: {
-                int newValue = button->valueHigh + ticks;
-                newValue = newValue < (button->valueLow + 1) ? (button->valueLow + 1)  : newValue;
+                int newValue = button->valueOn + ticks;
+                newValue = newValue < 0 ? 0  : newValue;
                 newValue = newValue > 127 ? 127 : newValue;
-                if (button->valueHigh != newValue) {
-                    button->valueHigh = newValue;
+                if (button->valueOn != newValue) {
+                    button->valueOn = newValue;
                     displayButtonParam(editControl_, BUTTON_PARAM_HIGH);
                 }
                 break;
@@ -684,10 +684,10 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
     case BUTTON_PARAM_HIGH:
         tft_->setCharColor(COLOR_YELLOW);
         tft_->setCursor(14, 12);
-        tft_->print(button->valueHigh);
-        if (button->valueHigh < 100) {
+        tft_->print(button->valueOn);
+        if (button->valueOn < 100) {
             tft_->print(' ');
-            if (button->valueHigh < 10) {
+            if (button->valueOn < 10) {
                 tft_->print(' ');
             }
         }
@@ -695,10 +695,10 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
     case BUTTON_PARAM_LOW:
         tft_->setCharColor(COLOR_YELLOW);
         tft_->setCursor(14, 13);
-        tft_->print(button->valueLow);
-        if (button->valueHigh < 100) {
+        tft_->print(button->valueOff);
+        if (button->valueOn < 100) {
             tft_->print(' ');
-            if (button->valueLow < 10) {
+            if (button->valueOff < 10) {
                 tft_->print(' ');
             }
         }
@@ -717,15 +717,15 @@ void FMDisplayMidiController::buttonUp(int buttonNumber) {
             if (midiControllerState_->buttonUp(pageNumber_, midiChannel_, buttonNumber)) {
                 displayButtonValue(buttonNumber);
             }
-        } else if (buttonNumber == BUTTON_PFM3_MENU) {
-            menuPressed_ = false;
+        } else if (buttonNumber == BUTTON_PFM3_EDIT) {
+            editPressed_ = false;
         }
     }
 }
 
 void FMDisplayMidiController::buttonDown(int buttonNumber) {
     if (displayMode_ == DISPLAY_MIDI_CONTROLLER_SAVE) {
-        if (buttonNumber == BUTTON_PFM3_SEQUENCER) {
+        if (buttonNumber == BUTTON_PFM3_MENU) {
             tft_->fillArea(30, 50, 190, 240, COLOR_RED);
             tft_->setCharBackgroundColor(COLOR_RED);
             tft_->setCharColor(COLOR_BLACK);
@@ -740,7 +740,7 @@ void FMDisplayMidiController::buttonDown(int buttonNumber) {
         return;
     } else if (displayMode_ == DISPLAY_MIDI_CONTROLLER_MAIN) {
         if (buttonNumber >= BUTTON_PFM3_1 && buttonNumber <= BUTTON_PFM3_6) {
-            if (!menuPressed_) {
+            if (!editPressed_) {
                 midiControllerState_->buttonDown(pageNumber_, midiChannel_, buttonNumber);
                 displayButtonValue(buttonNumber);
             } else  {
@@ -748,49 +748,47 @@ void FMDisplayMidiController::buttonDown(int buttonNumber) {
                 editControl_ = buttonNumber;
                 setResetRefreshStatus();
             }
+        } else if (buttonNumber == BUTTON_PFM3_EDIT) {
+            editPressed_ = true;
         } else if (buttonNumber == BUTTON_PFM3_MENU) {
-            menuPressed_ = true;
-        } else if (buttonNumber == BUTTON_PFM3_SEQUENCER) {
             displayMode_ = DISPLAY_MIDI_CONTROLLER_SAVE;
             refreshStatus_ = 20;
             HAL_Delay(100);
         } else if (buttonNumber == BUTTON_NEXT_INSTRUMENT) {
-            if (!menuPressed_) {
-                if (pageNumber_ < (MIDI_NUMBER_OF_PAGES -1)) {
-                    pageNumber_ ++;
-                    setResetRefreshStatus();
-                }
-            } else {
-                if (midiChannel_ < 15) {
-                    midiChannel_ ++;
-                    displayMidiChannel();
-                }
+            if (midiChannel_ < 15) {
+                midiChannel_ ++;
+                displayMidiChannel();
             }
         } else if (buttonNumber == BUTTON_PREVIOUS_INSTRUMENT) {
-            if (!menuPressed_) {
-                if (pageNumber_ > 0) {
-                    pageNumber_ --;
-                    setResetRefreshStatus();
-                }
-            } else {
-                if (midiChannel_ > 0) {
-                    midiChannel_ --;
-                    displayMidiChannel();
-                }
+            if (midiChannel_ > 0) {
+                midiChannel_ --;
+                displayMidiChannel();
             }
+        } else if (buttonNumber == BUTTON_PFM3_MIXER) {
+            pageNumber_ --;
+            if (pageNumber_ < 0) {
+                pageNumber_ = MIDI_NUMBER_OF_PAGES - 1;
+            }
+            setResetRefreshStatus();
+        } else if (buttonNumber == BUTTON_PFM3_SEQUENCER) {
+            pageNumber_ ++;
+            if (pageNumber_ >= MIDI_NUMBER_OF_PAGES) {
+                pageNumber_ = 0;
+            }
+            setResetRefreshStatus();
         }
     } else {
         if (displayMode_ == DISPLAY_MIDI_CONTROLLER_EDIT_BUTTON) {
             MidiButton* button = midiControllerState_->getButton(pageNumber_, editControl_);
-            if (buttonNumber == BUTTON_PREVIOUS_INSTRUMENT && button->valueLow > 0) {
-                button->valueLow--;
+            if (buttonNumber == BUTTON_PREVIOUS_INSTRUMENT && button->valueOff > 0) {
+                button->valueOff--;
                 displayButtonParam(editControl_, BUTTON_PARAM_LOW);
-            } else if (buttonNumber == BUTTON_NEXT_INSTRUMENT && button->valueLow < (button->valueHigh -1)) {
-                button->valueLow++;
+            } else if (buttonNumber == BUTTON_NEXT_INSTRUMENT && button->valueOff < 127) {
+                button->valueOff++;
                 displayButtonParam(editControl_, BUTTON_PARAM_LOW);
             }
         }
-        if (buttonNumber == BUTTON_PFM3_MENU) {
+        if (buttonNumber == BUTTON_PFM3_MENU || buttonNumber == BUTTON_PFM3_EDIT) {
             displayMode_ = DISPLAY_MIDI_CONTROLLER_MAIN;
             setResetRefreshStatus();
         }

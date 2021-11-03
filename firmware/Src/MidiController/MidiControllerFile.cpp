@@ -69,8 +69,8 @@ void MidiControllerFile::loadConfig(MidiControllerState* midiControllerState) {
                 button->midiChannel = *(p++);
                 button->controller = *(p++);
                 button->value = *(p++);
-                button->valueLow = *(p++);
-                button->valueHigh = *(p++);
+                button->valueOff = *(p++);
+                button->valueOn = *(p++);
             }
         }
         break;
@@ -117,8 +117,8 @@ void MidiControllerFile::saveConfig(MidiControllerState* midiControllerState) {
             *(p++) = button->midiChannel;
             *(p++) = button->controller;
             *(p++) = button->value;
-            *(p++) = button->valueLow;
-            *(p++) = button->valueHigh;
+            *(p++) = button->valueOff;
+            *(p++) = button->valueOn;
         }
     }
 

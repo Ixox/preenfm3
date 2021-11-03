@@ -94,9 +94,9 @@ private:
     uint8_t displayMode_;
     uint8_t editControl_;
     uint8_t editLetterPosition_;
-    bool menuPressed_;
+    bool editPressed_;
     uint8_t midiChannel_;
-    uint8_t pageNumber_;
+    int8_t pageNumber_;
 private:
 };
 

@@ -35,8 +35,8 @@ MidiControllerState::MidiControllerState() {
             midiPage_[pageNumber].button_[i].controller = 59 + cpt;
             midiPage_[pageNumber].button_[i].midiChannel = 16;
             midiPage_[pageNumber].button_[i].value = 0;
-            midiPage_[pageNumber].button_[i].valueLow = 0;
-            midiPage_[pageNumber].button_[i].valueHigh = 127;
+            midiPage_[pageNumber].button_[i].valueOff = 0;
+            midiPage_[pageNumber].button_[i].valueOn = 127;
             midiPage_[pageNumber].button_[i].buttonType = (pageNumber & 0x1) == 0 ? MIDI_BUTTON_TYPE_PUSH : MIDI_BUTTON_TYPE_TOGGLE;
 
             strcpy(midiPage_[pageNumber].encoder_[i].name, "Enc00", 5);
