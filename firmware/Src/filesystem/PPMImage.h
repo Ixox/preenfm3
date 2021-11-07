@@ -16,7 +16,7 @@
  */
 
 
-#define PPMIMAGE_ENABLE 1
+// #define PPMIMAGE_ENABLE 1
 
 #ifdef PPMIMAGE_ENABLE
 

@@ -551,6 +551,22 @@ bool isButton1Pressed() {
 }
 
 
+
+extern uint8_t midiControllerMode;
+
+void preenfm3ExitMidiController() {
+    midiControllerMode = 2;
+
+    HAL_Delay(500);
+    encoders.clearState();
+    encoders.insertListener(&synthState);
+    // Refresh all
+    fmDisplay3.newSynthMode(&synthState.fullState);
+
+    midiControllerMode = 0;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

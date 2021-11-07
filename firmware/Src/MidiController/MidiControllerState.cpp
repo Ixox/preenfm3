@@ -24,6 +24,13 @@ extern UART_HandleTypeDef huart1;
 
 
 MidiControllerState::MidiControllerState() {
+    resetState();
+}
+
+MidiControllerState::~MidiControllerState() {
+}
+
+void MidiControllerState::resetState() {
     int cpt = 1;
     for (int pageNumber = 0; pageNumber < MIDI_NUMBER_OF_PAGES; pageNumber++) {
         for (int i = 0; i < 6; i++) {
@@ -53,10 +60,6 @@ MidiControllerState::MidiControllerState() {
         }
     }
 }
-
-MidiControllerState::~MidiControllerState() {
-}
-
 
 void MidiControllerState::encoderDelta(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t encoderNumber, int delta) {
     MidiEncoder* encoder =  &midiPage_[pageNumber].encoder_[encoderNumber];

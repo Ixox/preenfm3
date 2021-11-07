@@ -54,6 +54,10 @@ MidiControllerState midiControllerState;
 MidiControllerFile midiControllerFile;
 
 void preenfm3MidiControllerInit() {
+    display.init(&tft, &midiControllerState, &midiControllerFile);
+}
+
+void preenfm3MidiControllerInit2() {
     preenfm3MidiControllerDI();
 
     uint32_t erreurSD = preenfm3LibInitSD();
@@ -164,7 +168,20 @@ void preenfm3MidiControllerDI() {
     sdCard.getUserWaveform()->loadUserWaveforms();
 
     encoders.insertListener(&display);
+}
 
+
+extern uint8_t midiControllerMode;
+
+void preenfm3SwitchToMidiController() {
+    midiControllerMode = 2;
+
+    HAL_Delay(500);
+    encoders.clearState();
+    encoders.insertListener(&display);
+    display.setResetRefreshStatus();
+
+    midiControllerMode = 1;
 }
 
 #ifdef __cplusplus

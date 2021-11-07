@@ -34,6 +34,9 @@ void preenfm3StartSai();
 
 float getCompInstrumentVolume(int t);
 float getCompInstrumentGainReduction(int t);
+void preenfm3SwitchToMidiController();
+void preenfm3ExitMidiController();
+
 
 #ifdef __cplusplus
 }

@@ -51,7 +51,9 @@ public:
     PatchBank* getPatchBank() { return &patchBank; }
     ScalaFile* getScalaFile() { return &scalaFile; }
     UserWaveform* getUserWaveform() { return &userWaveForm; };
+#ifdef PPMIMAGE_ENABLE
     PPMImage* getPPMImage() { return &ppmImage; };
+#endif
     SequenceBank* getSequenceBank() { return &sequenceBank; };
 #else
 #endif
@@ -65,7 +67,9 @@ private:
     PatchBank patchBank;
     ScalaFile scalaFile;
     UserWaveform userWaveForm;
+#ifdef PPMIMAGE_ENABLE
     PPMImage ppmImage;
+#endif
     SequenceBank sequenceBank;
 #else
 #endif

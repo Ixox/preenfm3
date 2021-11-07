@@ -74,6 +74,7 @@ public:
     MidiControllerState();
     virtual ~MidiControllerState();
 
+    void resetState();
     void encoderDelta(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t encoderNumber, int delta);
     void buttonDown(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t buttonNumber);
     bool buttonUp(uint8_t pageNumber, uint8_t globalMidiChannel, uint32_t buttonNumber);

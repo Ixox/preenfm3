@@ -19,6 +19,7 @@
 #include "MidiControllerState.h"
 #include "MidiControllerFile.h"
 #include "TftDisplay.h"
+#include "preenfm3.h"
 
 
 #define X_OFFSET 16
@@ -278,8 +279,8 @@ void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
 
             tft_->setCursor(4, 11);
             tft_->setCharColor(COLOR_WHITE);
-            tft_->print("Type    : ");
-            displayButtonParam(editControl_, BUTTON_PARAM_BUTTON_TYPE);
+            tft_->print("Low     : ");
+            displayButtonParam(editControl_, BUTTON_PARAM_LOW);
             break;
         case 14:
             tft_->setCursorInPixel(10, 12 * TFT_BIG_CHAR_HEIGHT + 3);
@@ -299,8 +300,8 @@ void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
 
             tft_->setCursor(4, 13);
             tft_->setCharColor(COLOR_WHITE);
-            tft_->print("Low     : ");
-            displayButtonParam(editControl_, BUTTON_PARAM_LOW);
+            tft_->print("Type    : ");
+            displayButtonParam(editControl_, BUTTON_PARAM_BUTTON_TYPE);
             break;
         case 12:
             refreshStatus_ = 0;
@@ -322,24 +323,43 @@ void FMDisplayMidiController::refreshAllScreenByStepSave() {
         case 20:
             tft_->fillArea(30, 50, 190, 240, COLOR_RED);
             tft_->fillArea(33, 53, 184, 234, COLOR_BLACK);
-        break;
+            break;
         case 19:
             tft_->setCharColor(COLOR_RED);
-            tft_->setCursor(9, 6);
-            tft_->print("Save");
-        break;
+            tft_->setCursor(9, 4);
+            tft_->print("Menu");
+            break;
         case 18:
+            tft_->setCursorInPixel(47, 140);
+            tft_->setCharColor(COLOR_RED);
+            tft_->printSmallChars("'MENU'");
             tft_->setCharColor(COLOR_WHITE);
-            tft_->setCursorInPixel(47, 180);
-            tft_->printSmallChars("'MENU' again to save");
-            tft_->setCursorInPixel(60, 210);
-            tft_->printSmallChars("Any other button");
-            tft_->setCursorInPixel(88, 220);
-            tft_->printSmallChars("To Cancel");
-        break;
+            tft_->printSmallChars(" again to save");
+            break;
         case 17:
+            tft_->setCursorInPixel(47, 160);
+            tft_->setCharColor(COLOR_RED);
+            tft_->printSmallChars("'MIX'");
+            tft_->setCharColor(COLOR_WHITE);
+            tft_->printSmallChars(" to reset state");
+            break;
+        case 16:
+            tft_->setCursorInPixel(47, 180);
+            tft_->setCharColor(COLOR_RED);
+            tft_->printSmallChars("'SEQ'");
+            tft_->setCharColor(COLOR_WHITE);
+            tft_->printSmallChars(" to exit controller");
+            break;
+        case 15:
+            tft_->setCharColor(COLOR_WHITE);
+            tft_->setCursorInPixel(60, 200);
+            tft_->printSmallChars("Any other button");
+            tft_->setCursorInPixel(88, 210);
+            tft_->printSmallChars("To Cancel");
+            break;
+        case 14:
             refreshStatus_ = 0;
-        break;
+            break;
     }
     if (refreshStatus_ > 0) {
         refreshStatus_--;
@@ -524,12 +544,13 @@ void FMDisplayMidiController::encoderTurned(int encoderNumber, int ticks) {
                 break;
             }
             case 2: {
-                MidiButtonType newValue = ticks < 0 ? MIDI_BUTTON_TYPE_PUSH : MIDI_BUTTON_TYPE_TOGGLE;
-                if (button->buttonType != newValue) {
-                    button->buttonType = newValue;
-                    displayButtonParam(editControl_, BUTTON_PARAM_BUTTON_TYPE);
+                int newValue = button->valueOff + ticks;
+                newValue = newValue < 0 ? 0  : newValue;
+                newValue = newValue > 127 ? 127 : newValue;
+                if (button->valueOff != newValue) {
+                    button->valueOff = newValue;
+                    displayButtonParam(editControl_, BUTTON_PARAM_LOW);
                 }
-                break;
             }
             case 5: {
                 int newValue = button->valueOn + ticks;
@@ -672,13 +693,15 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
             }
         }
         break;
-    case BUTTON_PARAM_BUTTON_TYPE:
+    case BUTTON_PARAM_LOW:
         tft_->setCharColor(COLOR_YELLOW);
         tft_->setCursor(14, 11);
-        if (button->buttonType == MIDI_BUTTON_TYPE_PUSH) {
-            tft_->print("Push");
-        } else {
-            tft_->print("Togl");
+        tft_->print(button->valueOff);
+        if (button->valueOn < 100) {
+            tft_->print(' ');
+            if (button->valueOff < 10) {
+                tft_->print(' ');
+            }
         }
         break;
     case BUTTON_PARAM_HIGH:
@@ -692,15 +715,13 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
             }
         }
         break;
-    case BUTTON_PARAM_LOW:
+    case BUTTON_PARAM_BUTTON_TYPE:
         tft_->setCharColor(COLOR_YELLOW);
         tft_->setCursor(14, 13);
-        tft_->print(button->valueOff);
-        if (button->valueOn < 100) {
-            tft_->print(' ');
-            if (button->valueOff < 10) {
-                tft_->print(' ');
-            }
+        if (button->buttonType == MIDI_BUTTON_TYPE_PUSH) {
+            tft_->print("Push");
+        } else {
+            tft_->print("Togl");
         }
         break;
     }
@@ -710,6 +731,10 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
 
 
 void FMDisplayMidiController::buttonUp(int buttonNumber) {
+    if (buttonNumber == BUTTON_PFM3_EDIT) {
+        editPressed_ = false;
+    }
+
     if (displayMode_ == DISPLAY_MIDI_CONTROLLER_SAVE) {
         return;
     } else if (displayMode_ == DISPLAY_MIDI_CONTROLLER_MAIN) {
@@ -717,8 +742,6 @@ void FMDisplayMidiController::buttonUp(int buttonNumber) {
             if (midiControllerState_->buttonUp(pageNumber_, midiChannel_, buttonNumber)) {
                 displayButtonValue(buttonNumber);
             }
-        } else if (buttonNumber == BUTTON_PFM3_EDIT) {
-            editPressed_ = false;
         }
     }
 }
@@ -734,6 +757,10 @@ void FMDisplayMidiController::buttonDown(int buttonNumber) {
             tft_->setCharBackgroundColor(COLOR_BLACK);
             midiControllerFile_->saveConfig(midiControllerState_);
             HAL_Delay(1500);
+        } else if (buttonNumber == BUTTON_PFM3_SEQUENCER) {
+            preenfm3ExitMidiController();
+        } else if (buttonNumber == BUTTON_PFM3_MIXER) {
+            midiControllerState_->resetState();
         }
         displayMode_ = DISPLAY_MIDI_CONTROLLER_MAIN;
         setResetRefreshStatus();
@@ -780,12 +807,12 @@ void FMDisplayMidiController::buttonDown(int buttonNumber) {
     } else {
         if (displayMode_ == DISPLAY_MIDI_CONTROLLER_EDIT_BUTTON) {
             MidiButton* button = midiControllerState_->getButton(pageNumber_, editControl_);
-            if (buttonNumber == BUTTON_PREVIOUS_INSTRUMENT && button->valueOff > 0) {
-                button->valueOff--;
-                displayButtonParam(editControl_, BUTTON_PARAM_LOW);
-            } else if (buttonNumber == BUTTON_NEXT_INSTRUMENT && button->valueOff < 127) {
-                button->valueOff++;
-                displayButtonParam(editControl_, BUTTON_PARAM_LOW);
+            if (buttonNumber == BUTTON_PREVIOUS_INSTRUMENT && button->buttonType != MIDI_BUTTON_TYPE_PUSH) {
+                button->buttonType = MIDI_BUTTON_TYPE_PUSH;
+                displayButtonParam(editControl_, BUTTON_PARAM_BUTTON_TYPE);
+            } else if (buttonNumber == BUTTON_NEXT_INSTRUMENT &&  button->buttonType != MIDI_BUTTON_TYPE_TOGGLE) {
+                button->buttonType = MIDI_BUTTON_TYPE_TOGGLE;
+                displayButtonParam(editControl_, BUTTON_PARAM_BUTTON_TYPE);
             }
         }
         if (buttonNumber == BUTTON_PFM3_MENU || buttonNumber == BUTTON_PFM3_EDIT) {

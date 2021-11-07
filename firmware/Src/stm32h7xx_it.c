@@ -203,10 +203,16 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  if (likely(midiControllerMode == 0)) {
+  switch (midiControllerMode) {
+  case 0:
       preenfm3Tic();
-  } else {
+      break;
+  case 1:
       preenfm3MidiControllerTic();
+      break;
+  case 2:
+  // Do nothing
+      break;
   }
   /* USER CODE END SysTick_IRQn 1 */
 }
