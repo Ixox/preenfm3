@@ -48,24 +48,36 @@ Encoders::Encoders() {
                                 { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0 } /* N24 */
     };
 
-
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 16; j++) {
             action_[i][j] = actionToCopy[i][j];
         }
     }
 
-    firstListener = 0;
-
     for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
         encoderBit1_[k] = 1 << (encoderPins[k * 2] - 1);
         encoderBit2_[k] = 1 << (encoderPins[k * 2 + 1] - 1);
+    }
+
+    for (int k = 0; k < NUMBER_OF_BUTTONS_MAX; k++) {
+        buttonBit_[k] = 1 << (buttonPins[k] - 1);
+    }
+
+
+    clearState();
+}
+
+Encoders::~Encoders() {}
+
+void Encoders::clearState() {
+    firstListener = 0;
+
+    for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
         lastMove_[k] = LAST_MOVE_NONE;
         tickSpeed_[k] = 1;
     }
 
     for (int k = 0; k < NUMBER_OF_BUTTONS_MAX; k++) {
-        buttonBit_[k] = 1 << (buttonPins[k] - 1);
         buttonPreviousState_[k] = false;
         // > 30
         buttonTimer_[k] = 31;
@@ -75,9 +87,6 @@ Encoders::Encoders() {
     encoderTimer_ = 0;
     firstButtonDown_ = -1;
     actions_.clear();
-}
-
-Encoders::~Encoders() {
 }
 
 uint32_t Encoders::getRegisterBits(uint8_t encoderPush) {

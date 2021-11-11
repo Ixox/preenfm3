@@ -89,6 +89,8 @@ public:
         firstListener = listener;
     }
 
+    void clearState();
+
     void encoderTurned(int encoder, int ticks) {
 		for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
 			listener->encoderTurned(encoder, ticks);
