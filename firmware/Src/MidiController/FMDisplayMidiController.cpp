@@ -23,6 +23,7 @@
 
 
 #define X_OFFSET 16
+#define Y_START_EDIT 5
 
 FMDisplayMidiController::FMDisplayMidiController() {
     editPressed_ = false;
@@ -166,16 +167,16 @@ void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
             tft_->setCharBackgroundColor(COLOR_BLACK);
             break;
         case 18:
-            tft_->setCursor(1,6);
+            tft_->setCursorInPixel(10, 5 * TFT_BIG_CHAR_HEIGHT + 3);
             tft_->setCharColor(COLOR_DARK_GRAY);
             tft_->printSmallChars("a,d");
-            tft_->setCursor(4, 6);
+            tft_->setCursor(4, 5);
             tft_->setCharColor(COLOR_WHITE);
             tft_->print("Name    : ");
             displayEncoderParam(editControl_, ENCODER_PARAM_NAME);
             break;
         case 17:
-            tft_->setCursor(1, 8);
+            tft_->setCursorInPixel(10, 8 * TFT_BIG_CHAR_HEIGHT + 3);
             tft_->setCharColor(COLOR_DARK_GRAY);
             tft_->printSmallChar('b');
             tft_->setCursor(4, 8);
@@ -184,7 +185,7 @@ void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
             displayEncoderParam(editControl_, ENCODER_PARAM_MIDI_CHANNEL);
             break;
         case 16:
-            tft_->setCursor(1, 9);
+            tft_->setCursorInPixel(10, 9 * TFT_BIG_CHAR_HEIGHT + 3);
             tft_->setCharColor(COLOR_DARK_GRAY);
             tft_->printSmallChar('e');
 
@@ -194,7 +195,7 @@ void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
             displayEncoderParam(editControl_, ENCODER_PARAM_CONTROLLER);
             break;
         case 15:
-            tft_->setCursor(1, 11);
+            tft_->setCursorInPixel(10, 11 * TFT_BIG_CHAR_HEIGHT + 3);
             tft_->setCharColor(COLOR_DARK_GRAY);
             tft_->printSmallChar('c');
 
@@ -204,7 +205,7 @@ void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
             displayEncoderParam(editControl_, ENCODER_PARAM_MIN);
             break;
         case 14:
-            tft_->setCursor(1, 12);
+            tft_->setCursorInPixel(10, 12 * TFT_BIG_CHAR_HEIGHT + 3);
             tft_->setCharColor(COLOR_DARK_GRAY);
             tft_->printSmallChar('f');
 
@@ -214,6 +215,18 @@ void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
             displayEncoderParam(editControl_, ENCODER_PARAM_MAX);
             break;
         case 13:
+            tft_->setCursorInPixel(30, 6 * TFT_BIG_CHAR_HEIGHT + 3);
+            tft_->setCharColor(COLOR_GRAY);
+            tft_->printSmallChars("Btn");
+            tft_->setCursorInPixel(70, 6 * TFT_BIG_CHAR_HEIGHT + 3);
+            tft_->printSmallChars("1:' '  2:' '  3:'0'");
+            break;
+        case 12:
+            tft_->setCursorInPixel(70, 6 * TFT_BIG_CHAR_HEIGHT + TFT_SMALL_CHAR_HEIGHT + 3);
+            tft_->setCharColor(COLOR_GRAY);
+            tft_->printSmallChars("4:'A'  5:'a'  6:next");
+            break;
+        case 11:
             refreshStatus_ = 0;
             break;
     }
@@ -236,7 +249,7 @@ void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
             tft_->fillArea(0, 22, 240, 298, COLOR_BLACK);
             tft_->fillArea(0, 50, 240, 250, COLOR_ORANGE);
             tft_->fillArea(2, 72, 236, 216, COLOR_BLACK);
-        break;
+            break;
         case 19:
             tft_->setCharBackgroundColor(COLOR_ORANGE);
             tft_->setCharColor(COLOR_BLACK);
@@ -245,10 +258,10 @@ void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
             tft_->setCharBackgroundColor(COLOR_BLACK);
             break;
         case 18:
-            tft_->setCursorInPixel(10, 6 * TFT_BIG_CHAR_HEIGHT + 3);
+            tft_->setCursorInPixel(10, 5 * TFT_BIG_CHAR_HEIGHT + 3);
             tft_->setCharColor(COLOR_GRAY);
             tft_->printSmallChars("a,d");
-            tft_->setCursor(4, 6);
+            tft_->setCursor(4, 5);
             tft_->setCharColor(COLOR_WHITE);
             tft_->print("Name    : ");
             displayButtonParam(editControl_, BUTTON_PARAM_NAME);
@@ -304,6 +317,18 @@ void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
             displayButtonParam(editControl_, BUTTON_PARAM_BUTTON_TYPE);
             break;
         case 12:
+            tft_->setCursorInPixel(30, 6 * TFT_BIG_CHAR_HEIGHT + 3);
+            tft_->setCharColor(COLOR_GRAY);
+            tft_->printSmallChars("Btn");
+            tft_->setCursorInPixel(70, 6 * TFT_BIG_CHAR_HEIGHT + 3);
+            tft_->printSmallChars("1:' '  2:' '  3:'0'");
+            break;
+        case 11:
+            tft_->setCursorInPixel(70, 6 * TFT_BIG_CHAR_HEIGHT + TFT_SMALL_CHAR_HEIGHT + 3);
+            tft_->setCharColor(COLOR_GRAY);
+            tft_->printSmallChars("4:'A'  5:'a'  6:next");
+            break;
+        case 10:
             refreshStatus_ = 0;
             break;
     }
@@ -594,9 +619,9 @@ void FMDisplayMidiController::displayEncoderParam(int encoderNumber, EncoderPara
     switch (paramType) {
     case ENCODER_PARAM_NAME:
         tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(14, 6);
+        tft_->setCursor(14, 5);
         tft_->print(encoder->name);
-        tft_->setCursor(14 + editLetterPosition_, 6);
+        tft_->setCursor(14 + editLetterPosition_, 5);
         tft_->setCharColor(COLOR_RED);
         if (encoder->name[editLetterPosition_] == ' ') {
             tft_->print('_');
@@ -660,9 +685,9 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
     switch (paramType) {
     case BUTTON_PARAM_NAME:
         tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(14, 6);
+        tft_->setCursor(14, 5);
         tft_->print(button->name);
-        tft_->setCursor(14 + editLetterPosition_, 6);
+        tft_->setCursor(14 + editLetterPosition_, 5);
         tft_->setCharColor(COLOR_RED);
         if (button->name[editLetterPosition_] == ' ') {
             tft_->print('_');
@@ -818,6 +843,49 @@ void FMDisplayMidiController::buttonDown(int buttonNumber) {
         if (buttonNumber == BUTTON_PFM3_MENU || buttonNumber == BUTTON_PFM3_EDIT) {
             displayMode_ = DISPLAY_MIDI_CONTROLLER_MAIN;
             setResetRefreshStatus();
+        }
+        if (displayMode_ == DISPLAY_MIDI_CONTROLLER_EDIT_BUTTON || displayMode_== DISPLAY_MIDI_CONTROLLER_EDIT_ENCODER) {
+            // Same as entering name in Menu save/rename
+            char newChar = 0;
+            char *name;
+            bool isButton = displayMode_ == DISPLAY_MIDI_CONTROLLER_EDIT_BUTTON;
+            if (isButton) {
+                name = midiControllerState_->getButton(pageNumber_, editControl_)->name;
+            } else {
+                name = midiControllerState_->getEncoder(pageNumber_, editControl_)->name;
+            }
+            switch (buttonNumber) {
+            case BUTTON_PFM3_2:
+            case BUTTON_PFM3_1:
+                newChar = ' ';
+                break;
+            case BUTTON_PFM3_3:
+                newChar = '0';
+                break;
+            case BUTTON_PFM3_4:
+                newChar = 'A';
+                break;
+            case BUTTON_PFM3_5:
+                newChar = 'a';
+                break;
+            case BUTTON_PFM3_6:
+                if (editLetterPosition_ < 4) {
+                    newChar = name[editLetterPosition_];
+                    editLetterPosition_++;
+                } else {
+                    return;
+                }
+                break;
+            }
+            if (newChar != 0 && name[editLetterPosition_] != newChar) {
+                name[editLetterPosition_] = newChar;
+                if (isButton) {
+                    displayButtonParam(editControl_, BUTTON_PARAM_NAME);
+                } else {
+                    displayEncoderParam(editControl_, ENCODER_PARAM_NAME);
+                }
+            }
+
         }
     }
 }
