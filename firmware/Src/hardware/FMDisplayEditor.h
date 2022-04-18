@@ -71,11 +71,13 @@ public:
     void updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue);
     void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
     void displayPreset();
+    void displayPopup(TFT_COLOR color, char* text, uint8_t length);
 
     void encoderTurnedPfm3(int encoder, int ticks);
     void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void buttonPressed(int button);
+    void buttonLongPressed(int instrument, int button);
     void newTimbre(int timbre);
 
     void refreshOscillatorOperatorShape();
@@ -87,6 +89,7 @@ private:
     void checkOperatorNumber();
     bool isInOperatorPage();
     bool isInMatrixPage();
+    bool isInModulatorPage();
     void resetHideParams();
     uint8_t getX(int encoder);
     TftDisplay *tft_;
@@ -106,6 +109,10 @@ private:
     uint8_t editPageSelected_[6];
     // Remember previous lfo freq value
     float lfoFreqPreviousValue[5];
+    // Buffer to copy and past
+    int8_t bufferPageNumber;
+    uint8_t bufferEditNumber;
+    float bufferParam[6];
 };
 
 #endif

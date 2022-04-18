@@ -35,9 +35,11 @@ enum LastEncoderMove {
 enum EncoderActionType {
 	ENCODER_TURNED = 0,
 	ENCODER_TURNED_WHILE_BUTTON_PRESSED,
-	ENCODER_BUTTON_PRESSED,
+	ENCODER_BUTTON_CLICKED,
 	ENCODER_TWO_BUTTON_PRESSED,
-	ENCODER_LONG_BUTTON_PRESSED
+	ENCODER_LONG_BUTTON_PRESSED,
+    ENCODER_BUTTON_DOWN,
+    ENCODER_BUTTON_UP,
 };
 
 
@@ -60,7 +62,22 @@ class Encoders {
 public:
     Encoders();
     ~Encoders();
+    /**
+     * checkStatus Stacks the following actions :
+     *  ENCODER_TURNED
+     *  ENCODER_TURNED_WHILE_BUTTON_PRESSED
+     *  ENCODER_BUTTON_CLICKED
+     *  ENCODER_TWO_BUTTON_PRESSED
+     *  ENCODER_LONG_BUTTON_PRESSED
+     */
     void checkStatus(uint8_t encoderType, uint8_t encoderPush);
+    /**
+     * checkStatusUpDown Stacks the following actions :
+     *  ENCODER_TURNED
+     *  ENCODER_BUTTON_DOWN
+     *  ENCODER_BUTTON_UP
+     */
+    void checkStatusUpDown(uint8_t encoderType, uint8_t encoderPush);
     void checkSimpleStatus();
     uint32_t getRegisterBits(uint8_t encoderPush);
     void processActions();
@@ -71,6 +88,8 @@ public:
         }
         firstListener = listener;
     }
+
+    void clearState();
 
     void encoderTurned(int encoder, int ticks) {
 		for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
@@ -101,6 +120,19 @@ public:
             listener->twoButtonsPressed(button1, button2);
         }
     }
+
+    void buttonUp(int button) {
+        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+            listener->buttonUp(button);
+        }
+    }
+
+    void buttonDown(int button) {
+        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+            listener->buttonDown(button);
+        }
+    }
+
 
 private:
     uint8_t action_[2][16];

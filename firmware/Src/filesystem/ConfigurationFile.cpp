@@ -19,11 +19,6 @@
 #include "ConfigurationFile.h"
 #include "Menu.h"
 
-#define SCALA_ENABLED   "scala_enabled"
-#define SCALA_FILENAME  "scala_filename"
-#define SCALA_FREQUENCY "scala_frequency"
-#define SCALA_KEYBOARD "scala_keyboard"
-
 extern char lineBuffer[512];
 
 ConfigurationFile::ConfigurationFile() {

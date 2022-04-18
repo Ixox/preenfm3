@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Xavier Hosxe
+ * Copyright 2021 Xavier Hosxe
  *
  * Author: Xavier Hosxe (xavier <dot> hosxe (at) g m a i l <dot> com)
  *
@@ -16,28 +16,22 @@
  */
 
 
-// #define PPMIMAGE_ENABLE 1
+#ifndef MidiControllerFile_H_
+#define MIDICONTROLLERFILE_H
 
-#ifdef PPMIMAGE_ENABLE
+#include "PreenFMFileType.h"
+#include "MidiControllerState.h"
 
-#ifndef FILESYSTEM_PPMIMAGE_H_
-#define FILESYSTEM_PPMIMAGE_H_
-
-
-class PPMImage {
+class MidiControllerFile: public PreenFMFileType {
 public:
-    PPMImage();
-    virtual ~PPMImage();
-    void saveImage();
+	MidiControllerFile();
+	virtual ~MidiControllerFile();
 
-private:
-    void init();
-    void updateImageName(int cpt);
-    int cptImage;
-    int sharpIndexInName;
-    bool isInitialized;
-    char imageTitle[32];
+	void loadConfig(MidiControllerState* midiControllerState);
+	void saveConfig(MidiControllerState* midiControllerState);
+protected:
+	const char* getFolderName() { return 0; }
+    bool isCorrectFile(char *name, int size) { return false; }
 };
 
-#endif
-#endif
+#endif /* MidiControllerFile_H_ */

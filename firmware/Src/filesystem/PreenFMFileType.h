@@ -28,13 +28,14 @@ enum FILE_ENUM {
     DEFAULT_MIXER = 0,
     PROPERTIES,
     FIRMWARE,
-    DEFAULT_SEQUENCE
+    DEFAULT_SEQUENCE,
+    MIDI_CONTROLLER_STATE
 };
 
 #define DEFAULT_MIXER_NAME       "0:/pfm3/mix.dfl"
 #define DEFAULT_SEQUENCE_NAME    "0:/pfm3/seq.dfl"
 #define PROPERTIES_NAME          "0:/pfm3/Settings.txt"
-#define SCALA_CONFIG_NAME        "0:/pfm3/ScalaCfg.txt"
+#define MIDI_CONTROLLER_STATE_NAME "0:/pfm3/MidiCtl1.bin"
 
 #define USERWAVEFORM_FILENAME_TXT            "0:/pfm3/waveform/usr#.txt"
 #define USERWAVEFORM_FILENAME_BIN            "0:/pfm3/waveform/usr#.bin"

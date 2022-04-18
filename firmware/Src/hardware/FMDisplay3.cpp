@@ -24,6 +24,7 @@
 #include "ili9341.h"
 
 extern struct WaveTable waveTables[NUMBER_OF_WAVETABLES];
+extern uint8_t midiControllerMode;
 
 int getLength(const char *str) {
     int length = 0;
@@ -260,6 +261,10 @@ void FMDisplay3::menuBack(const MenuItem *oldMenuItem, FullState *fullState) {
 // VisualInfo
 
 void FMDisplay3::midiClock(bool show) {
+    if (midiControllerMode != 0) {
+        return;
+    }
+
     int x = 240 - 4 * TFT_SMALL_CHAR_WIDTH;
     int y = 1;
     tft_->setCursorInPixel(x, y);
@@ -290,6 +295,9 @@ void FMDisplay3::midiClock(bool show) {
 }
 
 void FMDisplay3::noteOn(int timbre, bool show) {
+    if (midiControllerMode != 0) {
+        return;
+    }
     int x = 240 - (3 - (timbre % 3)) * TFT_SMALL_CHAR_WIDTH;
     int y = 1 + (timbre / 3) * TFT_SMALL_CHAR_HEIGHT;
     tft_->setCursorInPixel(x, y);

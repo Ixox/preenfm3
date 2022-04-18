@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "Common.h"
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -51,11 +52,13 @@ extern DMA_HandleTypeDef hdma_spi2_tx;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+extern uint8_t midiControllerMode;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-preenfm3Tic();
+void preenfm3Tic();
+void preenfm3MidiControllerTic();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -200,7 +203,17 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  preenfm3Tic();
+  switch (midiControllerMode) {
+  case 0:
+      preenfm3Tic();
+      break;
+  case 1:
+      preenfm3MidiControllerTic();
+      break;
+  case 2:
+  // Do nothing
+      break;
+  }
   /* USER CODE END SysTick_IRQn 1 */
 }
 

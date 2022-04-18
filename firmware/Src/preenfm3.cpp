@@ -544,6 +544,29 @@ float getCompInstrumentGainReduction(int t) {
 }
 
 
+bool isButton1Pressed() {
+    uint32_t buttonMixer1 = ~encoders.getRegisterBits(0);
+    buttonMixer1 &=  0x1 << 22; // 22 bit number of button 0
+    return buttonMixer1 > 0;
+}
+
+
+
+extern uint8_t midiControllerMode;
+
+void preenfm3ExitMidiController() {
+    midiControllerMode = 2;
+
+    HAL_Delay(500);
+    encoders.clearState();
+    encoders.insertListener(&synthState);
+    // Refresh all
+    fmDisplay3.newSynthMode(&synthState.fullState);
+
+    midiControllerMode = 0;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

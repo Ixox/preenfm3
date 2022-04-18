@@ -28,6 +28,11 @@ public:
 	virtual void buttonLongPressed(int button) = 0;
 	virtual void twoButtonsPressed(int button1, int button2) = 0;
 	EncodersListener* nextListener;
+
+	// For Midi Controller
+    virtual void buttonUp(int button) {};
+    virtual void buttonDown(int button) {};
+
 };
 
 #endif /* ENCODERSLISTENER_H_ */

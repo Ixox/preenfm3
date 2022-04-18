@@ -69,6 +69,7 @@ UART_HandleTypeDef huart1;
 
 MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 /* USER CODE BEGIN PV */
+volatile uint8_t midiControllerMode = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,7 +110,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
+
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
@@ -162,8 +163,16 @@ int main(void)
 
   MPU_RegionConfig();
 
-  // main preenfm3 init
-  preenfm3Init();
+  // If button 1 is pressed => Midi controller mode
+//  if (isButton1Pressed()) {
+//      midiControllerMode = 1;
+//      preenfm3MidiControllerInit();
+//  } else {
+      // main preenfm3 init
+      preenfm3Init();
+      // Also init Midi controller display and load state from SD card
+      preenfm3MidiControllerInit();
+//  }
 
   /* USER CODE END 2 */
 
@@ -172,8 +181,17 @@ int main(void)
 
   while (1)
   {
-    preenfm3Loop();
-
+      switch (midiControllerMode) {
+      case 0:
+          preenfm3Loop();
+          break;
+      case 1:
+          preenfm3MidiControllerLoop();
+          break;
+      case 2:
+      // Do nothing
+          break;
+      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

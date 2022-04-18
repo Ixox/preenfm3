@@ -62,7 +62,8 @@ enum {
     TFT_DRAW_FILL_AREA,
     TFT_RESTART_REFRESH,
     TFT_PAUSE_REFRESH,
-    TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM
+    TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM,
+    TFT_WAITCYCLE
 };
 
 #define TFT_OSCILLO_Y 160
@@ -651,6 +652,12 @@ void TftDisplay::tic(bool checkDisplayPower) {
         tftRefreshing = false;
         currentAction.actionType = 0;
         break;
+    case TFT_WAITCYCLE:
+        currentAction.param2 --;
+        if (currentAction.param2 == 0) {
+            currentAction.actionType = 0;
+        }
+        break;
     case TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM:
         switch (currentAction.param3) {
         case 0:
@@ -1150,6 +1157,14 @@ void TftDisplay::restartRefreshTft() {
 void TftDisplay::pauseRefresh() {
     TFTAction newAction;
     newAction.actionType = TFT_PAUSE_REFRESH;
+    tftActions.insert(newAction);
+}
+
+
+void TftDisplay::waitCycle(uint16_t waitCycle) {
+    TFTAction newAction;
+    newAction.actionType = TFT_WAITCYCLE;
+    newAction.param2 = waitCycle;
     tftActions.insert(newAction);
 }
 

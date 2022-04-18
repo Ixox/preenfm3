@@ -43,6 +43,8 @@ const char* PreenFMFileType::getFileName(FILE_ENUM file) {
             return DEFAULT_SEQUENCE_NAME;
         case PROPERTIES:
             return PROPERTIES_NAME;
+        case MIDI_CONTROLLER_STATE:
+            return MIDI_CONTROLLER_STATE_NAME;
     }
 }
 

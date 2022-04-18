@@ -32,7 +32,6 @@ public:
 	void saveConfig(uint8_t* midiConfigBytes);
 
 protected:
-	ScalaFile* scalaFile;
 	const char* getFolderName();
 	bool isCorrectFile(char *name, int size) { return true; }
 
