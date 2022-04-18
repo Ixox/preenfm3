@@ -116,6 +116,7 @@ public:
     void setCursorSmallChar(uint8_t x, uint16_t y);
     void setCursorInPixel(uint8_t x, uint16_t y);
     void pauseRefresh();
+    void waitCycle(uint16_t waitCycle);
     void restartRefreshTft();
 
     void print(const char* str);
@@ -253,6 +254,7 @@ private:
     uint8_t status_[4];
     // Set to true if there is a TFT problem
     bool tftMustBeReset_;
+    uint8_t waitCycle_;
 };
 
 #endif /* HARDWARE_TFTDISPLAY_H_ */

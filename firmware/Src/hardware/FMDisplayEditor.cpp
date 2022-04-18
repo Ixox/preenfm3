@@ -2055,37 +2055,39 @@ const struct Pfm3OneButton pfm3ButtonFilter = {
 //      { &pfm3ButtonOPMinus, &pfm3ButtonOPNothing, &pfm3ButtonOPPlus,
 //        &pfm3ButtonOPShape, &pfm3ButtonOPEnv1, &pfm3ButtonOPEnv2}
 
-const struct Pfm3OneButtonState pfm3ButtonOPEnv2State = {
-    "Env R",
+const struct Pfm3OneButtonState pfm3ButtonOPEnvLevel = {
+    "Env Level",
     {
         {
-            ROW_ENV1b,
-            ENCODER_ENV_R },
+            ROW_ENV1a,
+            ENCODER_ENV_A_LVL },
         {
-            ROW_NONE,
-            ENCODER_NONE },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
+            ROW_ENV1a,
+            ENCODER_ENV_D_LVL },
         {
             ROW_ENV1b,
-            ENCODER_ENV_R_LVL },
+            ENCODER_ENV_S_LVL },
         {
             ROW_NONE,
             ENCODER_NONE },
         {
             ROW_NONE,
-            ENCODER_NONE } } };
+            ENCODER_NONE },
+        {
+            ROW_ENV1b,
+            ENCODER_ENV_R_LVL }
+    } };
 
 const struct Pfm3OneButton pfm3ButtonOPEnv2 = {
-    "R",
+    "Level",
     BUTTONID_ONLY_ONE_STATE,
     1,
     {
-        &pfm3ButtonOPEnv2State } };
+        &pfm3ButtonOPEnvLevel } };
 
-const struct Pfm3OneButtonState pfm3ButtonOPEnv1State = {
-    "Env ADS",
+
+const struct Pfm3OneButtonState pfm3ButtonOPEnvTime = {
+    "Env Time",
     {
         {
             ROW_ENV1a,
@@ -2097,21 +2099,22 @@ const struct Pfm3OneButtonState pfm3ButtonOPEnv1State = {
             ROW_ENV1b,
             ENCODER_ENV_S },
         {
-            ROW_ENV1a,
-            ENCODER_ENV_A_LVL },
+            ROW_NONE,
+            ENCODER_NONE },
         {
-            ROW_ENV1a,
-            ENCODER_ENV_D_LVL },
+            ROW_NONE,
+            ENCODER_NONE },
         {
             ROW_ENV1b,
-            ENCODER_ENV_S_LVL } } };
+            ENCODER_ENV_R }
+    } };
 
 const struct Pfm3OneButton pfm3ButtonOPEnv1 = {
-    "ADS",
+    "Env",
     BUTTONID_ONLY_ONE_STATE,
     1,
     {
-        &pfm3ButtonOPEnv1State } };
+        &pfm3ButtonOPEnvTime } };
 
 const struct Pfm3OneButtonState pfm3ButtonOPShapeState = {
     "Oscillator",
@@ -3966,10 +3969,78 @@ void FMDisplayEditor::buttonPressed(int button) {
             }
             break;
         }
-
     }
 
     synthState_->propagateNewPfm3Page();
+}
+
+
+void FMDisplayEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) {
+    tft_->fillArea(70, 66, 100, 36, color);
+    tft_->fillArea(72, 68, 96, 32, COLOR_BLACK);
+    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharColor(color);
+    tft_->setCursorInPixel(120 - length * 11 / 2, 75);
+    tft_->print(text);
+    tft_->waitCycle(500);
+    synthState_->propagateNewPfm3Page();
+}
+
+void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
+    if (button == BUTTON_PREVIOUS_INSTRUMENT) {
+        // Can be copied ?
+        bool canBeCopied = isInMatrixPage() || isInOperatorPage() || (isInModulatorPage() && synthState_->fullState.editPage == 0);
+
+        if (canBeCopied) {
+            bufferPageNumber = synthState_->fullState.mainPage;
+            bufferEditNumber = synthState_->fullState.editPage;
+
+            const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+            const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
+            for (int e = 0; e < 6; e++) {
+                const struct RowEncoder rowEncoder =
+                        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
+                int encoder4 = rowEncoder.encoder;
+                int row = rowEncoder.row;
+                int num;
+                if (isInOperatorPage()) {
+                    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+                    num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
+                } else {
+                    num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+                }
+                bufferParam[e] = ((float*) synthState_->params)[num];
+            }
+            displayPopup(COLOR_GREEN, "Copied", 6);
+        }
+    } else if (button == BUTTON_NEXT_INSTRUMENT) {
+        // Can be pasted ?
+        bool canBePasted = isInMatrixPage() && bufferPageNumber == synthState_->fullState.mainPage;
+        canBePasted |= isInOperatorPage() && bufferPageNumber == synthState_->fullState.mainPage && bufferEditNumber == synthState_->fullState.editPage;
+        canBePasted |= isInModulatorPage() && bufferPageNumber == synthState_->fullState.mainPage && synthState_->fullState.editPage == 0;
+
+        if (canBePasted) {
+            const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+            const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
+            for (int e = 0; e < 6; e++) {
+                const struct RowEncoder rowEncoder =
+                        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
+                int encoder4 = rowEncoder.encoder;
+                int row = rowEncoder.row;
+                int num;
+                if (isInOperatorPage()) {
+                    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+                    num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
+                } else {
+                    num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+                }
+                ((float*) synthState_->params)[num] = bufferParam[e];
+            }
+            displayPopup(COLOR_GREEN, "Pasted", 6);
+        } else {
+            displayPopup(COLOR_RED, "Cannot", 6);
+        }
+    }
 }
 
 
@@ -3981,6 +4052,9 @@ bool FMDisplayEditor::isInMatrixPage() {
     return synthState_->fullState.mainPage == 2;
 }
 
+bool FMDisplayEditor::isInModulatorPage() {
+    return synthState_->fullState.mainPage == 3;
+}
 
 void FMDisplayEditor::refreshOscillatorOperatorShape() {
     int op = synthState_->fullState.operatorNumber;

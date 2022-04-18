@@ -57,55 +57,6 @@ void preenfm3MidiControllerInit() {
     display.init(&tft, &midiControllerState, &midiControllerFile);
 }
 
-void preenfm3MidiControllerInit2() {
-    preenfm3MidiControllerDI();
-
-    uint32_t erreurSD = preenfm3LibInitSD();
-
-    tft.init(NULL);
-    ILI9341_Init();
-    display.init(&tft, &midiControllerState, &midiControllerFile);
-
-    display.setResetRefreshStatus();
-
-    // Let's start main tft refresh loop
-    readyForTFT = true;
-
-    // Prepare Screen before turning on the backlight. It's nicer.
-    if (erreurSD == 0) {
-        while (display.needRefresh()) {
-            if (tft.getNumberOfPendingActions() < 100) {
-                display.refreshAllScreenByStep();
-            }
-        }
-    } else {
-        tft.clear();
-        tft.setCharBackgroundColor(COLOR_BLACK);
-        tft.setCharColor(COLOR_RED);
-        tft.setCursor(5, 7);
-        tft.print("SD CARD ERROR");
-        tft.setCursor(8, 8);
-        tft.print("#");
-        tft.print((int)erreurSD);
-        tft.print("#");
-    }
-    // For tft.tic
-    HAL_Delay(400);
-
-    // the TFT should be ready, we can turn on the led backlight
-    // the TFT should be ready, we can turn on the led backlight
-    uint8_t tft_bl =  synthState.fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
-
-    TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-
-    if (erreurSD > 0) {
-        HAL_Delay(2000);
-        // Refresh all
-    }
-    HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
-}
-
 
 void preenfm3MidiControllerLoop() {
     encoders.processActions();

@@ -237,6 +237,8 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
             case BUTTON_PFM3_SEQUENCER:
                 preenfm3SwitchToMidiController();
                 break;
+            case BUTTON_PFM3_MIXER:
+                break;
         }
         break;
     case BUTTON_NEXT_INSTRUMENT:
@@ -258,8 +260,6 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
         }
         break;
     }
-
-
 
 #ifdef PPMIMAGE_ENABLE
     // Screenshot !!
@@ -449,9 +449,13 @@ void SynthState::setCurrentInstrument(int value) {
 }
 
 void SynthState::buttonLongPressed(int button) {
-
-    if (fullState.synthMode == SYNTH_MODE_SEQUENCER) {
-        displaySequencer->buttonLongPressed(currentTimbre, button);
+    switch (fullState.synthMode) {
+        case SYNTH_MODE_SEQUENCER:
+            displaySequencer->buttonLongPressed(currentTimbre, button);
+            break;
+        case SYNTH_MODE_EDIT_PFM3:
+            displayEditor->buttonLongPressed(currentTimbre, button);
+            break;
     }
 }
 
