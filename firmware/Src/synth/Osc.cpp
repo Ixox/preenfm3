@@ -223,7 +223,11 @@ float Osc::getNoteRealFrequencyEstimation(struct OscState* oscState, float newNo
     case OSC_FT_FIXE:
         return oscState->mainFrequency;
     case OSC_FT_KEYHZ:
-        return newNoteFrequency *  oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
+        float freq = newNoteFrequency *  oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
+        if(freq < 0) {
+            freq = 0;
+        }
+        return freq;
     }
 }
 
