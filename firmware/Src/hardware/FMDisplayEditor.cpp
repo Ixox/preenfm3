@@ -642,6 +642,48 @@ struct ParameterRowDisplay engineMix3ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
+struct ParameterRowDisplay engineCurveParameterRow = {
+    "Curve",
+    {
+        "A",
+        "D",
+        "S",
+        "R" },
+    {
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            -1,
+            1,
+            201,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            -1,
+            1,
+            201,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder } } };
+
+
 /* FILTER ORDER
 
  0   Off , -0-
@@ -1624,6 +1666,11 @@ const char *midiNoteCurves[] = {
     "-Ln8",
     "-Exp" };
 
+const char *envCurves[] = {
+    "Log",
+    "Lin",
+    "Exp" };
+
 struct ParameterRowDisplay midiNote1ParameterRow = {
     "Note1 Midi Scaling",
     {
@@ -1804,7 +1851,8 @@ struct AllParameterRowsDisplay allParameterRows = {
         &midiNote2ParameterRow,
         &dummyParameterRow,
         &dummyParameterRow,
-        &engine2ParameterRow
+        &engine2ParameterRow,
+        &engineCurveParameterRow
 } };
 
 // =================================================
@@ -1969,6 +2017,36 @@ const struct Pfm3OneButton pfm3ButtonMixer = {
     {
         &pfm3ButtonMixer123State,
         &pfm3ButtonMixer456State } };
+
+const struct Pfm3OneButtonState pfm3ButtonEnvCurve = {
+    "Env Curve",
+    {
+        {
+            ROW_CURVE_A,
+            ENCODER_ENV_A_CURVE },
+        {
+            ROW_CURVE_D,
+            ENCODER_ENV_D_CURVE },
+        {
+            ROW_CURVE_S,
+            ENCODER_ENV_S_CURVE },
+        {
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_CURVE_R,
+            ENCODER_ENV_R_CURVE }
+    } };
+
+const struct Pfm3OneButton pfm3ButtonCurve = {
+    "Curve",
+    BUTTONID_EDIT_FILTER,
+    1,
+    {
+        &pfm3ButtonEnvCurve } };
 
 const struct Pfm3OneButtonState pfm3ButtonArpeggiator1State = {
     "Arpeggiator",
@@ -2758,11 +2836,12 @@ const struct Pfm3EditMenu modulatorEditorMenu = {
 
 const struct Pfm3EditMenu pfm3EngineMenu = {
     "FM",
-    3,
+    4,
     {
         &pfm3ButtonEngine,
         &pfm3ButtonIM,
         &pfm3ButtonMixer,
+        &pfm3ButtonCurve,
  } };
 
 const struct Pfm3EditMenu pfm3MatrixMenu = {

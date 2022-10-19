@@ -134,7 +134,14 @@ enum {
     ENCODER_ENV_A = 0,
     ENCODER_ENV_A_LVL,
     ENCODER_ENV_D,
-    ENCODER_ENV_D_LVL
+    ENCODER_ENV_D_LVL,
+};
+
+enum {
+    ENCODER_ENV_A_CURVE = 0,
+    ENCODER_ENV_D_CURVE,
+    ENCODER_ENV_S_CURVE,
+    ENCODER_ENV_R_CURVE,
 };
 
 enum {

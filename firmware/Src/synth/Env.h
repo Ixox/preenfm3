@@ -58,6 +58,8 @@ extern float envLinear[];
 
 extern float envExponential[];
 
+extern float envLog[];
+
 class Env
 {
 public:
@@ -70,8 +72,8 @@ public:
         nextState[ENV_STATE_ON_R] = ENV_STATE_DEAD;
         nextState[ENV_STATE_ON_QUICK_R] = ENV_STATE_DEAD;
 
-        tables[ENV_STATE_ON_A].table = envLinear;
-        tables[ENV_STATE_ON_A].size = 1;
+        tables[ENV_STATE_ON_A].table = envLog;
+        tables[ENV_STATE_ON_A].size = 63;
         tables[ENV_STATE_ON_D].table = envExponential;
         tables[ENV_STATE_ON_D].size = 63;
         tables[ENV_STATE_ON_S].table = envExponential;
@@ -93,7 +95,7 @@ public:
     virtual ~Env(void) {
     }
 
-    void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber);
+    void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber, int timbreNumber);
 
     void reloadADSR(int encoder) {
     	// 0 Attack time
@@ -251,6 +253,15 @@ public:
     }
 
     void noteOff(struct EnvData* env, Matrix* matrix) {
+
+        if (this->timbreNumber % 2 == 1) {
+            tables[ENV_STATE_ON_A].table = envLinear;
+            tables[ENV_STATE_ON_A].size = 1;
+        } else {
+            tables[ENV_STATE_ON_A].table = envLog;
+            tables[ENV_STATE_ON_A].size = 63;
+        }
+
         float release = envParamsB->releaseTime;
         if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_CARRIER) {
             release += matrix->getDestination(ALL_ENV_RELEASE);
@@ -293,6 +304,8 @@ private:
 
     // loopable envelope
     bool isLoop;
+
+    int timbreNumber = 0;
 
     static int initTab;
     static float incTab[1601];
