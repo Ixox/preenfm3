@@ -357,7 +357,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
         // Max is 0x7fffff * [-1:1]
         //float sampleMultipler = (float) 0x7fffff;
-        float sampleMultipler = panTable[(int)((1 - synthState_->mixerState.instrumentState_[timbre].send) * 128)] * (float) 0x7fffff;
+        float sampleMultipler = panTable[(int)((1 - synthState_->mixerState.instrumentState_[timbre].send) * 255)] * (float) 0x7fffff;
 
         switch (synthState_->mixerState.instrumentState_[timbre].out) {
             // 0 => out1+out2, 1 => out1, 2=> out2
@@ -670,6 +670,25 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
         case ROW_MIDINOTE2CURVE:
             timbres_[timbre].updateMidiNoteScale(1);
             break;
+        case ROW_ENV1_CURVE:
+            timbres_[timbre].env1_.applyCurves();
+            break;
+        case ROW_ENV2_CURVE:
+            timbres_[timbre].env2_.applyCurves();
+            break;
+        case ROW_ENV3_CURVE:
+            timbres_[timbre].env3_.applyCurves();
+            break;
+        case ROW_ENV4_CURVE:
+            timbres_[timbre].env4_.applyCurves();
+            break;
+        case ROW_ENV5_CURVE:
+            timbres_[timbre].env5_.applyCurves();
+            break;
+        case ROW_ENV6_CURVE:
+            timbres_[timbre].env6_.applyCurves();
+            break;
+
     }
 }
 

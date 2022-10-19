@@ -348,6 +348,7 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
     fsu_->copyFloat((float*) &params->effect, (float*) &memory->effect, 4);
     fsu_->copyFloat((float*) &params->osc1, (float*) &memory->osc1, 4 * 6);
     fsu_->copyFloat((float*) &params->env1a, (float*) &memory->env1a, 4 * 6 * 2);
+    fsu_->copyFloat((float*) &params->env1Curve, (float*) &memory->env1Curve, 4 * 6 );
     fsu_->copyFloat((float*) &params->matrixRowState1, (float*) &memory->matrixRowState1, 4 * 12);
     fsu_->copyFloat((float*) &params->lfoOsc1, (float*) &memory->lfoOsc1, 4 * 3);
     fsu_->copyFloat((float*) &params->lfoEnv1, (float*) &memory->lfoEnv1, 4);
@@ -366,6 +367,15 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
     for (int s = 0; s < 13; s++) {
         memory->presetName[s] = params->presetName[s];
     }
+}
+
+inline int iszero(void * ptr, int bytes )
+{
+   char * bptr = (char*)ptr;
+   while( bytes-- )
+     if( *bptr++ )
+         return 0;
+  return 1;
 }
 
 void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory, struct OneSynthParams *params, bool loadArp) {
@@ -395,6 +405,7 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
     fsu_->copyFloat((float*) &memory->effect, (float*) &params->effect, 4);
     fsu_->copyFloat((float*) &memory->osc1, (float*) &params->osc1, 4 * 6);
     fsu_->copyFloat((float*) &memory->env1a, (float*) &params->env1a, 4 * 6 * 2);
+    fsu_->copyFloat((float*) &memory->env1Curve, (float*) &params->env1Curve, 4 * 6 );
     fsu_->copyFloat((float*) &memory->matrixRowState1, (float*) &params->matrixRowState1, 4 * 12);
     fsu_->copyFloat((float*) &memory->lfoOsc1, (float*) &params->lfoOsc1, 4 * 3);
     fsu_->copyFloat((float*) &memory->lfoEnv1, (float*) &params->lfoEnv1, 4);
@@ -433,6 +444,16 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
         params->effect.param1 = 0.5f;
         params->effect.param2 = 0.5f;
         params->effect.param3 = 1.0f;
+    }
+
+    // Set default env curve if not initialized
+    if(iszero(&params->env1Curve, 24)) {
+        params->env1Curve = {1, 0, 1, 0};
+        params->env2Curve = {1, 0, 1, 0};
+        params->env3Curve = {1, 0, 1, 0};
+        params->env4Curve = {1, 0, 1, 0};
+        params->env5Curve = {1, 0, 1, 0};
+        params->env6Curve = {1, 0, 1, 0};
     }
 
     if (params->midiNote1Curve.breakNote == 0.0f && params->midiNote1Curve.curveAfter == 0.0f && params->midiNote1Curve.curveBefore == 0.0f) {
