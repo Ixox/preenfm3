@@ -3738,7 +3738,7 @@ void Voice::fxAfterBlock() {
     // LP Algo
     int effectType = currentTimbre->params_.effect.type;
     float gainTmp = clamp(currentTimbre->params_.effect.param3 + matrixFilterAmp, 0, 16);
-    mixerGain = 0.02f * gainTmp + .98 * mixerGain;
+    mixerGain = 0.02f * gainTmp + .98f * mixerGain;
 
     switch (effectType) {
         case FILTER_LP: {
@@ -4975,7 +4975,7 @@ void Voice::fxAfterBlock() {
 
             float _ly1L = v2L, _ly1R = v2R;
             float _lx1L = v3L, _lx1R = v3R;
-            const float f1 = 0.27f + fxParam1 * 0.027; //clamp(fxParam1 - 0.26f , filterWindowMin, filterWindowMax);
+            const float f1 = 0.27f + fxParam1 * 0.027f; //clamp(fxParam1 - 0.26f , filterWindowMin, filterWindowMax);
             float coef1 = (1.0f - f1) / (1.0f + f1);
 
             for (int k = BLOCK_SIZE; k--;) {
@@ -6215,7 +6215,7 @@ void Voice::fxAfterBlock() {
             float _lx3L = v6L, _lx3R = v6R;
             float _lx4L = v7L, _lx4R = v7R;
 
-            float _feedback = 0.15f + (randomF * 0.01) - 0.005f;
+            float _feedback = 0.15f + (randomF * 0.01f) - 0.005f;
             float inmix;
             float finalGain = mixerGain * 0.5f;
 

@@ -129,7 +129,7 @@ protected:
     float diffusion, prevDiffusion;
     float damping, prevDamping = -1;
     float predelayMixLevel = 0.5f;
-    float predelayMixAttn = predelayMixLevel * 0.75;
+    float predelayMixAttn = predelayMixLevel * 0.75f;
     float lfoDepth =  0;
     float lfoSpeed = 0, lfoSpeedLinear = 0, prevLfoSpeedLinear = -1;
     float loopLpf, loopLpf2, prevFilterBase = -1;
@@ -185,12 +185,14 @@ protected:
 
     //pre delay
 
-    static const int predelayBufferSize     = 16000;
+    static const int predelayBufferSize     = 8000;
     static const int predelayBufferSizeM1     = predelayBufferSize - 1;
     static float predelayBuffer[predelayBufferSize];
     int predelaySize             = predelayBufferSize;
     int predelayWritePos         = 0;
     float predelayReadPos         = 0;
+    const int inputRateDivider = 2;
+    int inputIncCount = 0;
 
     // input diffuser
 

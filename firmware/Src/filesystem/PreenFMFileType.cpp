@@ -508,6 +508,16 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashM
         params->effect.param3 = 1.0f;
     }
 
+    // Set default env curve if not initialized
+    if(iszero(&params->env1Curve, 24)) {
+        params->env1Curve = {1, 0, 1, 0};
+        params->env2Curve = {1, 0, 1, 0};
+        params->env3Curve = {1, 0, 1, 0};
+        params->env4Curve = {1, 0, 1, 0};
+        params->env5Curve = {1, 0, 1, 0};
+        params->env6Curve = {1, 0, 1, 0};
+    }
+
     if (params->midiNote1Curve.breakNote == 0.0f && params->midiNote1Curve.curveAfter == 0.0f && params->midiNote1Curve.curveBefore == 0.0f) {
         // Default compatibility value
         // FLAT 0 +Lin

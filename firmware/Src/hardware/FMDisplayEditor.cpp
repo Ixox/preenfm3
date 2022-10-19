@@ -739,6 +739,16 @@ struct ParameterRowDisplay engineCurveParameterRow = {
  46  LPx1, -30-
  47  LPx2, -31-
  48  Alkx, -48-
+ 49  Flng, -49-
+ 50  Chor, -50-
+ 51  Dim , -51-
+ 52  Dblr, -52-
+ 53  Harm, -53-
+ 54  Bode, -54-
+ 55  Wide, -55-
+ 56  DelC, -56-
+ 57  Ping, -57-
+ 58  Diff, -58-
  */
 
 const unsigned char filtersOrder[] = { 0, 1, 2, 3, 4, 5, 6, 38, 39, 40, 46, 47,
@@ -801,6 +811,16 @@ const char *fxName[] = {
     "h3o+", /*  46  */
     "Svh3", /*  47  */
     "Alkx", /*  48  */
+    "Flng", /*  49  */
+    "Chor", /*  50  */
+    "Dim ", /*  51  */
+    "Dblr", /*  52  */
+    "3Voi", /*  53  */
+    "Bode", /*  54  */
+    "Wide", /*  55  */
+    "Delc", /*  56  */
+    "Ping", /*  57  */
+    "Diff", /*  58  */
 };
 
 struct ParameterRowDisplay effectParameterRow = {
@@ -1040,7 +1060,48 @@ struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
     {
         "Smp1",
         "Smp2",
-        "Gain" } };
+        "Gain" },
+    {
+        "Dpth",
+        "Feed",
+        "Mix " },
+    {
+        "Widt",
+        "Feed",
+        "Mix " },
+    {
+        "Widt",
+        "Feed",
+        "Mix " },
+    {
+        "Ptch",
+        "Feed",
+        "Mix " },
+    {
+        "Ptc1",
+        "Ptc2",
+        "Mix " },
+    {
+        "Freq",
+        "Feed",
+        "Mix " },
+    {
+        "Detu",
+        "Freq",
+        "Mix " },
+    {
+        "Time",
+        "Feed",
+        "Mix " },
+    {
+        "Time",
+        "Feed",
+        "Mix " },
+    {
+        "Time",
+        "Size",
+        "Mix " }
+};
 
 const char *oscShapeNames[] = {
     "sin ",
@@ -3620,6 +3681,17 @@ void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
     encoderTurnedPfm2(row, encoder4, ticks);
 }
 
+int FMDisplayEditor::getEditPageMultiplier() {
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
+    uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
+    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+    if(synthState_->fullState.editPage == 1  && buttonState == 1) {
+        // env curve page
+        multiplier = 1;
+    }
+    return multiplier;
+}
 
 /*
  * In some case we want to shortcut the Operator row calculation case
