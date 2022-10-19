@@ -469,6 +469,7 @@ void dependencyInjection() {
     sdCard.getMixerBank()->loadDefaultMixer();
     sdCard.getSequenceBank()->loadDefaultSequence();
     sdCard.getUserWaveform()->loadUserWaveforms();
+    sdCard.getUserEnvCurve()->loadUserEnvCurves();
     synthState.propagateAfterNewMixerLoad();
 
 

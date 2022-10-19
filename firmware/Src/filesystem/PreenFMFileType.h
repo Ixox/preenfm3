@@ -40,6 +40,9 @@ enum FILE_ENUM {
 #define USERWAVEFORM_FILENAME_TXT            "0:/pfm3/waveform/usr#.txt"
 #define USERWAVEFORM_FILENAME_BIN            "0:/pfm3/waveform/usr#.bin"
 
+#define USERCURVE_FILENAME_TXT               "0:/pfm3/envcurve/usr#.txt"
+#define USERCURVE_FILENAME_BIN               "0:/pfm3/envcurve/usr#.bin"
+
 #define DX7_PACKED_PATCH_SIZED 128
 #define DX7_UNPACKED_PATCH_SIZED 155
 
@@ -48,6 +51,7 @@ enum FILE_ENUM {
 #define PREENFM_DIR              "0:/pfm3"
 #define SCALA_DIR                "0:/pfm3/scala"
 #define USERWAVEFORM_DIR         "0:/pfm3/waveform"
+#define USERCURVE_DIR            "0:/pfm3/envcurve"
 
 #define SYSEX_NEW_PFM2_BYTE_PATCH 5
 
@@ -133,6 +137,12 @@ struct FlashSynthParams {
     struct MidiNoteCurveRowParams midiNote1Curve;
     struct MidiNoteCurveRowParams midiNote2Curve;
     struct Engine2Params engine2;
+    struct EnvCurveParams env1Curve;
+    struct EnvCurveParams env2Curve;
+    struct EnvCurveParams env3Curve;
+    struct EnvCurveParams env4Curve;
+    struct EnvCurveParams env5Curve;
+    struct EnvCurveParams env6Curve;
 };
 
 #define PFM3_PATCH_FLASH_SIZE sizeof(struct FlashSynthParams)

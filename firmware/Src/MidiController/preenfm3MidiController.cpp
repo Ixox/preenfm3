@@ -117,7 +117,8 @@ void preenfm3MidiControllerDI() {
     sdCard.getMixerBank()->loadDefaultMixer();
     sdCard.getSequenceBank()->loadDefaultSequence();
     sdCard.getUserWaveform()->loadUserWaveforms();
-
+    sdCard.getUserEnvCurve()->loadUserEnvCurves();
+    
     encoders.insertListener(&display);
 }
 

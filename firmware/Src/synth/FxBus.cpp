@@ -494,7 +494,7 @@ void FxBus::paramChanged() {
  */
 void FxBus::mixAdd(float *inStereo, float send, float reverbLevel) {
     if (send > 0) {
-        const float level = - panTable[(int)(send * 128)] * 0.0625f * reverbLevel;
+        const float level = - panTable[(int)(send * 255)] * 0.0625f * reverbLevel;
         
         totalSent += level;
 
