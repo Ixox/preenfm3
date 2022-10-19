@@ -88,6 +88,8 @@ const struct OneSynthParams defaultPreset  = {
         {{ 3, 0, 7,  0,  12,  15,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0}} ,
         // Engine 2
         { 0, 0.5, 0.2, 0.0} ,
+        // Env curve
+        { 2, 1, 2, 1} ,
         // Name
         "Default"
 };
@@ -169,6 +171,8 @@ const struct OneSynthParams preenMainPreset  = {
         {{ 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0}} ,
         // Engine 2
         { 0, 0.5, 0.2, 0.0} ,
+        // Env curve
+        { 2, 1, 2, 1} ,
         "Sound"
 };
 
@@ -246,6 +250,8 @@ const struct OneSynthParams newPresetParams  = {
         { { 15, 4, 2, 0, 15, 2, 0, 8, 15, 0, 12, 0, 8, 0, 15, 0 } },
         // Engine 2
         { 0, 0.5, 0.2, 0.0} ,
+        // Env curve
+        { 2, 1, 2, 1} ,
         "Default"
 };
 

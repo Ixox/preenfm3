@@ -141,7 +141,7 @@ enum {
     ENCODER_ENV_A_CURVE = 0,
     ENCODER_ENV_D_CURVE,
     ENCODER_ENV_S_CURVE,
-    ENCODER_ENV_R_CURVE,
+    ENCODER_ENV_R_CURVE
 };
 
 enum {
@@ -247,6 +247,15 @@ enum OscEnv2Loop {
     LFO_ENV2_NOLOOP = 0,
     LFO_ENV2_LOOP_SILENCE,
     LFO_ENV2_LOOP_ATTACK
+};
+
+enum CurveType {
+    CURVE_TYPE_EXP2 = 0,
+    CURVE_TYPE_EXP,
+    CURVE_TYPE_LIN,
+    CURVE_TYPE_LOG,
+    CURVE_TYPE_LOG2,
+    CURVE_TYPE_MAX
 };
 
 

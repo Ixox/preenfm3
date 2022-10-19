@@ -642,46 +642,54 @@ struct ParameterRowDisplay engineMix3ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
+const char *envCurves[] = {
+    "Exp2",
+    "Exp ",
+    "Lin ",
+    "Log ",
+    "Log2" };
+
 struct ParameterRowDisplay engineCurveParameterRow = {
     "Curve",
     {
-        "A",
-        "D",
-        "S",
-        "R" },
+        "Attk",
+        "Dec ",
+        "Sust",
+        "Rel " },
     {
         {
-            0,
-            1,
-            101,
-            DISPLAY_TYPE_FLOAT,
-            nullNames,
+            CURVE_TYPE_EXP2,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurves,
             nullNamesOrder,
             nullNamesOrder },
         {
-            -1,
-            1,
-            201,
-            DISPLAY_TYPE_FLOAT,
-            nullNames,
+            CURVE_TYPE_EXP2,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurves,
             nullNamesOrder,
             nullNamesOrder },
         {
-            0,
-            1,
-            101,
-            DISPLAY_TYPE_FLOAT,
-            nullNames,
+            CURVE_TYPE_EXP2,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurves,
             nullNamesOrder,
             nullNamesOrder },
         {
-            -1,
-            1,
-            201,
-            DISPLAY_TYPE_FLOAT,
-            nullNames,
+            CURVE_TYPE_EXP2,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurves,
             nullNamesOrder,
-            nullNamesOrder } } };
+            nullNamesOrder }
+    } };
 
 
 /* FILTER ORDER
@@ -1666,10 +1674,6 @@ const char *midiNoteCurves[] = {
     "-Ln8",
     "-Exp" };
 
-const char *envCurves[] = {
-    "Log",
-    "Lin",
-    "Exp" };
 
 struct ParameterRowDisplay midiNote1ParameterRow = {
     "Note1 Midi Scaling",
@@ -2022,13 +2026,13 @@ const struct Pfm3OneButtonState pfm3ButtonEnvCurve = {
     "Env Curve",
     {
         {
-            ROW_CURVE_A,
+            ROW_ENV_CURVE,
             ENCODER_ENV_A_CURVE },
         {
-            ROW_CURVE_D,
+            ROW_ENV_CURVE,
             ENCODER_ENV_D_CURVE },
         {
-            ROW_CURVE_S,
+            ROW_ENV_CURVE,
             ENCODER_ENV_S_CURVE },
         {
             ROW_NONE,
@@ -2037,13 +2041,13 @@ const struct Pfm3OneButtonState pfm3ButtonEnvCurve = {
             ROW_NONE,
             ENCODER_NONE },
         {
-            ROW_CURVE_R,
+            ROW_ENV_CURVE,
             ENCODER_ENV_R_CURVE }
     } };
 
 const struct Pfm3OneButton pfm3ButtonCurve = {
     "Curve",
-    BUTTONID_EDIT_FILTER,
+    BUTTONID_ENV_CURVES,
     1,
     {
         &pfm3ButtonEnvCurve } };
@@ -3347,6 +3351,8 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     // Hide Ending1 GlideSpeed if play mode poly
                     hideParam_[button] = true;
                     tft_->setCharColor(COLOR_DARK_GRAY);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                } else if (rowEncoder.row == ROW_ENV_CURVE) {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
