@@ -73,6 +73,8 @@ public:
     void displayPreset();
     void displayPopup(TFT_COLOR color, char* text, uint8_t length);
 
+    int getEditPageMultiplier();
+
     void encoderTurnedPfm3(int encoder, int ticks);
     void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);

@@ -324,6 +324,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         // We divide by 5 to have headroom before saturating (>1.0f)
         timbres_[timbre].voicesToTimbre(smoothVolume_[timbre] * .2f);
         timbres_[timbre].gateFx();
+        timbres_[timbre].fxAfterBlock();
 
         // Smooth pan to avoid audio noise
         smoothPan_[timbre] = smoothPan_[timbre] * .95f

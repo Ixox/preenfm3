@@ -74,7 +74,7 @@ float FxBus::delay2Buffer[delay2BufferSize] __attribute__((section(".ram_d1")));
 float FxBus::delay3Buffer[delay3BufferSize] __attribute__((section(".ram_d2")));
 float FxBus::delay4Buffer[delay4BufferSize] __attribute__((section(".ram_d2")));
 
-float FxBus::predelayBuffer[predelayBufferSize] __attribute__((section(".ram_d1")));
+float FxBus::predelayBuffer[predelayBufferSize] __attribute__((section(".ram_d2")));
 
 float FxBus::inputBuffer1[inputBufferLen1] __attribute__((section(".ram_d2")));
 float FxBus::inputBuffer2[inputBufferLen2] __attribute__((section(".ram_d2")));
@@ -83,8 +83,8 @@ float FxBus::inputBuffer4[inputBufferLen4] __attribute__((section(".ram_d2")));
 
 float FxBus::diffuserBuffer1[diffuserBufferLen1] __attribute__((section(".ram_d2")));
 float FxBus::diffuserBuffer2[diffuserBufferLen2] __attribute__((section(".ram_d2")));
-float FxBus::diffuserBuffer3[diffuserBufferLen3] __attribute__((section(".ram_d2")));
-float FxBus::diffuserBuffer4[diffuserBufferLen4] __attribute__((section(".ram_d2")));
+float FxBus::diffuserBuffer3[diffuserBufferLen3] __attribute__((section(".ram_d2b")));
+float FxBus::diffuserBuffer4[diffuserBufferLen4] __attribute__((section(".ram_d2b")));
 
 FxBus::FxBus() {}
 
@@ -729,7 +729,10 @@ void FxBus::processBlock(int32_t *outBuff) {
         inputWritePos3        = modulo(inputWritePos3 + 1 , inputBufferLen3);
         inputWritePos4        = modulo(inputWritePos4 + 1 , inputBufferLen4);
 
-        predelayWritePos    = modulo(predelayWritePos + 1 , predelayBufferSize);
+        if(++inputIncCount >= inputRateDivider) {
+            inputIncCount = 0;
+            predelayWritePos    = modulo(predelayWritePos + 1 , predelayBufferSize);
+        }
 
         diffuserWritePos1    = modulo(diffuserWritePos1 + 1 , diffuserBufferLen1);
         diffuserWritePos2    = modulo(diffuserWritePos2 + 1 , diffuserBufferLen2);
@@ -766,18 +769,17 @@ void FxBus::processBlock(int32_t *outBuff) {
 float FxBus::delayAllpassInterpolation(float readPos, float buffer[], int bufferLenM1, float prevVal) {
     //v[n] = VoiceL[i + 1] + (1 - frac)  * VoiceL[i] - (1 - frac)  * v[n - 1]
     int readPosInt = readPos;
-    float y0 = buffer[readPosInt];
-    float y1 = buffer[(unlikely(readPosInt >= bufferLenM1) ? readPosInt - bufferLenM1 + 1 : readPosInt + 1)];
-    //float y1 = buffer[((readPosInt == 0 ) ? bufferLenM1: readPosInt - 1)];
-    float x = readPos - floorf(readPos);
-    return y1 + (1 - x) * (y0 - prevVal);
+    float y1 = buffer[readPosInt];
+    float y0 = buffer[(unlikely(readPosInt <= 0) ? readPosInt + bufferLenM1 : readPosInt - 1)];
+    float x = 1 - (readPos - floorf(readPos));
+    return y1 + x * (y0 - prevVal);
 }
 
 float FxBus::delayInterpolation(float readPos, float buffer[], int bufferLenM1) {
     int readPosInt = readPos;
-    float y0 = buffer[readPosInt];
-    float y1 = buffer[(unlikely(readPosInt == 0) ? bufferLenM1 : readPosInt - 1)];
-    float x = readPos - floorf(readPos);
+    float y1 = buffer[readPosInt];
+    float y0 = buffer[(unlikely(readPosInt <= 0) ? readPosInt + bufferLenM1 : readPosInt - 1)];
+    float x = 1 - (readPos - floorf(readPos));
     return y0 + x * (y1 - y0);
 }
 

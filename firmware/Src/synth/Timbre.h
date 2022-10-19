@@ -180,6 +180,118 @@ private:
     void OnMidiClock();
     void SendNote(uint8_t note, uint8_t velocity);
 
+    /** --------------FX conf--------------  */
+    void fxAfterBlock();
+    float delayInterpolation(float readPos, float buffer[], int bufferLenM1);
+    float delayInterpolation2(float readPos, float buffer[], int bufferLenM1, int offset);
+    float iirFilter(float x, float a0, float *yn1, float *yn2, float *xn1, float *xn2) ;
+
+    #define delayBufferSize 2048
+    const float delayBufferSizeF       = delayBufferSize;
+    const float delayBufferSize120     = delayBufferSize * 0.3333f;
+    const float delayBufferSize240     = delayBufferSize * 0.6666f;
+    const float delayBufferSize90      = delayBufferSize * 0.25f;
+    const float delayBufferSize180     = delayBufferSize * 0.5f;
+    const float delayBufferSize270     = delayBufferSize * 0.75f;
+    const int delayBufferSizeM1   = delayBufferSize - 1;
+    const int delayBufferSizeM4   = delayBufferSize - 4;
+    const float delayBufferSizeInv = 1.0f / delayBufferSize;
+
+    static float delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize];
+    float *delayBuffer_;
+
+    float param1S = 0;
+    float matrixFilterFrequencyS = 0;
+    float param2S = 0;
+    float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0, delaySize4 = 0;
+    float delaySizeInc1 = 0, delaySizeInc2 = 0, delaySizeInc3 = 0, delaySizeInc4 = 0;
+    float delayOut1 = 0, delayOut2 = 0, delayOut3 = 0, delayOut4 = 0, delayOut5 = 0, delayOut6 = 0;
+    float feedback            = 0;
+    float shift = 0, shift2 = 0;
+    int delayWritePos         = 0;
+    int delayWritePos2        = 0;
+    float delayWritePosF      = 0;
+    float delayReadPos        = 0;
+    float delayReadPos2       = 0;
+    float delayReadFrac       = 0;
+    float delayReadFrac2      = 0;
+    float readPos             = 0;
+    float _in_lp_a, _in_lp_b;
+    float _in_lp2_a, _in_lp2_b;
+    float lpF, lpF2;
+     
+    float low1 = 0, band1 = 0;
+    float low2 = 0, band2 = 0;
+    float low3 = 0, band3 = 0;
+    float low4 = 0, band4 = 0;
+    float low5 = 0, band5 = 0;
+    float low6 = 0, band6 = 0;
+
+    const int delayBufStereoSize = delayBufferSize * 0.5f;
+    const float delayBufStereoSizeF = delayBufStereoSize;
+    const int delayBufStereoSizeM1 = delayBufStereoSize - 1;
+    const float delayBufStereoDiv4 = delayBufStereoSize * 0.25f;
+    const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
+
+    float delaySumOut = 0;
+    float delayIn = 0;
+
+    // hp filter
+    float hp_in_x0 = 0;
+    float hp_in_y0 = 0;
+    float hp_in_y1 = 0;
+    float hp_in_x1 = 0;
+    float hp_in2_x0 = 0;
+    float hp_in2_y0 = 0;
+    float hp_in2_y1 = 0;
+    float hp_in2_x1 = 0;
+    float hp_in3_x0 = 0;
+    float hp_in3_y0 = 0;
+    float hp_in3_y1 = 0;
+    float hp_in3_x1 = 0;
+    float _in_b1, _in_a0, _in_a1;
+    float _in2_b1, _in2_a0, _in2_a1;
+    float _in3_b1, _in3_a0, _in3_a1;
+
+    // allpass filters
+    float _ly1 = 0;
+    float _lx1 = 0;
+    float _ly2 = 0;
+    float _lx2 = 0;
+    float _ly3 = 0;
+    float _lx3 = 0;
+    float _ly4 = 0;
+    float _lx4 = 0;
+    float apcoef1, apcoef2, apcoef3, apcoef4;
+    int prevEffectType;
+
+    // frequency shifter 
+    float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;
+    float hb2_x1 = 0, hb2_x2 = 0, hb2_y1 = 0, hb2_y2 = 0;
+    float hb3_x1 = 0, hb3_x2 = 0, hb3_y1 = 0, hb3_y2 = 0;
+    float hb4_x1 = 0, hb4_x2 = 0, hb4_y1 = 0, hb4_y2 = 0;
+    float hb5_x1 = 0, hb5_x2 = 0, hb5_y1 = 0, hb5_y2 = 0;
+    float hb6_x1 = 0, hb6_x2 = 0, hb6_y1 = 0, hb6_y2 = 0;
+    float hb7_x1 = 0, hb7_x2 = 0, hb7_y1 = 0, hb7_y2 = 0;
+    float hb8_x1 = 0, hb8_x2 = 0, hb8_y1 = 0, hb8_y2 = 0;
+    float phase1 = 0;
+    float samplen1 = 0;
+    float shifterOutMix = 0;
+
+    // diffuser
+    int inputWritePos1     = 0;
+    int inputWritePos2     = 0;
+    int inputWritePos3     = 0;
+    int inputWritePos4     = 0;
+    int inputWritePos5     = 0;
+    const int inputBufferLen1 = 112;
+    const int inputBufferLen2 = 210;
+    const int inputBufferLen3 = 137;
+    const int inputBufferLen4 = 242;
+    const int inputBufferLen5 = 160;
+
+    /** --------------end of FX conf--------------  */
+
     int8_t timbreNumber_;
     struct OneSynthParams params_;
     struct MixerState *mixerState_;
