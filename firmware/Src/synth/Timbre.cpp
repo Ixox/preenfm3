@@ -180,12 +180,12 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
 
     mixerState_ = &synthState->mixerState;
 
-    env1_.init(&params_.env1a, &params_.env1b, 0, &params_.engine1.algo, timbreNumber);
-    env2_.init(&params_.env2a, &params_.env2b, 1, &params_.engine1.algo, timbreNumber);
-    env3_.init(&params_.env3a, &params_.env3b, 2, &params_.engine1.algo, timbreNumber);
-    env4_.init(&params_.env4a, &params_.env4b, 3, &params_.engine1.algo, timbreNumber);
-    env5_.init(&params_.env5a, &params_.env5b, 4, &params_.engine1.algo, timbreNumber);
-    env6_.init(&params_.env6a, &params_.env6b, 5, &params_.engine1.algo, timbreNumber);
+    env1_.init(&params_.env1a, &params_.env1b, 0, &params_.engine1.algo, &params_.envCurve);
+    env2_.init(&params_.env2a, &params_.env2b, 1, &params_.engine1.algo, &params_.envCurve);
+    env3_.init(&params_.env3a, &params_.env3b, 2, &params_.engine1.algo, &params_.envCurve);
+    env4_.init(&params_.env4a, &params_.env4b, 3, &params_.engine1.algo, &params_.envCurve);
+    env5_.init(&params_.env5a, &params_.env5b, 4, &params_.engine1.algo, &params_.envCurve);
+    env6_.init(&params_.env6a, &params_.env6b, 5, &params_.engine1.algo, &params_.envCurve);
 
     osc1_.init(synthState, &params_.osc1, OSC1_FREQ);
     osc2_.init(synthState, &params_.osc2, OSC2_FREQ);

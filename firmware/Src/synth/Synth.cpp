@@ -670,6 +670,14 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
         case ROW_MIDINOTE2CURVE:
             timbres_[timbre].updateMidiNoteScale(1);
             break;
+        case ROW_ENV_CURVE:
+            timbres_[timbre].env1_.applyCurves();
+            timbres_[timbre].env2_.applyCurves();
+            timbres_[timbre].env3_.applyCurves();
+            timbres_[timbre].env4_.applyCurves();
+            timbres_[timbre].env5_.applyCurves();
+            timbres_[timbre].env6_.applyCurves();
+            break;
     }
 }
 

@@ -20,6 +20,7 @@
 
 #include "Common.h"
 #include "Matrix.h"
+#include "SynthState.h"
 
 enum EnvState {
     ENV_STATE_ON_A = 0,
@@ -57,8 +58,10 @@ struct table {
 extern float envLinear[];
 
 extern float envExponential[];
+extern float envExponential2[];
 
 extern float envLog[];
+extern float envLog2[];
 
 class Env
 {
@@ -72,16 +75,8 @@ public:
         nextState[ENV_STATE_ON_R] = ENV_STATE_DEAD;
         nextState[ENV_STATE_ON_QUICK_R] = ENV_STATE_DEAD;
 
-        tables[ENV_STATE_ON_A].table = envLog;
-        tables[ENV_STATE_ON_A].size = 63;
-        tables[ENV_STATE_ON_D].table = envExponential;
-        tables[ENV_STATE_ON_D].size = 63;
-        tables[ENV_STATE_ON_S].table = envExponential;
-        tables[ENV_STATE_ON_S].size = 63;
         tables[ENV_STATE_ON_REAL_S].table = envLinear;
         tables[ENV_STATE_ON_REAL_S].size = 1;
-        tables[ENV_STATE_ON_R].table = envExponential;
-        tables[ENV_STATE_ON_R].size = 63;
         tables[ENV_STATE_ON_QUICK_R].table = envLinear;
         tables[ENV_STATE_ON_QUICK_R].size = 1;
 
@@ -89,13 +84,40 @@ public:
         stateTarget[ENV_STATE_ON_QUICK_R] = 0.0f;
         stateInc[ENV_STATE_ON_QUICK_R] = 0.166667f;
 
+
         stateTarget[ENV_STATE_DEAD] = 0.0f;
     }
 
     virtual ~Env(void) {
     }
 
-    void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber, int timbreNumber);
+    void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber, struct EnvCurveParams *envCurve);
+
+    void applyCurves() {
+        applyCurveToOne(envCurve->curveAttack, ENV_STATE_ON_A);
+        applyCurveToOne(envCurve->curveDecay, ENV_STATE_ON_D);
+        applyCurveToOne(envCurve->curveSustain, ENV_STATE_ON_S);
+        applyCurveToOne(envCurve->curveRelease, ENV_STATE_ON_R);
+    }
+
+    void applyCurveToOne(float segment, int segmentPos) {
+        if(segment == CURVE_TYPE_EXP2) {
+            tables[segmentPos].table = envExponential2;
+            tables[segmentPos].size = 63;
+        } else if(segment == CURVE_TYPE_EXP) {
+            tables[segmentPos].table = envExponential;
+            tables[segmentPos].size = 63;
+        } else if(segment == CURVE_TYPE_LIN) {
+            tables[segmentPos].table = envLinear;
+            tables[segmentPos].size = 1;
+        } else if(segment == CURVE_TYPE_LOG) {
+            tables[segmentPos].table = envLog;
+            tables[segmentPos].size = 63;
+        } else if(segment == CURVE_TYPE_LOG2) {
+            tables[segmentPos].table = envLog2;
+            tables[segmentPos].size = 63;
+        }
+    }
 
     void reloadADSR(int encoder) {
     	// 0 Attack time
@@ -254,14 +276,6 @@ public:
 
     void noteOff(struct EnvData* env, Matrix* matrix) {
 
-        if (this->timbreNumber % 2 == 1) {
-            tables[ENV_STATE_ON_A].table = envLinear;
-            tables[ENV_STATE_ON_A].size = 1;
-        } else {
-            tables[ENV_STATE_ON_A].table = envLog;
-            tables[ENV_STATE_ON_A].size = 63;
-        }
-
         float release = envParamsB->releaseTime;
         if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_CARRIER) {
             release += matrix->getDestination(ALL_ENV_RELEASE);
@@ -305,7 +319,7 @@ private:
     // loopable envelope
     bool isLoop;
 
-    int timbreNumber = 0;
+    EnvCurveParams *envCurve;
 
     static int initTab;
     static float incTab[1601];
