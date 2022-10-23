@@ -55,13 +55,14 @@ struct table {
 	uint8_t size;
 };
 
-extern float envLinear[];
-
 extern float envExponential[];
-extern float envExponential2[];
-
+extern float envLinear[];
 extern float envLog[];
-extern float envLog2[];
+
+extern float envUsr1[];
+extern float envUsr2[];
+extern float envUsr3[];
+extern float envUsr4[];
 
 class Env
 {
@@ -94,17 +95,14 @@ public:
     void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber, struct EnvCurveParams *envCurve);
 
     void applyCurves() {
-        applyCurveToSegment(envCurve->curveAttack, ENV_STATE_ON_A);
-        applyCurveToSegment(envCurve->curveDecay, ENV_STATE_ON_D);
+        applyCurveToSegment(envCurve->curveAttack,  ENV_STATE_ON_A);
+        applyCurveToSegment(envCurve->curveDecay,   ENV_STATE_ON_D);
         applyCurveToSegment(envCurve->curveSustain, ENV_STATE_ON_S);
         applyCurveToSegment(envCurve->curveRelease, ENV_STATE_ON_R);
     }
 
     void applyCurveToSegment(float segment, int segmentPos) {
-        if(segment == CURVE_TYPE_EXP2) {
-            tables[segmentPos].table = envExponential2;
-            tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_EXP) {
+        if(segment == CURVE_TYPE_EXP) {
             tables[segmentPos].table = envExponential;
             tables[segmentPos].size = 63;
         } else if(segment == CURVE_TYPE_LIN) {
@@ -113,8 +111,17 @@ public:
         } else if(segment == CURVE_TYPE_LOG) {
             tables[segmentPos].table = envLog;
             tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_LOG2) {
-            tables[segmentPos].table = envLog2;
+        } else if(segment == CURVE_TYPE_USER1) {
+            tables[segmentPos].table = envUsr1;
+            tables[segmentPos].size = 63;
+        } else if(segment == CURVE_TYPE_USER2) {
+            tables[segmentPos].table = envUsr2;
+            tables[segmentPos].size = 63;
+        } else if(segment == CURVE_TYPE_USER3) {
+            tables[segmentPos].table = envUsr3;
+            tables[segmentPos].size = 63;
+        } else if(segment == CURVE_TYPE_USER4) {
+            tables[segmentPos].table = envUsr4;
             tables[segmentPos].size = 63;
         }
     }
