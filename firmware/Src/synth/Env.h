@@ -94,13 +94,13 @@ public:
     void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber, struct EnvCurveParams *envCurve);
 
     void applyCurves() {
-        applyCurveToOne(envCurve->curveAttack, ENV_STATE_ON_A);
-        applyCurveToOne(envCurve->curveDecay, ENV_STATE_ON_D);
-        applyCurveToOne(envCurve->curveSustain, ENV_STATE_ON_S);
-        applyCurveToOne(envCurve->curveRelease, ENV_STATE_ON_R);
+        applyCurveToSegment(envCurve->curveAttack, ENV_STATE_ON_A);
+        applyCurveToSegment(envCurve->curveDecay, ENV_STATE_ON_D);
+        applyCurveToSegment(envCurve->curveSustain, ENV_STATE_ON_S);
+        applyCurveToSegment(envCurve->curveRelease, ENV_STATE_ON_R);
     }
 
-    void applyCurveToOne(float segment, int segmentPos) {
+    void applyCurveToSegment(float segment, int segmentPos) {
         if(segment == CURVE_TYPE_EXP2) {
             tables[segmentPos].table = envExponential2;
             tables[segmentPos].size = 63;
@@ -313,13 +313,13 @@ private:
 
     EnvelopeParamsA* envParamsA;
     EnvelopeParamsB* envParamsB;
+    EnvCurveParams *envCurve;
+    
     uint8_t envNumber;
     float* algoNumber;
 
     // loopable envelope
     bool isLoop;
-
-    EnvCurveParams *envCurve;
 
     static int initTab;
     static float incTab[1601];
