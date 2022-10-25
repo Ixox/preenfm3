@@ -28,6 +28,7 @@
 #include "PatchBank.h"
 #include "ScalaFile.h"
 #include "UserWaveform.h"
+#include "UserEnvCurve.h"
 #include "PPMImage.h"
 #include "SequenceBank.h"
 
@@ -51,6 +52,7 @@ public:
     PatchBank* getPatchBank() { return &patchBank; }
     ScalaFile* getScalaFile() { return &scalaFile; }
     UserWaveform* getUserWaveform() { return &userWaveForm; };
+    UserEnvCurve* getUserEnvCurve() { return &userEnvCurve; };
 #ifdef PPMIMAGE_ENABLE
     PPMImage* getPPMImage() { return &ppmImage; };
 #endif
@@ -67,6 +69,7 @@ private:
     PatchBank patchBank;
     ScalaFile scalaFile;
     UserWaveform userWaveForm;
+    UserEnvCurve userEnvCurve;
 #ifdef PPMIMAGE_ENABLE
     PPMImage ppmImage;
 #endif

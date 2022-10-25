@@ -642,7 +642,7 @@ struct ParameterRowDisplay engineMix3ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *envCurves[] = {
+const char *envCurveNames[] = {
     "Exp ",
     "Lin ",
     "Log ",
@@ -665,7 +665,7 @@ struct ParameterRowDisplay engineCurveParameterRow = {
             CURVE_TYPE_MAX - 1,
             CURVE_TYPE_MAX,
             DISPLAY_TYPE_STRINGS,
-			envCurves,
+			envCurveNames,
             nullNamesOrder,
             nullNamesOrder },
         {
@@ -673,7 +673,7 @@ struct ParameterRowDisplay engineCurveParameterRow = {
             CURVE_TYPE_MAX - 1,
             CURVE_TYPE_MAX,
             DISPLAY_TYPE_STRINGS,
-			envCurves,
+			envCurveNames,
             nullNamesOrder,
             nullNamesOrder },
         {
@@ -681,7 +681,7 @@ struct ParameterRowDisplay engineCurveParameterRow = {
             CURVE_TYPE_MAX - 1,
             CURVE_TYPE_MAX,
             DISPLAY_TYPE_STRINGS,
-			envCurves,
+			envCurveNames,
             nullNamesOrder,
             nullNamesOrder },
         {
@@ -689,7 +689,7 @@ struct ParameterRowDisplay engineCurveParameterRow = {
             CURVE_TYPE_MAX - 1,
             CURVE_TYPE_MAX,
             DISPLAY_TYPE_STRINGS,
-			envCurves,
+			envCurveNames,
             nullNamesOrder,
             nullNamesOrder }
     } };

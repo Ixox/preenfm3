@@ -58,11 +58,7 @@ struct table {
 extern float envExponential[];
 extern float envLinear[];
 extern float envLog[];
-
-extern float envUsr1[];
-extern float envUsr2[];
-extern float envUsr3[];
-extern float envUsr4[];
+extern float userEnvCurves[4][64];
 
 class Env
 {
@@ -112,16 +108,16 @@ public:
             tables[segmentPos].table = envLog;
             tables[segmentPos].size = 63;
         } else if(segment == CURVE_TYPE_USER1) {
-            tables[segmentPos].table = envUsr1;
+            tables[segmentPos].table = userEnvCurves[0];
             tables[segmentPos].size = 63;
         } else if(segment == CURVE_TYPE_USER2) {
-            tables[segmentPos].table = envUsr2;
+            tables[segmentPos].table = userEnvCurves[1];
             tables[segmentPos].size = 63;
         } else if(segment == CURVE_TYPE_USER3) {
-            tables[segmentPos].table = envUsr3;
+            tables[segmentPos].table = userEnvCurves[2];
             tables[segmentPos].size = 63;
         } else if(segment == CURVE_TYPE_USER4) {
-            tables[segmentPos].table = envUsr4;
+            tables[segmentPos].table = userEnvCurves[3];
             tables[segmentPos].size = 63;
         }
     }
