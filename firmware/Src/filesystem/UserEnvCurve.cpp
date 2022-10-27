@@ -88,20 +88,20 @@ void UserEnvCurve::loadUserEnvCurveFromBin(int f, const char* fileName) {
     load(fileName, 0, userEnvCurveNames[f], 4);
     envCurveNames[3 + f] = userEnvCurveNames[f];
 
-    load(fileName, 4, &numberOfSample, 4);
+    load(fileName, 4, &numberOfSample, 2);
 
     int sampleSize = numberOfSample * 4;
     if (sampleSize <= 64) {
-        load(fileName, 8, userEnvCurves[f], sampleSize);
+        load(fileName, 6, userEnvCurves[f], sampleSize);
     }
 }
 
 void UserEnvCurve::saveUserEnvCurveToBin(int f, const char* fileName) {
     save(fileName, 0, userEnvCurveNames[f], 4);
-    save(fileName, 4, &numberOfSample, 4);
+    save(fileName, 4, &numberOfSample, 2);
     int sampleSize = numberOfSample * 4;
     if (sampleSize <= 64) {
-        save(fileName, 8, userEnvCurves[f], sampleSize);
+        save(fileName, 6, userEnvCurves[f], sampleSize);
     }
 }
 
