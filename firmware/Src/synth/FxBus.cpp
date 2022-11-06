@@ -175,6 +175,22 @@ void FxBus::mixSumInit() {
     }
 
     totalSent = 0.0f;
+
+    if(somethingChanged) {
+        if(waitCountBeforeChange-- == 0 ) {
+            somethingChanged = false;
+            if(currentPresetNum != nextPresetNum) {
+                presetChanged(nextPresetNum);
+            } else {
+                paramChanged();
+            }
+        }
+    }
+}
+
+void FxBus::slowParamChange() {
+    somethingChanged = true;
+    waitCountBeforeChange = 100;
 }
 
 void FxBus::presetChanged(int presetNum) {
@@ -325,6 +341,9 @@ void FxBus::presetChanged(int presetNum) {
             break;
         }
     }
+    currentPresetNum = presetNum;
+    nextPresetNum = presetNum;
+
     paramChanged();
 }
 

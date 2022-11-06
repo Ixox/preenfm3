@@ -446,27 +446,28 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         {
         case CC_MFX_PRESET:
             this->synthState_->mixerState.reverbPreset_ = midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.presetChanged( midiEvent.value[1] );
+            this->synthState_->mixerState.fxBus_.nextPresetNum = midiEvent.value[1];
+            this->synthState_->mixerState.fxBus_.slowParamChange();
             break;
         case CC_MFX_PREDELAYTIME:
             this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.paramChanged();
+            this->synthState_->mixerState.fxBus_.slowParamChange();
             break;
         case CC_MFX_PREDELAYMIX:
             this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.paramChanged();
+            this->synthState_->mixerState.fxBus_.slowParamChange();
             break;
         case CC_MFX_INPUTTILT:
             this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_INPUTBASE] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.paramChanged();
+            this->synthState_->mixerState.fxBus_.slowParamChange();
             break;
         case CC_MFX_MOD_SPEED:
             this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_LFOSPEED] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.paramChanged();
+            this->synthState_->mixerState.fxBus_.slowParamChange();
             break;
         case CC_MFX_MOD_DEPTH:
             this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_LFODEPTH] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.paramChanged();
+            this->synthState_->mixerState.fxBus_.slowParamChange();
             break;
         }
     }
