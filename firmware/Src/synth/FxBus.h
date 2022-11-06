@@ -80,9 +80,10 @@ public:
         return sampleBlock_;
     }
 
-protected:
     // Reverb params
     float masterfxConfig[GLOBALFX_PARAMS_SIZE];
+
+protected:
 
     #define _dattorroSampleRateMod PREENFM_FREQUENCY / 29761.0f
 
