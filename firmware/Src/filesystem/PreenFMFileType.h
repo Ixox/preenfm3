@@ -137,6 +137,12 @@ struct FlashSynthParams {
     struct MidiNoteCurveRowParams midiNote1Curve;
     struct MidiNoteCurveRowParams midiNote2Curve;
     struct Engine2Params engine2;
+    struct EnvCurveParams env1Curve;
+    struct EnvCurveParams env2Curve;
+    struct EnvCurveParams env3Curve;
+    struct EnvCurveParams env4Curve;
+    struct EnvCurveParams env5Curve;
+    struct EnvCurveParams env6Curve;
 };
 
 #define PFM3_PATCH_FLASH_SIZE sizeof(struct FlashSynthParams)
