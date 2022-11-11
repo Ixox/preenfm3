@@ -642,6 +642,59 @@ struct ParameterRowDisplay engineMix3ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
+const char *envCurveNames[] = {
+    "Exp ",
+    "Lin ",
+    "Log ",
+    "Usr1",
+    "Usr2",
+    "Usr3",
+    "Usr4"
+    };
+
+struct ParameterRowDisplay engineCurveParameterRow = {
+    "Curve",
+    {
+        "Attk",
+        "Dec ",
+        "Sust",
+        "Rel " },
+    {
+        {
+            CURVE_TYPE_EXP,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurveNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            CURVE_TYPE_EXP,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurveNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            CURVE_TYPE_EXP,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurveNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            CURVE_TYPE_EXP,
+            CURVE_TYPE_MAX - 1,
+            CURVE_TYPE_MAX,
+            DISPLAY_TYPE_STRINGS,
+			envCurveNames,
+            nullNamesOrder,
+            nullNamesOrder }
+    } };
+
+
 /* FILTER ORDER
 
  0   Off , -0-
@@ -1624,6 +1677,7 @@ const char *midiNoteCurves[] = {
     "-Ln8",
     "-Exp" };
 
+
 struct ParameterRowDisplay midiNote1ParameterRow = {
     "Note1 Midi Scaling",
     {
@@ -1804,7 +1858,13 @@ struct AllParameterRowsDisplay allParameterRows = {
         &midiNote2ParameterRow,
         &dummyParameterRow,
         &dummyParameterRow,
-        &engine2ParameterRow
+        &engine2ParameterRow,
+        &engineCurveParameterRow,
+        &engineCurveParameterRow,
+        &engineCurveParameterRow,
+        &engineCurveParameterRow,
+        &engineCurveParameterRow,
+        &engineCurveParameterRow
 } };
 
 // =================================================
@@ -2109,12 +2169,36 @@ const struct Pfm3OneButtonState pfm3ButtonOPEnvTime = {
             ENCODER_ENV_R }
     } };
 
+const struct Pfm3OneButtonState pfm3ButtonEnvCurve = {
+    "Env Curve",
+    {
+        {
+            ROW_ENV1_CURVE,
+            ENCODER_ENV_A_CURVE },
+        {
+            ROW_ENV1_CURVE,
+            ENCODER_ENV_D_CURVE },
+        {
+            ROW_ENV1_CURVE,
+            ENCODER_ENV_S_CURVE },
+        {
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_ENV1_CURVE,
+            ENCODER_ENV_R_CURVE }
+    } };
+
 const struct Pfm3OneButton pfm3ButtonOPEnv1 = {
     "Env",
-    BUTTONID_ONLY_ONE_STATE,
-    1,
+    BUTTONID_ENV_1,
+    2,
     {
-        &pfm3ButtonOPEnvTime } };
+        &pfm3ButtonOPEnvTime,
+        &pfm3ButtonEnvCurve } };
 
 const struct Pfm3OneButtonState pfm3ButtonOPShapeState = {
     "Oscillator",
@@ -2915,6 +2999,14 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
                 rowToTest = ROW_ENV1b;
                 break;
             }
+            case ROW_ENV1_CURVE:
+            case ROW_ENV2_CURVE:
+            case ROW_ENV3_CURVE:
+            case ROW_ENV4_CURVE:
+            case ROW_ENV5_CURVE:
+            case ROW_ENV6_CURVE: {
+                rowToTest = ROW_ENV1_CURVE;
+            }
             }
         }
         if (rowToTest == rowEncoder.row && encoder == rowEncoder.encoder) {
@@ -3062,8 +3154,13 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
 void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
-    const struct RowEncoder rowEncoder =
-        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
+    uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
+    const struct RowEncoder rowEncoder = page->states[buttonState]->rowEncoder[encoder];
+    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+    if(synthState_->fullState.editPage == 1  && buttonState == 1) {
+        // env curve page
+        multiplier = 1;
+    }
 
     uint8_t x = getX(encoder);
 
@@ -3073,11 +3170,7 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
         int row = rowEncoder.row;
         // Operator page
         if (synthState_->fullState.mainPage == 1) {
-            if (synthState_->fullState.editPage == 0) {
-                row += synthState_->fullState.operatorNumber;
-            } else {
-                row += synthState_->fullState.operatorNumber * 2;
-            }
+            row += synthState_->fullState.operatorNumber * multiplier;
         }
 
         struct ParameterDisplay *param = &allParameterRows.row[row]->params[rowEncoder.encoder];
@@ -3268,6 +3361,8 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                     // Hide Ending1 GlideSpeed if play mode poly
                     hideParam_[button] = true;
                     tft_->setCharColor(COLOR_DARK_GRAY);
+                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                } else if (rowEncoder.row >= ROW_ENV1_CURVE && rowEncoder.row <= ROW_ENV6_CURVE) {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 } else {
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
@@ -3632,6 +3727,17 @@ void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
     encoderTurnedPfm2(row, encoder4, ticks);
 }
 
+int FMDisplayEditor::getEditPageMultiplier() {
+    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
+    uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
+    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+    if(synthState_->fullState.editPage == 1  && buttonState == 1) {
+        // env curve page
+        multiplier = 1;
+    }
+    return multiplier;
+}
 
 /*
  * In some case we want to shortcut the Operator row calculation case
@@ -3652,7 +3758,7 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
     int num;
     struct ParameterDisplay *param;
     if (unlikely(synthState_->fullState.mainPage == 1) && specialOpCase) {
-        int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+        int multiplier = getEditPageMultiplier();
         // operator is a bit different with PFM3
         num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
         param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber * multiplier]->params[encoder4]);
@@ -3818,7 +3924,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 
         // Operator is a special case for row
         if (unlikely(synthState_->fullState.mainPage == 1)) {
-            int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+            int multiplier = getEditPageMultiplier();
             rowEncoder.row += synthState_->fullState.operatorNumber * multiplier;
         }
 
@@ -3850,7 +3956,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 
         // Operator is a special case for row
         if (unlikely(synthState_->fullState.mainPage == 1)) {
-            int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+            int multiplier = getEditPageMultiplier();
             rowEncoder.row += synthState_->fullState.operatorNumber * multiplier;
         }
 
@@ -4004,7 +4110,7 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
                 int row = rowEncoder.row;
                 int num;
                 if (isInOperatorPage()) {
-                    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+                    int multiplier = getEditPageMultiplier();
                     num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
                 } else {
                     num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
@@ -4029,7 +4135,7 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
                 int row = rowEncoder.row;
                 int num;
                 if (isInOperatorPage()) {
-                    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
+                    int multiplier = getEditPageMultiplier();
                     num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
                 } else {
                     num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;

@@ -141,6 +141,7 @@ enum {
     BUTTONID_MENU_SCALA,
     BUTTONID_MENU_SETTINGS,
     BUTTONID_PERFORMANCE,
+    BUTTONID_ENV_1,
     NUMBER_OF_BUTTONIDS
 };
 
@@ -210,10 +211,16 @@ enum {
     ROW_LFOSEQ1_STEP,
     ROW_LFOSEQ2_STEP,
     ROW_ENGINE2,
+    ROW_ENV1_CURVE,
+    ROW_ENV2_CURVE,
+    ROW_ENV3_CURVE,
+    ROW_ENV4_CURVE,
+    ROW_ENV5_CURVE,
+    ROW_ENV6_CURVE,
     ROW_NONE
 };
 
-#define NUMBER_OF_ROWS ROW_ENGINE2+1
+#define NUMBER_OF_ROWS ROW_ENV6_CURVE + 1
 
 
 
@@ -289,7 +296,6 @@ struct Engine2Params {
     float unisonDetune;
     float pfm3Version;
 };
-
 
 //{ "Acti", "Clk ", "BPM ", "Dire" },
 //{ "Ptrn", "Divi", "Dura", "Latc" },
@@ -402,6 +408,13 @@ struct EnvelopeParamsB {
     float sustainLevel;
     float releaseTime;
     float releaseLevel;
+};
+
+struct EnvCurveParams {
+    float curveAttack;
+    float curveDecay;
+    float curveSustain;
+    float curveRelease;
 };
 
 struct EnvelopeParams {
@@ -534,6 +547,12 @@ struct OneSynthParams {
     struct StepSequencerSteps lfoSteps1;
     struct StepSequencerSteps lfoSteps2;
     struct Engine2Params engine2;
+    struct EnvCurveParams env1Curve;
+    struct EnvCurveParams env2Curve;
+    struct EnvCurveParams env3Curve;
+    struct EnvCurveParams env4Curve;
+    struct EnvCurveParams env5Curve;
+    struct EnvCurveParams env6Curve;
     char presetName[13];
 };
 
