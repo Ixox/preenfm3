@@ -68,6 +68,7 @@ public:
     void mixSumInit();
     void presetChanged(int presetNum);
     void paramChanged();
+    void slowParamChange();
     void mixAdd(float *inStereo, float send, float reverbLevel);
     void processBlock(int32_t *outBuff);
     float delayInterpolation(float readPos, float buffer[], int bufferLenM1);
@@ -80,11 +81,18 @@ public:
         return sampleBlock_;
     }
 
-protected:
     // Reverb params
     float masterfxConfig[GLOBALFX_PARAMS_SIZE];
 
+    bool somethingChanged = false;
+    int waitCountBeforeChange = 0;
+    int nextPresetNum = 0;
+
+protected:
+
     #define _dattorroSampleRateMod PREENFM_FREQUENCY / 29761.0f
+
+    int currentPresetNum = 0;
 
     float headRoomMultiplier = 1;
     float sampleMultipler;
