@@ -440,7 +440,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         return;
     }
 
-    if(midiEvent.channel == this->synthState_->mixerState.globalChannel_ - 1) {
+    if (midiEvent.channel == this->synthState_->mixerState.globalChannel_ - 1) {
         // treat global channel CC
         switch (midiEvent.value[0])
         {
