@@ -188,6 +188,15 @@ void LfoOsc::nextValueInMatrix() {
 
         lfoValue = currentRandomValue;
         break;
+    case LFO_DRUNK:
+        if (unlikely(phase >= 1.0f)) {
+            phase -= 1;
+            currentRandomValue = noise[0];
+        }
+
+        lfoValue = phase * currentRandomValue;
+
+        break;
     }
 
 
