@@ -66,6 +66,7 @@ private:
     float* initPhase;
     DestinationEnum destination;
     float currentRandomValue;
+    float nextRandomValue = 1;
     float currentFreq ;
     //
     bool isNotMidiSynchronized;
