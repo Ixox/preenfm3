@@ -188,11 +188,30 @@ void LfoOsc::nextValueInMatrix() {
 
         lfoValue = currentRandomValue;
         break;
-    case LFO_DRUNK:
+    case LFO_FLOW:
         if (unlikely(phase >= 1.0f)) {
             phase -= 1;
             currentRandomValue = nextRandomValue;
             nextRandomValue = noise[0];
+        }
+
+        lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;
+        break;
+    case LFO_GAUSSIAN:
+        if (unlikely(phase >= 1.0f)) {
+            phase -= 1.0f;
+            float sq = noise[0] * noise[0];
+            currentRandomValue = sq * sq;
+        }
+
+        lfoValue = currentRandomValue;
+        break;
+    case LFO_FLOW_GAUSSIAN:
+        if (unlikely(phase >= 1.0f)) {
+            phase -= 1;
+            currentRandomValue = nextRandomValue;
+            float sq = noise[0] * noise[0];
+            nextRandomValue = sq * sq;
         }
 
         lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;

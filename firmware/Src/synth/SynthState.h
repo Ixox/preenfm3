@@ -214,7 +214,9 @@ enum LfoType {
     LFO_TRIANGLE,
     LFO_SQUARE,
     LFO_RANDOM,
-    LFO_DRUNK,
+    LFO_FLOW,
+    LFO_GAUSSIAN,
+    LFO_FLOW_GAUSSIAN,
     LFO_TYPE_MAX
 };
 
