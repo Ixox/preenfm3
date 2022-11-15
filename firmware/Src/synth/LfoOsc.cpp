@@ -201,7 +201,7 @@ void LfoOsc::nextValueInMatrix() {
         if (unlikely(phase >= 1.0f)) {
             phase -= 1.0f;
             float sq = noise[0] * noise[0];
-            currentRandomValue = sq * sq;
+            currentRandomValue = copysignf(sq * sq, noise[0]);
         }
 
         lfoValue = currentRandomValue;
@@ -211,7 +211,7 @@ void LfoOsc::nextValueInMatrix() {
             phase -= 1;
             currentRandomValue = nextRandomValue;
             float sq = noise[0] * noise[0];
-            nextRandomValue = sq * sq;
+            nextRandomValue = copysignf(sq * sq, noise[0]);
         }
 
         lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;
