@@ -217,17 +217,19 @@ void Osc::glideToNote(struct OscState* oscState, float newNoteFrequency) {
 
 
 float Osc::getNoteRealFrequencyEstimation(struct OscState* oscState, float newNoteFrequency) {
+    float realNoteFrequencyEstimation = 0;
     switch ((int)oscillator->frequencyType) {
     case OSC_FT_KEYBOARD:
-        return  newNoteFrequency *  oscillator->frequencyMul * (1.0f + oscillator->detune * .05f) * (synthState_->mixerState.tuning_ * INV440);
+        realNoteFrequencyEstimation = newNoteFrequency *  oscillator->frequencyMul * (1.0f + oscillator->detune * .05f) * (synthState_->mixerState.tuning_ * INV440);
     case OSC_FT_FIXE:
-        return oscState->mainFrequency;
+        realNoteFrequencyEstimation = oscState->mainFrequency;
     case OSC_FT_KEYHZ:
-        float freq = newNoteFrequency *  oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
-        if(freq < 0) {
-            freq = 0;
-        }
-        return freq;
+        realNoteFrequencyEstimation = newNoteFrequency *  oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
+    }
+    if (unlikely(realNoteFrequencyEstimation < 1)) {
+        return 1;
+    } else {
+        return realNoteFrequencyEstimation;
     }
 }
 
