@@ -188,15 +188,6 @@ void LfoOsc::nextValueInMatrix() {
 
         lfoValue = currentRandomValue;
         break;
-    case LFO_WANDERING:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
-            currentRandomValue = nextRandomValue;
-            nextRandomValue = noise[0];
-        }
-
-        lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;
-        break;
     case LFO_BROWNIAN:
         if (unlikely(phase >= 1.0f)) {
             phase -= 1.0f;
@@ -205,6 +196,15 @@ void LfoOsc::nextValueInMatrix() {
         }
 
         lfoValue = currentRandomValue;
+        break;
+    case LFO_WANDERING:
+        if (unlikely(phase >= 1.0f)) {
+            phase -= 1;
+            currentRandomValue = nextRandomValue;
+            nextRandomValue = noise[0];
+        }
+
+        lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;
         break;
     case LFO_FLOW:
         if (unlikely(phase >= 1.0f)) {
@@ -240,6 +240,9 @@ void LfoOsc::noteOn() {
         // Retriger value if random...
         if (unlikely(lfo->shape == LFO_RANDOM)) {
             currentRandomValue = noise[0];
+        } else if (unlikely(lfo->shape >= LFO_BROWNIAN)) {
+            noiseLp = noise[0] * 0.4f + noiseLp * 0.6f;
+            currentRandomValue = noiseLp;
         }
     } else {
         // For KSyn Off
