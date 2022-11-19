@@ -1495,7 +1495,11 @@ const char *lfoShapeNames[] = {
     "Saw ",
     "Tria",
     "Squa",
-    "Rand" };
+    "Rand",
+    "Brwn",
+    "Wndr",
+    "Flow"
+     };
 
 struct ParameterRowDisplay lfoParameterRow = {
     "LFO",

@@ -221,6 +221,9 @@ enum LfoType {
     LFO_TRIANGLE,
     LFO_SQUARE,
     LFO_RANDOM,
+    LFO_BROWNIAN,
+    LFO_WANDERING,
+    LFO_FLOW,
     LFO_TYPE_MAX
 };
 
