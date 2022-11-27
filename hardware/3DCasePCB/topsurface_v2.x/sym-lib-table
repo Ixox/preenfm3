@@ -1,0 +1,6 @@
+(sym_lib_table
+  (lib (name 0_pfm3)(type Legacy)(uri F:/dev/preenfm3/hardware/lib/pfm3.lib)(options "")(descr ""))
+  (lib (name pfm3-rescue)(type Legacy)(uri ${KIPRJMOD}/pfm3_176-rescue.lib)(options "")(descr ""))
+  (lib (name pfm3_176-rescue)(type Legacy)(uri ${KIPRJMOD}/pfm3_176-rescue.lib)(options "")(descr ""))
+  (lib (name pfm3_topsurface-rescue)(type Legacy)(uri ${KIPRJMOD}/pfm3_topsurface-rescue.lib)(options "")(descr ""))
+)
