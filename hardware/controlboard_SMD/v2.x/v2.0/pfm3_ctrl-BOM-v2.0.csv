@@ -1,0 +1,6 @@
+"Id","Designator","Footprint","Quantity","Comment","LCSC part number"
+"8","U4,U3,U2,U1","SOIC-16_3.9x9.9mm_P1.27mm","4","74hc165","C5613"
+"9","R31,R30,R29,R28,R27,R26,R25,R24,R23,R22,R21,R20,R19,R18,R17,R16,R15,R14,R13,R12,R11,R10,R9,R8,R7,R6,R5,R4,R3,R2","R_0402_1005Metric","30","10k","C25744"
+"10","C4,C3,C2,C1","C_0402_1005Metric","4","100nF","C1525"
+"14","R1","R_0603_1608Metric","1","470","C23179"
+"15","D1","LED_0603_1608Metric","1","LED","C72041"
