@@ -1,4 +1,4 @@
-# Preenfm3 2021 Case : 3D print + PCB
+# Preenfm3 2022 Case : 3D print + PCB
 
 This enclosure for the preenfm3 is made from 2 3D printed pieces plus a PCB for the top surface.  
 
@@ -15,14 +15,21 @@ You'll also need
 * 5 * nuts bottom of the PCB (for the 5 * 6mm M/F spacers)  
 * Optionaly 4 case feet to stick on the bottom of the 3D printed case
 
-Kicad files are in the topsurface sub folder.
+Kicad files are in the topsurface sub folder.   
+Use top surface v2 if you have a surface control v2.
+
+Topsurface v1.x  
 
 <img src="./pfm3_topsurface.png" width="600" />
+
+Topsurface v2.x  
+
+<img src="./pfm3_topsurface_2.0.jpg" width="600" />
 
 The 2 stl files are in this folder  
 
 <img src="./3DPrintedCase.png" width="600" />
 
-The result can look like this depending of your components (PCB color, 3D filament color, button etc..)
+The result of the v1 will look like this
 
 <img src="./pfm3_PCBCase.jpg" width="600" />

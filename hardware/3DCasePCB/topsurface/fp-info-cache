@@ -1,880 +1,733 @@
-18830436116050371
-0_pfm_lib
+18795672909024900
+A_PFM3
 74HC165
 16-lead though-hole mounted DIP package, row spacing 7.62 mm (300 mils), Socket, LongPads
 THT DIP DIL PDIP 2.54mm 7.62mm 300mil Socket LongPads
 0
 16
 16
-0_pfm_lib
+A_PFM3
 BarrelJack_Horizontal
 DC Barrel Jack
 Power Jack
 0
 3
 3
-0_pfm_lib
+A_PFM3
 Boot0_1x02
 Through hole straight pin header, 1x03, 2.54mm pitch, single row
 Through hole pin header THT 1x03 2.54mm single row
 0
 2
 2
-0_pfm_lib
+A_PFM3
 Boot0_1x03
 Through hole straight pin header, 1x03, 2.54mm pitch, single row
 Through hole pin header THT 1x03 2.54mm single row
 0
 3
 3
-0_pfm_lib
+A_PFM3
 Bridge-rond
 
 
 0
 4
 4
-0_pfm_lib
-CS4344_EXT
-8-lead though-hole mounted DIP package, row spacing 10.16 mm (400 mils)
-THT DIP DIL PDIP 2.54mm 10.16mm 400mil
-0
-8
-8
-0_pfm_lib
+A_PFM3
 ControlBoard
 
 
 0
 18
 13
-0_pfm_lib
+A_PFM3
+ControlBoard_2
+
+
+0
+11
+6
+A_PFM3
 ControlBoard_To
 
 
 0
 18
 13
-0_pfm_lib
+A_PFM3
 ControlBoard_To_TS
 
 
 0
 1
 0
-0_pfm_lib
+A_PFM3
+ControlBoard_To_TS_2
+
+
+0
+1
+0
+A_PFM3
 DMHole3mm
 
 
 0
 1
 0
-0_pfm_lib
+A_PFM3
 FM7805
 Regulateur TO220 serie LM78xx
 TR TO220
 0
 3
 3
-0_pfm_lib
+A_PFM3
 FM78052
 Regulateur TO220 serie LM78xx
 TR TO220
 0
 3
 3
-0_pfm_lib
+A_PFM3
 FMButton
 
 
 0
 4
 2
-0_pfm_lib
+A_PFM3
 FMButton2
 
 
 0
 4
 2
-0_pfm_lib
+A_PFM3
 FMButton_no_drawing
 
 
 0
 4
 2
-0_pfm_lib
+A_PFM3
 FMCondeDecouplage
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondeDecouplage2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondo
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoChimique
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoChimique2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoChimiqueBig
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoChimique_10uF
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoChimique_10uF_2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoPlastic
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMCondoPlastic2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMDiode
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMDiode1N4001
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMDiode1N4001_2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMDiode2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMDualPot
 
 
 0
 8
 6
-0_pfm_lib
+A_PFM3
 FMDualPotALPS
 
 
 0
 8
 6
-0_pfm_lib
+A_PFM3
 FMEncoder
 
 
 0
 5
 3
-0_pfm_lib
+A_PFM3
 FMEncoder2
 
 
 0
 5
 3
-0_pfm_lib
+A_PFM3
 FMEncoder2_pfm3
 
 
 0
+7
 5
-3
-0_pfm_lib
+A_PFM3
 FMEncoderWithSwitch
 
 
 0
 7
 5
-0_pfm_lib
+A_PFM3
 FMEncoderWithSwitch2
 
 
 0
 7
 5
-0_pfm_lib
+A_PFM3
 FMHole3.5mm
 
 
 0
 1
 0
-0_pfm_lib
+A_PFM3
 FMHole3mm
 
 
 0
 1
 1
-0_pfm_lib
+A_PFM3
 FMHole4mm
 
 
 0
 1
 0
-0_pfm_lib
+A_PFM3
 FMInductance
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMInductance2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMJACK
 
 
 0
 6
 3
-0_pfm_lib
+A_PFM3
 FMJACK2
 
 
 0
 6
 2
-0_pfm_lib
-FMJACK3_TRS
-
-
-0
-6
-6
-0_pfm_lib
+A_PFM3
 FMLCD4x20
 
 
 0
 18
 16
-0_pfm_lib
+A_PFM3
 FMLCD4x20_2
 
 
 0
 18
 16
-0_pfm_lib
+A_PFM3
 FMLD1117
 Regulateur TO220 serie LM78xx
 TR TO220
 0
 3
 3
-0_pfm_lib
+A_PFM3
 FMLD1117_2
 Regulateur TO220 serie LM78xx
 TR TO220
 0
 3
 3
-0_pfm_lib
+A_PFM3
 FMLed
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMLed2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMLed_pfm3
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMMicroSwitch
 
 
 0
 4
 2
-0_pfm_lib
+A_PFM3
 FMMicroSwitch2
 
 
 0
 4
 2
-0_pfm_lib
+A_PFM3
 FMMidi
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMMidi2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMPetitCondo
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMPot
 
 
 0
 5
 3
-0_pfm_lib
+A_PFM3
 FMPot2
 
 
 0
 5
 3
-0_pfm_lib
+A_PFM3
 FMRR
 
 
 0
 5
 5
-0_pfm_lib
+A_PFM3
 FMRR9
 
 
 0
 9
 9
-0_pfm_lib
+A_PFM3
 FMRV
 Resistance variable / potentiometre
 R
 0
 3
 3
-0_pfm_lib
+A_PFM3
 FMRV2
 Resistance variable / potentiometre
 R
 0
 3
 3
-0_pfm_lib
+A_PFM3
 FMResistance
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMResistance2
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FMUSB
 
 USB
 0
 6
 6
-0_pfm_lib
+A_PFM3
 FMUSB2
 
 USB
 0
 6
 6
-0_pfm_lib
+A_PFM3
 FMUSB_A
 
 
 0
 6
 6
-0_pfm_lib
+A_PFM3
 FM_USBInvisible
 Connecteurs 2 pins
 CONN DEV
 0
 2
 2
-0_pfm_lib
+A_PFM3
 FM_mcp4922
 14 pins DIL package, elliptical pads
 DIL
 0
 14
 14
-0_pfm_lib
+A_PFM3
 FM_mcp4922_2
 14 pins DIL package, elliptical pads
 DIL
 0
 14
 14
-0_pfm_lib
-HP5v
-
-
-0
-2
-2
-0_pfm_lib
+A_PFM3
 Hole4mm
 
 
 0
 1
 0
-0_pfm_lib
+A_PFM3
 JACK_ALIM
 module 1 pin (ou trou mecanique de percage)
 CONN JACK
 0
 3
 3
-0_pfm_lib
+A_PFM3
 JACK_ALIM2
 module 1 pin (ou trou mecanique de percage)
 CONN JACK
 0
 3
 3
-0_pfm_lib
+A_PFM3
 JACK_ALIM3
 module 1 pin (ou trou mecanique de percage)
 CONN JACK
 0
 3
 3
-0_pfm_lib
+A_PFM3
 JACK_ALIM4
 module 1 pin (ou trou mecanique de percage)
 CONN JACK
 0
 3
 3
-0_pfm_lib
+A_PFM3
 JLCJLCJLCJLC
 
 
 0
 0
 0
-0_pfm_lib
-Jumper_SMD
-Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
-capacitor
-0
-2
-2
-0_pfm_lib
+A_PFM3
 Maple
 
 
 0
 46
 46
-0_pfm_lib
+A_PFM3
 Midi_2.1
 
 
 0
 5
 5
-0_pfm_lib
+A_PFM3
 Midi_Din5_PCB
 
 
 0
 9
 5
-0_pfm_lib
-Mouse-bites
-
-
-0
-5
-0
-0_pfm_lib
+A_PFM3
 NRJ4HF
 
 
 0
 4
 4
-0_pfm_lib
+A_PFM3
 NRJ4HF_pfm3
 
 
 0
-6
-6
-0_pfm_lib
+4
+4
+A_PFM3
 NRJ6HF
 
 
 0
 6
 6
-0_pfm_lib
+A_PFM3
 PFM2_AnalogInConnector
 Through hole straight pin header, 1x05, 2.54mm pitch, single row
 Through hole pin header THT 1x05 2.54mm single row
 0
 5
 5
-0_pfm_lib
-PinHeader_1x01_Simple
-Through hole straight pin header, 1x01, 2.54mm pitch, single row
-Through hole pin header THT 1x01 2.54mm single row
-0
-1
-1
-0_pfm_lib
-PinHeader_1x02_P2.54mm_NoSilk
-Through hole straight pin header, 1x02, 2.54mm pitch, single row
-Through hole pin header THT 1x02 2.54mm single row
-0
-2
-2
-0_pfm_lib
+A_PFM3
 PinHeader_1x03_P2.54mm_Vertical
 Through hole straight pin header, 1x03, 2.54mm pitch, single row
 Through hole pin header THT 1x03 2.54mm single row
 0
 3
 3
-0_pfm_lib
+A_PFM3
 PinHeader_1x05_P2.54mm
 Through hole straight pin header, 1x03, 2.54mm pitch, single row
 Through hole pin header THT 1x03 2.54mm single row
 0
 5
 5
-0_pfm_lib
+A_PFM3
 PowerJumper_1x02
 Through hole straight pin header, 1x02, 2.54mm pitch, single row
 Through hole pin header THT 1x02 2.54mm single row
 0
 2
 2
-0_pfm_lib
+A_PFM3
 PreenFMLed
 
 
 0
 2
 2
-0_pfm_lib
+A_PFM3
 R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal
 Resistor, Axial_DIN0207 series, Axial, Horizontal, pin pitch=7.62mm, 0.25W = 1/4W, length*diameter=6.3*2.5mm^2, http://cdn-reichelt.de/documents/datenblatt/B400/1_4W%23YAG.pdf
 Resistor Axial_DIN0207 series Axial Horizontal pin pitch 7.62mm 0.25W = 1/4W length 6.3mm diameter 2.5mm
 0
 2
 2
-0_pfm_lib
+A_PFM3
 Resistor_Horizontal_RM7mm
 Resistor, Axial,  RM 7.62mm, 1/3W,
 Resistor Axial RM 7.62mm 1/3W R3
 0
 2
 2
-0_pfm_lib
+A_PFM3
 SAI_1x06
 Through hole straight pin header, 1x06, 2.54mm pitch, single row
 Through hole pin header THT 1x06 2.54mm single row
 0
 6
 6
-0_pfm_lib
+A_PFM3
 SIL-16
 Connecteur 18 pins
 CONN DEV
 0
 16
 16
-0_pfm_lib
+A_PFM3
 SIL-18
 Connecteur 18 pins
 CONN DEV
 0
 16
 16
-0_pfm_lib
-SIL_1x02_NoDrawing
-Through hole straight pin header, 1x06, 2.54mm pitch, single row
-Through hole pin header THT 1x06 2.54mm single row
-0
-2
-2
-0_pfm_lib
+A_PFM3
 SWD_1x04
 Through hole straight pin header, 1x04, 2.54mm pitch, single row
 Through hole pin header THT 1x04 2.54mm single row
 0
 4
 4
-0_pfm_lib
+A_PFM3
 TFT_Ili_9341
 
 
 0
-27
-13
-0_pfm_lib
-TFT_Ili_9341_TS
-
-
-0
-0
-0
-0_pfm_lib
-TFT_Ili_9341_withHole
-
-
-0
-25
+24
 18
-0_pfm_lib
-TFT_ili_9341_2.2
-
-
-0
-16
-14
-0_pfm_lib
+A_PFM3
 TO-263-2
 TO-263 / D2PAK / DDPAK SMD package, http://www.infineon.com/cms/en/product/packages/PG-TO263/PG-TO263-3-1/
 D2PAK DDPAK TO-263 D2PAK-3 TO-263-3 SOT-404
 0
 7
 3
-0_pfm_lib
-TftVccChoice
-
-
-0
-3
-3
-0_pfm_lib
-ToMix
-Through hole straight pin header, 2x03, 2.54mm pitch, double rows
-Through hole pin header THT 2x03 2.54mm double row
-0
-6
-6
-0_pfm_lib
-ToMix4
-Through hole straight pin header, 2x03, 2.54mm pitch, double rows
-Through hole pin header THT 2x03 2.54mm double row
-0
-4
-4
-0_pfm_lib
+A_PFM3
 USB_B
 
 USB
 0
 6
 6
-0_pfm_lib
-logo_dcIn
-
-
-0
-0
-0
-0_pfm_lib
-logo_midi
-
-
-0
-0
-0
-0_pfm_lib
-logo_usb
-
-
-0
-0
-0
-0_pfm_lib
+A_PFM3
 pfm2_OledModeSelector
 Through hole straight pin header, 2x02, 2.54mm pitch, double rows
 Through hole pin header THT 2x02 2.54mm double row
 0
 4
 4
-0_pfm_lib
-pfm2_OledModeSelector_r6.4
-Through hole straight pin header, 2x02, 2.54mm pitch, double rows
-Through hole pin header THT 2x02 2.54mm double row
-0
-4
-4
-0_pfm_lib
+A_PFM3
 pfm2_logo
 
 
 0
 0
 0
-0_pfm_lib
-pfm3_1x02_ToShort
-Through hole straight pin header, 1x02, 2.54mm pitch, single row
-Through hole pin header THT 1x02 2.54mm single row
-0
-2
-2
-0_pfm_lib
+A_PFM3
 pfm3_Expansion_2x05
 Through hole straight pin header, 2x05, 2.54mm pitch, double rows
 Through hole pin header THT 2x05 2.54mm double row
 0
 10
 10
-0_pfm_lib
+A_PFM3
 pfm3_Expansion_2x06
 Through hole straight pin header, 2x05, 2.54mm pitch, double rows
 Through hole pin header THT 2x05 2.54mm double row
 0
 12
 12
-0_pfm_lib
+A_PFM3
 pfm3_tantalum_smd_3216-18_Kemet-A
 Tantalum Capacitor SMD Kemet-A (3216-18 Metric), IPC_7351 nominal, (Body size from: http://www.kemet.com/Lists/ProductCatalog/Attachments/253/KEM_TC101_STD.pdf), generated with kicad-footprint-generator
 capacitor tantalum
 0
 2
 2
-0_pfm_lib
+A_PFM3
 pfmH743
 
 
 0
 40
 40
-0_pfm_lib
+A_PFM3
 pfmH743_connector_Only
 
 
 0
 40
 40
-0_pfm_lib
+A_PFM3
 pfm_logo
 
 
 0
 0
 0
-0_pfm_lib
-pfm_logo_12mm
-
-
-0
-0
-0
-0_pfm_lib
-pfm_logo_15mm
-
-
-0
-0
-0
-0_pfm_lib
-pfm_logo_20mm
-
-
-0
-0
-0
-0_pfm_lib
-pfm_logo_40mm
-
-
-0
-0
-0
-0_pfm_lib
+A_PFM3
 uSwitch_Reset
 
 
