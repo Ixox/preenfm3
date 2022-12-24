@@ -1,12 +1,12 @@
 #!/bin/bash
 
-BINPATH=/home/xavier/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer.sh
+BINPATH=/C/ST/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe
 
 echo "=============================="
 echo "  Flash preenfm2 bootloader"
 echo "=============================="
 
-${BINPATH} -c port=SWD -w ./p3_boot_1_07.bin 0x8000000
+${BINPATH} -c port=SWD -w ./p3_boot_1_09.bin 0x8000000
 
 echo ""
 echo ""
@@ -14,5 +14,5 @@ echo "=============================="
 echo "  Flash preenfm2 firmware..."
 echo "=============================="
  
-${BINPATH} -c port=SWD -w ./p3_0_104.bin 0x8020000
+${BINPATH} -c port=SWD -w ./p3_0_110.bin 0x8020000
 

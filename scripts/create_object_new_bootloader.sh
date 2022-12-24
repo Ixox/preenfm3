@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-OBJCOPY_BIN="/opt/st/stm32cubeide_1.3.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.linux64_1.0.0.201904181610/tools/bin/arm-none-eabi-objcopy"
+OBJCOPY_BIN="/c/ST/STM32CubeIDE_1.5.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/arm-none-eabi-objcopy.exe"
 
 
 FIRMWARE_DIR=../firmware
@@ -57,6 +57,36 @@ ls -l ${buildFolder}
 echo ""
 echo "dfu-util -a0 -d 0x0483:0xdf11 -D ${binBootloader} -s 0x8000000" > ${buildFolder}/flash_bootloader.cmd
 echo "dfu-util -a0 -d 0x0483:0xdf11 -D ${binFirmware} -s 0x8020000" > ${buildFolder}/flash_firmware.cmd
-zip ${buildFolder}.zip ${buildFolder}/*.bin ${buildFolder}/*.cmd
+
+tee -a ${buildFolder}/flash_StmProgrammer_windows.sh <<EOF
+#!/bin/bash
+echo "=============================="
+echo "  Flash preenfm2 bootloader"
+echo "=============================="
+"/c/ST/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe" -c port=SWD -w ./${binBootloader} 0x8000000
+echo ""
+echo ""
+echo "=============================="
+echo "  Flash preenfm2 firmware..."
+echo "=============================="
+"/c/ST/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe" -c port=SWD -w ./${binFirmware} 0x8020000
+EOF
+
+tee -a ${buildFolder}/README.txt <<EOF
+In this folder you can find the following preenfm3 binaries:
+- preenfm3 firmware   : ${binFirmware}
+- preenfm3 bootloader : ${binBootloader}
+
+In most situation the bootloder is not needed.
+More information about flashing here :
+https://github.com/Ixox/preenfm3/wiki/Upgrade-firmware-(Flash-bootloader)
+
+Latest release : 
+https://github.com/Ixox/preenfm3/releases
+
+Xavier Hosxe
+EOF
 
 
+echo "Ziping...."
+"/c/Program Files/7-Zip/7z" a ${ZIP_BIN} ${buildFolder}.zip ${buildFolder}/*

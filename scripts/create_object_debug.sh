@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-OBJCOPY_BIN="/opt/st/stm32cubeide_1.3.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.linux64_1.0.0.201904181610/tools/bin/arm-none-eabi-objcopy"
+OBJCOPY_BIN="/c/ST/STM32CubeIDE_1.5.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/arm-none-eabi-objcopy.exe"
 
 
 FIRMWARE_DIR=../firmware

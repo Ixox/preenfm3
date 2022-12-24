@@ -1,4 +1,4 @@
-18795673514958929
+18833773042044672
 A_PFM3
 74HC165
 16-lead though-hole mounted DIP package, row spacing 7.62 mm (300 mils), Socket, LongPads
@@ -35,6 +35,13 @@ Bridge-rond
 4
 4
 A_PFM3
+CS4344_EXT
+8-lead though-hole mounted DIP package, row spacing 10.16 mm (400 mils)
+THT DIP DIL PDIP 2.54mm 10.16mm 400mil
+0
+8
+8
+A_PFM3
 ControlBoard
 
 
@@ -56,14 +63,14 @@ ControlBoard_To
 18
 13
 A_PFM3
-ControlBoard_To_TS
+ControlBoard_To_2
 
 
 0
-1
-0
+11
+6
 A_PFM3
-ControlBoard_To_TS_2
+ControlBoard_To_TS
 
 
 0
@@ -242,8 +249,8 @@ FMEncoder2_pfm3
 
 
 0
-7
 5
+3
 A_PFM3
 FMEncoderWithSwitch
 
@@ -307,6 +314,13 @@ FMJACK2
 0
 6
 2
+A_PFM3
+FMJACK3_TRS
+
+
+0
+6
+6
 A_PFM3
 FMLCD4x20
 
@@ -490,6 +504,13 @@ DIL
 14
 14
 A_PFM3
+HP5v
+
+
+0
+2
+2
+A_PFM3
 Hole4mm
 
 
@@ -532,6 +553,13 @@ JLCJLCJLCJLC
 0
 0
 A_PFM3
+Jumper_SMD
+Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+A_PFM3
 Maple
 
 
@@ -553,6 +581,13 @@ Midi_Din5_PCB
 9
 5
 A_PFM3
+Mouse-bites
+
+
+0
+5
+0
+A_PFM3
 NRJ4HF
 
 
@@ -564,8 +599,8 @@ NRJ4HF_pfm3
 
 
 0
-4
-4
+6
+6
 A_PFM3
 NRJ6HF
 
@@ -580,6 +615,20 @@ Through hole pin header THT 1x05 2.54mm single row
 0
 5
 5
+A_PFM3
+PinHeader_1x01_Simple
+Through hole straight pin header, 1x01, 2.54mm pitch, single row
+Through hole pin header THT 1x01 2.54mm single row
+0
+1
+1
+A_PFM3
+PinHeader_1x02_P2.54mm_NoSilk
+Through hole straight pin header, 1x02, 2.54mm pitch, single row
+Through hole pin header THT 1x02 2.54mm single row
+0
+2
+2
 A_PFM3
 PinHeader_1x03_P2.54mm_Vertical
 Through hole straight pin header, 1x03, 2.54mm pitch, single row
@@ -644,6 +693,13 @@ CONN DEV
 16
 16
 A_PFM3
+SIL_1x02_NoDrawing
+Through hole straight pin header, 1x06, 2.54mm pitch, single row
+Through hole pin header THT 1x06 2.54mm single row
+0
+2
+2
+A_PFM3
 SWD_1x04
 Through hole straight pin header, 1x04, 2.54mm pitch, single row
 Through hole pin header THT 1x04 2.54mm single row
@@ -655,8 +711,29 @@ TFT_Ili_9341
 
 
 0
-24
+27
+13
+A_PFM3
+TFT_Ili_9341_TS
+
+
+0
+0
+0
+A_PFM3
+TFT_Ili_9341_withHole
+
+
+0
+25
 18
+A_PFM3
+TFT_ili_9341_2.2
+
+
+0
+16
+14
 A_PFM3
 TO-263-2
 TO-263 / D2PAK / DDPAK SMD package, http://www.infineon.com/cms/en/product/packages/PG-TO263/PG-TO263-3-1/
@@ -665,6 +742,27 @@ D2PAK DDPAK TO-263 D2PAK-3 TO-263-3 SOT-404
 7
 3
 A_PFM3
+TftVccChoice
+
+
+0
+3
+3
+A_PFM3
+ToMix
+Through hole straight pin header, 2x03, 2.54mm pitch, double rows
+Through hole pin header THT 2x03 2.54mm double row
+0
+6
+6
+A_PFM3
+ToMix4
+Through hole straight pin header, 2x03, 2.54mm pitch, double rows
+Through hole pin header THT 2x03 2.54mm double row
+0
+4
+4
+A_PFM3
 USB_B
 
 USB
@@ -672,7 +770,35 @@ USB
 6
 6
 A_PFM3
+logo_dcIn
+
+
+0
+0
+0
+A_PFM3
+logo_midi
+
+
+0
+0
+0
+A_PFM3
+logo_usb
+
+
+0
+0
+0
+A_PFM3
 pfm2_OledModeSelector
+Through hole straight pin header, 2x02, 2.54mm pitch, double rows
+Through hole pin header THT 2x02 2.54mm double row
+0
+4
+4
+A_PFM3
+pfm2_OledModeSelector_r6.4
 Through hole straight pin header, 2x02, 2.54mm pitch, double rows
 Through hole pin header THT 2x02 2.54mm double row
 0
@@ -685,6 +811,13 @@ pfm2_logo
 0
 0
 0
+A_PFM3
+pfm3_1x02_ToShort
+Through hole straight pin header, 1x02, 2.54mm pitch, single row
+Through hole pin header THT 1x02 2.54mm single row
+0
+2
+2
 A_PFM3
 pfm3_Expansion_2x05
 Through hole straight pin header, 2x05, 2.54mm pitch, double rows
@@ -722,6 +855,34 @@ pfmH743_connector_Only
 40
 A_PFM3
 pfm_logo
+
+
+0
+0
+0
+A_PFM3
+pfm_logo_12mm
+
+
+0
+0
+0
+A_PFM3
+pfm_logo_15mm
+
+
+0
+0
+0
+A_PFM3
+pfm_logo_20mm
+
+
+0
+0
+0
+A_PFM3
+pfm_logo_40mm
 
 
 0
