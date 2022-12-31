@@ -120,8 +120,8 @@ struct FlashSynthParams {
     struct LfoParams lfoOsc1;
     struct LfoParams lfoOsc2;
     struct LfoParams lfoOsc3;
-    struct EnvelopeParams lfoEnv1;
-    struct Envelope2Params lfoEnv2;
+    struct EnvelopeLfoParams lfoEnv1;
+    struct Envelope2LfoParams lfoEnv2;
     struct StepSequencerParams lfoSeq1;
     struct StepSequencerParams lfoSeq2;
     struct StepSequencerSteps lfoSteps1;
@@ -137,12 +137,8 @@ struct FlashSynthParams {
     struct MidiNoteCurveRowParams midiNote1Curve;
     struct MidiNoteCurveRowParams midiNote2Curve;
     struct Engine2Params engine2;
-    struct EnvCurveParams env1Curve;
-    struct EnvCurveParams env2Curve;
-    struct EnvCurveParams env3Curve;
-    struct EnvCurveParams env4Curve;
-    struct EnvCurveParams env5Curve;
-    struct EnvCurveParams env6Curve;
+    struct EnvelopeCurveFlashMemory1 envCurves1To4;
+    struct EnvelopeCurveFlashMemory2 envCurves5To6;
 };
 
 #define PFM3_PATCH_FLASH_SIZE sizeof(struct FlashSynthParams)

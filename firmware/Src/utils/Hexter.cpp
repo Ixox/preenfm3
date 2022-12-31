@@ -319,8 +319,8 @@ void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
     }
 
 
-    struct EnvelopeParamsA* envParamsA[] = { &params->env1a, &params->env2a, &params->env3a, &params->env4a, &params->env5a, &params->env6a};
-    struct EnvelopeParamsB* envParamsB[] = { &params->env1b, &params->env2b, &params->env3b, &params->env4b, &params->env5b, &params->env6b};
+    struct EnvelopeTimeMemory* envTimes[] = { &params->env1Time, &params->env2Time, &params->env3Time, &params->env4Time, &params->env5Time, &params->env6Time};
+    struct EnvelopeLevelMemory* envLevels[] = { &params->env1Level, &params->env2Level, &params->env3Level, &params->env4Level, &params->env5Level, &params->env6Level};
     struct OscillatorParams* oscParams[] = { &params->osc1, &params->osc2, &params->osc3, &params->osc4, &params->osc5, &params->osc6};
 
 
@@ -335,8 +335,8 @@ void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
 	for (int i = 0; i < 6; i++) {
 		uint8_t *eb_op = patch + ((5 - i) * 21);
 		struct OscillatorParams* oscParam = oscParams[i];
-		struct EnvelopeParamsA* envA = envParamsA[i];
-		struct EnvelopeParamsB* envB = envParamsB[i];
+		struct EnvelopeTimeMemory* envTime = envTimes[i];
+		struct EnvelopeLevelMemory* envLevel = envLevels[i];
 
 		oscParam->shape = OSC_SHAPE_SIN;
 
@@ -389,12 +389,12 @@ void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
 
 
 
-		envA->attackTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[0], 0, 99), 0, limit(eb_op[4], 0, 99));
-		envA->decayTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[1], 0, 99), limit(eb_op[4], 0, 99), limit(eb_op[5], 0, 99));
-		envB->sustainTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[2], 0, 99), limit(eb_op[5], 0, 99), limit(eb_op[6], 0, 99));
+		envTime->attackTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[0], 0, 99), 0, limit(eb_op[4], 0, 99));
+		envTime->decayTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[1], 0, 99), limit(eb_op[4], 0, 99), limit(eb_op[5], 0, 99));
+		envTime->sustainTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[2], 0, 99), limit(eb_op[5], 0, 99), limit(eb_op[6], 0, 99));
 		// Take previous value if the release one is 0
 		int releaseFromValue = limit(eb_op[6] != 0 ? eb_op[6] : (eb_op[5] != 0 ? eb_op[5] : eb_op[4]), 0, 99);
-		envB->releaseTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[3], 0, 99), releaseFromValue, 0);
+		envTime->releaseTime = getChangeTime(limit(eb_op[16], 0, 99), limit(eb_op[3], 0, 99), releaseFromValue, 0);
 
 
 //		envA->attackTime = dx7_voice_eg_rate_rise_duration[limit(eb_op[0], 0, 99)] * eb_op[0] / ;
@@ -406,26 +406,26 @@ void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
 //		envB->sustainTime = dx7_voice_eg_rate_decay_duration[limit(eb_op[2], 0, 99)] / 4.0f * abs(eb_op[6] - eb_op[5]) / 99.0f;
 //		envB->releaseTime = dx7_voice_eg_rate_decay_duration[limit(eb_op[3], 0, 99)] / 4.0f;
 
-		if (envA->attackTime > 16.0) {
-			envA->attackTime = 16.0;
+		if (envTime->attackTime > 16.0) {
+			envTime->attackTime = 16.0;
 		}
-		if (envA->decayTime > 16.0) {
-			envA->decayTime = 16.0;
+		if (envTime->decayTime > 16.0) {
+			envTime->decayTime = 16.0;
 		}
-		if (envB->sustainTime > 16.0) {
-			envB->sustainTime = 16.0;
+		if (envTime->sustainTime > 16.0) {
+			envTime->sustainTime = 16.0;
 		}
-		if (envB->releaseTime > 16.0) {
-			envB->releaseTime = 16.0;
+		if (envTime->releaseTime > 16.0) {
+		    envTime->releaseTime = 16.0;
 		}
-		if (envB->releaseTime < 0.04) {
-			envB->releaseTime = 0.04;
+		if (envTime->releaseTime < 0.04) {
+		    envTime->releaseTime = 0.04;
 		}
 
-		envA->attackLevel = dx7_voice_eg_rate_rise_percent[ limit(eb_op[4], 0, 99)];
-		envA->decayLevel = dx7_voice_eg_rate_decay_percent[limit(eb_op[5], 0, 99)];
-		envB->sustainLevel = dx7_voice_eg_rate_decay_percent[limit(eb_op[6], 0, 99)];
-		envB->releaseLevel = dx7_voice_eg_rate_decay_percent[limit(eb_op[7], 0, 99)];
+		envLevel->attackLevel = dx7_voice_eg_rate_rise_percent[ limit(eb_op[4], 0, 99)];
+		envLevel->decayLevel = dx7_voice_eg_rate_decay_percent[limit(eb_op[5], 0, 99)];
+		envLevel->sustainLevel = dx7_voice_eg_rate_decay_percent[limit(eb_op[6], 0, 99)];
+		envLevel->releaseLevel = dx7_voice_eg_rate_decay_percent[limit(eb_op[7], 0, 99)];
 
 
 

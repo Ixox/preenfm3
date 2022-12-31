@@ -168,19 +168,19 @@ enum {
     ROW_OSC6,
     ROW_OSC_LAST = ROW_OSC6,
     ROW_ENV_FIRST = ROW_OSC_LAST + 1,
-    ROW_ENV1a = ROW_ENV_FIRST,
-    ROW_ENV1b,
-    ROW_ENV2a,
-    ROW_ENV2b,
-    ROW_ENV3a,
-    ROW_ENV3b,
-    ROW_ENV4a,
-    ROW_ENV4b,
-    ROW_ENV5a,
-    ROW_ENV5b,
-    ROW_ENV6a,
-    ROW_ENV6b,
-    ROW_ENV_LAST = ROW_ENV6b,
+    ROW_ENV1_TIME = ROW_ENV_FIRST,
+    ROW_ENV2_TIME,
+    ROW_ENV3_TIME,
+    ROW_ENV4_TIME,
+    ROW_ENV5_TIME,
+    ROW_ENV6_TIME,
+    ROW_ENV1_LEVEL,
+    ROW_ENV2_LEVEL,
+    ROW_ENV3_LEVEL,
+    ROW_ENV4_LEVEL,
+    ROW_ENV5_LEVEL,
+    ROW_ENV6_LEVEL,
+    ROW_ENV_LAST = ROW_ENV6_LEVEL,
     ROW_MATRIX_FIRST = ROW_ENV_LAST + 1,
     ROW_MATRIX1 = ROW_MATRIX_FIRST,
     ROW_MATRIX2,
@@ -410,21 +410,70 @@ struct EnvelopeParamsB {
     float releaseLevel;
 };
 
-struct EnvCurveParams {
+struct EnvelopeTimeMemory {
+    float attackTime;
+    float decayTime;
+    float sustainTime;
+    float releaseTime;
+};
+
+struct EnvelopeLevelMemory {
+    float attackLevel;
+    float decayLevel;
+    float sustainLevel;
+    float releaseLevel;
+};
+
+struct EnvelopeCurveParams {
     float curveAttack;
     float curveDecay;
     float curveSustain;
     float curveRelease;
 };
 
-struct EnvelopeParams {
+struct EnvelopeCurveFlashMemory1 {
+    uint8_t curveAttack1;
+    uint8_t curveDecay1;
+    uint8_t curveSustain1;
+    uint8_t curveRelease1;
+
+    uint8_t curveAttack2;
+    uint8_t curveDecay2;
+    uint8_t curveSustain2;
+    uint8_t curveRelease2;
+
+    uint8_t curveAttack3;
+    uint8_t curveDecay3;
+    uint8_t curveSustain3;
+    uint8_t curveRelease3;
+
+    uint8_t curveAttack4;
+    uint8_t curveDecay4;
+    uint8_t curveSustain4;
+    uint8_t curveRelease4;
+};
+
+struct EnvelopeCurveFlashMemory2 {
+    uint8_t curveAttack5;
+    uint8_t curveDecay5;
+    uint8_t curveSustain5;
+    uint8_t curveRelease5;
+
+    uint8_t curveAttack6;
+    uint8_t curveDecay6;
+    uint8_t curveSustain6;
+    uint8_t curveRelease6;
+};
+
+
+struct EnvelopeLfoParams {
     float attack;
     float decay;
     float sustain;
     float release;
 };
 
-struct Envelope2Params {
+struct Envelope2LfoParams {
     float silence;
     float attack;
     float decay;
@@ -509,18 +558,18 @@ struct OneSynthParams {
     struct OscillatorParams osc4;
     struct OscillatorParams osc5;
     struct OscillatorParams osc6;
-    struct EnvelopeParamsA env1a;
-    struct EnvelopeParamsB env1b;
-    struct EnvelopeParamsA env2a;
-    struct EnvelopeParamsB env2b;
-    struct EnvelopeParamsA env3a;
-    struct EnvelopeParamsB env3b;
-    struct EnvelopeParamsA env4a;
-    struct EnvelopeParamsB env4b;
-    struct EnvelopeParamsA env5a;
-    struct EnvelopeParamsB env5b;
-    struct EnvelopeParamsA env6a;
-    struct EnvelopeParamsB env6b;
+    struct EnvelopeTimeMemory env1Time;
+    struct EnvelopeTimeMemory env2Time;
+    struct EnvelopeTimeMemory env3Time;
+    struct EnvelopeTimeMemory env4Time;
+    struct EnvelopeTimeMemory env5Time;
+    struct EnvelopeTimeMemory env6Time;
+    struct EnvelopeLevelMemory env1Level;
+    struct EnvelopeLevelMemory env2Level;
+    struct EnvelopeLevelMemory env3Level;
+    struct EnvelopeLevelMemory env4Level;
+    struct EnvelopeLevelMemory env5Level;
+    struct EnvelopeLevelMemory env6Level;
     struct MatrixRowParams matrixRowState1;
     struct MatrixRowParams matrixRowState2;
     struct MatrixRowParams matrixRowState3;
@@ -538,8 +587,8 @@ struct OneSynthParams {
     struct LfoParams lfoOsc2;
     struct LfoParams lfoOsc3;
     struct LfoPhaseRowParams lfoPhases;
-    struct EnvelopeParams lfoEnv1;
-    struct Envelope2Params lfoEnv2;
+    struct EnvelopeLfoParams lfoEnv1;
+    struct Envelope2LfoParams lfoEnv2;
     struct StepSequencerParams lfoSeq1;
     struct StepSequencerParams lfoSeq2;
     struct MidiNoteCurveRowParams midiNote1Curve;
@@ -547,12 +596,12 @@ struct OneSynthParams {
     struct StepSequencerSteps lfoSteps1;
     struct StepSequencerSteps lfoSteps2;
     struct Engine2Params engine2;
-    struct EnvCurveParams env1Curve;
-    struct EnvCurveParams env2Curve;
-    struct EnvCurveParams env3Curve;
-    struct EnvCurveParams env4Curve;
-    struct EnvCurveParams env5Curve;
-    struct EnvCurveParams env6Curve;
+    struct EnvelopeCurveParams env1Curve;
+    struct EnvelopeCurveParams env2Curve;
+    struct EnvelopeCurveParams env3Curve;
+    struct EnvelopeCurveParams env4Curve;
+    struct EnvelopeCurveParams env5Curve;
+    struct EnvelopeCurveParams env6Curve;
     char presetName[13];
 };
 

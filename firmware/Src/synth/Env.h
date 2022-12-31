@@ -17,7 +17,6 @@
 
 #pragma once
 
-
 #include "Common.h"
 #include "Matrix.h"
 #include "SynthState.h"
@@ -60,6 +59,8 @@ extern float envLinear[];
 extern float envLog[];
 extern float userEnvCurves[4][64];
 
+extern struct table allLfoTables[CURVE_TYPE_MAX];
+
 class Env
 {
 public:
@@ -88,71 +89,43 @@ public:
     virtual ~Env(void) {
     }
 
-    void init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float* algoNumber, struct EnvCurveParams *envCurve);
+    void init(struct EnvelopeTimeMemory *envTime, struct EnvelopeLevelMemory *envLevel, uint8_t envNumber, float* algoNumber, struct EnvelopeCurveParams *envCurve);
 
     void applyCurves() {
-        applyCurveToSegment(envCurve->curveAttack,  ENV_STATE_ON_A);
-        applyCurveToSegment(envCurve->curveDecay,   ENV_STATE_ON_D);
-        applyCurveToSegment(envCurve->curveSustain, ENV_STATE_ON_S);
-        applyCurveToSegment(envCurve->curveRelease, ENV_STATE_ON_R);
+        applyCurveToSegment((int)envCurve->curveAttack,  ENV_STATE_ON_A);
+        applyCurveToSegment((int)envCurve->curveDecay,   ENV_STATE_ON_D);
+        applyCurveToSegment((int)envCurve->curveSustain, ENV_STATE_ON_S);
+        applyCurveToSegment((int)envCurve->curveRelease, ENV_STATE_ON_R);
     }
 
-    void applyCurveToSegment(float segment, int segmentPos) {
-        if(segment == CURVE_TYPE_EXP) {
-            tables[segmentPos].table = envExponential;
-            tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_LIN) {
-            tables[segmentPos].table = envLinear;
-            tables[segmentPos].size = 1;
-        } else if(segment == CURVE_TYPE_LOG) {
-            tables[segmentPos].table = envLog;
-            tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_USER1) {
-            tables[segmentPos].table = userEnvCurves[0];
-            tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_USER2) {
-            tables[segmentPos].table = userEnvCurves[1];
-            tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_USER3) {
-            tables[segmentPos].table = userEnvCurves[2];
-            tables[segmentPos].size = 63;
-        } else if(segment == CURVE_TYPE_USER4) {
-            tables[segmentPos].table = userEnvCurves[3];
-            tables[segmentPos].size = 63;
-        }
+    void applyCurveToSegment(int segment, int segmentPos) {
+        tables[segmentPos].table = allLfoTables[segment].table;
+        tables[segmentPos].size  = allLfoTables[segment].size;
     }
 
     void reloadADSR(int encoder) {
-    	// 0 Attack time
-    	// 1 Attack rate
-    	// 2 Decay time
-    	// 3 Decay rate
-    	// 4 Sustain time
-    	// 5 Sustain rate
-    	// 6 Release time
-    	// 7 Release rate
+    	// 0 Attack
+    	// 1 Decay
+    	// 2 Sustain
+    	// 3 Release
         switch (encoder) {
         case 0:
-        case 1:
-        	stateTarget[ENV_STATE_ON_A] =  envParamsA->attackLevel;
+        	stateTarget[ENV_STATE_ON_A] =  envLevel->attackLevel;
             // Not necessary... recalculated in noteOn....
         	// stateInc[ENV_STATE_ON_A] = incTab[(int)(envParamsA->attackTime * 100.0f)];
             break;
-        case 2:
-        case 3:
-        	stateTarget[ENV_STATE_ON_D] =  envParamsA->decayLevel;
-        	stateInc[ENV_STATE_ON_D] = incTab[(int)(envParamsA->decayTime * 100.0f)];
+        case 1:
+        	stateTarget[ENV_STATE_ON_D] =  envLevel->decayLevel;
+        	stateInc[ENV_STATE_ON_D] = incTab[(int)(envTime->decayTime * 100.0f)];
             break;
-        case 4:
-        case 5:
-        	stateTarget[ENV_STATE_ON_S] =  envParamsB->sustainLevel;
-        	stateTarget[ENV_STATE_ON_REAL_S] =  envParamsB->sustainLevel;
-        	stateInc[ENV_STATE_ON_S] = incTab[(int)(envParamsB->sustainTime * 100.0f)];
+        case 2:
+        	stateTarget[ENV_STATE_ON_S] =  envLevel->sustainLevel;
+        	stateTarget[ENV_STATE_ON_REAL_S] =  envLevel->sustainLevel;
+        	stateInc[ENV_STATE_ON_S] = incTab[(int)(envTime->sustainTime * 100.0f)];
             stateInc[ENV_STATE_ON_REAL_S] = 0.0f;
         	break;
-        case 6:
-        case 7:
-        	stateTarget[ENV_STATE_ON_R] =  envParamsB->releaseLevel;
+        case 3:
+        	stateTarget[ENV_STATE_ON_R] =  envLevel->releaseLevel;
             isLoop = checkIsLoop();
             // Not necessary... recalculated in noteOff....
         	// stateInc[ENV_STATE_ON_R] = incTab[(int)(envParamsB->releaseTime * 100.0f)];
@@ -168,7 +141,7 @@ public:
         // loopable only for modulators
         bool isModulator = algoOpInformation[(int)*this->algoNumber][this->envNumber] == OPERATOR_MODULATOR;
         // loop trick : modulator enveloppe loop if release = 1:0
-        return isModulator && (envParamsB->releaseLevel == 1.0f) && (envParamsB->releaseTime == 0.0f);
+        return isModulator && (envLevel->releaseLevel == 1.0f) && (envTime->releaseTime == 0.0f);
     }
 
     void newState(struct EnvData* env) {
@@ -229,8 +202,8 @@ public:
 
     float noteOnAfterMatrixCompute(struct EnvData* env, Matrix* matrix) {
 
-        float attack = envParamsA->attackTime + matrix->getDestination((enum DestinationEnum)(ENV1_ATTACK + envNumber));
-        float decay = envParamsA->decayTime;
+        float attack = envTime->attackTime + matrix->getDestination((enum DestinationEnum)(ENV1_ATTACK + envNumber));
+        float decay = envTime->decayTime;
 
         if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_CARRIER) {
             attack += matrix->getDestination(ALL_ENV_ATTACK);
@@ -279,7 +252,7 @@ public:
 
     void noteOff(struct EnvData* env, Matrix* matrix) {
 
-        float release = envParamsB->releaseTime;
+        float release = envTime->releaseTime;
         if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_CARRIER) {
             release += matrix->getDestination(ALL_ENV_RELEASE);
         }
@@ -314,9 +287,9 @@ private:
     uint8_t nextState[ENV_NUMBER_OF_STATES];
     struct table tables[ENV_NUMBER_OF_STATES];
 
-    EnvelopeParamsA* envParamsA;
-    EnvelopeParamsB* envParamsB;
-    EnvCurveParams *envCurve;
+    EnvelopeTimeMemory* envTime;
+    EnvelopeLevelMemory* envLevel;
+    EnvelopeCurveParams *envCurve;
     
     uint8_t envNumber;
     float* algoNumber;

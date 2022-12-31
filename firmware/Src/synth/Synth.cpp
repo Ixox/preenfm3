@@ -612,41 +612,29 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
         case ROW_EFFECT:
             timbres_[timbre].setNewEffecParam(encoder);
             break;
-        case ROW_ENV1a:
+        case ROW_ENV1_TIME:
+        case ROW_ENV1_LEVEL:
             timbres_[timbre].env1_.reloadADSR(encoder);
             break;
-        case ROW_ENV1b:
-            timbres_[timbre].env1_.reloadADSR(encoder + 4);
-            break;
-        case ROW_ENV2a:
+        case ROW_ENV2_TIME:
+        case ROW_ENV2_LEVEL:
             timbres_[timbre].env2_.reloadADSR(encoder);
             break;
-        case ROW_ENV2b:
-            timbres_[timbre].env2_.reloadADSR(encoder + 4);
-            break;
-        case ROW_ENV3a:
+        case ROW_ENV3_TIME:
+        case ROW_ENV3_LEVEL:
             timbres_[timbre].env3_.reloadADSR(encoder);
             break;
-        case ROW_ENV3b:
-            timbres_[timbre].env3_.reloadADSR(encoder + 4);
-            break;
-        case ROW_ENV4a:
+        case ROW_ENV4_TIME:
+        case ROW_ENV4_LEVEL:
             timbres_[timbre].env4_.reloadADSR(encoder);
             break;
-        case ROW_ENV4b:
-            timbres_[timbre].env4_.reloadADSR(encoder + 4);
-            break;
-        case ROW_ENV5a:
+        case ROW_ENV5_TIME:
+        case ROW_ENV5_LEVEL:
             timbres_[timbre].env5_.reloadADSR(encoder);
             break;
-        case ROW_ENV5b:
-            timbres_[timbre].env5_.reloadADSR(encoder + 4);
-            break;
-        case ROW_ENV6a:
+        case ROW_ENV6_TIME:
+        case ROW_ENV6_LEVEL:
             timbres_[timbre].env6_.reloadADSR(encoder);
-            break;
-        case ROW_ENV6b:
-            timbres_[timbre].env6_.reloadADSR(encoder + 4);
             break;
         case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
             timbres_[timbre].verifyLfoUsed(encoder, oldValue, newValue);

@@ -709,8 +709,8 @@ void SynthState::randomizePreset() {
     }
 
     for (int e = 0; e < 6; e++) {
-        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*) &params->env1a)[e * 2];
-        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*) &params->env1b)[e * 2];
+        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*) &params->env1Time)[e * 2];
+        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*) &params->env1Level)[e * 2];
 
         switch (envelopeTypeRandom) {
         case 1:
@@ -864,7 +864,7 @@ void SynthState::randomizePreset() {
             }
         }
         for (int e = 0; e < 2; e++) {
-            struct EnvelopeParams* env = &((struct EnvelopeParams*) &params->lfoEnv1)[e];
+            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*) &params->lfoEnv1)[e];
             env->attack = getRandomFloat(0.05f, 1.0f);
             env->decay = getRandomFloat(0.05f, 1.0f);
             env->sustain = getRandomFloat(0.05f, 1.0f);

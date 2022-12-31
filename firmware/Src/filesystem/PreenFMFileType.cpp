@@ -302,126 +302,188 @@ void PreenFMFileType::sortFiles(struct PFM3File *bankFiles, int numberOfFiles) {
  *    engine1.monoPoly has a new value : 2 for unison
  *
  *********************************************************/
-void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *memory, bool saveArp) {
+void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *flashMemory, bool saveArp) {
     // Engines line
-    fsu_->copyFloat((float*) &params->engine1, (float*) &memory->engine1, 4);
-    fsu_->copyFloat((float*) &params->engine2, (float*) &memory->engine2, 4);
+    fsu_->copyFloat((float*) &params->engine1, (float*) &flashMemory->engine1, 4);
+    fsu_->copyFloat((float*) &params->engine2, (float*) &flashMemory->engine2, 4);
 
     // VERSION : 1.0
-    memory->engine2.pfm3Version = 1.0f;
+    flashMemory->engine2.pfm3Version = 1.0f;
 
 
     if (saveArp) {
-        fsu_->copyFloat((float*) &params->engineArp1, (float*) &memory->engineArp1, 4 * 2);
-        memory->engineArpUserPatterns = params->engineArpUserPatterns;
+        fsu_->copyFloat((float*) &params->engineArp1, (float*) &flashMemory->engineArp1, 4 * 2);
+        flashMemory->engineArpUserPatterns = params->engineArpUserPatterns;
     } else {
-        memory->engineArp1.clock = 0;
-        memory->engineArp1.BPM = 90;
-        memory->engineArp1.octave = 1;
-        memory->engineArp2.pattern = 2;
-        memory->engineArp2.division = 12;
-        memory->engineArp2.duration = 14;
-        memory->engineArp2.latche = 0;
-        for (int p = 0; p < ARRAY_SIZE(memory->engineArpUserPatterns.patterns); ++p)
-            memory->engineArpUserPatterns.patterns[p] = 0;
+        flashMemory->engineArp1.clock = 0;
+        flashMemory->engineArp1.BPM = 90;
+        flashMemory->engineArp1.octave = 1;
+        flashMemory->engineArp2.pattern = 2;
+        flashMemory->engineArp2.division = 12;
+        flashMemory->engineArp2.duration = 14;
+        flashMemory->engineArp2.latche = 0;
+        for (int p = 0; p < ARRAY_SIZE(flashMemory->engineArpUserPatterns.patterns); ++p)
+            flashMemory->engineArpUserPatterns.patterns[p] = 0;
     }
 
-    memory->flashEngineIm1.modulationIndex1 = params->engineIm1.modulationIndex1;
-    memory->flashEngineIm1.modulationIndex2 = params->engineIm1.modulationIndex2;
-    memory->flashEngineIm1.modulationIndex3 = params->engineIm2.modulationIndex3;
-    memory->flashEngineIm1.modulationIndex4 = params->engineIm2.modulationIndex4;
-    memory->flashEngineIm2.modulationIndex5 = params->engineIm3.modulationIndex5;
-    memory->flashEngineIm2.modulationIndex6 = params->engineIm3.modulationIndex6;
-    memory->flashEngineIm2.notUsed1 = 0.0f;
-    memory->flashEngineIm2.notUsed2 = 0.0f;
+    flashMemory->flashEngineIm1.modulationIndex1 = params->engineIm1.modulationIndex1;
+    flashMemory->flashEngineIm1.modulationIndex2 = params->engineIm1.modulationIndex2;
+    flashMemory->flashEngineIm1.modulationIndex3 = params->engineIm2.modulationIndex3;
+    flashMemory->flashEngineIm1.modulationIndex4 = params->engineIm2.modulationIndex4;
+    flashMemory->flashEngineIm2.modulationIndex5 = params->engineIm3.modulationIndex5;
+    flashMemory->flashEngineIm2.modulationIndex6 = params->engineIm3.modulationIndex6;
+    flashMemory->flashEngineIm2.notUsed1 = 0.0f;
+    flashMemory->flashEngineIm2.notUsed2 = 0.0f;
 
-    memory->flashEngineVeloIm1.modulationIndexVelo1 = params->engineIm1.modulationIndexVelo1;
-    memory->flashEngineVeloIm1.modulationIndexVelo2 = params->engineIm1.modulationIndexVelo2;
-    memory->flashEngineVeloIm1.modulationIndexVelo3 = params->engineIm2.modulationIndexVelo3;
-    memory->flashEngineVeloIm1.modulationIndexVelo4 = params->engineIm2.modulationIndexVelo4;
-    memory->flashEngineVeloIm2.modulationIndexVelo5 = params->engineIm3.modulationIndexVelo5;
-    memory->flashEngineVeloIm2.modulationIndexVelo6 = params->engineIm3.modulationIndexVelo6;
-    memory->flashEngineVeloIm2.notUsed1 = 0.0f;
-    memory->flashEngineVeloIm2.notUsed1 = 0.0f;
+    flashMemory->flashEngineVeloIm1.modulationIndexVelo1 = params->engineIm1.modulationIndexVelo1;
+    flashMemory->flashEngineVeloIm1.modulationIndexVelo2 = params->engineIm1.modulationIndexVelo2;
+    flashMemory->flashEngineVeloIm1.modulationIndexVelo3 = params->engineIm2.modulationIndexVelo3;
+    flashMemory->flashEngineVeloIm1.modulationIndexVelo4 = params->engineIm2.modulationIndexVelo4;
+    flashMemory->flashEngineVeloIm2.modulationIndexVelo5 = params->engineIm3.modulationIndexVelo5;
+    flashMemory->flashEngineVeloIm2.modulationIndexVelo6 = params->engineIm3.modulationIndexVelo6;
+    flashMemory->flashEngineVeloIm2.notUsed1 = 0.0f;
+    flashMemory->flashEngineVeloIm2.notUsed1 = 0.0f;
 
-    fsu_->copyFloat((float*) &params->engineMix1, (float*) &memory->engineMix1, 4 * 3);
-    fsu_->copyFloat((float*) &params->effect, (float*) &memory->effect, 4);
-    fsu_->copyFloat((float*) &params->osc1, (float*) &memory->osc1, 4 * 6);
-    fsu_->copyFloat((float*) &params->env1a, (float*) &memory->env1a, 4 * 6 * 2);
-    fsu_->copyFloat((float*) &params->env1Curve, (float*) &memory->env1Curve, 4 * 6 );
-    fsu_->copyFloat((float*) &params->matrixRowState1, (float*) &memory->matrixRowState1, 4 * 12);
-    fsu_->copyFloat((float*) &params->lfoOsc1, (float*) &memory->lfoOsc1, 4 * 3);
-    fsu_->copyFloat((float*) &params->lfoEnv1, (float*) &memory->lfoEnv1, 4);
-    fsu_->copyFloat((float*) &params->lfoEnv2, (float*) &memory->lfoEnv2, 4);
-    fsu_->copyFloat((float*) &params->lfoSeq1, (float*) &memory->lfoSeq1, 4 * 2);
+    fsu_->copyFloat((float*) &params->engineMix1, (float*) &flashMemory->engineMix1, 4 * 3);
+    fsu_->copyFloat((float*) &params->effect, (float*) &flashMemory->effect, 4);
+    fsu_->copyFloat((float*) &params->osc1, (float*) &flashMemory->osc1, 4 * 6);
 
-    fsu_->copyFloat((float*) &params->midiNote1Curve, (float*) &memory->midiNote1Curve, 4);
-    fsu_->copyFloat((float*) &params->midiNote2Curve, (float*) &memory->midiNote2Curve, 4);
-    fsu_->copyFloat((float*) &params->lfoPhases, (float*) &memory->lfoPhases, 4);
+
+    // Copy env time and levels from new memory mapping (31/12/2022)
+    const EnvelopeTimeMemory* envTime = &params->env1Time;
+    const EnvelopeLevelMemory* envLevel = &params->env1Level;
+    float* envFlashFloat = (float*) &flashMemory->env1a;
+    for (int e = 0; e < 6; e++) {
+        envFlashFloat[e * 8] = envTime[e].attackTime;
+        envFlashFloat[e * 8 + 2] = envTime[e].decayTime;
+        envFlashFloat[e * 8 + 4] = envTime[e].sustainTime;
+        envFlashFloat[e * 8 + 6] = envTime[e].releaseTime;
+
+        envFlashFloat[e * 8 + 1] = envLevel[e].attackLevel;
+        envFlashFloat[e * 8 + 3] = envLevel[e].decayLevel;
+        envFlashFloat[e * 8 + 5] = envLevel[e].sustainLevel;
+        envFlashFloat[e * 8 + 6] = envLevel[e].releaseLevel;
+    }
+
+
+    // copy envCurve to int8_t flash memory
+    const EnvelopeCurveParams* envCurveParam = &params->env1Curve;
+    uint8_t* envFlashUint8 = (uint8_t*) &flashMemory->envCurves1To4;
+    for (int e = 0; e < 6; e++) {
+        envFlashUint8[e * 4 + 0] = (uint8_t)envCurveParam[e].curveAttack;
+        envFlashUint8[e * 4 + 1] = (uint8_t)envCurveParam[e].curveDecay;
+        envFlashUint8[e * 4 + 2] = (uint8_t)envCurveParam[e].curveRelease;
+        envFlashUint8[e * 4 + 3] = (uint8_t)envCurveParam[e].curveSustain;
+    }
+
+    fsu_->copyFloat((float*) &params->matrixRowState1, (float*) &flashMemory->matrixRowState1, 4 * 12);
+    fsu_->copyFloat((float*) &params->lfoOsc1, (float*) &flashMemory->lfoOsc1, 4 * 3);
+    fsu_->copyFloat((float*) &params->lfoEnv1, (float*) &flashMemory->lfoEnv1, 4);
+    fsu_->copyFloat((float*) &params->lfoEnv2, (float*) &flashMemory->lfoEnv2, 4);
+    fsu_->copyFloat((float*) &params->lfoSeq1, (float*) &flashMemory->lfoSeq1, 4 * 2);
+
+    fsu_->copyFloat((float*) &params->midiNote1Curve, (float*) &flashMemory->midiNote1Curve, 4);
+    fsu_->copyFloat((float*) &params->midiNote2Curve, (float*) &flashMemory->midiNote2Curve, 4);
+    fsu_->copyFloat((float*) &params->lfoPhases, (float*) &flashMemory->lfoPhases, 4);
 
 
     for (int s = 0; s < 16; s++) {
-        memory->lfoSteps1.steps[s] = params->lfoSteps1.steps[s];
-        memory->lfoSteps2.steps[s] = params->lfoSteps2.steps[s];
+        flashMemory->lfoSteps1.steps[s] = params->lfoSteps1.steps[s];
+        flashMemory->lfoSteps2.steps[s] = params->lfoSteps2.steps[s];
     }
     for (int s = 0; s < 13; s++) {
-        memory->presetName[s] = params->presetName[s];
+        flashMemory->presetName[s] = params->presetName[s];
     }
 }
 
-inline int iszero(void * ptr, int bytes )
-{
-   char * bptr = (char*)ptr;
-   while( bytes-- )
-     if( *bptr++ )
-         return 0;
-  return 1;
+inline int iszero(void *ptr, int bytes) {
+    char *bptr = (char*) ptr;
+    while (bytes--)
+        if (*bptr++)
+            return 0;
+    return 1;
 }
 
-void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory, struct OneSynthParams *params, bool loadArp) {
+void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashMemory, struct OneSynthParams *params, bool loadArp) {
     // First engine line
-    fsu_->copyFloat((float*) &memory->engine1, (float*) &params->engine1, 4);
-    fsu_->copyFloat((float*) &memory->engine2, (float*) &params->engine2, 4);
+    fsu_->copyFloat((float*) &flashMemory->engine1, (float*) &params->engine1, 4);
+    fsu_->copyFloat((float*) &flashMemory->engine2, (float*) &params->engine2, 4);
 
     if (loadArp) {
-        fsu_->copyFloat((float*) &memory->engineArp1, (float*) &params->engineArp1, 4 * 2);
-        params->engineArpUserPatterns = memory->engineArpUserPatterns;
+        fsu_->copyFloat((float*) &flashMemory->engineArp1, (float*) &params->engineArp1, 4 * 2);
+        params->engineArpUserPatterns = flashMemory->engineArpUserPatterns;
     }
 
-    params->engineIm1.modulationIndex1 = memory->flashEngineIm1.modulationIndex1;
-    params->engineIm1.modulationIndex2 = memory->flashEngineIm1.modulationIndex2;
-    params->engineIm2.modulationIndex3 = memory->flashEngineIm1.modulationIndex3;
-    params->engineIm2.modulationIndex4 = memory->flashEngineIm1.modulationIndex4;
-    params->engineIm3.modulationIndex5 = memory->flashEngineIm2.modulationIndex5;
-    params->engineIm3.modulationIndex6 = memory->flashEngineIm2.modulationIndex6;
-    params->engineIm1.modulationIndexVelo1 = memory->flashEngineVeloIm1.modulationIndexVelo1;
-    params->engineIm1.modulationIndexVelo2 = memory->flashEngineVeloIm1.modulationIndexVelo2;
-    params->engineIm2.modulationIndexVelo3 = memory->flashEngineVeloIm1.modulationIndexVelo3;
-    params->engineIm2.modulationIndexVelo4 = memory->flashEngineVeloIm1.modulationIndexVelo4;
-    params->engineIm3.modulationIndexVelo5 = memory->flashEngineVeloIm2.modulationIndexVelo5;
-    params->engineIm3.modulationIndexVelo6 = memory->flashEngineVeloIm2.modulationIndexVelo6;
+    params->engineIm1.modulationIndex1 = flashMemory->flashEngineIm1.modulationIndex1;
+    params->engineIm1.modulationIndex2 = flashMemory->flashEngineIm1.modulationIndex2;
+    params->engineIm2.modulationIndex3 = flashMemory->flashEngineIm1.modulationIndex3;
+    params->engineIm2.modulationIndex4 = flashMemory->flashEngineIm1.modulationIndex4;
+    params->engineIm3.modulationIndex5 = flashMemory->flashEngineIm2.modulationIndex5;
+    params->engineIm3.modulationIndex6 = flashMemory->flashEngineIm2.modulationIndex6;
+    params->engineIm1.modulationIndexVelo1 = flashMemory->flashEngineVeloIm1.modulationIndexVelo1;
+    params->engineIm1.modulationIndexVelo2 = flashMemory->flashEngineVeloIm1.modulationIndexVelo2;
+    params->engineIm2.modulationIndexVelo3 = flashMemory->flashEngineVeloIm1.modulationIndexVelo3;
+    params->engineIm2.modulationIndexVelo4 = flashMemory->flashEngineVeloIm1.modulationIndexVelo4;
+    params->engineIm3.modulationIndexVelo5 = flashMemory->flashEngineVeloIm2.modulationIndexVelo5;
+    params->engineIm3.modulationIndexVelo6 = flashMemory->flashEngineVeloIm2.modulationIndexVelo6;
 
-    fsu_->copyFloat((float*) &memory->engineMix1, (float*) &params->engineMix1, 4 * 3);
-    fsu_->copyFloat((float*) &memory->effect, (float*) &params->effect, 4);
-    fsu_->copyFloat((float*) &memory->osc1, (float*) &params->osc1, 4 * 6);
-    fsu_->copyFloat((float*) &memory->env1a, (float*) &params->env1a, 4 * 6 * 2);
-    fsu_->copyFloat((float*) &memory->env1Curve, (float*) &params->env1Curve, 4 * 6 );
-    fsu_->copyFloat((float*) &memory->matrixRowState1, (float*) &params->matrixRowState1, 4 * 12);
-    fsu_->copyFloat((float*) &memory->lfoOsc1, (float*) &params->lfoOsc1, 4 * 3);
-    fsu_->copyFloat((float*) &memory->lfoEnv1, (float*) &params->lfoEnv1, 4);
-    fsu_->copyFloat((float*) &memory->lfoEnv2, (float*) &params->lfoEnv2, 4);
-    fsu_->copyFloat((float*) &memory->lfoSeq1, (float*) &params->lfoSeq1, 4 * 2);
+    fsu_->copyFloat((float*) &flashMemory->engineMix1, (float*) &params->engineMix1, 4 * 3);
+    fsu_->copyFloat((float*) &flashMemory->effect, (float*) &params->effect, 4);
+    fsu_->copyFloat((float*) &flashMemory->osc1, (float*) &params->osc1, 4 * 6);
 
-    fsu_->copyFloat((float*) &memory->lfoPhases, (float*) &params->lfoPhases, 4);
-    fsu_->copyFloat((float*) &memory->midiNote1Curve, (float*) &params->midiNote1Curve, 4);
-    fsu_->copyFloat((float*) &memory->midiNote2Curve, (float*) &params->midiNote2Curve, 4);
+    // Copy env time and levels to new memory mapping (31/12/2022)
+    EnvelopeTimeMemory* envTime = &params->env1Time;
+    EnvelopeLevelMemory* envLevel = &params->env1Level;
+    float* envFlashFloat = (float*) &flashMemory->env1a;
+    for (int e = 0; e < 6; e++) {
+        envTime[e].attackTime  = envFlashFloat[e * 8];
+        envTime[e].decayTime   = envFlashFloat[e * 8 + 2];
+        envTime[e].sustainTime = envFlashFloat[e * 8 + 4];
+        envTime[e].releaseTime = envFlashFloat[e * 8 + 6];
+
+        envLevel[e].attackLevel  = envFlashFloat[e * 8 + 1];
+        envLevel[e].decayLevel   = envFlashFloat[e * 8 + 3];
+        envLevel[e].sustainLevel = envFlashFloat[e * 8 + 5];
+        envLevel[e].releaseLevel = envFlashFloat[e * 8 + 7];
+    }
+
+    // copy envCurve from int8_t flash memory
+    EnvelopeCurveParams* envCurveParam = &params->env1Curve;
+    uint8_t* envFlashUint8 = (uint8_t*) &flashMemory->envCurves1To4;
+
+    if (iszero(envFlashUint8, 24)) {
+        // Set default env curve if not initialized
+        for (int e = 0; e < 6; e++) {
+            envCurveParam[e].curveAttack  = 1.0f;
+            envCurveParam[e].curveDecay   = 0.0f;
+            envCurveParam[e].curveRelease = 1.0f;
+            envCurveParam[e].curveSustain = 0.0f;
+        }
+    } else {
+        for (int e = 0; e < 6; e++) {
+            envCurveParam[e].curveAttack  = (float)envFlashUint8[e * 4 + 0];
+            envCurveParam[e].curveDecay   = (float)envFlashUint8[e * 4 + 1];
+            envCurveParam[e].curveRelease = (float)envFlashUint8[e * 4 + 2];
+            envCurveParam[e].curveSustain = (float)envFlashUint8[e * 4 + 3];
+        }
+    }
+
+    fsu_->copyFloat((float*) &flashMemory->matrixRowState1, (float*) &params->matrixRowState1, 4 * 12);
+    fsu_->copyFloat((float*) &flashMemory->lfoOsc1, (float*) &params->lfoOsc1, 4 * 3);
+    fsu_->copyFloat((float*) &flashMemory->lfoEnv1, (float*) &params->lfoEnv1, 4);
+    fsu_->copyFloat((float*) &flashMemory->lfoEnv2, (float*) &params->lfoEnv2, 4);
+    fsu_->copyFloat((float*) &flashMemory->lfoSeq1, (float*) &params->lfoSeq1, 4 * 2);
+
+    fsu_->copyFloat((float*) &flashMemory->lfoPhases, (float*) &params->lfoPhases, 4);
+    fsu_->copyFloat((float*) &flashMemory->midiNote1Curve, (float*) &params->midiNote1Curve, 4);
+    fsu_->copyFloat((float*) &flashMemory->midiNote2Curve, (float*) &params->midiNote2Curve, 4);
 
     for (int s = 0; s < 16; s++) {
-        params->lfoSteps1.steps[s] = memory->lfoSteps1.steps[s];
-        params->lfoSteps2.steps[s] = memory->lfoSteps2.steps[s];
+        params->lfoSteps1.steps[s] = flashMemory->lfoSteps1.steps[s];
+        params->lfoSteps2.steps[s] = flashMemory->lfoSteps2.steps[s];
     }
     for (int s = 0; s < 13; s++) {
-        params->presetName[s] = memory->presetName[s];
+        params->presetName[s] = flashMemory->presetName[s];
     }
 
     params->performance1.perf1 = 0.0f;
@@ -429,7 +491,7 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
     params->performance1.perf3 = 0.0f;
     params->performance1.perf4 = 0.0f;
 
-    // Initialized not initialize params in memory
+    // Initialized not initialize params in flashMemory
     if (params->engineArp1.BPM < 10) {
         params->engineArp1.clock = 0;
         params->engineArp1.BPM = 90;
@@ -444,16 +506,6 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *memory
         params->effect.param1 = 0.5f;
         params->effect.param2 = 0.5f;
         params->effect.param3 = 1.0f;
-    }
-
-    // Set default env curve if not initialized
-    if(iszero(&params->env1Curve, 24)) {
-        params->env1Curve = {1, 0, 1, 0};
-        params->env2Curve = {1, 0, 1, 0};
-        params->env3Curve = {1, 0, 1, 0};
-        params->env4Curve = {1, 0, 1, 0};
-        params->env5Curve = {1, 0, 1, 0};
-        params->env6Curve = {1, 0, 1, 0};
     }
 
     if (params->midiNote1Curve.breakNote == 0.0f && params->midiNote1Curve.curveAfter == 0.0f && params->midiNote1Curve.curveBefore == 0.0f) {

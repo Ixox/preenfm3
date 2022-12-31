@@ -16,10 +16,10 @@
  */
 
 
+#include <FirmwareTftDisplay.h.KO>
 #include "FMDisplayEditor.h"
 #include "FMDisplay.h"
 #include "SynthState.h"
-#include "TftDisplay.h"
 #include "preenfm3.h"
 
 extern bool carrierOperator[28][6];
@@ -642,15 +642,8 @@ struct ParameterRowDisplay engineMix3ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *envCurveNames[] = {
-    "Exp ",
-    "Lin ",
-    "Log ",
-    "Usr1",
-    "Usr2",
-    "Usr3",
-    "Usr4"
-    };
+const char *envCurveNames[] = { "Exp ", "Lin ", "Log ", "Usr1", "Usr2", "Usr3",
+        "Usr4" };
 
 struct ParameterRowDisplay engineCurveParameterRow = {
     "Curve",
@@ -748,107 +741,15 @@ struct ParameterRowDisplay engineCurveParameterRow = {
  48  Alkx, -48-
  */
 
-const unsigned char filtersOrder[] = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    38,
-    39,
-    40,
-    46,
-    47,
-    22,
-    7,
-    8,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    23,
-    24,
-    25,
-    26,
-    32,
-    33,
-    34,
-    35,
-    36,
-    37,
-    41,
-    42,
-    9,
-    43,
-    44,
-    45,
-    27,
-    28,
-    29,
-    30,
-    31,
-    48 };
+const unsigned char filtersOrder[] = { 0, 1, 2, 3, 4, 5, 6, 38, 39, 40, 46, 47,
+        22, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25,
+        26, 32, 33, 34, 35, 36, 37, 41, 42, 9, 43, 44, 45, 27, 28, 29, 30, 31,
+        48 };
 
-const unsigned char filtersPosition[] = {
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    13,
-    14,
-    39,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    24,
-    25,
-    26,
-    12,
-    27,
-    28,
-    29,
-    30,
-    43,
-    44,
-    45,
-    46,
-    47,
-    31,
-    32,
-    33,
-    34,
-    35,
-    36,
-    7,
-    8,
-    9,
-    37,
-    38,
-    40,
-    41,
-    42,
-    10,
-    11,
-    48 };
+const unsigned char filtersPosition[] = { 0, 1, 2, 3, 4, 5, 6, 13, 14, 39, 15,
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 12, 27, 28, 29, 30, 43, 44,
+        45, 46, 47, 31, 32, 33, 34, 35, 36, 7, 8, 9, 37, 38, 40, 41, 42, 10, 11,
+        48 };
 
 const char *fxName[] = {
     "Off ", /*  0   */
@@ -1242,13 +1143,13 @@ struct ParameterRowDisplay oscParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-struct ParameterRowDisplay envParameterRow1 = {
-    "Env A",
+struct ParameterRowDisplay envParameterTime = {
+    "Env T",
     {
         "Attk",
-        "lv  ",
         "Deca",
-        "lv  " },
+        "Rele",
+        "Sust" },
     {
         {
             0,
@@ -1260,8 +1161,8 @@ struct ParameterRowDisplay envParameterRow1 = {
             nullNamesOrder },
         {
             0,
-            1,
-            101,
+            16,
+            1601,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
@@ -1276,25 +1177,25 @@ struct ParameterRowDisplay envParameterRow1 = {
             nullNamesOrder },
         {
             0,
-            1,
-            101,
+            16,
+            1601,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
 
-struct ParameterRowDisplay envParameterRow2 = {
-    "Env B",
+struct ParameterRowDisplay envParameterLevel = {
+    "Env L",
     {
-        "Sust",
-        "lv  ",
+        "Attk",
+        "Deca",
         "Rele",
-        "lv  " },
+        "Sust" },
     {
         {
             0,
-            16,
-            1601,
+            1,
+            101,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
@@ -1309,8 +1210,8 @@ struct ParameterRowDisplay envParameterRow2 = {
             nullNamesOrder },
         {
             0,
-            16,
-            1601,
+            1,
+            101,
             DISPLAY_TYPE_FLOAT,
             nullNames,
             nullNamesOrder,
@@ -1825,18 +1726,18 @@ struct AllParameterRowsDisplay allParameterRows = {
         &oscParameterRow,
         &oscParameterRow,
         &oscParameterRow,
-        &envParameterRow1,
-        &envParameterRow2,
-        &envParameterRow1,
-        &envParameterRow2,
-        &envParameterRow1,
-        &envParameterRow2,
-        &envParameterRow1,
-        &envParameterRow2,
-        &envParameterRow1,
-        &envParameterRow2,
-        &envParameterRow1,
-        &envParameterRow2,
+        &envParameterTime,
+        &envParameterTime,
+        &envParameterTime,
+        &envParameterTime,
+        &envParameterTime,
+        &envParameterTime,
+        &envParameterLevel,
+        &envParameterLevel,
+        &envParameterLevel,
+        &envParameterLevel,
+        &envParameterLevel,
+        &envParameterLevel,
         &matrixParameterRow,
         &matrixParameterRow,
         &matrixParameterRow,
@@ -2123,23 +2024,23 @@ const struct Pfm3OneButtonState pfm3ButtonOPEnvLevel = {
     "Env Level",
     {
         {
-            ROW_ENV1a,
-            ENCODER_ENV_A_LVL },
+            ROW_ENV1_LEVEL,
+            ENCODER_ENV_A },
         {
-            ROW_ENV1a,
-            ENCODER_ENV_D_LVL },
+            ROW_ENV1_LEVEL,
+            ENCODER_ENV_D },
         {
-            ROW_ENV1b,
-            ENCODER_ENV_S_LVL },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
+            ROW_ENV1_LEVEL,
+            ENCODER_ENV_S },
         {
             ROW_NONE,
             ENCODER_NONE },
         {
-            ROW_ENV1b,
-            ENCODER_ENV_R_LVL }
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_ENV1_LEVEL,
+            ENCODER_ENV_R }
     } };
 
 const struct Pfm3OneButton pfm3ButtonOPEnv2 = {
@@ -2154,13 +2055,13 @@ const struct Pfm3OneButtonState pfm3ButtonOPEnvTime = {
     "Env Time",
     {
         {
-            ROW_ENV1a,
+            ROW_ENV1_TIME,
             ENCODER_ENV_A },
         {
-            ROW_ENV1a,
+            ROW_ENV1_TIME,
             ENCODER_ENV_D },
         {
-            ROW_ENV1b,
+            ROW_ENV1_TIME,
             ENCODER_ENV_S },
         {
             ROW_NONE,
@@ -2169,7 +2070,7 @@ const struct Pfm3OneButtonState pfm3ButtonOPEnvTime = {
             ROW_NONE,
             ENCODER_NONE },
         {
-            ROW_ENV1b,
+            ROW_ENV1_TIME,
             ENCODER_ENV_R }
     } };
 
@@ -2975,32 +2876,32 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             case ROW_OSC6:
                 rowToTest = ROW_OSC1;
                 break;
-            case ROW_ENV1a:
-            case ROW_ENV2a:
-            case ROW_ENV3a:
-            case ROW_ENV4a:
-            case ROW_ENV5a:
-            case ROW_ENV6a: {
-                int op = (currentRow - ROW_ENV1a) >> 1;
+            case ROW_ENV1_TIME:
+            case ROW_ENV2_TIME:
+            case ROW_ENV3_TIME:
+            case ROW_ENV4_TIME:
+            case ROW_ENV5_TIME:
+            case ROW_ENV6_TIME: {
+                int op = currentRow - ROW_ENV1_TIME;
                 // This mean we used MENU + encoder, so some new value must not be displayed
                 if (op != synthState_->fullState.operatorNumber) {
                     return;
                 }
-                rowToTest = ROW_ENV1a;
+                rowToTest = ROW_ENV1_TIME;
                 break;
             }
-            case ROW_ENV1b:
-            case ROW_ENV2b:
-            case ROW_ENV3b:
-            case ROW_ENV4b:
-            case ROW_ENV5b:
-            case ROW_ENV6b: {
-                int op = (currentRow - ROW_ENV1b) >> 1;
+            case ROW_ENV1_LEVEL:
+            case ROW_ENV2_LEVEL:
+            case ROW_ENV3_LEVEL:
+            case ROW_ENV4_LEVEL:
+            case ROW_ENV5_LEVEL:
+            case ROW_ENV6_LEVEL: {
+                int op = currentRow - ROW_ENV1_LEVEL;
                 // This mean we used MENU + encoder, so some new value must not be displayed
                 if (op != synthState_->fullState.operatorNumber) {
                     return;
                 }
-                rowToTest = ROW_ENV1b;
+                rowToTest = ROW_ENV1_LEVEL;
                 break;
             }
             case ROW_ENV1_CURVE:
@@ -3116,18 +3017,18 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             }
             break;
         }
-        case ROW_ENV1a:
-        case ROW_ENV1b:
-        case ROW_ENV2a:
-        case ROW_ENV2b:
-        case ROW_ENV3a:
-        case ROW_ENV3b:
-        case ROW_ENV4a:
-        case ROW_ENV4b:
-        case ROW_ENV5a:
-        case ROW_ENV5b:
-        case ROW_ENV6a:
-        case ROW_ENV6b:
+        case ROW_ENV1_TIME:
+        case ROW_ENV1_LEVEL:
+        case ROW_ENV2_TIME:
+        case ROW_ENV2_LEVEL:
+        case ROW_ENV3_TIME:
+        case ROW_ENV3_LEVEL:
+        case ROW_ENV4_TIME:
+        case ROW_ENV4_LEVEL:
+        case ROW_ENV5_TIME:
+        case ROW_ENV5_LEVEL:
+        case ROW_ENV6_TIME:
+        case ROW_ENV6_LEVEL:
             refreshOscillatorOperatorEnvelope();
             break;
         case ROW_LFOPHASES:
@@ -3160,11 +3061,6 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
     uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
     const struct RowEncoder rowEncoder = page->states[buttonState]->rowEncoder[encoder];
-    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
-    if(synthState_->fullState.editPage == 1  && buttonState == 1) {
-        // env curve page
-        multiplier = 1;
-    }
 
     uint8_t x = getX(encoder);
 
@@ -3174,7 +3070,7 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
         int row = rowEncoder.row;
         // Operator page
         if (synthState_->fullState.mainPage == 1) {
-            row += synthState_->fullState.operatorNumber * multiplier;
+            row += synthState_->fullState.operatorNumber;
         }
 
         struct ParameterDisplay *param = &allParameterRows.row[row]->params[rowEncoder.encoder];
@@ -3731,17 +3627,6 @@ void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
     encoderTurnedPfm2(row, encoder4, ticks);
 }
 
-int FMDisplayEditor::getEditPageMultiplier() {
-    const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
-    const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
-    uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
-    int multiplier = synthState_->fullState.editPage == 0 ? 1 : 2;
-    if(synthState_->fullState.editPage == 1  && buttonState == 1) {
-        // env curve page
-        multiplier = 1;
-    }
-    return multiplier;
-}
 
 /*
  * In some case we want to shortcut the Operator row calculation case
@@ -3762,11 +3647,10 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
     int num;
     struct ParameterDisplay *param;
     if (unlikely(synthState_->fullState.mainPage == 1) && specialOpCase) {
-        int multiplier = getEditPageMultiplier();
         // operator is a bit different with PFM3
-        num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
-        param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber * multiplier]->params[encoder4]);
-        row += synthState_->fullState.operatorNumber * multiplier;
+        num = encoder4 + (row + synthState_->fullState.operatorNumber) * NUMBER_OF_ENCODERS_PFM2;
+        param = &(allParameterRows.row[row + synthState_->fullState.operatorNumber]->params[encoder4]);
+        row += synthState_->fullState.operatorNumber;
     } else if (unlikely(encoder4 == ENCODER_MODULATOR_SYNC_LFO)) {
         // Simulate we're Osc freq
         int lfoButtonState = synthState_->fullState.buttonState[BUTTONID_EDIT_LFOS];
@@ -3928,8 +3812,7 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 
         // Operator is a special case for row
         if (unlikely(synthState_->fullState.mainPage == 1)) {
-            int multiplier = getEditPageMultiplier();
-            rowEncoder.row += synthState_->fullState.operatorNumber * multiplier;
+            rowEncoder.row += synthState_->fullState.operatorNumber;
         }
 
         struct ParameterDisplay *param = &(allParameterRows.row[rowEncoder.row]->params[rowEncoder.encoder]);
@@ -3960,22 +3843,21 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 
         // Operator is a special case for row
         if (unlikely(synthState_->fullState.mainPage == 1)) {
-            int multiplier = getEditPageMultiplier();
-            rowEncoder.row += synthState_->fullState.operatorNumber * multiplier;
+            rowEncoder.row += synthState_->fullState.operatorNumber;
         }
 
         int row = rowEncoder.row;
         int encoder4 = rowEncoder.encoder;
 
         // Modify param of all operator of same types.
-        if (row >= ROW_ENV1a && row <= ROW_ENV6b) {
-            int firstRow = ROW_ENV1a;
-            int envBBit = ROW_ENV1b & 0x1;
+        if (row >= ROW_ENV1_TIME && row <= ROW_ENV6_LEVEL) {
+            int firstRow = ROW_ENV1_TIME;
+            int envBBit = ROW_ENV1_LEVEL & 0x1;
             if ((row & 0x1) == envBBit) {
-                firstRow = ROW_ENV1b;
+                firstRow = ROW_ENV1_LEVEL;
             }
             int currentAlgo = (int)synthState_->params->engine1.algo;
-            int currentOpType = algoOpInformation[currentAlgo][(row - ROW_ENV1a) >> 1];
+            int currentOpType = algoOpInformation[currentAlgo][(row - ROW_ENV1_TIME) >> 1];
 
             for (int op = 0; op < NUMBER_OF_OPERATORS; op++) {
                 if (currentOpType == algoOpInformation[currentAlgo][op]) {
@@ -4046,7 +3928,7 @@ void FMDisplayEditor::buttonPressed(int button) {
                 break;
             }
             if (unlikely(isInOperatorPage() && button >= BUTTON_PFM3_4 && button <= BUTTON_PFM3_6)) {
-                // Operator page
+                // Operator page : button 4 to 6 change the current operator
                 uint8_t buttonSelected = (button - BUTTON_PFM3_4);
                 uint8_t currentButton = synthState_->fullState.operatorNumber >> 1;
                 int buttonId = BUTTONID_OPERATOR_1_2 + buttonSelected;
@@ -4114,8 +3996,7 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
                 int row = rowEncoder.row;
                 int num;
                 if (isInOperatorPage()) {
-                    int multiplier = getEditPageMultiplier();
-                    num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
+                    num = encoder4 + (row + synthState_->fullState.operatorNumber) * NUMBER_OF_ENCODERS_PFM2;
                 } else {
                     num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
                 }
@@ -4139,8 +4020,7 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
                 int row = rowEncoder.row;
                 int num;
                 if (isInOperatorPage()) {
-                    int multiplier = getEditPageMultiplier();
-                    num = encoder4 + (row + synthState_->fullState.operatorNumber * multiplier) * NUMBER_OF_ENCODERS_PFM2;
+                    num = encoder4 + (row + synthState_->fullState.operatorNumber) * NUMBER_OF_ENCODERS_PFM2;
                 } else {
                     num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
                 }
@@ -4175,11 +4055,10 @@ void FMDisplayEditor::refreshOscillatorOperatorShape() {
 
 void FMDisplayEditor::refreshOscillatorOperatorEnvelope() {
     int op = synthState_->fullState.operatorNumber;
-    EnvelopeParamsA *envParamA = &synthState_->params->env1a;
-    EnvelopeParamsB *envParamB = &synthState_->params->env1b;
-    tft_->oscilloBgSetEnvelope(envParamA[op * 2].attackTime, envParamA[op * 2].decayTime, envParamB[op * 2].sustainTime,
-        envParamB[op * 2].releaseTime, envParamA[op * 2].attackLevel, envParamA[op * 2].decayLevel,
-        envParamB[op * 2].sustainLevel, envParamB[op * 2].releaseLevel);
+    EnvelopeTimeMemory *envTime = &synthState_->params->env1Time;
+    EnvelopeLevelMemory *envLevel = &synthState_->params->env1Level;
+    tft_->oscilloBgSetEnvelope(envTime[op].attackTime, envTime[op].decayTime, envTime[op].sustainTime, envTime[op].releaseTime,
+            envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel);
     tft_->oscilloBgActionEnvelope();
 }
 
@@ -4210,12 +4089,12 @@ void FMDisplayEditor::refreshLfoEnv() {
     uint8_t envNumber = synthState_->fullState.buttonState[page->buttonId];
 
     if (envNumber == 0) {
-        EnvelopeParams *envParam = &synthState_->params->lfoEnv1;
+        EnvelopeLfoParams *envParam = &synthState_->params->lfoEnv1;
         tft_->oscilloBgSetLfoEnvelope(envParam->attack, envParam->decay, 1.0f, envParam->release, 1.0f,
             envParam->sustain, envParam->sustain, 0.0f);
         tft_->oscilloBgActionEnvelope();
     } else if (envNumber == 1) {
-        Envelope2Params *envParam = &synthState_->params->lfoEnv2;
+        Envelope2LfoParams *envParam = &synthState_->params->lfoEnv2;
         tft_->oscilloBgSetLfoEnvelope(envParam->silence, envParam->attack, envParam->decay, 0.0f, 0.0f, 1.0f, 0.0f,
             0.0f);
         tft_->oscilloBgActionEnvelope();
