@@ -180,12 +180,12 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
 
     mixerState_ = &synthState->mixerState;
 
-    env1_.init(&params_.env1a, &params_.env1b, 0, &params_.engine1.algo, &params_.env1Curve);
-    env2_.init(&params_.env2a, &params_.env2b, 1, &params_.engine1.algo, &params_.env2Curve);
-    env3_.init(&params_.env3a, &params_.env3b, 2, &params_.engine1.algo, &params_.env3Curve);
-    env4_.init(&params_.env4a, &params_.env4b, 3, &params_.engine1.algo, &params_.env4Curve);
-    env5_.init(&params_.env5a, &params_.env5b, 4, &params_.engine1.algo, &params_.env5Curve);
-    env6_.init(&params_.env6a, &params_.env6b, 5, &params_.engine1.algo, &params_.env6Curve);
+    env1_.init(&params_.env1Time, &params_.env1Level, 0, &params_.engine1.algo, &params_.env1Curve);
+    env2_.init(&params_.env2Time, &params_.env2Level, 1, &params_.engine1.algo, &params_.env2Curve);
+    env3_.init(&params_.env3Time, &params_.env3Level, 2, &params_.engine1.algo, &params_.env3Curve);
+    env4_.init(&params_.env4Time, &params_.env4Level, 3, &params_.engine1.algo, &params_.env4Curve);
+    env5_.init(&params_.env5Time, &params_.env5Level, 4, &params_.engine1.algo, &params_.env5Curve);
+    env6_.init(&params_.env6Time, &params_.env6Level, 5, &params_.engine1.algo, &params_.env6Curve);
 
     osc1_.init(synthState, &params_.osc1, OSC1_FREQ);
     osc2_.init(synthState, &params_.osc2, OSC2_FREQ);
@@ -718,7 +718,7 @@ void Timbre::afterNewParamsLoad() {
         voices_[voiceNumber_[k]]->afterNewParamsLoad();
     }
 
-    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2 * 2; j++) {
+    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
         env1_.reloadADSR(j);
         env2_.reloadADSR(j);
         env3_.reloadADSR(j);

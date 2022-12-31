@@ -199,6 +199,7 @@ private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
     void oscilloBgDrawEnvelope();
     void oscilloBgDrawLfo();
+    void oscilloFillWithRand(int randtype);
     void oscilloBgDrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 
     RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions;

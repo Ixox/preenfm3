@@ -41,7 +41,7 @@ class LfoEnv2: public Lfo {
 public:
     LfoEnv2();
 
-	void init(struct Envelope2Params * envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest);
+	void init(struct Envelope2LfoParams * envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
 	void valueChanged(int encoder) {
         switch (encoder) {
@@ -118,7 +118,7 @@ private:
     // float
     float stateInc[ENV2_NUMBER_OF_STATES];
 
-    Envelope2Params* envParams;
+    Envelope2LfoParams* envParams;
 	EnvData env;
 };
 

@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include "stm32h7xx_hal.h"
+#include "stm32h7xx_hal_rng.h"
 #include "TftDisplay.h"
 #include "ili9341.h"
 
@@ -34,6 +35,7 @@ RAM_D1_SECTION uint16_t tftBackground[42860 * 2];
 RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 
 extern DMA2D_HandleTypeDef hdma2d;
+extern RNG_HandleTypeDef hrng;
 
 
 #define PFM_IS_DMA2D_READY() (hdma2d.Instance->CR & DMA2D_CR_START) == 0
@@ -1559,6 +1561,66 @@ void TftDisplay::oscilloBgDrawEnvelope() {
 }
 
 
+
+
+/*
+ * randType == 0 : random
+ * randType == 1 : Brownian
+ * randType == 2 : Wandering
+ * randType == 3 : Flow
+ */
+void TftDisplay::oscilloFillWithRand(int randtype) {
+    // Rand
+    uint32_t random32bit = HAL_RNG_ReadLastRandomNumber(&hrng);
+    if (random32bit == 0) {
+        random32bit = 0b10101101110001101110010010010011;
+    }
+    float incIndex = 1.0f / 160.0f * oscilParams1[1];
+    float sample = 0.0f;
+    float nextSample = 0.0f;
+    float sampleLp = 0.0f;
+    int8_t sampleInt;
+
+    // Adjust to enter index>1 condition when x==0
+    float index = oscilParams1[4] + 1.0f - incIndex;
+
+    for (int x = 0; x < 160; x++) {
+        index += incIndex;
+
+        if (unlikely(index >= 1.0f))  {
+            index -= 1.0f;
+            random32bit = 214013 * random32bit + 2531011;
+            sample =  ((float) ((random32bit & 0xff)) * 0.00784313725f - 1.0f) * 48;
+            switch (randtype) {
+            case 0:
+                sampleInt = (int) sample;
+                break;
+            case 1:
+                sampleLp = sample * .4f + sampleLp * 0.6f;
+                sampleInt = (int) sampleLp;
+                break;
+            case 2:
+                sampleLp = sample;
+                sample = nextSample;
+                nextSample = sampleLp;
+                break;
+            case 3:
+                sampleLp = sample * .4f + sampleLp * 0.6f;
+                sample = nextSample;
+                nextSample = sampleLp;
+                break;
+            }
+        }
+        // Take 8 bits (0 to 255), divide by 127 and minus 1 -> [-1.0; 1.0];
+        if (randtype <= 1) {
+            oscilloYValue[x] = sampleInt;
+        } else {
+            oscilloYValue[x] =  (int) ((nextSample - sample) * index + sample);
+        }
+    }
+}
+
+
 void TftDisplay::oscilloBgDrawLfo() {
     // Sclae 160 pixel = 1 second of LFO
     int indexMiddle = 50 * 160;
@@ -1619,24 +1681,13 @@ void TftDisplay::oscilloBgDrawLfo() {
         }
         break;
     }
-    case 4: {
+    case 4:
+    case 5:
+    case 6:
+    case 7:
         // Rand
-        uint32_t random32bit = 0b10101101110001101110010010010011;
-        float incIndex = 1.0f / 160.0f * oscilParams1[1];
-        float index = oscilParams1[4];
-        for (int x = 0; x < 160; x++) {
-            index += incIndex;
-
-            if (index > 1.0f)  {
-                index -= 1.0f;
-                random32bit = 214013 * random32bit + 2531011;
-            }
-            // Take 8 bits (0 to 255), divide by 127 and minus 1 -> [-1.0; 1.0];
-            float sample =  ((float) (random32bit &0xff)) * 0.00784313725f - 1.0f;
-            oscilloYValue[x] = (int)(sample * 48.0f);
-        }
+        oscilloFillWithRand((int)oscilParams1[0] - 4);
         break;
-    }
     }
 
     if (oscilParams1[2] > 0.0f) {

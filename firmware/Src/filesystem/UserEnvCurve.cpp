@@ -1,6 +1,7 @@
 /*
  * Copyright 2020 Xavier Hosxe
  *
+ * Author: Patrice Vigouroux (Toltekradiation)
  * Author: Xavier Hosxe (xavier <dot> hosxe (at) g m a i l <dot> com)
  *
  * This program is free software: you can redistribute it and/or modify

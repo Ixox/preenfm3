@@ -26,7 +26,7 @@ LfoEnv::LfoEnv() {
 }
 
 
-void LfoEnv::init(struct EnvelopeParams * envParams, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
+void LfoEnv::init(struct EnvelopeLfoParams * envParams, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
 	Lfo::init(matrix, source, dest);
 	this->envParams = envParams;
 	this->valueChanged(0);

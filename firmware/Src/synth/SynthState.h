@@ -132,10 +132,11 @@ enum {
 
 enum {
     ENCODER_ENV_A = 0,
-    ENCODER_ENV_A_LVL,
     ENCODER_ENV_D,
-    ENCODER_ENV_D_LVL,
+    ENCODER_ENV_S,
+    ENCODER_ENV_R,
 };
+
 
 enum {
     ENCODER_ENV_A_CURVE = 0,
@@ -144,12 +145,6 @@ enum {
     ENCODER_ENV_R_CURVE
 };
 
-enum {
-    ENCODER_ENV_S = 0,
-    ENCODER_ENV_S_LVL,
-    ENCODER_ENV_R,
-    ENCODER_ENV_R_LVL
-};
 
 enum {
     ENCODER_MATRIX_SOURCE = 0,

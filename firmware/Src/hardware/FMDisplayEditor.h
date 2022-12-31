@@ -18,7 +18,7 @@
 #ifndef FMDISPLAY_EDITOR
 #define FMDISPLAY_EDITOR
 
-#include "TftDisplay.h"
+#include <FirmwareTftDisplay.h.KO>
 #include "SynthParamListener.h"
 #include "FMDisplay.h"
 
@@ -72,8 +72,6 @@ public:
     void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
     void displayPreset();
     void displayPopup(TFT_COLOR color, char* text, uint8_t length);
-
-    int getEditPageMultiplier();
 
     void encoderTurnedPfm3(int encoder, int ticks);
     void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);

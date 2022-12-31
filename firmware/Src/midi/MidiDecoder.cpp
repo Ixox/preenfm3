@@ -623,7 +623,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                     (float) midiEvent.value[1] * .01f);
             break;
         case CC_ENV_ATK_OP1:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1a, ENCODER_ENV_A,
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME, ENCODER_ENV_A,
                     (float)midiEvent.value[1] * .01562500000000000000f);
             break;
         case CC_ENV_ATK_OP2:
@@ -631,7 +631,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_ENV_ATK_OP4:
         case CC_ENV_ATK_OP5:
         case CC_ENV_ATK_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV2a + (midiEvent.value[0] - CC_ENV_ATK_OP2)* 2, ENCODER_ENV_A,
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV2_TIME + (midiEvent.value[0] - CC_ENV_ATK_OP2)* 2, ENCODER_ENV_A,
             		(float) midiEvent.value[1] * .01562500000000000000f);
             break;
         case CC_ENV_ATK_ALL:
@@ -640,7 +640,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             int type = midiEvent.value[0] == CC_ENV_ATK_ALL ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
             for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
                 if (algoOpInformation[currentAlgo][e] == type) {
-                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1a + e * 2, ENCODER_ENV_A,
+                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + e * 2, ENCODER_ENV_A,
                             (float) midiEvent.value[1] * .01562500000000000000f);
                 }
             }
@@ -652,7 +652,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_ENV_REL_OP4:
         case CC_ENV_REL_OP5:
         case CC_ENV_REL_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1b + (midiEvent.value[0] - CC_ENV_REL_OP1) * 2, ENCODER_ENV_R,
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_LEVEL + (midiEvent.value[0] - CC_ENV_REL_OP1) * 2, ENCODER_ENV_R,
                     (float) midiEvent.value[1] * .03125000000000000000f);
             break;
         case CC_ENV_REL_ALL_MODULATOR:
@@ -661,7 +661,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             int type = midiEvent.value[0] == CC_ENV_REL_ALL ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
             for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
                 if (algoOpInformation[currentAlgo][e] == type) {
-                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1b + e * 2, ENCODER_ENV_R,
+                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_LEVEL + e * 2, ENCODER_ENV_R,
                             (float) midiEvent.value[1] * .03125000000000000000f);
                 }
             }
@@ -1113,30 +1113,30 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 }
             }
             break;
-        case ROW_ENV1a:
+        case ROW_ENV1_TIME:
             if (encoder == ENCODER_ENV_A) {
                 cc.value[0] = CC_ENV_ATK_OP1;
                 cc.value[1] = newValue * 64.0f + .1f;
             }
             break;
-        case ROW_ENV2a:
-        case ROW_ENV3a:
-        case ROW_ENV4a:
-        case ROW_ENV5a:
-        case ROW_ENV6a:
+        case ROW_ENV2_TIME:
+        case ROW_ENV3_TIME:
+        case ROW_ENV4_TIME:
+        case ROW_ENV5_TIME:
+        case ROW_ENV6_TIME:
             if (encoder == ENCODER_ENV_A) {
-                cc.value[0] = CC_ENV_ATK_OP2 + ((currentrow - ROW_ENV2a) >> 1);
+                cc.value[0] = CC_ENV_ATK_OP2 + ((currentrow - ROW_ENV2_TIME) >> 1);
                 cc.value[1] = newValue * 64.0f + .1f;
             }
             break;
-        case ROW_ENV1b:
-        case ROW_ENV2b:
-        case ROW_ENV3b:
-        case ROW_ENV4b:
-        case ROW_ENV5b:
-        case ROW_ENV6b:
+        case ROW_ENV1_LEVEL:
+        case ROW_ENV2_LEVEL:
+        case ROW_ENV3_LEVEL:
+        case ROW_ENV4_LEVEL:
+        case ROW_ENV5_LEVEL:
+        case ROW_ENV6_LEVEL:
             if (encoder == ENCODER_ENV_R) {
-                cc.value[0] = CC_ENV_REL_OP1 + ((currentrow - ROW_ENV1b) >> 1);
+                cc.value[0] = CC_ENV_REL_OP1 + ((currentrow - ROW_ENV1_LEVEL) >> 1);
                 cc.value[1] = newValue * 32.0f + .1f;
             }
             break;

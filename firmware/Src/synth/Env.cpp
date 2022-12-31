@@ -48,10 +48,21 @@ float envLog[] = {
 // User curves
 float userEnvCurves[4][64] __attribute__((section(".instruction_ram")));
 
-void Env::init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envParamsB, uint8_t envNumber, float *algoNumber, struct EnvCurveParams *envCurve)
+struct table allLfoTables[CURVE_TYPE_MAX] =  {
+        { envExponential, 63 },
+        { envLinear, 1 },
+        { envLog, 63 },
+        { userEnvCurves[0], 63 },
+        { userEnvCurves[1], 63 },
+        { userEnvCurves[2], 63 },
+        { userEnvCurves[3], 63 }
+};
+
+
+void Env::init(struct EnvelopeTimeMemory *envParamTime, struct EnvelopeLevelMemory *envParamLevel, uint8_t envNumber, float *algoNumber, struct EnvelopeCurveParams *envCurve)
 {
-	this->envParamsA = envParamsA;
-	this->envParamsB = envParamsB;
+	this->envTime = envParamTime;
+	this->envLevel = envParamLevel;
 	this->envNumber = envNumber;
 	this->algoNumber = algoNumber;
 	this->isLoop = checkIsLoop();
@@ -69,7 +80,6 @@ void Env::init(struct EnvelopeParamsA *envParamsA, struct EnvelopeParamsB *envPa
     // Init All ADSR
     for (int k = 0; k < 4; k++) {
         reloadADSR(k);
-        reloadADSR(k + 4);
     }
 
 	applyCurves();
