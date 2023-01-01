@@ -828,7 +828,8 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     for (int currentrow = 0; currentrow < NUMBER_OF_ROWS; currentrow++) {
         for (int encoder = 0; encoder < NUMBER_OF_ENCODERS_PFM2; encoder++) {
             struct ParameterDisplay* param = &allParameterRows.row[currentrow]->params[encoder];
-            float floatValue = ((float*) paramsToSend)[currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder];
+            int memoryIndex = currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder;
+            float floatValue = ((float*) paramsToSend)[memoryIndex];
 
             int valueToSend;
 
@@ -839,15 +840,15 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
                 valueToSend = floatValue + .1f;
             }
             // MSB / LSB
-            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS_PFM2 + encoder;
+            int midiIndex = getMidiIndexFromMemory(memoryIndex);
             // Value to send must be positive
 
             // NRPN is 4 control change
             cc.value[0] = 99;
-            cc.value[1] = (unsigned char) (paramNumber >> 7);
+            cc.value[1] = (unsigned char) (midiIndex >> 7);
             writeMidiCCOut(&cc);
             cc.value[0] = 98;
-            cc.value[1] = (unsigned char) (paramNumber & 0x7F);
+            cc.value[1] = (unsigned char) (midiIndex & 0x7F);
             writeMidiCCOut(&cc);
             cc.value[0] = 6;
             cc.value[1] = (unsigned char) (valueToSend >> 7);
@@ -895,10 +896,11 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
 
 void MidiDecoder::decodeNrpn(int timbre) {
     if (this->currentNrpn[timbre].paramMSB < 2) {
-        unsigned int index = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
         float value = (this->currentNrpn[timbre].valueMSB << 7) + this->currentNrpn[timbre].valueLSB;
-        unsigned int row = getParamRowFromNrpnRow(index / NUMBER_OF_ENCODERS_PFM2);
-        unsigned int encoder = index % NUMBER_OF_ENCODERS_PFM2;
+        int index = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
+        int memoryIndex = getMemoryIndexFromMidi(index);
+        int row = memoryIndex >> 2;
+        int encoder = memoryIndex % 4;
 
         struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
 
@@ -988,15 +990,14 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 valueToSend = newValue + .1f;
             }
             // MSB / LSB
-            int paramNumber = getNrpnRowFromParamRow(currentrow) * NUMBER_OF_ENCODERS_PFM2 + encoder;
-            // Value to send must be positive
+            int midiIndex = getMidiIndexFromMemory(currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder);
 
             // NRPN is 4 control change
             cc.value[0] = 99;
-            cc.value[1] = (unsigned char) (paramNumber >> 7);
+            cc.value[1] = (unsigned char) (midiIndex >> 7);
             writeMidiCCOut(&cc);
             cc.value[0] = 98;
-            cc.value[1] = (unsigned char) (paramNumber & 0x7F);
+            cc.value[1] = (unsigned char) (midiIndex & 0x7F);
             writeMidiCCOut(&cc);
             cc.value[0] = 6;
             cc.value[1] = (unsigned char) (valueToSend >> 7);
@@ -1230,38 +1231,87 @@ void MidiDecoder::sendMidiUsbOut() {
     }
 }
 
+/*
+ * Allow to conserve same MIDI nrpn even when order are changed
+ */
+int MidiDecoder::getMidiIndexFromMemory(int index) {
+    int paramRow = index >> 2;
+    int encoder = index % 4;
 
-int MidiDecoder::getNrpnRowFromParamRow(int paramRow) {
     switch (paramRow) {
     case ROW_LFOPHASES:
         // Move after ROW_LFOSEQ2
-        return paramRow + 4;
+        paramRow += 4;
+        break;
     case ROW_LFOENV1:
     case ROW_LFOENV2:
     case ROW_LFOSEQ1:
     case ROW_LFOSEQ2:
         // Move before ROW_LFOPHASE
-        return paramRow - 1;
-    default:
-        return paramRow;
+        paramRow -= 1;
+        break;
+    // TIME and LEVEL have been grouped in december 2022
+    case ROW_ENV1_TIME:
+    case ROW_ENV2_TIME:
+    case ROW_ENV3_TIME:
+    case ROW_ENV4_TIME:
+    case ROW_ENV5_TIME:
+    case ROW_ENV6_TIME:
+        paramRow = ROW_ENV1_TIME + (paramRow - ROW_ENV1_TIME) * 2;
+        encoder *= 2;
+        break;
+    case ROW_ENV1_LEVEL:
+    case ROW_ENV2_LEVEL:
+    case ROW_ENV3_LEVEL:
+    case ROW_ENV4_LEVEL:
+    case ROW_ENV5_LEVEL:
+    case ROW_ENV6_LEVEL:
+        paramRow = ROW_ENV1_TIME + (paramRow - ROW_ENV1_LEVEL) * 2;
+        encoder = encoder * 2 + 1;
+        break;
     }
+
+    return paramRow  * NUMBER_OF_ENCODERS_PFM2 + encoder;
 }
 
-int MidiDecoder::getParamRowFromNrpnRow(int nrpmRow) {
+int MidiDecoder::getMemoryIndexFromMidi(int index) {
+    int row = index >> 2;
+    int encoder = index % 4;
     // Move back row
-    switch (nrpmRow) {
+    switch (row) {
     case ROW_LFOPHASES + 4:
-        return ROW_LFOPHASES;
+        row = ROW_LFOPHASES;
+        break;
     case ROW_LFOENV1 - 1:
     case ROW_LFOENV2 - 1:
     case ROW_LFOSEQ1 - 1:
     case ROW_LFOSEQ2 - 1:
-        return nrpmRow + 1;
-    default:
-        return nrpmRow;
+        row++;
+        break;
+    case ROW_ENV1_TIME:
+    case ROW_ENV2_TIME:
+    case ROW_ENV3_TIME:
+    case ROW_ENV4_TIME:
+    case ROW_ENV5_TIME:
+    case ROW_ENV6_TIME:
+    case ROW_ENV1_LEVEL:
+    case ROW_ENV2_LEVEL:
+    case ROW_ENV3_LEVEL:
+    case ROW_ENV4_LEVEL:
+    case ROW_ENV5_LEVEL:
+    case ROW_ENV6_LEVEL: {
+        bool isLevel = encoder & 0x1;
+        if (isLevel)
+            encoder --;
+        int num = (row - ROW_ENV1_TIME) * 2  + encoder;
+        row = (isLevel ? ROW_ENV1_TIME : ROW_ENV1_LEVEL) + (num >> 2);
+        encoder = num % 4;
+        break;
     }
-    return nrpmRow;
+    }
+    return row * 4 + encoder;
 }
+
 
 uint8_t MidiDecoder::analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size) {
     if (sysexBuffer[0] == 0x7d) {
