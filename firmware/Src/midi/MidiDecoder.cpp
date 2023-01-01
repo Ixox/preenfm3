@@ -623,15 +623,12 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                     (float) midiEvent.value[1] * .01f);
             break;
         case CC_ENV_ATK_OP1:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME, ENCODER_ENV_A,
-                    (float)midiEvent.value[1] * .01562500000000000000f);
-            break;
         case CC_ENV_ATK_OP2:
         case CC_ENV_ATK_OP3:
         case CC_ENV_ATK_OP4:
         case CC_ENV_ATK_OP5:
         case CC_ENV_ATK_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV2_TIME + (midiEvent.value[0] - CC_ENV_ATK_OP2)* 2, ENCODER_ENV_A,
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + (midiEvent.value[0] - CC_ENV_ATK_OP2), ENCODER_ENV_A,
             		(float) midiEvent.value[1] * .01562500000000000000f);
             break;
         case CC_ENV_ATK_ALL:
@@ -640,7 +637,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             int type = midiEvent.value[0] == CC_ENV_ATK_ALL ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
             for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
                 if (algoOpInformation[currentAlgo][e] == type) {
-                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + e * 2, ENCODER_ENV_A,
+                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + e, ENCODER_ENV_A,
                             (float) midiEvent.value[1] * .01562500000000000000f);
                 }
             }
@@ -652,7 +649,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_ENV_REL_OP4:
         case CC_ENV_REL_OP5:
         case CC_ENV_REL_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_LEVEL + (midiEvent.value[0] - CC_ENV_REL_OP1) * 2, ENCODER_ENV_R,
+            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_LEVEL + (midiEvent.value[0] - CC_ENV_REL_OP1), ENCODER_ENV_R,
                     (float) midiEvent.value[1] * .03125000000000000000f);
             break;
         case CC_ENV_REL_ALL_MODULATOR:
@@ -661,7 +658,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             int type = midiEvent.value[0] == CC_ENV_REL_ALL ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
             for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
                 if (algoOpInformation[currentAlgo][e] == type) {
-                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_LEVEL + e * 2, ENCODER_ENV_R,
+                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_LEVEL + e, ENCODER_ENV_R,
                             (float) midiEvent.value[1] * .03125000000000000000f);
                 }
             }
