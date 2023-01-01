@@ -225,8 +225,8 @@ public:
     // Firmware 2.00
     // Phase LFO1/3 added not at the right place so nrpm and params row are now
     // unlinked for compatibility reason....
-    int getNrpnRowFromParamRow(int paramRow);
-    int getParamRowFromNrpnRow(int nrpmRow);
+    int getMidiIndexFromMemory(int index);
+    int getMemoryIndexFromMidi(int index);
 
     // Some actions must not be called from the audio thread
     void processAsyncActions();
