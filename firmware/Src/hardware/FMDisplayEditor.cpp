@@ -3856,19 +3856,18 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
         int encoder4 = rowEncoder.encoder;
 
         // Modify param of all operator of same types.
-        if (row >= ROW_ENV1_TIME && row <= ROW_ENV6_LEVEL) {
+        if (row >= ROW_ENV_FIRST && row <= ROW_ENV_LAST) {
             int firstRow = ROW_ENV1_TIME;
-            int envBBit = ROW_ENV1_LEVEL & 0x1;
-            if ((row & 0x1) == envBBit) {
+            if (row >= ROW_ENV1_LEVEL) {
                 firstRow = ROW_ENV1_LEVEL;
             }
             int currentAlgo = (int)synthState_->params->engine1.algo;
-            int currentOpType = algoOpInformation[currentAlgo][(row - ROW_ENV1_TIME) >> 1];
+            int currentOpType = algoOpInformation[currentAlgo][(row - firstRow)];
 
             for (int op = 0; op < NUMBER_OF_OPERATORS; op++) {
                 if (currentOpType == algoOpInformation[currentAlgo][op]) {
                     // Same operator type : carrier or modulation
-                    encoderTurnedPfm2(firstRow + op*2, encoder4, ticks, false);
+                    encoderTurnedPfm2(firstRow + op, encoder4, ticks, false);
                 }
             }
         } else if (row >= ROW_MODULATION1 && row <= ROW_MODULATION3) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Xavier Hosxe
+ * Copyright 2022
  *
  * Author: Patrice Vigouroux (Toltekradiation)
  * Author: Xavier Hosxe (xavier <dot> hosxe (at) g m a i l <dot> com)
