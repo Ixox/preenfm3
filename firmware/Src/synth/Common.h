@@ -425,10 +425,10 @@ struct EnvelopeLevelMemory {
 };
 
 struct EnvelopeCurveParams {
-    float curveAttack;
-    float curveDecay;
-    float curveSustain;
-    float curveRelease;
+    float attackCurve;
+    float decayCurve;
+    float sustainCurve;
+    float releaseCurve;
 };
 
 struct EnvelopeCurveFlashMemory1 {

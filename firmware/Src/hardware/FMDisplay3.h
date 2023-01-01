@@ -19,7 +19,7 @@
 #define FMDISPLAY3_H_
 
 #include "SynthStateAware.h"
-#include "TftDisplay.h"
+#include "FirmwareTftDisplay.h"
 #include "Menu.h"
 #include "VisualInfo.h"
 #include "Storage.h"
@@ -33,7 +33,7 @@ class FMDisplay3: public SynthParamListener, public SynthMenuListener, public Sy
 public:
     FMDisplay3();
     ~FMDisplay3();
-    void init(TftDisplay *tft);
+    void init(FirmwareTftDisplay *tft);
     void setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *dDisplayEditor, FMDisplayMenu *displayMenu, FMDisplaySequencer *displaySequencer);
     void customCharsInit();
 
@@ -108,7 +108,7 @@ public:
     }
 
 private:
-    TftDisplay *tft_;
+    FirmwareTftDisplay *tft_;
     int refreshStatus_;
     int endRefreshStatus_;
 

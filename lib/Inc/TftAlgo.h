@@ -21,6 +21,7 @@
 #define HARDWARE_TFTALGO_H_
 
 #define PREENFM_FREQUENCY 47916.0f
+#define ABS(X) ((X) > 0 ? (X) : -(X))
 
 #include "stm32h7xx_hal.h"
 // #include "Common.h"

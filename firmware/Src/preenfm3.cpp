@@ -25,7 +25,7 @@
 #include "FMDisplayEditor.h"
 #include "FMDisplayMenu.h"
 #include "FMDisplaySequencer.h"
-#include "TftDisplay.h"
+#include "FirmwareTftDisplay.h"
 #include "ili9341.h"
 #include "Storage.h"
 #include "Encoders.h"
@@ -53,7 +53,7 @@ FMDisplayMixer displayMixer;
 FMDisplaySequencer displaySequencer;
 MidiDecoder midiDecoder;
 Encoders encoders;
-TftDisplay tft;
+FirmwareTftDisplay tft;
 TftAlgo tftAlgo;
 Synth synth;
 Storage sdCard;

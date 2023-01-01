@@ -29,8 +29,6 @@
 #define RGB565_YELLOW 0xe0ff
 #define RGB565_CYAN 0xff07
 
-#define ABS(X) ((X) > 0 ? (X) : -(X))
-
 const uint8_t digitBits[] = {
     // 0
     0b11111000,

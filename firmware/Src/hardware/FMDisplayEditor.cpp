@@ -16,7 +16,7 @@
  */
 
 
-#include <FirmwareTftDisplay.h.KO>
+#include <FirmwareTftDisplay.h>
 #include "FMDisplayEditor.h"
 #include "FMDisplay.h"
 #include "SynthState.h"
@@ -1148,8 +1148,8 @@ struct ParameterRowDisplay envParameterTime = {
     {
         "Attk",
         "Deca",
-        "Rele",
-        "Sust" },
+        "Sust",
+        "Rel" },
     {
         {
             0,
@@ -1189,8 +1189,8 @@ struct ParameterRowDisplay envParameterLevel = {
     {
         "Attk",
         "Deca",
-        "Rele",
-        "Sust" },
+        "Sust",
+        "Rel" },
     {
         {
             0,
@@ -3018,17 +3018,23 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             break;
         }
         case ROW_ENV1_TIME:
-        case ROW_ENV1_LEVEL:
         case ROW_ENV2_TIME:
-        case ROW_ENV2_LEVEL:
         case ROW_ENV3_TIME:
-        case ROW_ENV3_LEVEL:
         case ROW_ENV4_TIME:
-        case ROW_ENV4_LEVEL:
         case ROW_ENV5_TIME:
-        case ROW_ENV5_LEVEL:
         case ROW_ENV6_TIME:
+        case ROW_ENV1_LEVEL:
+        case ROW_ENV2_LEVEL:
+        case ROW_ENV3_LEVEL:
+        case ROW_ENV4_LEVEL:
+        case ROW_ENV5_LEVEL:
         case ROW_ENV6_LEVEL:
+        case ROW_ENV1_CURVE:
+        case ROW_ENV2_CURVE:
+        case ROW_ENV3_CURVE:
+        case ROW_ENV4_CURVE:
+        case ROW_ENV5_CURVE:
+        case ROW_ENV6_CURVE:
             refreshOscillatorOperatorEnvelope();
             break;
         case ROW_LFOPHASES:
@@ -4057,8 +4063,10 @@ void FMDisplayEditor::refreshOscillatorOperatorEnvelope() {
     int op = synthState_->fullState.operatorNumber;
     EnvelopeTimeMemory *envTime = &synthState_->params->env1Time;
     EnvelopeLevelMemory *envLevel = &synthState_->params->env1Level;
+    EnvelopeCurveParams *envCurve = &synthState_->params->env1Curve;
     tft_->oscilloBgSetEnvelope(envTime[op].attackTime, envTime[op].decayTime, envTime[op].sustainTime, envTime[op].releaseTime,
-            envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel);
+            envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel,
+            envCurve[op].attackCurve, envCurve[op].decayCurve, envCurve[op].sustainCurve, envCurve[op].releaseCurve);
     tft_->oscilloBgActionEnvelope();
 }
 

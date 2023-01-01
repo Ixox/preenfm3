@@ -18,7 +18,7 @@
 #ifndef FMDISPLAY_EDITOR
 #define FMDISPLAY_EDITOR
 
-#include <FirmwareTftDisplay.h.KO>
+#include "FirmwareTftDisplay.h"
 #include "SynthParamListener.h"
 #include "FMDisplay.h"
 
@@ -52,7 +52,7 @@ class FMDisplayEditor {
 public:
     FMDisplayEditor();
 
-    void init(SynthState *synthState, TftDisplay *tft) {
+    void init(SynthState *synthState, FirmwareTftDisplay *tft) {
         synthState_ = synthState;
         tft_ = tft;
     }
@@ -92,7 +92,7 @@ private:
     bool isInModulatorPage();
     void resetHideParams();
     uint8_t getX(int encoder);
-    TftDisplay *tft_;
+    FirmwareTftDisplay *tft_;
     SynthState *synthState_;
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
