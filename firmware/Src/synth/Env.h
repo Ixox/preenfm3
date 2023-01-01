@@ -92,10 +92,10 @@ public:
     void init(struct EnvelopeTimeMemory *envTime, struct EnvelopeLevelMemory *envLevel, uint8_t envNumber, float* algoNumber, struct EnvelopeCurveParams *envCurve);
 
     void applyCurves() {
-        applyCurveToSegment((int)envCurve->curveAttack,  ENV_STATE_ON_A);
-        applyCurveToSegment((int)envCurve->curveDecay,   ENV_STATE_ON_D);
-        applyCurveToSegment((int)envCurve->curveSustain, ENV_STATE_ON_S);
-        applyCurveToSegment((int)envCurve->curveRelease, ENV_STATE_ON_R);
+        applyCurveToSegment((int)envCurve->attackCurve,  ENV_STATE_ON_A);
+        applyCurveToSegment((int)envCurve->decayCurve,   ENV_STATE_ON_D);
+        applyCurveToSegment((int)envCurve->sustainCurve, ENV_STATE_ON_S);
+        applyCurveToSegment((int)envCurve->releaseCurve, ENV_STATE_ON_R);
     }
 
     void applyCurveToSegment(int segment, int segmentPos) {

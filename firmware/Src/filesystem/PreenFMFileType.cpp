@@ -370,10 +370,10 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
     const EnvelopeCurveParams* envCurveParam = &params->env1Curve;
     uint8_t* envFlashUint8 = (uint8_t*) &flashMemory->envCurves1To4;
     for (int e = 0; e < 6; e++) {
-        envFlashUint8[e * 4 + 0] = (uint8_t)envCurveParam[e].curveAttack;
-        envFlashUint8[e * 4 + 1] = (uint8_t)envCurveParam[e].curveDecay;
-        envFlashUint8[e * 4 + 2] = (uint8_t)envCurveParam[e].curveRelease;
-        envFlashUint8[e * 4 + 3] = (uint8_t)envCurveParam[e].curveSustain;
+        envFlashUint8[e * 4 + 0] = (uint8_t)envCurveParam[e].attackCurve;
+        envFlashUint8[e * 4 + 1] = (uint8_t)envCurveParam[e].decayCurve;
+        envFlashUint8[e * 4 + 2] = (uint8_t)envCurveParam[e].sustainCurve;
+        envFlashUint8[e * 4 + 3] = (uint8_t)envCurveParam[e].releaseCurve;
     }
 
     fsu_->copyFloat((float*) &params->matrixRowState1, (float*) &flashMemory->matrixRowState1, 4 * 12);
@@ -454,17 +454,17 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashM
     if (iszero(envFlashUint8, 24)) {
         // Set default env curve if not initialized
         for (int e = 0; e < 6; e++) {
-            envCurveParam[e].curveAttack  = 1.0f;
-            envCurveParam[e].curveDecay   = 0.0f;
-            envCurveParam[e].curveRelease = 1.0f;
-            envCurveParam[e].curveSustain = 0.0f;
+            envCurveParam[e].attackCurve  = 1.0f;
+            envCurveParam[e].decayCurve   = 0.0f;
+            envCurveParam[e].sustainCurve = 1.0f;
+            envCurveParam[e].releaseCurve = 0.0f;
         }
     } else {
         for (int e = 0; e < 6; e++) {
-            envCurveParam[e].curveAttack  = (float)envFlashUint8[e * 4 + 0];
-            envCurveParam[e].curveDecay   = (float)envFlashUint8[e * 4 + 1];
-            envCurveParam[e].curveRelease = (float)envFlashUint8[e * 4 + 2];
-            envCurveParam[e].curveSustain = (float)envFlashUint8[e * 4 + 3];
+            envCurveParam[e].attackCurve  = (float)envFlashUint8[e * 4 + 0];
+            envCurveParam[e].decayCurve   = (float)envFlashUint8[e * 4 + 1];
+            envCurveParam[e].sustainCurve = (float)envFlashUint8[e * 4 + 2];
+            envCurveParam[e].releaseCurve = (float)envFlashUint8[e * 4 + 3];
         }
     }
 

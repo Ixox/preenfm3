@@ -37,6 +37,26 @@ enum {
 	TFT_PART_BUTTONS
 };
 
+enum {
+    TFT_NOP = 0,
+    TFT_DISPLAY_ONE_CHAR,
+    TFT_DISPLAY_ONE_SMALL_CHAR,
+    TFT_DRAW_FILL_TFT,
+    TFT_DRAW_OSCILLO,
+    TFT_DRAW_ALGO,
+    TFT_HIGHLIGHT_ALGO_OPERATOR,
+    TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR,
+    TFT_HIGHTLIGHT_ALGO_IM,
+    TFT_ERASE_HIGHTLIGHT_ALGO_IM,
+    TFT_CLEAR_ALGO_FG,
+    TFT_DRAW_FILL_AREA,
+    TFT_RESTART_REFRESH,
+    TFT_PAUSE_REFRESH,
+    TFT_WAITCYCLE,
+    TFT_STANDARD_LAST_ACTION = TFT_WAITCYCLE
+};
+
+
 #define TFT_PART_HEADER_BITS        0b00000001
 #define TFT_PART_VALUES_BITS        0b00001110
 #define TFT_PART_OSCILLO_BITS       0b01110000
@@ -76,14 +96,6 @@ enum TFT_COLOR {
 #define TFT_SMALL_CHAR_WIDTH 7
 #define TFT_SMALL_CHAR_HEIGHT 10
 
-#define TFT_NUMBER_OF_WAVEFORM_EXT 14
-#define TFT_DRAW_ENVELOPPE TFT_NUMBER_OF_WAVEFORM_EXT+1
-#define TFT_DRAW_LFO TFT_DRAW_ENVELOPPE+1
-
-struct WaveFormExt {
-    float* waveForms;
-    int size;
-};
 
 enum TFTActionType {
     clear, charAt
@@ -101,14 +113,20 @@ struct TFTAction {
 #define OSCILLO_WIDTH 160
 #define OSCILLO_BUFFER_SIZE 1024
 
+#define PFM_IS_DMA2D_READY() (hdma2d.Instance->CR & DMA2D_CR_START) == 0
+#define PFM_START_DMA2D() hdma2d.Instance->CR |= DMA2D_CR_START
+
+
+
 class TftDisplay {
 public:
     TftDisplay();
     virtual ~TftDisplay();
     void init(TftAlgo* tftAlgo);
-    void initWaveFormExt(int index, float* waveform, int size);
 
     void tic(bool checkDisplayPower);
+    virtual void additionalActions() {};
+
     bool pushToTft();
     void pushToTftFinished();
 
@@ -177,14 +195,6 @@ public:
     void printValueWithSpace(int value);
     void printFloatWithSpace(float value);
 
-    void oscilloBgActionOperatorShape(int wfNumber);
-    void oscilloBgActionEnvelope();
-    void oscilloBgActionLfo();
-    void oscilloBgActionClear();
-
-    void oscilloBgSetEnvelope(float a, float d, float s, float r, float aL, float dL, float sL, float rL);
-    void oscilloBgSetLfoEnvelope(float a, float d, float s, float r, float aL, float dL, float sL, float rL);
-    void oscilloBgSetLfo(float shape, float freq, float kSyn, float bias, float phase);
     void oscilloForceNextDisplay() { flatOscilloAlreadyDisplayed = false; }
 
     bool hasJustBeenCleared() { return bHasJustBeenCleared; }
@@ -195,6 +205,14 @@ public:
     bool mustBeReset() { return tftMustBeReset_; }
     void reset();
 
+protected:
+    int8_t oscilloYValue[OSCILLO_WIDTH];
+    uint16_t *bgOscillo;
+    RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions;
+    TFTAction currentAction;
+    uint8_t currentActionStep;
+    TftAlgo *tftAlgo;
+
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
     void oscilloBgDrawEnvelope();
@@ -202,9 +220,6 @@ private:
     void oscilloFillWithRand(int randtype);
     void oscilloBgDrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 
-    RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions;
-    TFTAction currentAction;
-    uint8_t currentActionStep;
     uint32_t lastOscilloSaturateTic;
     uint32_t tftPushMillis;
     uint32_t tftGetStatusMillis;
@@ -218,7 +233,7 @@ private:
     uint16_t cursorY;
     bool fgAlgoDirty;
 
-    int8_t oscilloYValue[OSCILLO_WIDTH];
+
     float oscilloSamplePeriod;
     float oscilloLowerFrequency;
     float oscilloSampleInc;
@@ -226,23 +241,17 @@ private:
     int oscilloDataWritePtr;
     float oscilloPhaseIndex;
     uint32_t oscilloPhaseIndexToUse;
-    bool oscilloIsClean;
     float olscilloYScale;
 
     float oscilloFullPeriodSampl[OSCILLO_BUFFER_SIZE];
-    TftAlgo *tftAlgo;
     uint8_t charBackgroundColor, charColor;
     uint16_t *bgColorChar[NUMBER_OF_TFT_COLORS];
-    uint16_t *bgOscillo, *bgAlgo;
+    uint16_t *bgAlgo;
 
     // TFT refresh
     bool tftRefreshing;
     uint16_t areaHeight[TFT_NUMBER_OF_PARTS];
     uint16_t areaY[TFT_NUMBER_OF_PARTS];
-
-    WaveFormExt waveForm[TFT_NUMBER_OF_WAVEFORM_EXT];
-    float oscilParams1[6];
-    float oscilParams2[6];
 
     bool flatOscilloAlreadyDisplayed;
     bool bHasJustBeenCleared;

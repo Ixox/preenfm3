@@ -40,7 +40,7 @@ FMDisplay3::FMDisplay3() {
 FMDisplay3::~FMDisplay3() {
 }
 
-void FMDisplay3::init(TftDisplay *tft) {
+void FMDisplay3::init(FirmwareTftDisplay *tft) {
 
     for (int w = 0; w < NUMBER_OF_WAVETABLES; w++) {
         tft->initWaveFormExt(w, waveTables[w].table, waveTables[w].max);
