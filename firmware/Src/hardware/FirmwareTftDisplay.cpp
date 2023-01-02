@@ -26,8 +26,12 @@ extern RNG_HandleTypeDef hrng;
 
 extern uint16_t tftPalette565[NUMBER_OF_TFT_COLORS];
 
+
 FirmwareTftDisplay::FirmwareTftDisplay() : TftDisplay() {
    oscilloIsClean = true;
+   envInQueue = 0;
+   lfoInQueue = 0;
+   operatorInQueue = 0;
 }
 
 FirmwareTftDisplay::~FirmwareTftDisplay() {
@@ -63,12 +67,15 @@ void FirmwareTftDisplay::additionalActions() {
             }
             break;
         case 1:
-            if (currentAction.param1 < TFT_NUMBER_OF_WAVEFORM_EXT) {
+            if (currentAction.param1 <= TFT_NUMBER_OF_WAVEFORM_EXT) {
                 oscilloBgDrawOperatorShape(waveForm[currentAction.param1].waveForms, waveForm[currentAction.param1].size);
+                operatorInQueue--;
             } else if (currentAction.param1 == TFT_DRAW_ENVELOPPE) {
                 oscilloBgDrawEnvelope();
+                envInQueue--;
             } else if (currentAction.param1 == TFT_DRAW_LFO) {
                 oscilloBgDrawLfo();
+                lfoInQueue--;
             }
             currentAction.actionType = 0;
             oscilloForceNextDisplay();
@@ -119,6 +126,12 @@ void FirmwareTftDisplay::oscilloBgActionClear() {
 
 
 void FirmwareTftDisplay::oscilloBgActionOperatorShape(int wfNumber) {
+    if (operatorInQueue >= 2) {
+        // No need to ask for new drawing
+        // params have been updated and next drawing will use them
+        return;
+    }
+    operatorInQueue++;
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM;
     newAction.param1 = wfNumber;
@@ -129,6 +142,13 @@ void FirmwareTftDisplay::oscilloBgActionOperatorShape(int wfNumber) {
 }
 
 void FirmwareTftDisplay::oscilloBgActionLfo() {
+    if (lfoInQueue >= 2) {
+        // No need to ask for new drawing
+        // params have been updated and next drawing will use them
+        return;
+    }
+    lfoInQueue++;
+
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM;
     newAction.param1 = TFT_DRAW_LFO;
@@ -138,7 +158,14 @@ void FirmwareTftDisplay::oscilloBgActionLfo() {
     oscilloIsClean = false;
 }
 
+
 void FirmwareTftDisplay::oscilloBgActionEnvelope() {
+    if (envInQueue >= 2) {
+        // No need to ask for new drawing
+        // params have been updated and next drawing will use them
+        return;
+    }
+    envInQueue++;
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM;
     newAction.param1 = TFT_DRAW_ENVELOPPE;

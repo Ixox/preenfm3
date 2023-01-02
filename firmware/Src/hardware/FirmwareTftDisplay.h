@@ -22,10 +22,12 @@
 
 #include "TftDisplay.h"
 
-enum { TFT_NUMBER_OF_WAVEFORM_EXT = 14,
+// 14 is the number of op waveforms
+enum {
+    TFT_NUMBER_OF_WAVEFORM_EXT = 14,
     TFT_DRAW_ENVELOPPE,
-    TFT_DRAW_LFO,
-    TFT_DRAW_LFO_ENVELOPE};
+    TFT_DRAW_LFO
+};
 
 
 
@@ -76,6 +78,10 @@ private:
     float oscilParams1[6];
     float oscilParams2[6];
     uint8_t envCurve[4];
+
+    int envInQueue;
+    int lfoInQueue;
+    int operatorInQueue;
 };
 
 #endif /* HARDWARE_FIRMWARETFTDISPLAY_H_KO_ */
