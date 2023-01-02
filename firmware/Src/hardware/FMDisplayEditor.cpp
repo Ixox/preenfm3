@@ -2887,6 +2887,7 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
                 if (op != synthState_->fullState.operatorNumber) {
                     return;
                 }
+                refreshOscillatorOperatorEnvelope();
                 rowToTest = ROW_ENV1_TIME;
                 break;
             }
@@ -2901,6 +2902,7 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
                 if (op != synthState_->fullState.operatorNumber) {
                     return;
                 }
+                refreshOscillatorOperatorEnvelope();
                 rowToTest = ROW_ENV1_LEVEL;
                 break;
             }
@@ -2910,6 +2912,11 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             case ROW_ENV4_CURVE:
             case ROW_ENV5_CURVE:
             case ROW_ENV6_CURVE: {
+                int op = currentRow - ROW_ENV1_CURVE;
+                if (op != synthState_->fullState.operatorNumber) {
+                    return;
+                }
+                refreshOscillatorOperatorEnvelope();
                 rowToTest = ROW_ENV1_CURVE;
             }
             }
@@ -3017,26 +3024,6 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
             }
             break;
         }
-        case ROW_ENV1_TIME:
-        case ROW_ENV2_TIME:
-        case ROW_ENV3_TIME:
-        case ROW_ENV4_TIME:
-        case ROW_ENV5_TIME:
-        case ROW_ENV6_TIME:
-        case ROW_ENV1_LEVEL:
-        case ROW_ENV2_LEVEL:
-        case ROW_ENV3_LEVEL:
-        case ROW_ENV4_LEVEL:
-        case ROW_ENV5_LEVEL:
-        case ROW_ENV6_LEVEL:
-        case ROW_ENV1_CURVE:
-        case ROW_ENV2_CURVE:
-        case ROW_ENV3_CURVE:
-        case ROW_ENV4_CURVE:
-        case ROW_ENV5_CURVE:
-        case ROW_ENV6_CURVE:
-            refreshOscillatorOperatorEnvelope();
-            break;
         case ROW_LFOPHASES:
         case ROW_LFOOSC1:
         case ROW_LFOOSC2:

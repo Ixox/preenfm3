@@ -1303,8 +1303,10 @@ int MidiDecoder::getMemoryIndexFromMidi(int index) {
         bool isLevel = encoder & 0x1;
         if (isLevel)
             encoder --;
-        int num = (row - ROW_ENV1_TIME) * 2  + encoder;
-        row = (isLevel ? ROW_ENV1_TIME : ROW_ENV1_LEVEL) + (num >> 2);
+        // num is the number of the value.. More than 4 => next operator
+        int num = (row - ROW_ENV1_TIME) * 2  + (encoder >> 1);
+        // Convert to new row/encoder
+        row = (isLevel ? ROW_ENV1_LEVEL : ROW_ENV1_TIME) + (num >> 2);
         encoder = num % 4;
         break;
     }
