@@ -163,7 +163,7 @@ public:
     void clearMixerValues();
     void clearMixerLabels();
     void fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height, uint8_t color);
-    void clearActions() {
+    virtual void clearActions() {
         tftActions.clear();
     }
 
