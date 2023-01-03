@@ -26,6 +26,13 @@ extern RNG_HandleTypeDef hrng;
 
 extern uint16_t tftPalette565[NUMBER_OF_TFT_COLORS];
 
+const float randomDisplay[32] = { 0.679268211, -0.559346101, 0.93210829, 0.263967825,
+        0.868206376, -0.955814486, 0.767822461, -0.260222359, -0.617473204,
+        -0.844648436, 0.380078337, 0.481601148, -0.807739871, 0.995462356,
+        -0.854993442, 0.704896648, 0.258727388, 0.947767668, -0.12564,
+        0.513101208, -0.75714895, -0.11723284, 0.026869686, -0.738605819,
+        -0.262181885, 0.856453, 0.209812963, -0.976879332, -0.019152814,
+        -0.213303568, 0.55, 0.379348783 };
 
 FirmwareTftDisplay::FirmwareTftDisplay() : TftDisplay() {
    oscilloIsClean = true;
@@ -39,6 +46,14 @@ FirmwareTftDisplay::~FirmwareTftDisplay() {
 }
 
 
+void FirmwareTftDisplay::clearActions() {
+    tftActions.clear();
+    envInQueue = 0;
+    lfoInQueue = 0;
+    operatorInQueue = 0;
+}
+
+
 void FirmwareTftDisplay::initWaveFormExt(int index, float* waveform, int size) {
     waveForm[index].waveForms = waveform;
     waveForm[index].size = size;
@@ -46,6 +61,13 @@ void FirmwareTftDisplay::initWaveFormExt(int index, float* waveform, int size) {
 
 
 void FirmwareTftDisplay::additionalActions() {
+
+    // Just in case
+    if (tftActions.getCount() == 0) {
+        envInQueue = 0;
+        lfoInQueue = 0;
+        operatorInQueue = 0;
+    }
 
     switch (currentAction.actionType) {
     case TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM:
@@ -399,10 +421,6 @@ void FirmwareTftDisplay::oscilloBgDrawEnvelope() {
  */
 void FirmwareTftDisplay::oscilloFillWithRand(int randtype) {
     // Rand
-    uint32_t random32bit = HAL_RNG_ReadLastRandomNumber(&hrng);
-    if (random32bit == 0) {
-        random32bit = 0b10101101110001101110010010010011;
-    }
     float incIndex = 1.0f / 160.0f * oscilParams1[1];
     float sample = 0.0f;
     float nextSample = 0.0f;
@@ -411,15 +429,13 @@ void FirmwareTftDisplay::oscilloFillWithRand(int randtype) {
 
     // Adjust to enter index>1 condition when x==0
     float index = oscilParams1[4] + 1.0f - incIndex;
-
+    int randIndex = 0;
     for (int x = 0; x < 160; x++) {
         index += incIndex;
 
         if (unlikely(index >= 1.0f))  {
             index -= 1.0f;
-            random32bit = 214013 * random32bit + 2531011;
-            // Take 8 bits (0 to 255), divide by 127 and minus 1 -> [-1.0; 1.0];
-            sample =  ((float) ((random32bit & 0xff)) * 0.00784313725f - 1.0f) * 48;
+            sample =  randomDisplay[(randIndex++) % 32] * 48.0f;
             switch (randtype) {
             case 0:
                 sampleInt = (int) sample;

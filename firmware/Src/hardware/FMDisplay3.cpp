@@ -151,12 +151,11 @@ void FMDisplay3::newTimbre(int timbre) {
         tft_->clearActions();
         tft_->pauseRefresh();
         tft_->clear();
+        this->refreshOscilloBG();
         tft_->drawAlgo(this->synthState_->params->engine1.algo);
         displayEditor_->displayPreset();
         refreshStatus_ = 20;
         endRefreshStatus_ = 0;
-
-        this->refreshOscilloBG();
     } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
         refreshStatus_ = 19;
         endRefreshStatus_ = 14;

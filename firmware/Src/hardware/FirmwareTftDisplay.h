@@ -63,6 +63,8 @@ public:
     void oscilloBgSetLfo(float shape, float freq, float kSyn, float bias, float phase);
 
     void additionalActions();
+    void clearActions();
+
 
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
