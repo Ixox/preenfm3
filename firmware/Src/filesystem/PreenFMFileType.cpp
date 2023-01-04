@@ -362,7 +362,7 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
         envFlashFloat[e * 8 + 1] = envLevel[e].attackLevel;
         envFlashFloat[e * 8 + 3] = envLevel[e].decayLevel;
         envFlashFloat[e * 8 + 5] = envLevel[e].sustainLevel;
-        envFlashFloat[e * 8 + 6] = envLevel[e].releaseLevel;
+        envFlashFloat[e * 8 + 7] = envLevel[e].releaseLevel;
     }
 
 
