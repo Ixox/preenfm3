@@ -51,6 +51,7 @@ public:
     void encoderTurned(int instrument, int encoder, int ticks);
     void buttonPressed(int instrument, int button);
     void buttonLongPressed(int instrument, int button);
+    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void* getValuePointer(int valueType, int encoder);
     void setRefreshStatusPointer(int *refreshStatus, int *endRefreshStatus) {
         refreshStatusP_ = refreshStatus;
@@ -67,6 +68,8 @@ public:
         }
         *refreshStatusP_ = startRefreshStatus;
     }
+
+    void updateCurrentData();
 
     void refreshAllInstruments() {
         refresh(14, 7);
@@ -91,9 +94,7 @@ public:
         refresh(16, 0);
     }
 
-    void refreshStepCursor() {
-        refresh(13, 13);
-    }
+    void refreshStepCursor();
 
     void refreshPlayButton();
 
@@ -126,6 +127,7 @@ private:
     int stepSize_;
     int stepRedrawSequenceIndex_;
     int stepCurrentInstrument_;
+    uint64_t stepCurrentData_;
 };
 
 #endif
