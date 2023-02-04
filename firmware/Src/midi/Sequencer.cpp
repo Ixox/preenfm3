@@ -554,7 +554,7 @@ void Sequencer::insertNote(uint8_t instrument, uint8_t note, uint8_t velocity) {
         return;
     }
 
-    if (lastFreeAction_ < SEQ_ACTION_SIZE) {
+    if (likely(lastFreeAction_ < SEQ_ACTION_SIZE)) {
         SeqMidiAction* newAction = &actions[lastFreeAction_];
         newAction->when = current16bitTimer_ & instrumentTimerMask_[instrument];
         newAction->actionType = SEQ_ACTION_NOTE;
@@ -577,7 +577,7 @@ void Sequencer::insertNote(uint8_t instrument, uint8_t note, uint8_t velocity) {
 
 
 /*
- * Returns true if more thant one note
+ * Returns true if more than one note
  */
 bool Sequencer::stepRecordNotes(int instrument, int stepCursor, int stepSize) {
     bool moreThanOneNote;
@@ -835,4 +835,119 @@ void Sequencer::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t
     };
     displaySequencer_->sequencerWasUpdated(timbre, seqValue, newValue);
 }
+
+
+uint64_t Sequencer::getStepData(int instrument, int stepCursor) {
+    int seqNumber = instrumentStepSeq_[instrument];
+    return stepNotes[seqNumber][stepCursor].full;
+}
+
+
+
+void Sequencer::changeCurrentNote(int instrument, int stepCursor, int stepSize, int ticks) {
+    int seqNumber = instrumentStepSeq_[instrument];
+
+    // return if no note
+    if (stepNotes[seqNumber][stepCursor].values[3] == 0) {
+        return;
+    }
+
+    // Don't change if some notes are out of [0-127]
+    for (int n = 3; n <= 7; n++) {
+        // note 2-5 can be null
+        if (stepNotes[seqNumber][stepCursor].values[n] == 0) {
+            continue;
+        }
+        int note = stepNotes[seqNumber][stepCursor].values[n] + ticks;
+        // 0 is considered as no note so we don't want 0
+        if (note <= 0 || note > 127) {
+            return;
+        }
+    }
+    for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
+        for (int n = 3; n <= 7; n++) {
+            if (stepNotes[seqNumber][s].values[n] != 0) {
+                stepNotes[seqNumber][s].values[n] += ticks;
+            }
+        }
+    }
+    if (!createNewNoteIfNeeded(instrument, stepCursor, stepSize)) {
+        displaySequencer_->updateCurrentData();
+        displaySequencer_->refresh(12, 12);
+    }
+}
+
+void Sequencer::changeCurrentVelocity(int instrument, int stepCursor, int stepSize, int ticks) {
+    int seqNumber = instrumentStepSeq_[instrument];
+
+    // return if no note
+    if (stepNotes[seqNumber][stepCursor].values[3] == 0) {
+        return;
+    }
+
+    // Must be int for >127 and negative test
+    for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
+        if (stepNotes[seqNumber][s].values[2] != 0) {
+            int newValue = stepNotes[seqNumber][s].values[2] + ticks;
+            if (newValue > 127) {
+                newValue = 127;
+            } else if (newValue < 1) {
+                // No zero so that it can be edited
+                newValue = 1;
+            }
+            stepNotes[seqNumber][s].values[2] = newValue;
+        }
+    }
+    if (!createNewNoteIfNeeded(instrument, stepCursor, stepSize)) {
+        displaySequencer_->updateCurrentData();
+        displaySequencer_->refresh(11, 11);
+    }
+}
+
+
+/*
+ * We check limit
+ * If everything is the same, we're in the middle of a bigger note -> yes we must create a new note (new uniqueId)
+ */
+bool Sequencer::createNewNoteIfNeeded(int instrument, int stepCursor, int stepSize) {
+    bool createNewNote = false;
+    int seqNumber = instrumentStepSeq_[instrument];
+    uint16_t startUniqueId = stepNotes[seqNumber][stepCursor].unique;
+
+    // Before cursor
+    if (stepCursor > 0) {
+        if (stepNotes[seqNumber][stepCursor - 1].unique == startUniqueId) {
+            createNewNote = true;;
+        }
+    }
+
+    // After cursor
+    if ((stepCursor + stepSize) <= 255) {
+        if (stepNotes[seqNumber][stepCursor + stepSize].unique == startUniqueId) {
+            createNewNote = true;
+        }
+    }
+
+    // All steps must be the same
+    // Only test if it's currently true;
+    if (createNewNote) {
+        for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
+            if (stepNotes[seqNumber][s].unique != startUniqueId) {
+                return false;
+            }
+        }
+    }
+
+
+    if (createNewNote) {
+        int uniqueId = stepUniqueValue_[instrument];
+        for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
+            stepNotes[seqNumber][s].unique = uniqueId;
+        }
+        stepUniqueValue_[instrument]++;
+        displaySequencer_->refreshStepSeq();
+    }
+    return createNewNote;
+}
+
 

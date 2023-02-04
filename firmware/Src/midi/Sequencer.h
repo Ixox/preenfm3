@@ -58,6 +58,11 @@ struct SeqMidiAction {
     uint8_t unused; // It takes memory even if it does not exist
 };
 
+/**
+ * unique / values[0..1] = position
+ * values[2] = velocity
+ * values[3...8] 6 notes
+ */
 union StepSeqValue {
     uint64_t full;
     uint8_t values[8];
@@ -101,8 +106,10 @@ public:
     void midiClockSetSongPosition(int songPosition);
 
     void mainSequencerTic(uint16_t counter);
-    void calculateSequenceDuration(int instrument);
     void insertNote(uint8_t instrument, uint8_t note, uint8_t velocity);
+    void changeCurrentNote(int instrument, int stepCursor, int stepSize, int ticks);
+    void changeCurrentVelocity(int instrument, int stepCursor, int stepSize, int ticks);
+    uint64_t getStepData(int instrument, int stepCursor);
 
     bool isMuted(uint8_t instrument) {
         return muted_[instrument];
@@ -185,12 +192,13 @@ public:
         stepNumberOfNotesOn_ = 0;
     }
 
+
 private:
     void processActionBetwen(int instrument, uint16_t startTimer, uint16_t endTimer);
     void resyncNextAction(int instrument, uint16_t newInstrumentTimer);
     void loadStateVersion1(uint8_t* buffer);
     void loadStateVersion2(uint8_t* buffer);
-
+    bool createNewNoteIfNeeded(int instrument, int stepCursor, int stepSize);
     char sequenceName_[13];
     uint16_t lastFreeAction_;
     Synth * synth_;

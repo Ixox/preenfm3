@@ -29,6 +29,8 @@
 #define Y_STEP_LEVEL_METTER 252
 
 const char *buttonLabel[SEQ_MOD_LAST] = { "Seq", "Rec", "Play", "Clear", "Step" };
+const char* noteNames[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
 
 FMDisplaySequencer::FMDisplaySequencer() {
     seqMode_ = SEQ_MODE_NORMAL;
@@ -111,7 +113,7 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
             displayBeat();
             break;
         case 16:
-            tft_->fillArea(2, Y_START_SEQ + 2, 236, 166, COLOR_BLACK);
+            tft_->fillArea(2, Y_START_SEQ + 2, 236, 194, COLOR_BLACK);
             break;
         case 15:
             tft_->setCharBackgroundColor(COLOR_BLACK);
@@ -265,6 +267,16 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
             tft_->print(seqNumber);
 
             stepRedrawSequenceIndex_ = 0;
+
+            tft_->setCharColor(COLOR_LIGHT_GRAY);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCursorInPixel(10, Y_START_SEQ + 174);
+            tft_->print("Note:");
+
+            tft_->setCharColor(COLOR_LIGHT_GRAY);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCursorInPixel(132, Y_START_SEQ + 174);
+            tft_->print("Velo:");
             break;
         }
         case 14: {
@@ -274,6 +286,8 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
                 // If not finish, come back here
                 refreshStatus++;
             }
+            // Init for next step 13
+            stepCurrentData_ = sequencer_->getStepData(stepCurrentInstrument_, stepCursor_);
             break;
         }
         case 13: {
@@ -286,11 +300,39 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
             tft_->fillArea(x, y - 15, stepSize_ * 3, 4, COLOR_YELLOW);
             break;
         }
+        case 12: {
+            // display midi note
+            tft_->fillArea(10 + 66, Y_START_SEQ + 174, 44, 20, COLOR_BLACK);
+            int midiNote = ((char*)&stepCurrentData_)[3];
+            if (midiNote > 0) {
+                int octave = (midiNote / 12) - 1;
+                int noteIndex = midiNote % 12;
+
+                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                tft_->setCharBackgroundColor(COLOR_BLACK);
+                tft_->setCursorInPixel(10 + 66, Y_START_SEQ + 174);
+                tft_->print(noteNames[noteIndex]);
+                tft_->print(octave);
+            }
+            break;
+        }
+        case 11: {
+            // display velocity
+            tft_->fillArea(132 + 66, Y_START_SEQ + 174, 33, 20, COLOR_BLACK);
+            int velocity = (int)((char*)&stepCurrentData_)[2];
+            if (velocity > 0) {
+                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                tft_->setCharBackgroundColor(COLOR_BLACK);
+                tft_->setCursorInPixel(132 + 66, Y_START_SEQ + 174);
+                tft_->print(velocity);
+            }
+            break;
+        }
         case 6:
             tft_->drawSimpleButton("_", 270, 29, 0, COLOR_WHITE, COLOR_DARK_YELLOW);
             break;
         case 5:
-            tft_->drawSimpleButton(" ", 270, 29, 1, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleBorderButton("Note", 270, 29, 1, COLOR_WHITE, COLOR_DARK_YELLOW);
             break;
         case 4:
             tft_->drawSimpleButton("<Seq", 270, 29, 2, COLOR_WHITE, COLOR_DARK_YELLOW);
@@ -299,7 +341,7 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
             tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_DARK_YELLOW);
             break;
         case 2:
-            tft_->drawSimpleButton(" ", 270, 29, 4, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleBorderButton("Velo", 270, 29, 4, COLOR_WHITE, COLOR_DARK_YELLOW);
             break;
         case 1:
             refreshPlayButton();
@@ -573,6 +615,17 @@ void FMDisplaySequencer::buttonLongPressed(int instrument, int button) {
 
 }
 
+
+void FMDisplaySequencer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+    if (seqMode_ == SEQ_MODE_STEP) {
+        if (button == BUTTON_PFM3_2) {
+            sequencer_->changeCurrentNote(stepCurrentInstrument_, stepCursor_, stepSize_, ticks);
+        } else if (button == BUTTON_PFM3_5) {
+            sequencer_->changeCurrentVelocity(stepCurrentInstrument_, stepCursor_, stepSize_, ticks);
+        }
+    }
+}
+
 void FMDisplaySequencer::buttonPressed(int instrument, int button) {
     // Action for SEQ and STEP mode
     if (seqMode_ == SEQ_MODE_NORMAL || seqMode_ == SEQ_MODE_STEP) {
@@ -755,4 +808,14 @@ void FMDisplaySequencer::sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, u
         break;
     };
 }
+
+void FMDisplaySequencer::refreshStepCursor() {
+    stepCurrentData_ = sequencer_->getStepData(stepCurrentInstrument_, stepCursor_);
+    refresh(13, 11);
+}
+
+void FMDisplaySequencer::updateCurrentData() {
+    stepCurrentData_ = sequencer_->getStepData(stepCurrentInstrument_, stepCursor_);
+}
+
 

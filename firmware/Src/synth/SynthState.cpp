@@ -263,7 +263,7 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
 
 #ifdef PPMIMAGE_ENABLE
     // Screenshot !!
-    if (button1 == BUTTON_PFM3_MENU && button2 == BUTTON_PFM3_SEQUENCER) {
+    if (button1 == BUTTON_PFM3_MENU && button2 == BUTTON_NEXT_INSTRUMENT) {
         storage->getPPMImage()->saveImage();
         propagateNewPfm3Page();
     }
@@ -293,7 +293,10 @@ void SynthState::encoderTurnedWhileButtonPressed(int encoder, int ticks, int but
 
     if (fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
         displayEditor->encoderTurnedWhileButtonPressed(encoder, ticks, button);
+    } else if (fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+        displaySequencer->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     }
+
 }
 
 bool SynthState::newRandomizerValue(int encoder, int ticks) {
