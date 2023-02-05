@@ -199,6 +199,7 @@ private:
     void loadStateVersion1(uint8_t* buffer);
     void loadStateVersion2(uint8_t* buffer);
     bool createNewNoteIfNeeded(int instrument, int stepCursor, int stepSize);
+    bool createNewNoteIfEmpty(int instrument, int stepCursor, int stepSize);
     char sequenceName_[13];
     uint16_t lastFreeAction_;
     Synth * synth_;

@@ -847,8 +847,9 @@ uint64_t Sequencer::getStepData(int instrument, int stepCursor) {
 void Sequencer::changeCurrentNote(int instrument, int stepCursor, int stepSize, int ticks) {
     int seqNumber = instrumentStepSeq_[instrument];
 
-    // return if no note
+    // if no note we create a note if everything is empty bellow
     if (stepNotes[seqNumber][stepCursor].values[3] == 0) {
+        createNewNoteIfEmpty(instrument, stepCursor, stepSize);
         return;
     }
 
@@ -948,6 +949,34 @@ bool Sequencer::createNewNoteIfNeeded(int instrument, int stepCursor, int stepSi
         displaySequencer_->refreshStepSeq();
     }
     return createNewNote;
+}
+
+/*
+ * We check that everything is empty bellow the cursor
+ * If empty we create a 64/100 note
+ */
+bool Sequencer::createNewNoteIfEmpty(int instrument, int stepCursor, int stepSize) {
+    int seqNumber = instrumentStepSeq_[instrument];
+
+    // All steps must be empty
+    for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
+        if (stepNotes[seqNumber][s].unique != 0) {
+            return false;
+        }
+    }
+
+    // Create new Note
+    StepSeqValue newNote;
+    newNote.unique = stepUniqueValue_[instrument];
+    newNote.values[2] = 100;
+    newNote.values[3] = 64;
+    for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
+        stepNotes[seqNumber][s] = newNote;
+
+    }
+    stepUniqueValue_[instrument]++;
+    displaySequencer_->refreshStepSeq();
+    return true;
 }
 
 
