@@ -3841,7 +3841,7 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
 
         // Special Case for filter - hide not so good filter
         if (unlikely(param->valueNameOrderReversed == filtersPosition)) {
-            if (ticks > 0 && oldValue != FILTER_LADDER) {
+            if (ticks > 0 && oldValue != FILTER_DIFFUSER) {
                 newValue = param->valueNameOrder[pos + 1];
             }
             if (ticks < 0 && pos > param->minValue) {
