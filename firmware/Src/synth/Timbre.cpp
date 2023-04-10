@@ -775,7 +775,6 @@ void Timbre::fxAfterBlock() {
     float matrixFilterParam2    = voices_[lastPlayedNote_]->matrix.getDestination(FILTER_PARAM2);
     float matrixFilterAmp       = voices_[lastPlayedNote_]->matrix.getDestination(FILTER_AMP);
     float matrixFilterPan       = clamp( voices_[lastPlayedNote_]->matrix.getDestination(ALL_PAN), -1, 1);
-    float matrixOscAllFreq      = voices_[lastPlayedNote_]->matrix.getDestination(ALL_OSC_FREQ_HARM);
     float gainTmp               = clamp(this->params_.effect.param3 + matrixFilterAmp, 0, 16);
 
     switch (effectType) {
@@ -1096,7 +1095,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255] * 0.75f;
+            float wet = panTable[mixerGain255] * 0.5f;
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -1104,20 +1103,21 @@ void Timbre::fxAfterBlock() {
             float wetR = wet * (1 - matrixFilterPan);
 
             param1S = 0.02f * this->params_.effect.param1 + .98f * param1S;
+            param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
 
             float currentShift = shift;
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
             float shiftInc = (shift - currentShift) * INV_BLOCK_SIZE;
 
-            float param1 = fabsf(param1S - 0.5f);// 2 quadrant for up & down shift
-            float feedbackZeroZone = clamp(0.86f + (param1 * param1 * param1 * 7600), 0, 1) * 0.95f;
+            float quadrant = fabsf((shift - 1));// 2 quadrant for up & down shift
+            float feedbackZeroZone = clamp(0.85f + quadrant * 7000, 0, 0.995f);
 
-            float feed = (this->params_.effect.param2 + matrixFilterParam2) * (feedbackZeroZone);
+            float feed = param2S * feedbackZeroZone;
             float currentFeedback = feedback;
-            feedback = clamp( feed, -0.9999f, 0.9999f) * 0.5f;
+            feedback = clamp( feed, -1, 1) * 0.45f;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
 
-            float lpZeroZone  = clamp(param1 * 50, 0, 1);
+            float lpZeroZone  = clamp(quadrant * 50, 0, 1);
 
             float filterA2    = 0.5f + lpZeroZone * 0.2f;
             float filterA     = (filterA2 * filterA2 * 0.5f);
@@ -1125,6 +1125,7 @@ void Timbre::fxAfterBlock() {
             _in_lp_a = 1 - _in_lp_b;
 
             const float f = 0.65f;
+            const float f2 = 0.38f;
             const float f3 = 0.72f;
 
             float *sp = sampleBlock_;
@@ -1132,9 +1133,11 @@ void Timbre::fxAfterBlock() {
             float delayReadPos90, delayReadPos180, delayReadPos270, level1, level2, level3, level4;
 
             // hi pass params
-            float hpZeroZone  = 1 - clamp(param1 * param1 * 8300, 0, 1);
+            float quadrant2 = quadrant * quadrant;
+            float hpZeroZone  = 1 - clamp(quadrant2 * 8000, 0, 1);
+            float hpAttnZone  = 1 - clamp(quadrant2 * 30, 0, 1);
 
-            float filterB2     = 0.15f + sigmoidPos( clamp(shift, 0, 1) ) * (0.22f + hpZeroZone * 0.25f) + param1S * 0.1f;
+            float filterB2    = (f2 + (hpZeroZone * 0.275f)) * clamp(param2S * 2, 0, 1) + param1S * 0.1f;
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             _in2_b1 = (1 - filterB);
@@ -1189,8 +1192,8 @@ void Timbre::fxAfterBlock() {
                 float out3 = delayOut3 * level3;
                 float out4 = delayOut4 * level4;
 
-                delaySumOut  = out1 + out2 + out3 - out4;
-                float delaySumOut2  = out1 + out2 - out3 + out4;
+                delaySumOut  = out1 + out2 + out3 + out4;
+                float delaySumOut2 = - delaySumOut;//out1 + out2 - out3 + out4;
 
                 low5  += f3 * band5;
                 band5 += f3 * (delaySumOut - low5 - band5);
@@ -1198,9 +1201,15 @@ void Timbre::fxAfterBlock() {
                 low6  += f3 * band6;
                 band6 += f3 * (delaySumOut2 - low6 - band6);
 
-                *sp = (*sp * dry + low5 * wetL);
+                // bass boost
+                low3  += f2 * band3;
+                band3 += f2 * (low5 - low3 - band3);
+                low4  += f2 * band4;
+                band4 += f2 * (low6 - low4 - band4);
+
+                *sp = (*sp * dry + ((low3 + low5) * wetL));
                 sp++;
-                *sp = (*sp * dry + low6 * wetR);
+                *sp = (*sp * dry + ((low4 + low6) * wetR));
                 sp++;
 
                 currentFeedback += feedbackInc;
@@ -1320,7 +1329,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255];
+            float wet = panTable[mixerGain255] * 0.66f;
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -1342,6 +1351,7 @@ void Timbre::fxAfterBlock() {
             // shift val
             param1S = 0.02f * this->params_.effect.param1 + .98f * param1S;
             float param1 = fabsf(param1S - 0.5f);// 2 quadrant for up & down shift
+            float param1sq = sqrt3(param1);
 
             // shift increment :
             float currentShift = shift;
@@ -1351,9 +1361,9 @@ void Timbre::fxAfterBlock() {
             float shiftInc = (shift - currentShift) * INV_BLOCK_SIZE;
 
             // feedback
-            float feedbackZeroZone = clamp(0.88f + (param1 * param1 * 100), 0, 1);
+            float feedbackZeroZone = clamp(0.1f + (param1sq * 8), 0, 1);
 
-            float feedbackParam = (clamp( (this->params_.effect.param2 + matrixFilterParam2), -1, 1));
+            float feedbackParam = clamp(this->params_.effect.param2 + matrixFilterParam2, -1, 1) * 0.9f;
 
             float currentFeedback = feedback;
             feedback = feedbackParam * feedbackZeroZone;
@@ -1375,8 +1385,8 @@ void Timbre::fxAfterBlock() {
             const float f2 = 0.75f;
             const float f3 = 0.25f;
 
-            float hpZeroZone  = clamp(param1 * 50, 0, 1);
-            float filterB2    = 0.45f - 0.45f * hpZeroZone * (1 - (feedbackZeroZone * fabsf(feedbackParam) * 0.125f));
+            float hpZeroZone  = clamp(param1 * 4, 0, 1);
+            float filterB2    = 0.3f - 0.3f * hpZeroZone * (1 - (feedbackZeroZone * fabsf(feedbackParam) * 0.125f));
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             _in3_b1 = (1 - filterB);
