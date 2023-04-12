@@ -1135,7 +1135,6 @@ void Timbre::fxAfterBlock() {
             // hi pass params
             float quadrant2 = quadrant * quadrant;
             float hpZeroZone  = 1 - clamp(quadrant2 * 8000, 0, 1);
-            float hpAttnZone  = 1 - clamp(quadrant2 * 30, 0, 1);
 
             float filterB2    = (f2 + (hpZeroZone * 0.275f)) * clamp(param2S * 2, 0, 1) + param1S * 0.1f;
             float filterB     = (filterB2 * filterB2 * 0.5f);
@@ -1250,16 +1249,10 @@ void Timbre::fxAfterBlock() {
             for (int k = 0; k < BLOCK_SIZE; k++) {
                 float monoIn = (*sp + *(sp + 1)) * 0.5f;
 
-                // delay in hp
-                hp_in_x0     = monoIn;
-                hp_in_y0     = _in_a0 * hp_in_x0 + _in_a1 * hp_in_x1 + _in_b1 * hp_in_y1;
-                hp_in_y1     = hp_in_y0;
-                hp_in_x1     = hp_in_x0;
-
                 delayWritePos = (delayWritePos + 1) & delayBufferSizeM1;
 
                 low1  += f * band1;
-                band1 += f * (hp_in_y0 - low1 - band1);
+                band1 += f * (monoIn - low1 - band1);
 
                 delayBuffer_[delayWritePos] = low1;
 
