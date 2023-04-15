@@ -1240,11 +1240,12 @@ void Timbre::fxAfterBlock() {
             float shiftInc2 = (shift2 - currentShift2) * INV_BLOCK_SIZE;
 
             const float f = 0.75f;
+            const float f2 = 0.72f;
 
             float *sp = sampleBlock_;
             
             float level1, level2, level3, level4, level5, level6;
-            float delayReadPos120, delayReadPos240;
+            float delayReadPos180;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
                 float monoIn = (*sp + *(sp + 1)) * 0.5f;
@@ -1259,55 +1260,49 @@ void Timbre::fxAfterBlock() {
                 //--------------- shifter 1
 
                 delayReadPos = modulo(delayReadPos + currentShift, delayBufferSize);
-                delayReadPos120 = modulo(delayReadPos + delayBufferSize120, delayBufferSize);
-                delayReadPos240 = modulo(delayReadPos + delayBufferSize240, delayBufferSize);
+                delayReadPos180 = modulo(delayReadPos + delayBufferSize180, delayBufferSize);
 
                 delayOut1 = delayInterpolation(delayReadPos, delayBuffer_, delayBufferSizeM1);
-                delayOut2 = delayInterpolation(delayReadPos120, delayBuffer_, delayBufferSizeM1);
-                delayOut3 = delayInterpolation(delayReadPos240, delayBuffer_, delayBufferSizeM1);
+                delayOut2 = delayInterpolation(delayReadPos180, delayBuffer_, delayBufferSizeM1);
                 
                 float delayWritePosF = (float) delayWritePos;
                 float rwp1 = modulo2(delayWritePosF - delayReadPos, delayBufferSize);
-                float rwp2 = modulo2(delayWritePosF - delayReadPos120, delayBufferSize);
-                float rwp3 = modulo2(delayWritePosF - delayReadPos240, delayBufferSize);
+                float rwp2 = modulo2(delayWritePosF - delayReadPos180, delayBufferSize);
 
                 level1 = fastSin(rwp1 * delayBufferSizeInv);
                 level2 = fastSin(rwp2 * delayBufferSizeInv);
-                level3 = fastSin(rwp3 * delayBufferSizeInv);
 
-                float out1 = delayOut1 * level1;
-                float out2 = delayOut2 * level2;
-                float out3 = delayOut3 * level3;
+                float out1 = delayOut1 * sigmoid2(level1);
+                float out2 = delayOut2 * sigmoid2(level2);
 
-                delaySumOut  = out1 + out2 + out3;
+                delaySumOut  = out1 + out2;
 
                 //--------------- shifter 2
 
                 delayReadPos2 = modulo(delayReadPos2 + currentShift2, delayBufferSize);
-                delayReadPos120 = modulo(delayReadPos2 + delayBufferSize120, delayBufferSize);
-                delayReadPos240 = modulo(delayReadPos2 + delayBufferSize240, delayBufferSize);
+                delayReadPos180 = modulo(delayReadPos2 + delayBufferSize90, delayBufferSize);
 
                 delayOut4 = delayInterpolation(delayReadPos2, delayBuffer_, delayBufferSizeM1);
-                delayOut5 = delayInterpolation(delayReadPos120, delayBuffer_, delayBufferSizeM1);
-                delayOut6 = delayInterpolation(delayReadPos240, delayBuffer_, delayBufferSizeM1);
+                delayOut5 = delayInterpolation(delayReadPos180, delayBuffer_, delayBufferSizeM1);
 
                 float rwp4 = modulo2(delayWritePosF - delayReadPos2, delayBufferSize);
-                float rwp5 = modulo2(delayWritePosF - delayReadPos120, delayBufferSize);
-                float rwp6 = modulo2(delayWritePosF - delayReadPos240, delayBufferSize);
+                float rwp5 = modulo2(delayWritePosF - delayReadPos180, delayBufferSize);
 
                 level4 = fastSin(rwp4 * delayBufferSizeInv);
                 level5 = fastSin(rwp5 * delayBufferSizeInv);
-                level6 = fastSin(rwp6 * delayBufferSizeInv);
 
-                float out4 = delayOut4 * level4;
-                float out5 = delayOut5 * level5;
-                float out6 = delayOut6 * level6;
+                float out4 = delayOut4 * sigmoid2(level4);
+                float out5 = delayOut5 * sigmoid2(level5);
 
-                delaySumOut -= out4 + out5 + out6;
+                delaySumOut -= out4 + out5;
 
-                *sp = *sp * dry + delaySumOut * wetL;
+                // lp output 
+                low3  += f2 * band3;
+                band3 += f2 * ((delaySumOut) - low3 - band3);
+
+                *sp = *sp * dry + low3 * wetL;
                 sp++;
-                *sp = *sp * dry + delaySumOut * wetR;
+                *sp = *sp * dry + low3 * wetR;
                 sp++;
 
                 currentShift += shiftInc;
@@ -1513,6 +1508,7 @@ void Timbre::fxAfterBlock() {
             const int delaySizeInt = 500;
 
             const float f = 0.72f;
+            const float f2 = 0.7f + f * 0.1f;
 
             // hi pass params
             float filterB2    = param2S * param2S * 0.93f;
@@ -1525,7 +1521,7 @@ void Timbre::fxAfterBlock() {
             float *sp = sampleBlock_;
             
             float level1, level2, level3, level4, level5, level6;
-            float delayReadPos120, delayReadPos240;
+            float delayReadPos180;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
                 float monoIn = (*sp + *(sp + 1)) * 0.5f;
@@ -1553,50 +1549,47 @@ void Timbre::fxAfterBlock() {
                 //--------------- shifter 1
                 
                 delayReadPos = modulo(delayReadPos + currentShift, delayBufStereoSize);
-                delayReadPos120 = modulo(delayReadPos + 338.f, delayBufStereoSize);
-                delayReadPos240 = modulo(delayReadPos + 676.f, delayBufStereoSize);
+                delayReadPos180 = modulo(delayReadPos + delayBufferSize90, delayBufStereoSize);
 
                 delayOut1 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
-                delayOut2 = delayInterpolation(delayReadPos120, delayBuffer_, delayBufStereoSizeM1);
-                delayOut3 = delayInterpolation(delayReadPos240, delayBuffer_, delayBufStereoSizeM1);
+                delayOut2 = delayInterpolation(delayReadPos180, delayBuffer_, delayBufStereoSizeM1);
 
                 float rwp1 = modulo2(delayWritePosF - delayReadPos, delayBufStereoSize);
-                float rwp2 = modulo2(delayWritePosF - delayReadPos120, delayBufStereoSize);
-                float rwp3 = modulo2(delayWritePosF - delayReadPos240, delayBufStereoSize);
+                float rwp2 = modulo2(delayWritePosF - delayReadPos180, delayBufStereoSize);
 
                 level1 = fastSin(rwp1 * delayBufStereoSizeInv);
                 level2 = fastSin(rwp2 * delayBufStereoSizeInv);
-                level3 = fastSin(rwp3 * delayBufStereoSizeInv);
 
-                float out1 = delayOut1 * level1;
-                float out2 = delayOut2 * level2;
-                float out3 = delayOut3 * level3;
+                float out1 = delayOut1 * sigmoid2(level1);
+                float out2 = delayOut2 * sigmoid2(level2);
 
                 //--------------- shifter 2
 
                 delayReadPos2 = modulo(delayReadPos2 + currentShift2, delayBufStereoSize);
-                delayReadPos120 = modulo(delayReadPos2 + 338.f, delayBufStereoSize);
-                delayReadPos240 = modulo(delayReadPos2 + 676.f, delayBufStereoSize);
+                delayReadPos180 = modulo(delayReadPos2 + delayBufferSize90, delayBufStereoSize);
 
                 delayOut4 = delayInterpolation(delayReadPos2, delayBuffer_, delayBufStereoSizeM1);
-                delayOut5 = delayInterpolation(delayReadPos120, delayBuffer_, delayBufStereoSizeM1);
-                delayOut6 = delayInterpolation(delayReadPos240, delayBuffer_, delayBufStereoSizeM1);
+                delayOut5 = delayInterpolation(delayReadPos180, delayBuffer_, delayBufStereoSizeM1);
 
                 float rwp4 = modulo2(delayWritePosF - delayReadPos2, delayBufStereoSize);
-                float rwp5 = modulo2(delayWritePosF - delayReadPos120, delayBufStereoSize);
-                float rwp6 = modulo2(delayWritePosF - delayReadPos240, delayBufStereoSize);
+                float rwp5 = modulo2(delayWritePosF - delayReadPos180, delayBufStereoSize);
 
                 level4 = fastSin(rwp4 * delayBufStereoSizeInv);
                 level5 = fastSin(rwp5 * delayBufStereoSizeInv);
-                level6 = fastSin(rwp6 * delayBufStereoSizeInv);
 
-                float out4 = delayOut4 * level4;
-                float out5 = delayOut5 * level5;
-                float out6 = delayOut6 * level6;
+                float out4 = delayOut4 * sigmoid2(level4);
+                float out5 = delayOut5 * sigmoid2(level5);
    
-                *sp = *sp * dry + (hpComplement + out1 + out2 + out3) * wetL;
+                // lp output 
+                low3  += f2 * band3;
+                band3 += f2 * ((hpComplement + out1 + out2) - low3 - band3);
+
+                low4  += f2 * band4;
+                band4 += f2 * ((hpComplement + out4 + out5) - low4 - band4);
+
+                *sp = *sp * dry + low3 * wetL;
                 sp++;
-                *sp = *sp * dry + (hpComplement + out4 + out5 + out6) * wetR;
+                *sp = *sp * dry + low4 * wetR;
                 sp++;
 
                 currentShift += shiftInc;
@@ -1637,8 +1630,8 @@ void Timbre::fxAfterBlock() {
             _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
             _in3_a1 = -_in3_a0;
 
-            float f = 0.725f;
-            float f2 = 0.62f;
+            const float f = 0.725f;
+            const float f2 = 0.62f;
 
             float *sp = sampleBlock_;
  
