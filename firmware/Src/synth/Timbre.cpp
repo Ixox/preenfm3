@@ -1006,7 +1006,7 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc2 = (delaySize2 - currentDelaySize2) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
-            feedback = clamp( (this->params_.effect.param2 + matrixFilterParam2) , -0.9999f, 0.9999f);
+            feedback = clamp( (this->params_.effect.param2 + matrixFilterParam2) , -0.9995f, 0.9995f);
             feedback *= feedback;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
             
@@ -1109,10 +1109,10 @@ void Timbre::fxAfterBlock() {
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
             float shiftInc = (shift - currentShift) * INV_BLOCK_SIZE;
 
-            float quadrant = fabsf((shift - 1));// 2 quadrant for up & down shift
+            float quadrant = fabsf((clamp(shift, 0, 2) - 1));// 2 quadrant for up & down shift
             float feedbackZeroZone = clamp(0.85f + quadrant * 7000, 0, 0.995f);
 
-            float feed = param2S * feedbackZeroZone;
+            float feed = clamp(param2S * feedbackZeroZone, 0, 1);
             float currentFeedback = feedback;
             feedback = clamp( feed, -1, 1) * 0.45f;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
@@ -1324,41 +1324,46 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
+            float param1 = this->params_.effect.param1;
+    
             // mix between freq shift + and - :
             int param255 = 0;
-            if (this->params_.effect.param1 <= 0.4f) {
+            if (param1 <= 0.4f) {
                 param255 = 0;
-            } else if (this->params_.effect.param1 >= 0.6f) {
+            } else if (param1 >= 0.6f) {
                 param255 = 255;
             } else {
-                param255 = 255 * (5.f * (this->params_.effect.param1 - 0.4f));
+                param255 = 255 * (5.f * (param1 - 0.4f));
             }
             float shiftMinus = panTable[255 - param255];
             float shiftPlus  = panTable[param255];
             
             // shift val
-            param1S = 0.02f * this->params_.effect.param1 + .98f * param1S;
-            float param1 = fabsf(param1S - 0.5f);// 2 quadrant for up & down shift
-            float param1sq = sqrt3(param1);
+            param1S = 0.02f * param1 + .98f * param1S;
+            float quadrant = fabsf(param1S - 0.5f);// 2 quadrant for up & down shift
+            float quadrantSq = sqrt3(quadrant);
 
             // shift increment :
+            shift = clamp(shift, 0, 0.1f);
             float currentShift = shift;
-            float shiftval = clamp(fabsf(param1 * 1.34f + matrixFilterFrequency * 0.5f), 0, 0.9999f);
+            float shiftval = clamp(fabsf(quadrant * 1.34f + matrixFilterFrequency * 0.5f), 0, 0.9999f);
             shiftval *= shiftval * 0.05f;
             shift = shift * 0.96f + 0.04f * shiftval;
             float shiftInc = (shift - currentShift) * INV_BLOCK_SIZE;
 
             // feedback
-            float feedbackZeroZone = clamp(0.1f + (param1sq * 8), 0, 1);
+            float feedbackZeroZone = clamp(0.1f + (quadrantSq * 8), 0, 1);
 
-            float feedbackParam = clamp(this->params_.effect.param2 + matrixFilterParam2, -1, 1) * 0.9f;
+            float feedbackParam = clamp(this->params_.effect.param2 + matrixFilterParam2, 0, 1) * 0.9f;
+
+            feedback = clamp(feedback, 0, 1);
 
             float currentFeedback = feedback;
             feedback = feedbackParam * feedbackZeroZone;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
 
             float currentDelaySize1 = clamp(delaySize1, 0, delayBufferSize);
-            delaySize1 = clamp(430 + 70 * param1,  0, delayBufferSize);
+            delaySize1 = clamp(430 + 70 * quadrant,  0, delayBufferSize);
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * INV_BLOCK_SIZE;
 
             float *sp = sampleBlock_;
@@ -1511,7 +1516,7 @@ void Timbre::fxAfterBlock() {
             const float f2 = 0.7f + f * 0.1f;
 
             // hi pass params
-            float filterB2    = param2S * param2S * 0.93f;
+            float filterB2    = clamp(param2S * param2S * 0.93f, 0, 1);
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             const float _hp_b1 = (1 - filterB);
@@ -1613,7 +1618,9 @@ void Timbre::fxAfterBlock() {
             matrixFilterFrequencyS = 0.02f * (matrixFilterFrequency) + .98f * matrixFilterFrequencyS;
             param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
 
-            feedback = clamp(param2S, 0, 1.f) * 1.25f;
+            param2S = clamp(param2S, 0, 1.f);
+
+            feedback = param2S * 1.25f;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
@@ -1623,7 +1630,7 @@ void Timbre::fxAfterBlock() {
             delaySize1 = 1.f + (delayBufferSize - 16) * clamp(param1S + (matrixFilterFrequencyS * 0.0625f), 0.f, 1.f);
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * sampleRateDivideInv * INV_BLOCK_SIZE;
 
-            float filterB2     = 0.15f + clamp(param2S, 0, 1.f) * 0.33f;
+            float filterB2     = 0.15f + param2S * 0.33f;
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             _in3_b1 = (1 - filterB);
@@ -1704,8 +1711,10 @@ void Timbre::fxAfterBlock() {
             param1S = 0.005f * (this->params_.effect.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.02f * (matrixFilterFrequency) + .98f * matrixFilterFrequencyS;
             param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
+            
+            param2S = clamp(param2S, 0, 1.f);
 
-            feedback = clamp(param2S, 0, 1.f) * 1.25f;
+            feedback = param2S* 1.25f;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
@@ -1719,7 +1728,7 @@ void Timbre::fxAfterBlock() {
             delaySize2 = delaySize1 * 0.5f;
             float delaySizeInc2 = (delaySize2 - currentDelaySize2) * sampleRateDivideInv * INV_BLOCK_SIZE;
 
-            float filterB2     = 0.15f + clamp(param2S, 0, 1.f) * 0.33f;
+            float filterB2     = 0.15f + param2S * 0.33f;
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             _in3_b1 = (1 - filterB);
@@ -1811,17 +1820,20 @@ void Timbre::fxAfterBlock() {
             matrixFilterFrequencyS = 0.01f * (matrixFilterFrequency) + .99f * matrixFilterFrequencyS;
             param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
 
-            feedback = clamp(param2S, 0, 1) * 0.5f;
+            param1S = clamp(param1S, 0, 1);
+            param2S = clamp(param2S, 0, 1);
+
+            feedback = param2S * 0.5f;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
             float inputIncCount = 0;
 
-            float currentDelaySize1 = clamp(delaySize1, 0, delayBufferSize);
-            delaySize1 = 1.f + (delayBufferSize - 120) * clamp(param1S + (matrixFilterFrequencyS * 0.125f), 0.f, 1.f) * 0.5f;
+            float currentDelaySize1 = clamp(delaySize1, 0, delayBufStereoSize);
+            delaySize1 = 1.f + (delayBufStereoSize - 120) * clamp(param1S + (matrixFilterFrequencyS * 0.125f), 0.f, 1.f) * 0.5f;
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * sampleRateDivideInv * INV_BLOCK_SIZE;
 
-            float filterB2    = 0.15f + clamp(param2S, 0, 1.f) * 0.1f;
+            float filterB2    = 0.15f + param2S * 0.1f;
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             _in3_b1 = (1 - filterB);
