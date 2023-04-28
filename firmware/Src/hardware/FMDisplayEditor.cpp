@@ -812,12 +812,12 @@ const char *fxName[] = {
     "Svh3", /*  47  */
     "Alkx", /*  48  */
     "Flng", /*  49  */
-    "Chor", /*  50  */
-    "Dim ", /*  51  */
-    "Dblr", /*  52  */
-    "3Voi", /*  53  */
-    "Bode", /*  54  */
-    "Wide", /*  55  */
+    "Dim ", /*  50  */
+    "Chor", /*  51  */
+    "Wide", /*  52  */
+    "Dblr", /*  53  */
+    "3Voi", /*  54  */
+    "Bode", /*  55  */
     "Delc", /*  56  */
     "Ping", /*  57  */
     "Diff", /*  58  */
@@ -1074,6 +1074,10 @@ struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
         "Feed",
         "Mix " },
     {
+        "Detu",
+        "Freq",
+        "Mix " },
+    {
         "Ptch",
         "Feed",
         "Mix " },
@@ -1084,10 +1088,6 @@ struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
     {
         "Freq",
         "Feed",
-        "Mix " },
-    {
-        "Detu",
-        "Freq",
         "Mix " },
     {
         "Time",
