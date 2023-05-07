@@ -223,6 +223,11 @@ inline
 float fastSin(float x) {
     return 3.9961f * x * ( 1 - fabsf(x) );
 }
+inline 
+float hann(float x) {
+    float s = sqrt3(x * (1 - x));
+    return s + s;
+}
 Timbre::Timbre() {
 
     recomputeNext_ = true;
@@ -1173,11 +1178,11 @@ void Timbre::fxAfterBlock() {
                 float rwp1 = modulo2(delayWritePosF - delayReadPos, delayBufferSize);
                 float rwp3 = modulo2(delayWritePosF - delayReadPos180, delayBufferSize);
 
-                level1 = fastSin(rwp1 * delayBufferSizeInv);
-                level2 = fastSin(rwp3 * delayBufferSizeInv);
+                level1 = hann(rwp1 * delayBufferSizeInv);
+                level2 = hann(rwp3 * delayBufferSizeInv);
 
-                float out1 = delayOut1 * sigmoid2(level1);
-                float out2 = delayOut2 * sigmoid2(level2);
+                float out1 = delayOut1 * (level1);
+                float out2 = delayOut2 * (level2);
 
                 delaySumOut  = out1 + out2;
                 float delaySumOut2 = out1 - out2;
@@ -1257,11 +1262,11 @@ void Timbre::fxAfterBlock() {
                 float rwp1 = modulo2(delayWritePosF - delayReadPos, delayBufferSize);
                 float rwp2 = modulo2(delayWritePosF - delayReadPos180, delayBufferSize);
 
-                level1 = fastSin(rwp1 * delayBufferSizeInv);
-                level2 = fastSin(rwp2 * delayBufferSizeInv);
+                level1 = hann(rwp1 * delayBufferSizeInv);
+                level2 = hann(rwp2 * delayBufferSizeInv);
 
-                float out1 = delayOut1 * sigmoid2(level1);
-                float out2 = delayOut2 * sigmoid2(level2);
+                float out1 = delayOut1 * (level1);
+                float out2 = delayOut2 * (level2);
 
                 delaySumOut  = out1 + out2;
 
@@ -1276,11 +1281,11 @@ void Timbre::fxAfterBlock() {
                 float rwp3 = modulo2(delayWritePosF - delayReadPos2, delayBufferSize);
                 float rwp4 = modulo2(delayWritePosF - delayReadPos180, delayBufferSize);
 
-                level3 = fastSin(rwp3 * delayBufferSizeInv);
-                level4 = fastSin(rwp4 * delayBufferSizeInv);
+                level3 = hann(rwp3 * delayBufferSizeInv);
+                level4 = hann(rwp4 * delayBufferSizeInv);
 
-                float out3 = delayOut3 * sigmoid2(level3);
-                float out4 = delayOut4 * sigmoid2(level4);
+                float out3 = delayOut3 * (level3);
+                float out4 = delayOut4 * (level4);
 
                 delaySumOut -= out3 + out4;
 
@@ -1549,11 +1554,11 @@ void Timbre::fxAfterBlock() {
                 float rwp1 = modulo2(delayWritePosF - delayReadPos, delayBufStereoSize);
                 float rwp2 = modulo2(delayWritePosF - delayReadPos180, delayBufStereoSize);
 
-                level1 = fastSin(rwp1 * delayBufStereoSizeInv);
-                level2 = fastSin(rwp2 * delayBufStereoSizeInv);
+                level1 = hann(rwp1 * delayBufStereoSizeInv);
+                level2 = hann(rwp2 * delayBufStereoSizeInv);
 
-                float out1 = delayOut1 * sigmoid2(level1);
-                float out2 = delayOut2 * sigmoid2(level2);
+                float out1 = delayOut1 * (level1);
+                float out2 = delayOut2 * (level2);
 
                 //--------------- shifter 2
 
@@ -1566,11 +1571,11 @@ void Timbre::fxAfterBlock() {
                 float rwp3 = modulo2(delayWritePosF - delayReadPos2, delayBufStereoSize);
                 float rwp4 = modulo2(delayWritePosF - delayReadPos180, delayBufStereoSize);
 
-                level3 = fastSin(rwp3 * delayBufStereoSizeInv);
-                level4 = fastSin(rwp4 * delayBufStereoSizeInv);
+                level3 = hann(rwp3 * delayBufStereoSizeInv);
+                level4 = hann(rwp4 * delayBufStereoSizeInv);
 
-                float out3 = delayOut3 * sigmoid2(level3);
-                float out4 = delayOut4 * sigmoid2(level4);
+                float out3 = delayOut3 * (level3);
+                float out4 = delayOut4 * (level4);
    
                 // lp output 
                 low3  += f2 * band3;
@@ -1600,7 +1605,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255] * 1.25f;
+            float wet = panTable[mixerGain255] * 1.2f;
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -1630,8 +1635,10 @@ void Timbre::fxAfterBlock() {
             _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
             _in3_a1 = -_in3_a0;
 
-            const float f = 0.725f;
-            const float f2 = 0.62f;
+            const float f = 0.7f;
+            const float f2 = 0.75f;
+
+            const float fnotch = 1.03f;
 
             float *sp = sampleBlock_;
  
@@ -1672,17 +1679,27 @@ void Timbre::fxAfterBlock() {
 
                 delayReadPos = modulo2(delayWritePosF - currentDelaySize1, delayBufferSize);
                 delayOut1 = delayInterpolation(delayReadPos, delayBuffer_, delayBufferSizeM1);
+                delayWritePosF += sampleRateDivideInv;
 
-                // lp output 
-                low3  += f2 * band3;
+                // lp 
+                low3 += f2 * band3;
                 band3 += f2 * (delayOut1 - low3 - band3);
-
-                low4  += f2 * band4;
+                low4 += f2 * band4;
                 band4 += f2 * (low3 - low4 - band4);
+                low5 += f2 * band5;
+                band5 += f2 * (low4 - low5 - band5);
+                low6 += f2 * band6;
+                band6 += f2 * (low5 - low6 - band6);
 
-                *sp = *sp * dry + low4 * wetL;
+                // notch 
+                low7 += fnotch * band7;
+                float high7 = low6 - low7 - band7;
+                band7 += fnotch * high7;
+                float notch = (high7 + low7);
+
+                *sp = *sp * dry + notch * wetL;
                 sp++;
-                *sp = *sp * dry + low4 * wetR;
+                *sp = *sp * dry + notch * wetR;
                 sp++;
 
                 currentDelaySize1 += delaySizeInc1;
@@ -1731,6 +1748,7 @@ void Timbre::fxAfterBlock() {
             float f = 0.7f;
             float f2 = 0.62;
             float f3 = 0.66;
+            const float fnotch = 1.03f;
 
             float *sp = sampleBlock_;
 
@@ -1774,22 +1792,34 @@ void Timbre::fxAfterBlock() {
                 delayReadPos = modulo2(delayWritePosF - currentDelaySize2, delayBufferSize);
                 delayOut2 = delayInterpolation(delayReadPos, delayBuffer_, delayBufferSizeM1);
 
-                // lp output
+                // lp L
                 low3  += f2 * band3;
                 band3 += f2 * ((delayOut1) - low3 - band3);
-
                 low5  += f2 * band5;
                 band5 += f2 * ((low3) - low5 - band5);
 
+                // lp R
                 low4  += f3 * band4;
                 band4 += f3 * ((delayOut2) - low4 - band4);
-
                 low6  += f3 * band6;
                 band6 += f3 * ((low4) - low6 - band6);
 
-                *sp = *sp * dry + low5 * wetL;
+                // notch L
+                low7 += fnotch * band7;
+                float high7 = low5 - low7 - band7;
+                band7 += fnotch * high7;
+                float notchL = (high7 + low7);
+
+                // notch R
+                low8 += fnotch * band8;
+                float high8 = low6 - low8 - band8;
+                band8 += fnotch * high8;
+                float notchR = (high8 + low8);
+
+
+                *sp = *sp * dry + notchL * wetL;
                 sp++;
-                *sp = *sp * dry + low6 * wetR;
+                *sp = *sp * dry + notchR * wetR;
                 sp++;
 
                 currentDelaySize1 += delaySizeInc1;
@@ -1802,7 +1832,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255] * 1.0f;
+            float wet = panTable[mixerGain255];
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -1835,6 +1865,7 @@ void Timbre::fxAfterBlock() {
 
             float f = 0.7f - clamp(feedback - (param1S * 0.3f), 0, 1) * 0.6f;
             float f2 = 0.64f - param1S * 0.1f;
+            const float fnotch = 1.03f;
 
             const float inputCoef1 = 0.75f;
             const float inputCoef2 = 0.625f;
@@ -1932,22 +1963,33 @@ void Timbre::fxAfterBlock() {
                 delayReadPos = modulo2(delayReadPos - 512, delayBufStereoSize);
                 delayOut2 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
                
-                // lp output 
+                // lp L
                 low3  += f2 * band3;
                 band3 += f2 * ((delayOut1) - low3 - band3);
-
                 low5  += f2 * band5;
                 band5 += f2 * ((low3) - low5 - band5);
 
+                // lp R
                 low4  += f2 * band4;
                 band4 += f2 * ((delayOut2) - low4 - band4);
-
                 low6  += f2 * band6;
                 band6 += f2 * ((low4) - low6 - band6);
 
-                *sp = *sp * dry + low5 * wetL;
+                // notch L
+                low7 += fnotch * band7;
+                float high7 = low5 - low7 - band7;
+                band7 += fnotch * high7;
+                float notchL = (high7 + low7);
+
+                // notch R
+                low8 += fnotch * band8;
+                float high8 = low6 - low8 - band8;
+                band8 += fnotch * high8;
+                float notchR = (high8 + low8);
+
+                *sp = *sp * dry + notchL * wetL;
                 sp++;
-                *sp = *sp * dry + low6 * wetR;
+                *sp = *sp * dry + notchR * wetR;
                 sp++;
 
                 currentDelaySize1 += delaySizeInc1;
