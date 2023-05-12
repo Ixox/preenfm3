@@ -136,7 +136,7 @@ const struct OneSynthParams preenMainPreset  = {
         { 0, .6, 4, 0},
 
         { .1, 1, 0, 1 },
-        { .1, 1, 1.8, 0 },
+        { .1, 1, 1.0, 0 },
 
         { 0, 1, .6, 0},
         { 0, 0, 0.66, 0},

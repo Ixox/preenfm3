@@ -445,6 +445,20 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashM
         envLevel[e].decayLevel   = envFlashFloat[e * 8 + 3];
         envLevel[e].sustainLevel = envFlashFloat[e * 8 + 5];
         envLevel[e].releaseLevel = envFlashFloat[e * 8 + 7];
+
+        //  A bug created banks with level > 1
+        if (envLevel[e].attackLevel > 1.0) {
+            envLevel[e].attackLevel = 1.0;
+        }
+        if (envLevel[e].decayLevel > 1.0) {
+            envLevel[e].decayLevel = 1.0;
+        }
+        if (envLevel[e].sustainLevel > 1.0) {
+            envLevel[e].sustainLevel = 1.0;
+        }
+        if (envLevel[e].releaseLevel > 1.0) {
+            envLevel[e].releaseLevel = 1.0;
+        }
     }
 
     // copy envCurve from int8_t flash memory
