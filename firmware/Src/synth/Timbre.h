@@ -265,7 +265,6 @@ private:
     float _ly4 = 0;
     float _lx4 = 0;
     float apcoef1, apcoef2, apcoef3, apcoef4;
-    int prevEffectType;
 
     // frequency shifter 
     float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;

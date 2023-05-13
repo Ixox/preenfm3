@@ -699,15 +699,15 @@ void SynthState::randomizePreset() {
         }
 
         // FX
-        params->effect.param1 = getRandomFloat(0.2f, 0.8f);
-        params->effect.param2 = getRandomFloat(0.2f, 0.8f);
+        params->effect1.param1 = getRandomFloat(0.2f, 0.8f);
+        params->effect1.param2 = getRandomFloat(0.2f, 0.8f);
         int effect = getRandomInt(15);
         if (effect == 1 || effect > 6) {
-            params->effect.param3 = 1.0;
-            params->effect.type = 0;
+            params->effect1.param3 = 1.0;
+            params->effect1.type = 0;
         } else {
-            params->effect.param3 = 0.6;
-            params->effect.type = effect;
+            params->effect1.param3 = 0.6;
+            params->effect1.type = effect;
         }
     }
 

@@ -345,7 +345,8 @@ void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, 
     flashMemory->flashEngineVeloIm2.notUsed1 = 0.0f;
 
     fsu_->copyFloat((float*) &params->engineMix1, (float*) &flashMemory->engineMix1, 4 * 3);
-    fsu_->copyFloat((float*) &params->effect, (float*) &flashMemory->effect, 4);
+    fsu_->copyFloat((float*) &params->effect1, (float*) &flashMemory->effect, 4);
+    fsu_->copyFloat((float*) &params->effect2, (float*) &flashMemory->effect2, 4);
     fsu_->copyFloat((float*) &params->osc1, (float*) &flashMemory->osc1, 4 * 6);
 
 
@@ -428,7 +429,8 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashM
     params->engineIm3.modulationIndexVelo6 = flashMemory->flashEngineVeloIm2.modulationIndexVelo6;
 
     fsu_->copyFloat((float*) &flashMemory->engineMix1, (float*) &params->engineMix1, 4 * 3);
-    fsu_->copyFloat((float*) &flashMemory->effect, (float*) &params->effect, 4);
+    fsu_->copyFloat((float*) &flashMemory->effect, (float*) &params->effect1, 4);
+    fsu_->copyFloat((float*) &flashMemory->effect2, (float*) &params->effect2, 4);
     fsu_->copyFloat((float*) &flashMemory->osc1, (float*) &params->osc1, 4 * 6);
 
     // Copy env time and levels to new memory mapping (31/12/2022)
@@ -516,10 +518,18 @@ void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashM
         params->engineArp2.latche = 0;
     }
 
-    if (params->effect.type == 0.0f && params->effect.param1 == 0.0f && params->effect.param2 == 0.0f && params->effect.param3 == 0.0f) {
-        params->effect.param1 = 0.5f;
-        params->effect.param2 = 0.5f;
-        params->effect.param3 = 1.0f;
+    // No effect in preset, set default values
+    if (params->effect1.type == 0.0f && params->effect1.param1 == 0.0f && params->effect1.param2 == 0.0f && params->effect1.param3 == 0.0f) {
+        params->effect1.param1 = 0.5f;
+        params->effect1.param2 = 0.5f;
+        params->effect1.param3 = 1.0f;
+    }
+
+    // No effect2 in preset, set default values
+    if (params->effect2.type == 0.0f && params->effect2.param1 == 0.0f && params->effect2.param2 == 0.0f && params->effect2.param3 == 0.0f) {
+        params->effect2.param1 = 0.5f;
+        params->effect2.param2 = 0.5f;
+        params->effect2.param3 = 1.0f;
     }
 
     // Set default env curve if not initialized

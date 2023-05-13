@@ -95,6 +95,8 @@ const struct OneSynthParams defaultPreset  = {
         { 1, 0, 1, 0} ,
         { 1, 0, 1, 0} ,
         { 1, 0, 1, 0} ,
+        // Effect 2
+        { 0, 0.5, 0.5, 1.0} ,
         // Name
         "Default"
 };
@@ -151,7 +153,7 @@ const struct OneSynthParams preenMainPreset  = {
         { MATRIX_SOURCE_PITCHBEND, .5, ALL_OSC_FREQ_HARM, 0} ,
         { MATRIX_SOURCE_MODWHEEL, 3, LFO1_FREQ, 0} ,
         { MATRIX_SOURCE_LFOSEQ1, 0, MAIN_GATE, 0} ,
-        { MATRIX_SOURCE_LFOENV1, 0, FILTER_FREQUENCY, 0} ,
+        { MATRIX_SOURCE_LFOENV1, 0, FILTER1_PARAM1, 0} ,
         { MATRIX_SOURCE_LFO1, 0, INDEX_MODULATION2, 0} ,
         { MATRIX_SOURCE_VELOCITY, 0, INDEX_MODULATION4, 0} ,
         { MATRIX_SOURCE_MODWHEEL, 0, PAN_OSC1, 0} ,
@@ -183,6 +185,8 @@ const struct OneSynthParams preenMainPreset  = {
         { 1, 0, 1, 0} ,
         { 1, 0, 1, 0} ,
         { 1, 0, 1, 0} ,
+        // Effect 2
+        { 0, 0.5, 0.5, 1.0} ,
         "Sound"
 };
 
@@ -237,7 +241,7 @@ const struct OneSynthParams newPresetParams  = {
         { MATRIX_SOURCE_MODWHEEL, 0.3, MTX2_MUL, 0} ,
         { MATRIX_SOURCE_MODWHEEL, 1.0, MTX3_MUL, MTX4_MUL} ,
         { MATRIX_SOURCE_LFOSEQ1, 0.0, MAIN_GATE, 0} ,
-        { MATRIX_SOURCE_LFOENV1, 0.0, FILTER_FREQUENCY, 0} ,
+        { MATRIX_SOURCE_LFOENV1, 0.0, FILTER1_PARAM1, 0} ,
         { MATRIX_SOURCE_LFO1, 0.0, INDEX_MODULATION2, 0} ,
         { MATRIX_SOURCE_MODWHEEL, 0.0, PAN_OSC1, 0} ,
         { MATRIX_SOURCE_NOTE1, 0.0f, INDEX_ALL_MODULATION, 0} ,
@@ -267,6 +271,8 @@ const struct OneSynthParams newPresetParams  = {
         { 1, 0, 1, 0} ,
         { 1, 0, 1, 0} ,
         { 1, 0, 1, 0} ,
+        // Effect 2
+        { 0, 0.5, 0.5, 1.0} ,
         "Default"
 };
 

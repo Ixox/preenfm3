@@ -611,15 +611,15 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
 
             break;
         case CC_FILTER_TYPE:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT, ENCODER_EFFECT_TYPE, (float) midiEvent.value[1]);
+            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, ENCODER_EFFECT_TYPE, (float) midiEvent.value[1]);
             break;
         case CC_FILTER_PARAM1:
         case CC_FILTER_PARAM2:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
+            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
                     (float) midiEvent.value[1] * INV127);
             break;
         case CC_FILTER_GAIN:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
+            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
                     (float) midiEvent.value[1] * .01f);
             break;
         case CC_ENV_ATK_OP1:
@@ -715,7 +715,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             break;
         case CC_MPE_SLIDE_CC74:
         	// No CC74 on global midi channel
-        	if (!this->synthState_->mixerState.MPE_inst1_ > 0 || timbre != 0) {
+        	if (!(this->synthState_->mixerState.MPE_inst1_ > 0) || timbre != 0) {
         		this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
         	}
             break;
@@ -1102,7 +1102,7 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 cc.value[1] = newValue * 100.0f + .1f;
             }
             break;
-        case ROW_EFFECT:
+        case ROW_EFFECT1:
             if (encoder == ENCODER_EFFECT_TYPE) {
                 cc.value[0] = CC_FILTER_TYPE;
                 cc.value[1] = newValue + .1f;

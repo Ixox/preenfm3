@@ -157,9 +157,8 @@ enum {
     ROW_ARPEGGIATOR1,
     ROW_ARPEGGIATOR2,
     ROW_ARPEGGIATOR3,
-    ROW_EFFECT,
-    ROW_ENGINE_LAST = ROW_EFFECT,
-    ROW_OSC_FIRST = ROW_ENGINE_LAST + 1,
+    ROW_EFFECT1,
+    ROW_OSC_FIRST ,
     ROW_OSC1 = ROW_OSC_FIRST,
     ROW_OSC2,
     ROW_OSC3,
@@ -217,10 +216,11 @@ enum {
     ROW_ENV4_CURVE,
     ROW_ENV5_CURVE,
     ROW_ENV6_CURVE,
+    ROW_EFFECT2,
     ROW_NONE
 };
 
-#define NUMBER_OF_ROWS ROW_ENV6_CURVE + 1
+#define NUMBER_OF_ROWS ROW_EFFECT2 + 1
 
 
 
@@ -551,7 +551,7 @@ struct OneSynthParams {
     struct EngineArp1 engineArp1;
     struct EngineArp2 engineArp2;
     struct EngineArpUserPatterns engineArpUserPatterns;
-    struct EffectRowParams effect;
+    struct EffectRowParams effect1;
     struct OscillatorParams osc1;
     struct OscillatorParams osc2;
     struct OscillatorParams osc3;
@@ -602,6 +602,7 @@ struct OneSynthParams {
     struct EnvelopeCurveParams env4Curve;
     struct EnvelopeCurveParams env5Curve;
     struct EnvelopeCurveParams env6Curve;
+    struct EffectRowParams effect2;
     char presetName[13];
 };
 
@@ -680,15 +681,18 @@ enum DestinationEnum {
     LFOENV2_SILENCE,
     LFOSEQ1_GATE,
     LFOSEQ2_GATE,
-    FILTER_FREQUENCY,
+    FILTER1_PARAM1,
     ALL_OSC_FREQ_HARM,
     ALL_ENV_DECAY,
     ALL_ENV_ATTACK_MODULATOR,
     ALL_ENV_DECAY_MODULATOR,
     ALL_ENV_RELEASE_MODULATOR,
     MTX_DEST_FEEDBACK,
-    FILTER_PARAM2,
-    FILTER_AMP,
+    FILTER1_PARAM2,
+    FILTER1_AMP,
+    FILTER2_PARAM1,
+    FILTER2_PARAM2,
+    FILTER2_AMP,
     DESTINATION_MAX
 };
 

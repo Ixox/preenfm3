@@ -766,24 +766,21 @@ uint8_t Timbre::voicesNextBlock() {
 
 void Timbre::fxAfterBlock() {
 
-	int effectType = params_.effect.type;
+	int fx2Type = params_.effect2.type;
     
-    if(prevEffectType != effectType) {
-        prevEffectType = effectType;
-    }
     if(!voices_[lastPlayedNote_]->isPlaying()) {
         // hack : this voice is not playing but still need to calculate lfo
         voices_[lastPlayedNote_]->matrix.computeAllDestinations();
     }
 
-    float matrixFilterFrequency = voices_[lastPlayedNote_]->matrix.getDestination(FILTER_FREQUENCY);
-    float matrixFilterParam2    = voices_[lastPlayedNote_]->matrix.getDestination(FILTER_PARAM2);
-    float matrixFilterAmp       = voices_[lastPlayedNote_]->matrix.getDestination(FILTER_AMP);
+    float matrixFilterFrequency = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_PARAM1);
+    float matrixFilterParam2    = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_PARAM2);
+    float matrixFilterAmp       = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_AMP);
     float matrixFilterPan       = clamp( voices_[lastPlayedNote_]->matrix.getDestination(ALL_PAN), -1, 1);
-    float gainTmp               = clamp(this->params_.effect.param3 + matrixFilterAmp, 0, 16);
+    float gainTmp               = clamp(this->params_.effect2.param3 + matrixFilterAmp, 0, 16);
 
-    switch (effectType) {
-        case FILTER_FLANGE: {
+    switch (fx2Type) {
+        case FILTER2_FLANGE: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -792,7 +789,7 @@ void Timbre::fxAfterBlock() {
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
-            param1S = 0.02f * this->params_.effect.param1 + .98f * param1S;
+            param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
             float fxParamTmp = foldAbs(param1S * (param1S + matrixFilterFrequency) * 0.125f) * 0.5f;
             delayReadFrac = (fxParamTmp + 99 * delayReadFrac) * 0.01f; // smooth change
             
@@ -801,7 +798,7 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
-            feedback = clamp( this->params_.effect.param2 + matrixFilterParam2, -1, 1) * 0.95f;
+            feedback = clamp( this->params_.effect2.param2 + matrixFilterParam2, -1, 1) * 0.95f;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
 
             float *sp  = sampleBlock_;
@@ -884,7 +881,7 @@ void Timbre::fxAfterBlock() {
 
         }
         break;
-        case FILTER_CHORUS: {
+        case FILTER2_CHORUS: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -896,7 +893,7 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.02f * this->params_.effect.param1 + .98f * param1S;
+            param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
             float param1 = 0.1f + param1S * 0.9f;
             float fxParamTmp = foldAbs( 0.125f * param1 * (0.5f + (param1 + matrixFilterFrequency) * 0.5f ) );
             fxParamTmp = sigmoid(fxParamTmp);
@@ -917,7 +914,7 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc3 = (delaySize3 - currentDelaySize3) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
-            feedback = clamp(this->params_.effect.param2 + matrixFilterParam2, -1, 1) * 0.4f;
+            feedback = clamp(this->params_.effect2.param2 + matrixFilterParam2, -1, 1) * 0.4f;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
 
             float *sp = sampleBlock_;
@@ -984,7 +981,7 @@ void Timbre::fxAfterBlock() {
 
         }
         break;
-        case FILTER_DIMENSION: {
+        case FILTER2_DIMENSION: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -994,7 +991,7 @@ void Timbre::fxAfterBlock() {
             wet += extraAmp;
 
             param1S = 0.02f * matrixFilterFrequency + .98f * param1S;
-            float param1 = this->params_.effect.param1;
+            float param1 = this->params_.effect2.param1;
 
             matrixFilterFrequency *= 0.5f;
             
@@ -1011,7 +1008,7 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc2 = (delaySize2 - currentDelaySize2) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
-            feedback = clamp( (this->params_.effect.param2 + matrixFilterParam2) , -0.995f, 0.995f);
+            feedback = clamp( (this->params_.effect2.param2 + matrixFilterParam2) , -0.995f, 0.995f);
             feedback *= feedback;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
             
@@ -1094,7 +1091,7 @@ void Timbre::fxAfterBlock() {
 
         }
         break;
-        case FILTER_DOUBLER: {
+        case FILTER2_DOUBLER: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -1106,8 +1103,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.02f * this->params_.effect.param1 + .98f * param1S;
-            param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
+            param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
+            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
 
             float currentShift = shift;
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
@@ -1209,7 +1206,7 @@ void Timbre::fxAfterBlock() {
             }
         }
         break;
-        case FILTER_TRIPLER: {
+        case FILTER2_TRIPLER: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -1221,8 +1218,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * this->params_.effect.param1 + .995f * param1S;
-            param2S = 0.005f * this->params_.effect.param2 + .995f * param2S;
+            param1S = 0.005f * this->params_.effect2.param1 + .995f * param1S;
+            param2S = 0.005f * this->params_.effect2.param2 + .995f * param2S;
 
             float currentShift = shift;
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
@@ -1304,7 +1301,7 @@ void Timbre::fxAfterBlock() {
             }
         }
         break;
-        case FILTER_BODE: {
+        case FILTER2_BODE: {
             // dry wet
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
@@ -1317,7 +1314,7 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            float param1 = this->params_.effect.param1;
+            float param1 = this->params_.effect2.param1;
     
             // mix between freq shift + and - :
             int param255 = 0;
@@ -1347,7 +1344,7 @@ void Timbre::fxAfterBlock() {
             // feedback
             float feedbackZeroZone = clamp(0.8f + (quadrantSq * 8), 0, 1);
 
-            float feedbackParam = clamp(this->params_.effect.param2 + matrixFilterParam2, 0, 1) * 0.8f;
+            float feedbackParam = clamp(this->params_.effect2.param2 + matrixFilterParam2, 0, 1) * 0.8f;
 
             feedback = clamp(feedback, 0, 1);
 
@@ -1476,7 +1473,7 @@ void Timbre::fxAfterBlock() {
             }
         }
         break;
-        case FILTER_WIDE: {
+        case FILTER2_WIDE: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -1488,8 +1485,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.02f * fabsf(this->params_.effect.param1 + matrixFilterFrequency) + .98f * param1S;
-            param2S = 0.02f * clamp(this->params_.effect.param2 + matrixFilterParam2, 0.f, 1.f) + .98f * param2S;
+            param1S = 0.02f * fabsf(this->params_.effect2.param1 + matrixFilterFrequency) + .98f * param1S;
+            param2S = 0.02f * clamp(this->params_.effect2.param2 + matrixFilterParam2, 0.f, 1.f) + .98f * param2S;
 
             float detune = param1S * param1S * 0.03125f;
 
@@ -1600,7 +1597,7 @@ void Timbre::fxAfterBlock() {
             }
         }
         break;
-        case FILTER_DELAYCRUNCH: {
+        case FILTER2_DELAYCRUNCH: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -1612,9 +1609,9 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * (this->params_.effect.param1) + .995f * param1S;
+            param1S = 0.005f * (this->params_.effect2.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.02f * (matrixFilterFrequency) + .98f * matrixFilterFrequencyS;
-            param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
+            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
 
             param2S = clamp(param2S, 0, 1.f);
 
@@ -1706,7 +1703,7 @@ void Timbre::fxAfterBlock() {
             }
         }
         break;
-        case FILTER_PINGPONG: {
+        case FILTER2_PINGPONG: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -1718,9 +1715,9 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * (this->params_.effect.param1) + .995f * param1S;
+            param1S = 0.005f * (this->params_.effect2.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.02f * (matrixFilterFrequency) + .98f * matrixFilterFrequencyS;
-            param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
+            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
             
             param2S = clamp(param2S, 0, 1.f);
 
@@ -1827,7 +1824,7 @@ void Timbre::fxAfterBlock() {
             }
         }
         break;
-        case FILTER_DIFFUSER: {
+        case FILTER2_DIFFUSER: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
@@ -1839,9 +1836,9 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * (this->params_.effect.param1) + .995f * param1S;
+            param1S = 0.005f * (this->params_.effect2.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.01f * (matrixFilterFrequency) + .99f * matrixFilterFrequencyS;
-            param2S = 0.05f * (this->params_.effect.param2 + matrixFilterParam2) + .95f * param2S;
+            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
 
             param1S = clamp(param1S, 0, 1);
             param2S = clamp(param2S, 0, 1);

@@ -139,6 +139,7 @@ struct FlashSynthParams {
     struct Engine2Params engine2;
     struct EnvelopeCurveFlashMemory1 envCurves1To4;
     struct EnvelopeCurveFlashMemory2 envCurves5To6;
+    struct EffectRowParams effect2;
 };
 
 #define PFM3_PATCH_FLASH_SIZE sizeof(struct FlashSynthParams)

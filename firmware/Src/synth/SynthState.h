@@ -309,17 +309,22 @@ enum FILTER_TYPE {
     FILTER_TEEBEE,
     FILTER_SVFLH,
     FILTER_CRUSH2,
-    FILTER_FLANGE,
-    FILTER_DIMENSION,
-    FILTER_CHORUS,
-    FILTER_WIDE,
-    FILTER_DOUBLER,
-    FILTER_TRIPLER,
-    FILTER_BODE,
-    FILTER_DELAYCRUNCH,
-    FILTER_PINGPONG,
-    FILTER_DIFFUSER,
     FILTER_LAST
+};
+
+enum FILTER2_TYPE {
+    FILTER2_OFF = 0,
+    FILTER2_FLANGE,
+    FILTER2_DIMENSION,
+    FILTER2_CHORUS,
+    FILTER2_WIDE,
+    FILTER2_DOUBLER,
+    FILTER2_TRIPLER,
+    FILTER2_BODE,
+    FILTER2_DELAYCRUNCH,
+    FILTER2_PINGPONG,
+    FILTER2_DIFFUSER,
+    FILTER2_LAST
 };
 
 // Display information
@@ -635,7 +640,8 @@ private:
 
 // Global structure used all over the code
 extern struct AllParameterRowsDisplay allParameterRows;
-extern struct FilterRowDisplay filterRowDisplay[];
+extern struct FilterRowDisplay fx1RowDisplay[];
+extern struct FilterRowDisplay fx2RowDisplay[];
 
 
 #endif /* SYNTHSTATE_H_ */
