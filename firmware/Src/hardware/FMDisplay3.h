@@ -37,7 +37,6 @@ public:
     void setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *dDisplayEditor, FMDisplayMenu *displayMenu, FMDisplaySequencer *displaySequencer);
     void customCharsInit();
 
-    bool shouldThisValueShowUpPfm3(int row, int encoder, int encoder6);
     void updateEncoderValue(int refreshStatus);
     void updateCCValue(int refreshStatus);
     void newTimbre(int timbre);
@@ -46,26 +45,6 @@ public:
     void midiClock(bool show);
     void noteOn(int timbre, bool show);
     void tempoClick();
-
-    // Still used ??????
-    int getRowNumberToDiplay(int row) {
-        if (row <= ROW_ENGINE_LAST) {
-            return row - ROW_ENGINE_FIRST + 1;
-        } else if (row <= ROW_OSC_LAST) {
-            return row - ROW_OSC_FIRST + 1;
-        } else if (row <= ROW_ENV_LAST) {
-            return ((row - ROW_ENV_FIRST) >> 1) + 1;
-        } else if (row <= ROW_MATRIX_LAST) {
-            return row - ROW_MATRIX_FIRST + 1;
-        } else if (row <= ROW_LFOOSC3) {
-            return row - ROW_LFO_FIRST + 1;
-        } else if (row <= ROW_LFOENV2) {
-            return row - ROW_LFOENV1 + 1;
-        } else if (row <= ROW_LFOSEQ2) {
-            return row - ROW_LFOSEQ1 + 1;
-        }
-        return 0;
-    }
 
     bool needRefresh() {
         return refreshStatus_ != 0;

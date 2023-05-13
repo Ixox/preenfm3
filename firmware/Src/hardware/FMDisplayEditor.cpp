@@ -811,20 +811,12 @@ const char *fxName[] = {
     "h3o+", /*  46  */
     "Svh3", /*  47  */
     "Alkx", /*  48  */
-    "Flng", /*  49  */
-    "Dim ", /*  50  */
-    "Chor", /*  51  */
-    "Wide", /*  52  */
-    "Dblr", /*  53  */
-    "3Voi", /*  54  */
-    "Bode", /*  55  */
-    "Delc", /*  56  */
-    "Ping", /*  57  */
-    "Diff", /*  58  */
 };
 
-struct ParameterRowDisplay effectParameterRow = {
-    "Filter",
+
+
+struct ParameterRowDisplay fx1ParameterRow = {
+    "FX1",
     {
         "Type",
         "    ",
@@ -864,7 +856,7 @@ struct ParameterRowDisplay effectParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
+struct FilterRowDisplay fx1RowDisplay[FILTER_LAST] = {
     {
         NULL,
         NULL,
@@ -1060,6 +1052,74 @@ struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
     {
         "Smp1",
         "Smp2",
+        "Gain"
+    }
+
+};
+
+
+const char *fx2Name[] = {
+    "Off ",  /* 0 */
+    "Flng", /* 1  */
+    "Dim ", /* 2  */
+    "Chor", /* 3  */
+    "Wide", /* 4  */
+    "Dblr", /* 5  */
+    "3Voi", /* 6  */
+    "Bode", /* 7  */
+    "Delc", /* 8  */
+    "Ping", /* 9  */
+    "Diff", /* 10 */
+};
+
+
+
+
+struct ParameterRowDisplay fx2ParameterRow = {
+    "FX2",
+    {
+        "Type",
+        "    ",
+        "    ",
+        "Gain" },
+    {
+        {
+            0,
+            FILTER2_LAST - 1,
+            FILTER2_LAST,
+            DISPLAY_TYPE_STRINGS,
+            fx2Name,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            1,
+            101,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder },
+        {
+            0,
+            2,
+            201,
+            DISPLAY_TYPE_FLOAT,
+            nullNames,
+            nullNamesOrder,
+            nullNamesOrder } } };
+
+struct FilterRowDisplay fx2RowDisplay[FILTER2_LAST] = {
+    {
+        NULL,
+        NULL,
         "Gain" },
     {
         "Dpth",
@@ -1094,6 +1154,7 @@ struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
         "Feed",
         "Mix " },
     {
+
         "Time",
         "Feed",
         "Mix " },
@@ -1102,6 +1163,9 @@ struct FilterRowDisplay filterRowDisplay[FILTER_LAST] = {
         "Size",
         "Mix " }
 };
+
+
+
 
 const char *oscShapeNames[] = {
     "sin ",
@@ -1389,15 +1453,18 @@ const char *matrixDestNames[DESTINATION_MAX] = { "None ", "Gate ", "IM 1 ", "IM 
     /*30*/"Atk C", "Rel C",
     /*32*/"mtx 1" , "mtx 2", "mtx 3", "mtx 4",
     /*36*/"lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G",
-    /*42*/"Filt1",
+    /*42*/"Fx1 1",
     /*43*/"o* Fh", "Dec C",
     /*45*/"Atk M", "Dec M", "Rel M",
-    /* pfm3 feedback */ "FdBck",
-    /*filter param 2*/  "Filt2",
-    /*filter amp 2*/  "FltAm"
+    /* 48 pfm3 feedback */ "FdBck",
+    /*filter param 2*/  "Fx1 2",
+    /*filter amp 2*/  "fx1Am",
+    /*filter2 param 1*/  "Fx2 1",
+    /*filter2 param 1*/  "Fx2 2",
+    /*filter2 amp*/  "Fx2Am",
     };
 const unsigned char matrixTargetOrder[DESTINATION_MAX] = { 0, 1, 2, 3, 4, 5, 48, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29,
-    30, 45, 44, 46, 31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50 };
+    30, 45, 44, 46, 31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53 };
 
 unsigned char matrixTargetPosition[DESTINATION_MAX];
 
@@ -1780,7 +1847,7 @@ struct AllParameterRowsDisplay allParameterRows = {
         &engineArp1ParameterRow,
         &engineArp2ParameterRow,
         &engineArpPatternRow,
-        &effectParameterRow,
+        &fx1ParameterRow,
         &oscParameterRow,
         &oscParameterRow,
         &oscParameterRow,
@@ -1830,7 +1897,9 @@ struct AllParameterRowsDisplay allParameterRows = {
         &engineCurveParameterRow,
         &engineCurveParameterRow,
         &engineCurveParameterRow,
-        &engineCurveParameterRow
+        &engineCurveParameterRow,
+        &fx2ParameterRow
+
 } };
 
 // =================================================
@@ -2048,20 +2117,20 @@ const struct Pfm3OneButton pfm3ButtonArpeggiator = {
         &pfm3ButtonArpeggiator1State,
         &pfm3ButtonArpeggiator2State } };
 
-const struct Pfm3OneButtonState pfm3ButtonFilterState = {
-    "Voice Filter",
+const struct Pfm3OneButtonState pfm3ButtonFx1State = {
+    "Voice FX",
     {
         {
-            ROW_EFFECT,
+            ROW_EFFECT1,
             ENCODER_EFFECT_TYPE },
         {
-            ROW_EFFECT,
+            ROW_EFFECT1,
             ENCODER_EFFECT_PARAM1 },
         {
-            ROW_EFFECT,
+            ROW_EFFECT1,
             ENCODER_EFFECT_PARAM2 },
         {
-            ROW_EFFECT,
+            ROW_EFFECT1,
             ENCODER_EFFECT_PARAM3 },
         {
             ROW_NONE,
@@ -2070,16 +2139,45 @@ const struct Pfm3OneButtonState pfm3ButtonFilterState = {
             ROW_NONE,
             ENCODER_NONE } } };
 
-const struct Pfm3OneButton pfm3ButtonFilter = {
-    "Filter",
+const struct Pfm3OneButtonState pfm3ButtonFx2State = {
+    "Paraphonic FX",
+    {
+        {
+            ROW_EFFECT2,
+            ENCODER_EFFECT_TYPE },
+        {
+            ROW_EFFECT2,
+            ENCODER_EFFECT_PARAM1 },
+        {
+            ROW_EFFECT2,
+            ENCODER_EFFECT_PARAM2 },
+        {
+            ROW_EFFECT2,
+            ENCODER_EFFECT_PARAM3 },
+        {
+            ROW_NONE,
+            ENCODER_NONE },
+        {
+            ROW_NONE,
+            ENCODER_NONE } } };
+
+
+const struct Pfm3OneButton pfm3ButtonFx1 = {
+    "Fx1",
     BUTTONID_ONLY_ONE_STATE,
     1,
     {
-        &pfm3ButtonFilterState } };
+        &pfm3ButtonFx1State } };
+
+const struct Pfm3OneButton pfm3ButtonFx2 = {
+    "Fx2",
+    BUTTONID_ONLY_ONE_STATE,
+    1,
+    {
+        &pfm3ButtonFx2State } };
+
 
 // ======================= OPERATOR ====================================
-//      { &pfm3ButtonOPMinus, &pfm3ButtonOPNothing, &pfm3ButtonOPPlus,
-//        &pfm3ButtonOPShape, &pfm3ButtonOPEnv1, &pfm3ButtonOPEnv2}
 
 const struct Pfm3OneButtonState pfm3ButtonOPEnvLevel = {
     "Env Level",
@@ -2844,10 +2942,10 @@ const struct Pfm3OneButtonState perfEditorState = {
             ROW_PERFORMANCE1,
             ENCODER_PERFORMANCE_CC4 },
         {
-            ROW_EFFECT,
+            ROW_EFFECT1,
             ENCODER_EFFECT_PARAM1 },
         {
-            ROW_EFFECT,
+            ROW_EFFECT1,
             ENCODER_EFFECT_PARAM2 } } };
 
 const struct Pfm3OneButton perfEditorPage = {
@@ -2865,10 +2963,11 @@ const struct Pfm3EditMenu pfm3PerfMenu = {
 
 const struct Pfm3EditMenu pfm3ArpFilterMenu = {
     "Arp/Fx",
-    2,
+    3,
     {
         &pfm3ButtonArpeggiator,
-        &pfm3ButtonFilter
+        &pfm3ButtonFx1,
+        &pfm3ButtonFx2
     } };
 
 
@@ -3020,7 +3119,8 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
                 refreshStatus = 3;
             }
             break;
-        case ROW_EFFECT:
+        case ROW_EFFECT1:
+        case ROW_EFFECT2:
             if (encoder == ENCODER_EFFECT_TYPE) {
                 resetHideParams();
                 refreshStatus = 11;
@@ -3261,7 +3361,10 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
 
             if (rowEncoder.row != ROW_NONE) {
                 const struct ParameterRowDisplay *paramRow = allParameterRows.row[rowEncoder.row];
-                if (rowEncoder.row >= ROW_MODULATION1 && rowEncoder.row <= ROW_MODULATION3) {
+                switch (rowEncoder.row) {
+                case ROW_MODULATION1:
+                case ROW_MODULATION2:
+                case ROW_MODULATION3: {
                     struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][button];
                     if (im.source == 0) {
                         hideParam_[button] = true;
@@ -3274,11 +3377,14 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                             tft_->print("Fdbk");
                         }
                     }
-                } else if (rowEncoder.row >= ROW_OSC_MIX1 && rowEncoder.row <= ROW_OSC_MIX3) {
+                }
+                break;
+                case ROW_OSC_MIX1:
+                case ROW_OSC_MIX2:
+                case ROW_OSC_MIX3: {
                     int mixNumber = (rowEncoder.row - ROW_OSC_MIX1) * 2 + ((rowEncoder.encoder & 0x2) >> 1);
                     int currentAlgo = (int) synthState_->params->engine1.algo;
                     int numberOfMix = algoInformation[currentAlgo].mix;
-
 
                     if (mixNumber < numberOfMix) {
                         // Let's display the operator number associated to the mix number
@@ -3292,33 +3398,56 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
                         tft_->print(paramRow->paramName[rowEncoder.encoder]);
                         hideParam_[button] = true;    hideParam_[button] = true;
                     }
-                } else if (rowEncoder.row == ROW_EFFECT && rowEncoder.encoder > 0) {
-                    int effect = synthState_->params->effect.type;
-                    if (filterRowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
-                        tft_->print(filterRowDisplay[effect].paramName[rowEncoder.encoder - 1]);
+                }
+                break;
+                case ROW_EFFECT1:
+                    if (rowEncoder.encoder > 0) {
+                        int effect = synthState_->params->effect1.type;
+                        if (fx1RowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
+                            tft_->print(fx1RowDisplay[effect].paramName[rowEncoder.encoder - 1]);
+                        } else {
+                            hideParam_[button] = true;
+                            tft_->setCharColor(COLOR_DARK_GRAY);
+                            tft_->print("None");
+                        }
                     } else {
+                        goto displayDefault;
+                    }
+                break;
+                case ROW_EFFECT2:
+                    if (rowEncoder.encoder > 0) {
+                        int effect = synthState_->params->effect2.type;
+                        if (fx2RowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
+                            tft_->print(fx2RowDisplay[effect].paramName[rowEncoder.encoder - 1]);
+                        } else {
+                            hideParam_[button] = true;
+                            tft_->setCharColor(COLOR_DARK_GRAY);
+                            tft_->print("None");
+                        }
+                    } else {
+                        goto displayDefault;
+                    }
+                break;
+                case ROW_ENGINE2:
+                    if ((synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE)
+                        || (synthState_->params->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD)) {
+                        // Hide Engine2 GlideType if play mode poly
+                        // and Engine2 Spread and Detune if play mode is not uison
                         hideParam_[button] = true;
                         tft_->setCharColor(COLOR_DARK_GRAY);
-                        // Display LP in gray if no filter
-                        tft_->print(filterRowDisplay[2].paramName[rowEncoder.encoder - 1]);
+                        tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                    } else if (rowEncoder.row == ROW_ENGINE
+                         && (synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE_GLIDE_SPEED)) {
+                        // Hide Ending1 GlideSpeed if play mode poly
+                        hideParam_[button] = true;
+                        tft_->setCharColor(COLOR_DARK_GRAY);
+                        tft_->print(paramRow->paramName[rowEncoder.encoder]);
+                    } else {
+                        goto displayDefault;
                     }
-                } else if (rowEncoder.row == ROW_ENGINE2
-                     && ((synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE)
-                        || (synthState_->params->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD))) {
-                    // Hide Engine2 GlideType if play mode poly
-                    // and Engine2 Spread and Detune if play mode is not uison
-                    hideParam_[button] = true;
-                    tft_->setCharColor(COLOR_DARK_GRAY);
-                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
-                } else if (rowEncoder.row == ROW_ENGINE
-                     && (synthState_->params->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE_GLIDE_SPEED)) {
-                    // Hide Ending1 GlideSpeed if play mode poly
-                    hideParam_[button] = true;
-                    tft_->setCharColor(COLOR_DARK_GRAY);
-                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
-                } else if (rowEncoder.row >= ROW_ENV1_CURVE && rowEncoder.row <= ROW_ENV6_CURVE) {
-                    tft_->print(paramRow->paramName[rowEncoder.encoder]);
-                } else {
+                break;
+                default:
+                    displayDefault:
                     tft_->print(paramRow->paramName[rowEncoder.encoder]);
                 }
             } else {
@@ -3839,21 +3968,11 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         // Is there any other order than the default one
         int pos = param->valueNameOrderReversed[(int) (*value)];
 
-        // Special Case for filter - hide not so good filter
-        if (unlikely(param->valueNameOrderReversed == filtersPosition)) {
-            if (ticks > 0 && oldValue != FILTER_DIFFUSER) {
-                newValue = param->valueNameOrder[pos + 1];
-            }
-            if (ticks < 0 && pos > param->minValue) {
-                newValue = param->valueNameOrder[pos - 1];
-            }
-        } else {
-            if (ticks > 0 && pos < param->maxValue) {
-                newValue = param->valueNameOrder[pos + 1];
-            }
-            if (ticks < 0 && pos > param->minValue) {
-                newValue = param->valueNameOrder[pos - 1];
-            }
+        if (ticks > 0 && pos < param->maxValue) {
+            newValue = param->valueNameOrder[pos + 1];
+        }
+        if (ticks < 0 && pos > param->minValue) {
+            newValue = param->valueNameOrder[pos - 1];
         }
 
         (*value) = (float) newValue;

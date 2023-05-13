@@ -610,7 +610,7 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
             break;
         case ROW_ARPEGGIATOR3:
             break;
-        case ROW_EFFECT:
+        case ROW_EFFECT1:
             timbres_[timbre].setNewEffecParam(encoder);
             break;
         case ROW_ENV1_TIME:

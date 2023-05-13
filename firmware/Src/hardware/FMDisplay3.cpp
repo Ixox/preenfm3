@@ -67,43 +67,6 @@ void FMDisplay3::setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *disp
     this->displayMixer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
 }
 
-bool FMDisplay3::shouldThisValueShowUpPfm3(int row, int encoder, int encoder6) {
-    int algo = this->synthState_->params->engine1.algo;
-    switch (row) {
-        case ROW_MODULATION1:
-        case ROW_MODULATION2:
-        case ROW_MODULATION3:
-            if (unlikely(encoder6 >= algoInformation[algo].im)) {
-                return false;
-            }
-        case ROW_OSC_MIX1:
-        case ROW_OSC_MIX2:
-        case ROW_OSC_MIX3:
-            if (unlikely(encoder6 >= algoInformation[algo].mix)) {
-                return false;
-            }
-            break;
-        case ROW_EFFECT: {
-            if (unlikely(encoder == 0)) {
-                return true;
-            }
-            int effect = this->synthState_->params->effect.type;
-            if (filterRowDisplay[effect].paramName[encoder - 1] == NULL) {
-                return false;
-            }
-        }
-            break;
-        case ROW_ARPEGGIATOR1:
-            if (encoder >= 1 && this->synthState_->params->engineArp1.clock == 0.0f) {
-                return false;
-            }
-            break;
-        default:
-            break;
-    }
-
-    return true;
-}
 
 void FMDisplay3::afterNewMixerLoad() {
     displayEditor_->resetAllPresetModified();
