@@ -1789,6 +1789,8 @@ void Timbre::fxAfterBlock() {
                 delayReadPos = modulo2(delayWritePosF - currentDelaySize2, delayBufferSize);
                 delayOut2 = delayInterpolation(delayReadPos, delayBuffer_, delayBufferSizeM1);
 
+                delayWritePosF += sampleRateDivideInv;
+
                 // lp L
                 low3  += f2 * band3;
                 band3 += f2 * (delayOut1 - low3 - band3);
@@ -1967,6 +1969,8 @@ void Timbre::fxAfterBlock() {
                 delayReadPos = modulo2(delayReadPos - 512, delayBufStereoSize);
                 delayOut2 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
                
+                delayWritePosF += sampleRateDivideInv;
+
                 // lp L
                 low3  += f2 * band3;
                 band3 += f2 * (delayOut1 - low3 - band3);
