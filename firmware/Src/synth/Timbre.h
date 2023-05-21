@@ -228,6 +228,10 @@ private:
     float low6 = 0, band6 = 0;
     float low7 = 0, band7 = 0;
     float low8 = 0, band8 = 0;
+    float low9 = 0, band9 = 0;
+    float low10 = 0, band10 = 0;
+    float low11 = 0, band11 = 0;
+    float low12 = 0, band12 = 0;
 
     const int delayBufStereoSize = delayBufferSize * 0.5f;
     const float delayBufStereoSizeF = delayBufStereoSize;
