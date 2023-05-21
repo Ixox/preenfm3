@@ -1096,7 +1096,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255];
+            float wet = panTable[mixerGain255] * 0.75f;
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -1743,8 +1743,8 @@ void Timbre::fxAfterBlock() {
             _in3_a1 = -_in3_a0;
 
             float f = 0.7f;
-            float f2 = 0.62;
-            float f3 = 0.66;
+            float f2 = 0.65;
+            float f3 = 0.68;
             const float fnotch = 1.03f;
 
             float *sp = sampleBlock_;
@@ -1789,30 +1789,39 @@ void Timbre::fxAfterBlock() {
                 delayReadPos = modulo2(delayWritePosF - currentDelaySize2, delayBufferSize);
                 delayOut2 = delayInterpolation(delayReadPos, delayBuffer_, delayBufferSizeM1);
 
+                delayWritePosF += sampleRateDivideInv;
+
                 // lp L
                 low3  += f2 * band3;
-                band3 += f2 * ((delayOut1) - low3 - band3);
+                band3 += f2 * (delayOut1 - low3 - band3);
+                low4  += f2 * band4;
+                band4 += f2 * (low3 - low4 - band4);
                 low5  += f2 * band5;
-                band5 += f2 * ((low3) - low5 - band5);
+                band5 += f2 * (low4 - low5 - band5);
+                low6  += f2 * band6;
+                band6 += f2 * (low5 - low6 - band6);
 
                 // lp R
-                low4  += f3 * band4;
-                band4 += f3 * ((delayOut2) - low4 - band4);
-                low6  += f3 * band6;
-                band6 += f3 * ((low4) - low6 - band6);
+                low9  += f3 * band9;
+                band9 += f3 * (delayOut2 - low9 - band9);
+                low10 += f3 * band10;
+                band10+= f3 * (low9 - low10 - band10);
+                low11 += f3 * band11;
+                band11+= f3 * (low10 - low11 - band11);
+                low12 += f3 * band12;
+                band12+= f3 * (low11 - low12 - band12);
 
                 // notch L
                 low7 += fnotch * band7;
-                float high7 = low5 - low7 - band7;
+                float high7 = low6 - low7 - band7;
                 band7 += fnotch * high7;
                 float notchL = (high7 + low7);
 
                 // notch R
                 low8 += fnotch * band8;
-                float high8 = low6 - low8 - band8;
+                float high8 = low12 - low8 - band8;
                 band8 += fnotch * high8;
                 float notchR = (high8 + low8);
-
 
                 *sp = *sp * dry + notchL * wetL;
                 sp++;
@@ -1960,27 +1969,37 @@ void Timbre::fxAfterBlock() {
                 delayReadPos = modulo2(delayReadPos - 512, delayBufStereoSize);
                 delayOut2 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
                
+                delayWritePosF += sampleRateDivideInv;
+
                 // lp L
                 low3  += f2 * band3;
-                band3 += f2 * ((delayOut1) - low3 - band3);
+                band3 += f2 * (delayOut1 - low3 - band3);
+                low4  += f2 * band4;
+                band4 += f2 * (low3 - low4 - band4);
                 low5  += f2 * band5;
-                band5 += f2 * ((low3) - low5 - band5);
+                band5 += f2 * (low4 - low5 - band5);
+                low6  += f2 * band6;
+                band6 += f2 * (low5 - low6 - band6);
 
                 // lp R
-                low4  += f2 * band4;
-                band4 += f2 * ((delayOut2) - low4 - band4);
-                low6  += f2 * band6;
-                band6 += f2 * ((low4) - low6 - band6);
+                low9  += f2 * band9;
+                band9 += f2 * (delayOut2 - low9 - band9);
+                low10 += f2 * band10;
+                band10+= f2 * (low9 - low10 - band10);
+                low11 += f2 * band11;
+                band11+= f2 * (low10 - low11 - band11);
+                low12 += f2 * band12;
+                band12+= f2 * (low11 - low12 - band12);
 
                 // notch L
                 low7 += fnotch * band7;
-                float high7 = low5 - low7 - band7;
+                float high7 = low6 - low7 - band7;
                 band7 += fnotch * high7;
                 float notchL = (high7 + low7);
 
                 // notch R
                 low8 += fnotch * band8;
-                float high8 = low6 - low8 - band8;
+                float high8 = low12 - low8 - band8;
                 band8 += fnotch * high8;
                 float notchR = (high8 + low8);
 
