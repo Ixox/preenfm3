@@ -89,9 +89,9 @@ public:
 
 private:
     void checkOperatorNumber();
-    bool isInOperatorPage();
-    bool isInMatrixPage();
-    bool isInModulatorPage();
+    bool isInOperatorPage(uint8_t pageNumber);
+    bool isInMatrixPage(uint8_t pageNumber);
+    bool isInModulatorPage(uint8_t pageNumber);
     void resetHideParams();
     uint8_t getX(int encoder);
     FirmwareTftDisplay *tft_;

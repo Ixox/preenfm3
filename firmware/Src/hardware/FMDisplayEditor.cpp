@@ -3325,11 +3325,11 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         case 13: {
             int button = 18 - refreshStatus;
 
-            if (unlikely(isInOperatorPage() && button >= 3 && button <= 5)) {
+            if (unlikely(isInOperatorPage(synthState_->fullState.mainPage) && button >= 3 && button <= 5)) {
                 tft_->drawButtonBiState(270, 29, button, synthState_->fullState.operatorNumber,
                     algoInformation[(int)synthState_->params->engine1.algo].osc - 1, synthState_->fullState.buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
                     (button -3) * 2);
-            } else if (isInMatrixPage()) {
+            } else if (isInMatrixPage(synthState_->fullState.mainPage)) {
                 uint8_t currentSelection = synthState_->fullState.editPage * 2 + synthState_->fullState.buttonState[page->buttonId];
                 tft_->drawButtonBiState(270, 29, button, currentSelection,
                     12, synthState_->fullState.buttonState[BUTTONID_MATRIX_1_2 + button],
@@ -4110,7 +4110,7 @@ void FMDisplayEditor::buttonPressed(int button) {
             if (button >= editMenu->numberOfButtons) {
                 break;
             }
-            if (unlikely(isInOperatorPage() && button >= BUTTON_PFM3_4 && button <= BUTTON_PFM3_6)) {
+            if (unlikely(isInOperatorPage(synthState_->fullState.mainPage) && button >= BUTTON_PFM3_4 && button <= BUTTON_PFM3_6)) {
                 // Operator page : button 4 to 6 change the current operator
                 uint8_t buttonSelected = (button - BUTTON_PFM3_4);
                 uint8_t currentButton = synthState_->fullState.operatorNumber >> 1;
@@ -4151,11 +4151,11 @@ void FMDisplayEditor::buttonPressed(int button) {
 
 
 void FMDisplayEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) {
-    tft_->fillArea(70, 66, 100, 36, color);
-    tft_->fillArea(72, 68, 96, 32, COLOR_BLACK);
+    tft_->fillArea(60, 66, 120, 36, color);
+    tft_->fillArea(62, 68, 116, 32, COLOR_BLACK);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(color);
-    tft_->setCursorInPixel(120 - length * 11 / 2, 75);
+    tft_->setCursorInPixel(119 - ((length * 11) / 2), 75);
     tft_->print(text);
     tft_->waitCycle(500);
     synthState_->propagateNewPfm3Page();
@@ -4164,7 +4164,7 @@ void FMDisplayEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) 
 void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
         // Can be copied ?
-        bool canBeCopied = isInMatrixPage() || isInOperatorPage() || (isInModulatorPage() && synthState_->fullState.editPage == 0);
+        bool canBeCopied = isInMatrixPage(synthState_->fullState.mainPage) || isInOperatorPage(synthState_->fullState.mainPage) || (isInModulatorPage(synthState_->fullState.mainPage) && synthState_->fullState.editPage == 0);
 
         if (canBeCopied) {
             bufferPageNumber = synthState_->fullState.mainPage;
@@ -4172,44 +4172,87 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
 
             const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
             const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
-            for (int e = 0; e < 6; e++) {
-                const struct RowEncoder rowEncoder =
-                        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
-                int encoder4 = rowEncoder.encoder;
-                int row = rowEncoder.row;
-                int num;
-                if (isInOperatorPage()) {
-                    num = encoder4 + (row + synthState_->fullState.operatorNumber) * NUMBER_OF_ENCODERS_PFM2;
-                } else {
-                    num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+            if (isInOperatorPage(synthState_->fullState.mainPage) && synthState_->fullState.editPage != 0) {
+                // Env : we only store the op number.
+                // We'll copy time, level and shape
+                bufferParam[0] =  synthState_->fullState.operatorNumber;
+                displayPopup(COLOR_GREEN, "Copy Env", 8);
+            } else {
+                for (int e = 0; e < 6; e++) {
+                    const struct RowEncoder rowEncoder =
+                            page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
+                    int encoder4 = rowEncoder.encoder;
+                    int row = rowEncoder.row;
+                    if (isInOperatorPage(synthState_->fullState.mainPage)) {
+                        row += synthState_->fullState.operatorNumber;
+                    }
+                    int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+                    bufferParam[e] = ((float*) synthState_->params)[num];
                 }
-                bufferParam[e] = ((float*) synthState_->params)[num];
+                if (isInMatrixPage(synthState_->fullState.mainPage)) {
+                    displayPopup(COLOR_GREEN, "Copy Mtx", 8);
+                } else if (isInOperatorPage(synthState_->fullState.mainPage)) {
+                    displayPopup(COLOR_GREEN, "Copy Osc", 8);
+                } else {
+                    // LFO
+                    displayPopup(COLOR_GREEN, "Copy LFO", 8);
+                }
             }
-            displayPopup(COLOR_GREEN, "Copied", 6);
         }
     } else if (button == BUTTON_NEXT_INSTRUMENT) {
         // Can be pasted ?
-        bool canBePasted = isInMatrixPage() && bufferPageNumber == synthState_->fullState.mainPage;
-        canBePasted |= isInOperatorPage() && bufferPageNumber == synthState_->fullState.mainPage && bufferEditNumber == synthState_->fullState.editPage;
-        canBePasted |= isInModulatorPage() && bufferPageNumber == synthState_->fullState.mainPage && synthState_->fullState.editPage == 0;
+        bool canBePasted = isInMatrixPage(synthState_->fullState.mainPage) && isInMatrixPage(bufferPageNumber);
+        // Operator Osc
+        canBePasted |= isInOperatorPage(synthState_->fullState.mainPage) && isInOperatorPage(bufferPageNumber) && bufferEditNumber == 0 && synthState_->fullState.editPage == 0;
+        // Operator Env
+        canBePasted |= isInOperatorPage(synthState_->fullState.mainPage) && isInOperatorPage(bufferPageNumber) && bufferEditNumber != 0 && synthState_->fullState.editPage != 0;
+        // LFO
+        canBePasted |= isInModulatorPage(synthState_->fullState.mainPage) && isInModulatorPage(bufferPageNumber) && synthState_->fullState.editPage == 0;
 
         if (canBePasted) {
             const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
             const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
-            for (int e = 0; e < 6; e++) {
-                const struct RowEncoder rowEncoder =
-                        page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
-                int encoder4 = rowEncoder.encoder;
-                int row = rowEncoder.row;
-                int num;
-                if (isInOperatorPage()) {
-                    num = encoder4 + (row + synthState_->fullState.operatorNumber) * NUMBER_OF_ENCODERS_PFM2;
-                } else {
-                    num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+            if (isInOperatorPage(synthState_->fullState.mainPage) && synthState_->fullState.editPage != 0) {
+                if (bufferParam[0] != synthState_->fullState.operatorNumber) {
+                    uint8_t opNum = bufferParam[0];
+                    float* timeSource = (float*) (((EnvelopeTimeMemory *)&synthState_->params->env1Time) + opNum);
+                    float* timeDest =  (float*) (((EnvelopeTimeMemory *)&synthState_->params->env1Time) + synthState_->fullState.operatorNumber);
+                    for (int i = 0; i < 4; i++) {
+                        timeDest[i] = timeSource[i];
+                    }
+                    float* levelSource = (float*) (((EnvelopeLevelMemory *)&synthState_->params->env1Level) + opNum);
+                    float* levelDest =  (float*) (((EnvelopeLevelMemory *)&synthState_->params->env1Level) + synthState_->fullState.operatorNumber);
+                    for (int i = 0; i < 4; i++) {
+                        levelDest[i] = levelSource[i];
+                    }
+                    float* curveSource = (float*) (((EnvelopeCurveParams *)&synthState_->params->env1Curve) + opNum);
+                    float* curveDest =  (float*) (((EnvelopeCurveParams *)&synthState_->params->env1Curve) + synthState_->fullState.operatorNumber);
+                    for (int i = 0; i < 4; i++) {
+                        curveDest[i] = curveSource[i];
+                    }
                 }
-                ((float*) synthState_->params)[num] = bufferParam[e];
+                displayPopup(COLOR_GREEN, "Paste Env", 9);
+            } else {
+                for (int e = 0; e < 6; e++) {
+                    const struct RowEncoder rowEncoder =
+                            page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
+                    int encoder4 = rowEncoder.encoder;
+                    int row = rowEncoder.row;
+                    if (isInOperatorPage(synthState_->fullState.mainPage)) {
+                        row += synthState_->fullState.operatorNumber;
+                    }
+                    int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+                    ((float*) synthState_->params)[num] = bufferParam[e];
+                }
+                if (isInMatrixPage(synthState_->fullState.mainPage)) {
+                    displayPopup(COLOR_GREEN, "Paste Mtx", 9);
+                } else if (isInOperatorPage(synthState_->fullState.mainPage)) {
+                    displayPopup(COLOR_GREEN, "Paste Osc", 9);
+                } else {
+                    // LFO
+                    displayPopup(COLOR_GREEN, "Paste LFO", 9);
+                }
             }
-            displayPopup(COLOR_GREEN, "Pasted", 6);
         } else {
             displayPopup(COLOR_RED, "Cannot", 6);
         }
@@ -4217,16 +4260,16 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
 }
 
 
-bool FMDisplayEditor::isInOperatorPage() {
-    return synthState_->fullState.mainPage == 1;
+bool FMDisplayEditor::isInOperatorPage(uint8_t pageNumber) {
+    return pageNumber == 1;
 }
 
-bool FMDisplayEditor::isInMatrixPage() {
-    return synthState_->fullState.mainPage == 2;
+bool FMDisplayEditor::isInMatrixPage(uint8_t pageNumber) {
+    return pageNumber == 2;
 }
 
-bool FMDisplayEditor::isInModulatorPage() {
-    return synthState_->fullState.mainPage == 3;
+bool FMDisplayEditor::isInModulatorPage(uint8_t pageNumber) {
+    return pageNumber == 3;
 }
 
 void FMDisplayEditor::refreshOscillatorOperatorShape() {
