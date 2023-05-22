@@ -1775,8 +1775,7 @@ void Timbre::fxAfterBlock() {
                     low2  += f * band2;
                     band2 += f * (hp_in3_y0 - low2 - band2);
 
-                    float delayIn = low2;
-                    delayBuffer_[delayWritePos] = delayIn;
+                    delayBuffer_[delayWritePos] = low2;
                 }
 
                 delayReadPos = modulo2(delayWritePosF - currentDelaySize1, delayBufferSize);
@@ -1865,7 +1864,7 @@ void Timbre::fxAfterBlock() {
             _in3_a1 = -_in3_a0;
 
             float f = 0.7f - clamp(feedback - (param1S * 0.3f), 0, 1) * 0.6f;
-            float f2 = 0.64f - param1S * 0.1f;
+            float f2 = 0.75f - param1S * 0.1f;
             const float fnotch = 1.03f;
 
             const float inputCoef1 = 0.75f;
