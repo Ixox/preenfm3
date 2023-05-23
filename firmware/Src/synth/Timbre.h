@@ -188,11 +188,8 @@ private:
 
     #define delayBufferSize 2048
     const float delayBufferSizeF       = delayBufferSize;
-    const float delayBufferSize120     = delayBufferSize * 0.3333f;
-    const float delayBufferSize240     = delayBufferSize * 0.6666f;
     const float delayBufferSize90      = delayBufferSize * 0.25f;
     const float delayBufferSize180     = delayBufferSize * 0.5f;
-    const float delayBufferSize270     = delayBufferSize * 0.75f;
     const int delayBufferSizeM1   = delayBufferSize - 1;
     const int delayBufferSizeM4   = delayBufferSize - 4;
     const float delayBufferSizeInv = 1.0f / delayBufferSize;
@@ -204,12 +201,11 @@ private:
     float matrixFilterFrequencyS = 0;
     float param2S = 0;
     float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0, delaySize4 = 0;
-    float delaySizeInc1 = 0, delaySizeInc2 = 0, delaySizeInc3 = 0, delaySizeInc4 = 0;
-    float delayOut1 = 0, delayOut2 = 0, delayOut3 = 0, delayOut4 = 0, delayOut5 = 0, delayOut6 = 0;
+    float delaySizeInc1 = 0, delaySizeInc2 = 0, delaySizeInc3 = 0;
+    float delayOut1 = 0, delayOut2 = 0, delayOut3 = 0, delayOut4 = 0;
     float feedback            = 0;
     float shift = 0, shift2 = 0;
     int delayWritePos         = 0;
-    int delayWritePos2        = 0;
     float delayWritePosF      = 0;
     float delayReadPos        = 0;
     float delayReadPos2       = 0;
@@ -243,34 +239,13 @@ private:
     float delayIn = 0;
 
     // hp filter
-    float hp_in_x0 = 0;
-    float hp_in_y0 = 0;
-    float hp_in_y1 = 0;
-    float hp_in_x1 = 0;
-    float hp_in2_x0 = 0;
-    float hp_in2_y0 = 0;
-    float hp_in2_y1 = 0;
-    float hp_in2_x1 = 0;
-    float hp_in3_x0 = 0;
-    float hp_in3_y0 = 0;
-    float hp_in3_y1 = 0;
-    float hp_in3_x1 = 0;
-    float _in_b1, _in_a0, _in_a1;
     float _in2_b1, _in2_a0, _in2_a1;
     float _in3_b1, _in3_a0, _in3_a1;
 
-    // allpass filters
-    float _ly1 = 0;
-    float _lx1 = 0;
-    float _ly2 = 0;
-    float _lx2 = 0;
-    float _ly3 = 0;
-    float _lx3 = 0;
-    float _ly4 = 0;
-    float _lx4 = 0;
+    // allpass coefs   
     float apcoef1, apcoef2, apcoef3, apcoef4;
 
-    // frequency shifter 
+    // hp filters (hb1 - hb3) / frequency shifter / allpass filters (hb4 - hb5)
     float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;
     float hb2_x1 = 0, hb2_x2 = 0, hb2_y1 = 0, hb2_y2 = 0;
     float hb3_x1 = 0, hb3_x2 = 0, hb3_y1 = 0, hb3_y2 = 0;
