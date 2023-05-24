@@ -4181,13 +4181,15 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
                 for (int e = 0; e < 6; e++) {
                     const struct RowEncoder rowEncoder =
                             page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
-                    int encoder4 = rowEncoder.encoder;
                     int row = rowEncoder.row;
-                    if (isInOperatorPage(synthState_->fullState.mainPage)) {
-                        row += synthState_->fullState.operatorNumber;
+                    if (row != ROW_NONE) {
+                        int encoder4 = rowEncoder.encoder;
+                        if (isInOperatorPage(synthState_->fullState.mainPage)) {
+                            row += synthState_->fullState.operatorNumber;
+                        }
+                        int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+                        bufferParam[e] = ((float*) synthState_->params)[num];
                     }
-                    int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
-                    bufferParam[e] = ((float*) synthState_->params)[num];
                 }
                 if (isInMatrixPage(synthState_->fullState.mainPage)) {
                     displayPopup(COLOR_GREEN, "Copy Mtx", 8);
@@ -4236,13 +4238,15 @@ void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
                 for (int e = 0; e < 6; e++) {
                     const struct RowEncoder rowEncoder =
                             page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[e];
-                    int encoder4 = rowEncoder.encoder;
                     int row = rowEncoder.row;
-                    if (isInOperatorPage(synthState_->fullState.mainPage)) {
-                        row += synthState_->fullState.operatorNumber;
+                    if (row != ROW_NONE) {
+                        int encoder4 = rowEncoder.encoder;
+                        if (isInOperatorPage(synthState_->fullState.mainPage)) {
+                            row += synthState_->fullState.operatorNumber;
+                        }
+                        int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
+                        ((float*) synthState_->params)[num] = bufferParam[e];
                     }
-                    int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
-                    ((float*) synthState_->params)[num] = bufferParam[e];
                 }
                 if (isInMatrixPage(synthState_->fullState.mainPage)) {
                     displayPopup(COLOR_GREEN, "Paste Mtx", 9);
