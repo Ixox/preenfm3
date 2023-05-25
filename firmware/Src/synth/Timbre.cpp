@@ -1884,6 +1884,7 @@ void Timbre::fxAfterBlock() {
                     inputWritePos2        = modulo(inputWritePos2 + 1 , inputBufferLen2);
                     inputWritePos3        = modulo(inputWritePos3 + 1 , inputBufferLen3);
                     inputWritePos4        = modulo(inputWritePos4 + 1 , inputBufferLen4);
+                    inputWritePos5        = modulo(inputWritePos5 + 1 , inputBufferLen5);
 
                     // ---- feedback lp
                     low1  += f * band1;
