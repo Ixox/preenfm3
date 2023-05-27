@@ -1628,9 +1628,9 @@ void Timbre::fxAfterBlock() {
  
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
-                float monoIn = (*sp + *(sp + 1)) * 0.5f;
-
                 if(++inputIncCount >= sampleRateDivide) {
+                    float monoIn = (*sp + *(sp + 1)) * 0.5f;
+
                     inputIncCount = 0;
                     delayWritePos = (delayWritePos + 1) & delayBufferSizeM1;
                     delayWritePosF = (float) delayWritePos;
@@ -1737,9 +1737,9 @@ void Timbre::fxAfterBlock() {
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
-                float monoIn = (*sp + *(sp + 1)) * 0.5f;
-
                 if(++inputIncCount >= sampleRateDivide) {
+                    float monoIn = (*sp + *(sp + 1)) * 0.5f;
+
                     inputIncCount = 0;
                     delayWritePos = (delayWritePos + 1) & delayBufferSizeM1;
                     delayWritePosF = (float) delayWritePos;
@@ -1837,7 +1837,7 @@ void Timbre::fxAfterBlock() {
             param1S = clamp(param1S, 0, 1);
             param2S = clamp(param2S, 0, 1);
 
-            feedback = param2S * 0.5f;
+            feedback = param2S * 0.4999f;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
@@ -1858,7 +1858,7 @@ void Timbre::fxAfterBlock() {
             float f2 = 0.75f - param1S * 0.1f;
             const float fnotch = 1.03f;
 
-            const float inputCoef1 = 0.75f;
+            const float inputCoef1 = 0.7f;
             const float inputCoef2 = 0.625f;
 
             float diff1Out = 0, diff2Out = 0, diff3Out = 0, diff4Out = 0, diff5Out = 0;
@@ -1874,9 +1874,9 @@ void Timbre::fxAfterBlock() {
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
-                float monoIn = (*sp + *(sp + 1)) * 0.5f;
-
                 if(++inputIncCount >= sampleRateDivide) {
+                    float monoIn = (*sp + *(sp + 1)) * 0.5f;
+    
                     inputIncCount = 0;
                     delayWritePos = (delayWritePos + 1) & delayBufStereoSizeM1;
                     delayWritePosF = (float) delayWritePos;
@@ -1892,36 +1892,36 @@ void Timbre::fxAfterBlock() {
                     
                     // ---- diffuser 1
                     int inputReadPos1     = delayBufStereoSize + modulo2(inputWritePos1 - inputBuffer1ReadLen, inputBufferLen1);
-                    float in_apSum1 = (monoIn + low1) + delayBuffer_[inputReadPos1] * inputCoef1;
+                    float in_apSum1 = (monoIn - low1) + delayBuffer_[inputReadPos1] * inputCoef1;
                     diff1Out        = delayBuffer_[inputReadPos1] - in_apSum1 * inputCoef1;
                     delayBuffer_[delayBufStereoSize + inputWritePos1] = in_apSum1;
 
                     // ---- diffuser 2
                     int bufferStart = delayBufStereoSize + inputBufferLen1;
                     int inputReadPos2     = bufferStart + modulo2(inputWritePos2 - inputBuffer2ReadLen, inputBufferLen2);
-                    float in_apSum2 = diff1Out + delayBuffer_[inputReadPos2] * inputCoef1;
-                    diff2Out         = delayBuffer_[inputReadPos2] - in_apSum2 * inputCoef1;
+                    float in_apSum2 = diff1Out + delayBuffer_[inputReadPos2] * inputCoef2;
+                    diff2Out        = delayBuffer_[inputReadPos2] - in_apSum2 * inputCoef2;
                     delayBuffer_[bufferStart + inputWritePos2] = in_apSum2;
 
                     // ---- diffuser 3
                     bufferStart += inputBufferLen2;
                     int inputReadPos3     = bufferStart + modulo2(inputWritePos3 - inputBuffer3ReadLen, inputBufferLen3);
-                    float in_apSum3 = diff2Out + delayBuffer_[inputReadPos3] * inputCoef2;
-                    diff3Out         = delayBuffer_[inputReadPos3] - in_apSum3 * inputCoef2;
+                    float in_apSum3 = -diff2Out + delayBuffer_[inputReadPos3] * inputCoef2;
+                    diff3Out        = delayBuffer_[inputReadPos3] - in_apSum3 * inputCoef2;
                     delayBuffer_[bufferStart + inputWritePos3] = in_apSum3;
 
                     // ---- diffuser 4
                     bufferStart += inputBufferLen3;
                     int inputReadPos4     = bufferStart + modulo2(inputWritePos4 - inputBuffer4ReadLen, inputBufferLen4);
                     float in_apSum4 = diff3Out + delayBuffer_[inputReadPos4] * inputCoef2;
-                    diff4Out         = delayBuffer_[inputReadPos4] - in_apSum4 * inputCoef2;
+                    diff4Out        = delayBuffer_[inputReadPos4] - in_apSum4 * inputCoef2;
                     delayBuffer_[bufferStart + inputWritePos4] = in_apSum4;
 
                     // ---- diffuser 5
                     bufferStart += inputBufferLen4;
                     int inputReadPos5     = bufferStart + modulo2(inputWritePos5 - inputBuffer5ReadLen, inputBufferLen5);
-                    float in_apSum5 = diff4Out + delayBuffer_[inputReadPos5] * inputCoef2;
-                    diff5Out         = delayBuffer_[inputReadPos5] - in_apSum5 * inputCoef2;
+                    float in_apSum5 = -diff4Out + delayBuffer_[inputReadPos5] * inputCoef2;
+                    diff5Out        = delayBuffer_[inputReadPos5] - in_apSum5 * inputCoef2;
                     delayBuffer_[bufferStart + inputWritePos5] = in_apSum5;
 
                     low1  += f2 * band1;

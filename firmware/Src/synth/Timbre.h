@@ -264,11 +264,11 @@ private:
     int inputWritePos3     = 0;
     int inputWritePos4     = 0;
     int inputWritePos5     = 0;
-    const int inputBufferLen1 = 112;
-    const int inputBufferLen2 = 210;
-    const int inputBufferLen3 = 137;
-    const int inputBufferLen4 = 242;
-    const int inputBufferLen5 = 160;
+    const int inputBufferLen1 = 126;
+    const int inputBufferLen2 = 180;
+    const int inputBufferLen3 = 204;
+    const int inputBufferLen4 = 245;
+    const int inputBufferLen5 = 269;
 
     /** --------------end of FX conf--------------  */
 
