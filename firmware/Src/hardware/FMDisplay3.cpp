@@ -70,6 +70,7 @@ void FMDisplay3::setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *disp
 
 void FMDisplay3::afterNewMixerLoad() {
     displayEditor_->resetAllPresetModified();
+    this->refreshOscilloBG();
 }
 
 void FMDisplay3::refreshAllScreenByStep() {
