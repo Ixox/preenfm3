@@ -1382,7 +1382,7 @@ void Timbre::fxAfterBlock() {
             float shiftInc = (shift - currentShift) * INV_BLOCK_SIZE;
 
             // feedback
-            float feedbackZeroZone = clamp(0.8f + (quadrantSq * 8), 0, 1);
+            float feedbackZeroZone = clamp(0.6f + (quadrant * 6), 0, 1);
 
             float feedbackParam = clamp(this->params_.effect2.param2 + matrixFilterParam2, 0, 1) * 0.8f;
 

@@ -42,7 +42,6 @@ extern float noise[32];
 #define filterWindowMin 0.01f
 #define filterWindowMax 0.99f
 
-
 inline
 float expf_fast(float a) {
   //https://github.com/ekmett/approximate/blob/master/cbits/fast.c
@@ -123,29 +122,6 @@ float fold(float x4) {
 inline
 float wrap(float x) {
     return x - floorf(x);
-}
-inline
-float window(float x) {
-    if (x < 0 || x > 1) {
-        return 0;
-    } else if (x < 0.2f) {
-        return sqrt3( x * 5 );
-    } else if (x > 0.8f) {
-        return sqrt3(1 - (x-0.8f) * 5);
-    } else {
-        return 1;
-    }
-}
-inline float ftan(float fAngle)
-{
-    float fASqr = fAngle * fAngle;
-    float fResult = 2.033e-01f;
-    fResult *= fASqr;
-    fResult += 3.1755e-01f;
-    fResult *= fASqr;
-    fResult += 1.0f;
-    fResult *= fAngle;
-    return fResult;
 }
 enum NewNoteType {
     NEW_NOTE_FREE = 0,
@@ -3641,6 +3617,412 @@ void Voice::nextBlock() {
         }
             break;
 
+        case ALG29:
+            /* Windowed sync AM, 1 synced by 3
+            inspiration from https://electro-music.com/nm_classic/015_workshops/Clavia/NordModularWorkshops&Threads/WerkMap/WorkShops/Hordijk1999-2000/VOSIM.html
+                             https://scsynth.org/t/fake-resonance-aka-windowed-sync/2720
+
+                     IM3
+                    <----
+             .---.         .---.
+             | 3*|         | 4 |
+             '---'         '---'
+             |IM1           |IM2
+             .---.          .---.
+             |*1 |          | 2 |
+             '---'          '---'
+             |Mix1          |Mix2
+
+             */
+        {
+            float voiceIm1 = modulationIndex1;
+            float voiceIm2 = modulationIndex2;
+            float voiceIm3 = modulationIndex3;
+
+            currentTimbre->osc1_.calculateFrequencyWithMatrix(&oscState1_, &matrix, freqHarm);
+            currentTimbre->osc2_.calculateFrequencyWithMatrix(&oscState2_, &matrix, freqHarm);
+            currentTimbre->osc3_.calculateFrequencyWithMatrix(&oscState3_, &matrix, freqHarm);
+            currentTimbre->osc4_.calculateFrequencyWithMatrix(&oscState4_, &matrix, freqHarm);
+
+            env1Value = this->env1ValueMem;
+            envNextValue = currentTimbre->env1_.getNextAmpExp(&envState1_);
+            env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
+            this->env1ValueMem = envNextValue;
+
+            env2Value = this->env2ValueMem;
+            envNextValue = currentTimbre->env2_.getNextAmpExp(&envState2_);
+            env2Inc = (envNextValue - env2Value) * inv32;
+            this->env2ValueMem = envNextValue;
+
+            env3Value = this->env3ValueMem;
+            envNextValue = currentTimbre->env3_.getNextAmpExp(&envState3_);
+            env3Inc = (envNextValue - env3Value) * inv32;
+            this->env3ValueMem = envNextValue;
+
+            env4Value = this->env4ValueMem;
+            envNextValue = currentTimbre->env4_.getNextAmpExp(&envState4_);
+            env4Inc = (envNextValue - env4Value) * inv32;
+            this->env4ValueMem = envNextValue;
+
+            oscState4_.frequency = oscState4_.mainFrequencyPlusMatrix;
+            float *osc4Values = currentTimbre->osc4_.getNextBlockWithFeedbackAndEnveloppe(&oscState4_, feedbackModulation, env4Value, env4Inc,
+                oscState4_.frequency, fdbLastValue);
+
+            float div2TimesVelocity = this->velocity * .5f;
+
+            float mix1V = mix1 * div2TimesVelocity;
+            float mix2V = mix2 * div2TimesVelocity;
+
+            float osc1Matrix = oscState1_.mainFrequencyPlusMatrix - oscState1_.mainFrequency;
+            float osc1FrequencyPlusMatrix = oscState1_.mainFrequency + osc1Matrix * fabsf(osc1Matrix) * 0.25f;
+
+            for (int k = 0; k < BLOCK_SIZE; k++) {
+                float freq4 = osc4Values[k];
+
+                oscState3_.frequency = oscState3_.mainFrequencyPlusMatrix + voiceIm3 * freq4;
+                float osc3  = currentTimbre->osc3_.getNextSample(&oscState3_);
+                float phase = currentTimbre->osc3_.getPhase(&oscState3_);
+                float freq3 = osc3 * env3Value * oscState3_.frequency;
+  
+                // sync check
+                bool isSync = prevPhase > phase;
+                prevPhase = phase;
+                float window = 1.f - phase;
+
+                // sync slave osc
+                oscState1_.index = isSync ? 0 : oscState1_.index;
+
+                oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                carSample1 *= fabsf(carSample1); // vosim shape
+                float car1 = carSample1 * env1Value * mix1V;
+
+                oscState2_.frequency = freq4 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2V;
+
+                *sample++ = car1 * pan1Right + car2 * pan2Right;
+                *sample++ = car1 * pan1Left  + car2 * pan2Left;
+
+                env1Value += env1Inc;
+                env2Value += env2Inc;
+                env3Value += env3Inc;
+            }
+
+            if (unlikely(currentTimbre->env1_.isDead(&envState1_) && currentTimbre->env2_.isDead(&envState2_))) {
+                endNoteOrBeginNextOne();
+            }
+            break;
+        }
+        case ALG30:
+            /* Windowed sync AM, 1 & 2 synced by 3
+                             
+             .---.         .---.
+             | 3*|         | 4 |
+             '---'         '---'
+             |IM1 \IM2 IM3/ |IM4
+             .---.          .---.
+             |*1 |          |*2 |
+             '---'          '---'
+             |Mix1          |Mix2
+
+             */
+        {
+            float voiceIm1 = modulationIndex1;
+            float voiceIm2 = modulationIndex2;
+            float voiceIm3 = modulationIndex3;
+            float voiceIm4 = modulationIndex4;
+
+            currentTimbre->osc1_.calculateFrequencyWithMatrix(&oscState1_, &matrix, freqHarm);
+            currentTimbre->osc2_.calculateFrequencyWithMatrix(&oscState2_, &matrix, freqHarm);
+            currentTimbre->osc3_.calculateFrequencyWithMatrix(&oscState3_, &matrix, freqHarm);
+            currentTimbre->osc4_.calculateFrequencyWithMatrix(&oscState4_, &matrix, freqHarm);
+
+            env1Value = this->env1ValueMem;
+            envNextValue = currentTimbre->env1_.getNextAmpExp(&envState1_);
+            env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
+            this->env1ValueMem = envNextValue;
+
+            env2Value = this->env2ValueMem;
+            envNextValue = currentTimbre->env2_.getNextAmpExp(&envState2_);
+            env2Inc = (envNextValue - env2Value) * inv32;
+            this->env2ValueMem = envNextValue;
+
+            env3Value = this->env3ValueMem;
+            envNextValue = currentTimbre->env3_.getNextAmpExp(&envState3_);
+            env3Inc = (envNextValue - env3Value) * inv32;
+            this->env3ValueMem = envNextValue;
+
+            env4Value = this->env4ValueMem;
+            envNextValue = currentTimbre->env4_.getNextAmpExp(&envState4_);
+            env4Inc = (envNextValue - env4Value) * inv32;
+            this->env4ValueMem = envNextValue;
+
+            oscState4_.frequency = oscState4_.mainFrequencyPlusMatrix;
+            float *osc4Values = currentTimbre->osc4_.getNextBlockWithFeedbackAndEnveloppe(&oscState4_, feedbackModulation, env4Value, env4Inc,
+                oscState4_.frequency, fdbLastValue);
+
+            float div2TimesVelocity = this->velocity * .5f;
+
+            float mix1V = mix1 * div2TimesVelocity;
+            float mix2V = mix2 * div2TimesVelocity;
+
+            float osc1Matrix = oscState1_.mainFrequencyPlusMatrix - oscState1_.mainFrequency;
+            float osc1FrequencyPlusMatrix = oscState1_.mainFrequency + osc1Matrix * fabsf(osc1Matrix) * 0.25f;
+
+            float osc2Matrix = oscState2_.mainFrequencyPlusMatrix - oscState2_.mainFrequency;
+            float osc2FrequencyPlusMatrix = oscState2_.mainFrequency + osc2Matrix * fabsf(osc2Matrix) * 0.25f;
+
+            for (int k = 0; k < BLOCK_SIZE; k++) {
+                float freq4 = osc4Values[k];
+
+                oscState3_.frequency = oscState3_.mainFrequencyPlusMatrix;
+                float osc3 = currentTimbre->osc3_.getNextSample(&oscState3_);
+                float phase = currentTimbre->osc3_.getPhase(&oscState3_);
+                float freq3 = osc3 * env3Value * oscState3_.frequency;
+  
+                // sync check
+                bool isSync = prevPhase > phase;
+                prevPhase = phase;
+                float window = 1.f - phase;
+
+                // sync slave osc
+                if(isSync) {
+                    oscState1_.index = 0;
+                    oscState2_.index = 0;
+                }
+
+                oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix + freq4 * voiceIm3;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                carSample1 *= fabsf(carSample1); // vosim shape
+                float car1 = carSample1 * env1Value * mix1V;
+
+                oscState2_.frequency = freq3 * voiceIm2 + osc2FrequencyPlusMatrix + freq4 * voiceIm4;
+                float carSample2 = currentTimbre->osc2_.getNextSample(&oscState2_) * window;
+                carSample2 *= fabsf(carSample2); // vosim shape
+                float car2 = carSample2 * env2Value * mix2V;
+
+                *sample++ = car1 * pan1Right + car2 * pan2Right;
+                *sample++ = car1 * pan1Left  + car2 * pan2Left;
+
+                env1Value += env1Inc;
+                env2Value += env2Inc;
+                env3Value += env3Inc;
+            }
+
+            if (unlikely(currentTimbre->env1_.isDead(&envState1_) && currentTimbre->env2_.isDead(&envState2_))) {
+                endNoteOrBeginNextOne();
+            }
+            break;
+        }
+        case ALG31:
+            /* Windowed sync AM, 1 2 3 synced by 4
+
+             .---.
+             | 4 |
+             '---'
+             /IM1 |IM2 \IM3
+             .---.  .---.  .---.
+             | 1 |  | 2 |  | 3 |
+             '---'  '---'  '---'
+             |Mix1  |Mix2  | Mix3
+
+             */
+        {
+            float voiceIm1 = modulationIndex1;
+            float voiceIm2 = modulationIndex2;
+            float voiceIm3 = modulationIndex3;
+
+            currentTimbre->osc1_.calculateFrequencyWithMatrix(&oscState1_, &matrix, freqHarm);
+            currentTimbre->osc2_.calculateFrequencyWithMatrix(&oscState2_, &matrix, freqHarm);
+            currentTimbre->osc3_.calculateFrequencyWithMatrix(&oscState3_, &matrix, freqHarm);
+            currentTimbre->osc4_.calculateFrequencyWithMatrix(&oscState4_, &matrix, freqHarm);
+
+            env1Value = this->env1ValueMem;
+            envNextValue = currentTimbre->env1_.getNextAmpExp(&envState1_);
+            env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
+            this->env1ValueMem = envNextValue;
+
+            env2Value = this->env2ValueMem;
+            envNextValue = currentTimbre->env2_.getNextAmpExp(&envState2_);
+            env2Inc = (envNextValue - env2Value) * inv32;
+            this->env2ValueMem = envNextValue;
+
+            env3Value = this->env3ValueMem;
+            envNextValue = currentTimbre->env3_.getNextAmpExp(&envState3_);
+            env3Inc = (envNextValue - env3Value) * inv32;
+            this->env3ValueMem = envNextValue;
+
+            env4Value = this->env4ValueMem;
+            envNextValue = currentTimbre->env4_.getNextAmpExp(&envState4_);
+            env4Inc = (envNextValue - env4Value) * inv32;
+            this->env4ValueMem = envNextValue;
+
+            float div3TimesVelocity = .33f * this->velocity;
+
+            float mix1V = mix1 * div3TimesVelocity;
+            float mix2V = mix2 * div3TimesVelocity;
+            float mix3V = mix3 * div3TimesVelocity;
+
+            float osc1Matrix = oscState1_.mainFrequencyPlusMatrix - oscState1_.mainFrequency;
+            float osc1FrequencyPlusMatrix = oscState1_.mainFrequency + osc1Matrix * fabsf(osc1Matrix) * 0.25f;
+
+            float osc2Matrix = oscState2_.mainFrequencyPlusMatrix - oscState2_.mainFrequency;
+            float osc2FrequencyPlusMatrix = oscState2_.mainFrequency + osc2Matrix * fabsf(osc2Matrix) * 0.25f;
+
+            float osc3Matrix = oscState3_.mainFrequencyPlusMatrix - oscState3_.mainFrequency;
+            float osc3FrequencyPlusMatrix = oscState3_.mainFrequency + osc3Matrix * fabsf(osc3Matrix) * 0.25f;
+
+            for (int k = 0; k < BLOCK_SIZE; k++) {
+
+                oscState4_.frequency = oscState4_.mainFrequencyPlusMatrix;
+                float osc4 = currentTimbre->osc4_.getNextSample(&oscState4_);
+                float phase = currentTimbre->osc4_.getPhase(&oscState4_);
+                float freq4 = osc4 * env4Value * oscState4_.frequency;
+
+                bool isSync = prevPhase > phase;
+                prevPhase = phase;
+                float window = 1.f - phase;
+
+                // sync slave osc
+                if(isSync) {
+                    oscState1_.index = 0;
+                    oscState2_.index = 0;
+                    oscState3_.index = 0;
+                }
+
+                oscState3_.frequency = freq4 * voiceIm3 + osc3FrequencyPlusMatrix;
+                float carSample3 = currentTimbre->osc3_.getNextSample(&oscState3_) * window;
+                carSample3 *= fabsf(carSample3); // vosim shape
+                float car3 = carSample3 * env3Value * mix3V;
+
+                oscState2_.frequency = freq4 * voiceIm2 + osc2FrequencyPlusMatrix;
+                float carSample2 = currentTimbre->osc2_.getNextSample(&oscState2_) * window;
+                carSample2 *= fabsf(carSample2); // vosim shape
+                float car2 = carSample2 * env2Value * mix2V;
+
+                oscState1_.frequency = freq4 * voiceIm1 + osc1FrequencyPlusMatrix;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                carSample1 *= fabsf(carSample1); // vosim shape
+                float car1 = carSample1 * env1Value * mix1V;
+
+                *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right;
+                *sample++ = car1 * pan1Left  + car2 * pan2Left  + car3 * pan3Left;
+
+                env1Value += env1Inc;
+                env2Value += env2Inc;
+                env3Value += env3Inc;
+                env4Value += env4Inc;
+            }
+
+            if (unlikely(currentTimbre->env1_.isDead(&envState1_) && currentTimbre->env2_.isDead(&envState2_) && currentTimbre->env3_.isDead(&envState3_))) {
+                endNoteOrBeginNextOne();
+            }
+
+            break;
+        }
+
+        case ALG32:
+            /* Windowed sync AM, 1 synced by 4
+
+                          IM4
+                         ---->
+             .---.  .---.     .---.
+             | 2 |  | 3 |     | 4*|
+             '---'  '---'     '---'
+             \IM1  |IM2    /IM3
+             .---.
+             | 1 |
+             '---'
+             */
+        {
+            float voiceIm1 = modulationIndex1;
+            float voiceIm2 = modulationIndex2;
+            float voiceIm3 = modulationIndex3;
+            float voiceIm4 = modulationIndex4;
+
+            currentTimbre->osc1_.calculateFrequencyWithMatrix(&oscState1_, &matrix, freqHarm);
+            currentTimbre->osc2_.calculateFrequencyWithMatrix(&oscState2_, &matrix, freqHarm);
+            currentTimbre->osc3_.calculateFrequencyWithMatrix(&oscState3_, &matrix, freqHarm);
+            currentTimbre->osc4_.calculateFrequencyWithMatrix(&oscState4_, &matrix, freqHarm);
+
+            env1Value = this->env1ValueMem;
+            envNextValue = currentTimbre->env1_.getNextAmpExp(&envState1_);
+            env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
+            this->env1ValueMem = envNextValue;
+
+            env2Value = this->env2ValueMem;
+            envNextValue = currentTimbre->env2_.getNextAmpExp(&envState2_);
+            env2Inc = (envNextValue - env2Value) * inv32;
+            this->env2ValueMem = envNextValue;
+
+            env3Value = this->env3ValueMem;
+            envNextValue = currentTimbre->env3_.getNextAmpExp(&envState3_);
+            env3Inc = (envNextValue - env3Value) * inv32;
+            this->env3ValueMem = envNextValue;
+
+            env4Value = this->env4ValueMem;
+            envNextValue = currentTimbre->env4_.getNextAmpExp(&envState4_);
+            env4Inc = (envNextValue - env4Value) * inv32;
+            this->env4ValueMem = envNextValue;
+
+            oscState2_.frequency = oscState2_.mainFrequencyPlusMatrix;
+            float *osc2Values = currentTimbre->osc2_.getNextBlock(&oscState2_);
+
+            oscState3_.frequency = oscState3_.mainFrequencyPlusMatrix;
+            float *osc3Values = currentTimbre->osc3_.getNextBlockWithFeedbackAndEnveloppe(&oscState3_, feedbackModulation, env3Value, env3Inc,
+                oscState3_.frequency, fdbLastValue);
+
+            float f4x;
+            float f4xm1 = freqAi;
+            float freq4 = freqAo;
+            float mix1V = mix1 * this->velocity;
+
+            float osc1Matrix = oscState1_.mainFrequencyPlusMatrix - oscState1_.mainFrequency;
+            float osc1FrequencyPlusMatrix = oscState1_.mainFrequency + osc1Matrix * fabsf(osc1Matrix) * 0.25f;
+
+            for (int k = 0; k < BLOCK_SIZE; k++) {
+                float freq2 = osc2Values[k] * env2Value * oscState2_.frequency;
+                float freq3 = osc3Values[k];
+
+                oscState4_.frequency = freq3 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
+
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                float phase = currentTimbre->osc4_.getPhase(&oscState4_);
+                freq4 = f4x - f4xm1 + 0.99525f * freq4;
+                f4xm1 = f4x;
+
+                bool isSync = prevPhase > phase;
+                prevPhase = phase;
+                float window = 1.f - phase;
+
+                // sync slave osc
+                oscState1_.index = isSync ? 0 : oscState1_.index;
+
+                oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + osc1FrequencyPlusMatrix;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                carSample1 *= fabsf(carSample1); // vosim shape
+                float currentSample = carSample1 * env1Value * mix1V;
+
+                *sample++ = currentSample * pan1Right;
+                *sample++ = currentSample * pan1Left;
+
+                env1Value += env1Inc;
+                env2Value += env2Inc;
+                env4Value += env4Inc;
+
+            }
+
+            freqAi = f4xm1;
+            freqAo = freq4;
+
+            if (unlikely(currentTimbre->env1_.isDead(&envState1_))) {
+                endNoteOrBeginNextOne();
+            }
+
+            break;
+        }
+
+
     } // End switch
 
 
@@ -5218,18 +5600,17 @@ void Voice::fxAfterBlock() {
             int drive = clamp(27 + sqrt3(fxParam1) * 86, 0, 255);
             float gain = 1.1f + 44 * panTable[drive];
             float gainCorrection = (1.2f - sqrt3(panTable[64 + (drive >> 1)] * 0.6f));
-            float bias = -0.1f + (fxParam1 * 0.2f);
 
             for (int k = BLOCK_SIZE; k--;) {
                 // Left voice
-                localv0L = tanh3(bias + sat33(*sp) * gain) * gainCorrection;
+                localv0L = tanh3(sat33(*sp) * gain) * gainCorrection;
                 localv0L = pattern * localv0L + f * (*sp - localv1L);
                 localv1L = pattern * localv1L + f * localv0L;
 
                 *sp++ = clamp((*sp - localv1L) * mixerGain, -ratioTimbres, ratioTimbres);
 
                 // Right voice
-                localv0R = tanh3(bias + sat33(*sp) * gain) * gainCorrection;
+                localv0R = tanh3(sat33(*sp) * gain) * gainCorrection;
                 localv0R = pattern * localv0R + f * (*sp - localv1R);
                 localv1R = pattern * localv1R + f * localv0R;
 

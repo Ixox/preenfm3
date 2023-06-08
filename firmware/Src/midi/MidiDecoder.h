@@ -38,7 +38,7 @@ struct MidiEvent {
     EventType eventType;
     unsigned char value[2];
 };
-
+    
 enum AllControlChange {
     CC_BANK_SELECT = 0,
     CC_MODWHEEL = 1,
@@ -90,6 +90,10 @@ enum AllControlChange {
     CC_ENV_REL_ALL_MODULATOR,
     CC_HOLD_PEDAL = 64,
     CC_ENV_ATK_OP1,
+    CC_FILTER2_TYPE = 66,
+    CC_FILTER2_PARAM1,
+    CC_FILTER2_PARAM2,
+    CC_FILTER2_MIX,
     CC_FILTER_TYPE = 70,
     CC_FILTER_PARAM1,
     CC_FILTER_PARAM2,

@@ -28,6 +28,7 @@
 #define RGB565_ORANGE 0x00fc
 #define RGB565_YELLOW 0xe0ff
 #define RGB565_CYAN 0xff07
+#define RGB565_PURPLE 0xBFE0
 
 const uint8_t digitBits[] = {
     // 0
@@ -560,10 +561,67 @@ const uint8_t algo28[] = {
     END,
 };
 
-#define NUMBER_OF_ALGOS 28
+const uint8_t algo29[] = {
+    MIX, 1,
+    MIX, 2,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 12,
+    OPERATORSYNC, 3, 4,
+    OPERATOR, 4, 3,
+    IMSYNC, 1, 3, 1,
+    IM, 2, 4, 2,
+    IM, 3, 4, 3,
+    IM, 6, 4, 4,
+    END,
+};
+
+const uint8_t algo30[] = {
+    MIX, 1,
+    MIX, 2,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 12,
+    OPERATORSYNC, 3, 4,
+    OPERATOR, 4, 3,
+    IMSYNC, 1, 3, 1,
+    IMSYNC, 2, 3, 2,
+    IM, 3, 4, 1,
+    IM, 4, 4, 2,
+    IM, 6, 4, 4,
+    END,
+};
+
+const uint8_t algo31[] = {
+    MIX, 1,
+    MIX, 2,
+    MIX, 3,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 11,
+    OPERATOR, 3, 12,
+    OPERATORSYNC, 4, 5,
+    IMSYNC, 1, 4, 1,
+    IMSYNC, 2, 4, 2,
+    IMSYNC, 3, 4, 3,
+    END,
+};
+
+const uint8_t algo32[] = {
+    MIX, 1,
+    OPERATOR, 1, 11,
+    OPERATOR, 2, 4,
+    OPERATOR, 3, 2,
+    OPERATORSYNC, 4, 6,
+    IM, 1, 2, 1,
+    IM, 2, 3, 1,
+    IMSYNC, 3, 4, 1,
+    IM, 4, 3, 4,
+    IM, 6, 3, 3,
+    END,
+};
+
+#define NUMBER_OF_ALGOS 32
 const uint8_t* allAlgos[NUMBER_OF_ALGOS] = { algo1, algo2, algo3 , algo4, algo5, algo6, algo7, algo8, algo9, algo10, algo11,
         algo12, algo13, algo14, algo15, algo16, algo17, algo18, algo19, algo20, algo21, algo22, algo23, algo24, algo25,
-        algo26, algo27, algo28 };
+        algo26, algo27, algo28, algo29, algo30, algo31, algo32 };
 
 struct ModulationIndex modulationIndex[ALGO_END][6];
 bool carrierOperator[ALGO_END][6];
@@ -590,10 +648,12 @@ TftAlgo::TftAlgo() {
         }
         while (algoInfo[idx] != END) {
             switch (algoInfo[idx++]) {
+                case OPERATORSYNC:
                 case OPERATOR:
                     idx += 2;
                     break;
                 case IM:
+                case IMSYNC:
                     modulationIndex[a][algoInfo[idx] - 1].source = algoInfo[idx + 1];
                     modulationIndex[a][algoInfo[idx] - 1].destination = algoInfo[idx + 2];
                     idx += 3;
@@ -654,14 +714,14 @@ void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t
         xinc1 = 0;
         yinc2 = 0;
         den = deltax;
-        num = deltax / 2;
+        num = deltax * 0.5f;
         numadd = deltay;
         numpixels = deltax;
     } else {
         xinc2 = 0;
         yinc1 = 0;
         den = deltay;
-        num = deltay / 2;
+        num = deltay * 0.5f;
         numadd = deltax;
         numpixels = deltay;
     }
@@ -691,7 +751,7 @@ void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t
 
 void TftAlgo::drawNumber(int x, int y, int opNum) {
 
-    if (operatorMix_[opNum - 1] == 1) {
+    if (operatorMix_[opNum - 1] == MIX) {
         // Carrier
         setColor(RGB565_YELLOW);
     } else {
@@ -746,9 +806,12 @@ void TftAlgo::highlightOperator(bool draw, uint8_t opNum) {
 
 void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 
-    if (operatorMix_[opNum - 1] == 1) {
+    if (operatorMix_[opNum - 1] == MIX) {
         // Carrier
         setColor(RGB565_CYAN);
+    } else if (operatorMix_[opNum - 1] == OPERATORSYNC) {
+        // modulator sync
+        setColor(RGB565_PURPLE);
     } else {
         // modulator
         setColor(RGB565_BLUE);
@@ -809,11 +872,13 @@ void TftAlgo::drawAlgo(int algo) {
         operatorPosition_[i] = 0;
         imSource_[i] = 0;
         imDest_[i] = 0;
-        operatorMix_[i] = 0;
+        operatorMix_[i] = OPERATOR; // default
     }
 
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
+            case OPERATORSYNC:
+                operatorMix_[algoInfo[idx] - 1] = OPERATORSYNC;
             case OPERATOR:
                 operatorPosition_[algoInfo[idx] - 1] = algoInfo[idx + 1];
                 drawOperator(algoInfo[idx], algoInfo[idx + 1]);
@@ -826,8 +891,15 @@ void TftAlgo::drawAlgo(int algo) {
                 drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
                 idx += 3;
                 break;
+            case IMSYNC:
+                imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+                imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
+                setColor(RGB565_PURPLE);
+                drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
+                idx += 3;
+                break;
             case MIX:
-                operatorMix_[algoInfo[idx] - 1] = 1;
+                operatorMix_[algoInfo[idx] - 1] = MIX;
                 drawMix(algoInfo[idx++]);
                 break;
         }
@@ -838,6 +910,7 @@ void TftAlgo::drawAlgo(int algo) {
     idx = 0;
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
+            case OPERATORSYNC:
             case OPERATOR:
                 x1 = GETX1(algoInfo[idx + 1]);
                 y1 = GETY1(algoInfo[idx + 1]);
@@ -845,6 +918,7 @@ void TftAlgo::drawAlgo(int algo) {
                 idx += 2;
                 break;
             case IM:
+            case IMSYNC:
                 idx += 3;
                 break;
             case MIX:
