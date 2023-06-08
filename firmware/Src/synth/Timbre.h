@@ -270,6 +270,26 @@ private:
     const int inputBufferLen4 = 245;
     const int inputBufferLen5 = 269;
 
+    // granulator
+    enum GRAIN_PARAMS {
+        GRAIN_RAMP = 0,
+        GRAIN_POS,
+        GRAIN_SIZE,
+        GRAIN_CURRENT_SHIFT,
+        GRAIN_NEXT_SHIFT,
+        GRAIN_INC,
+        GRAIN_VOL,
+        GRAIN_PAN
+    };
+
+    int grainNext = 0, grainPrev = 0;
+    float grainTable[3][8] = {
+        {1, 1, 1, 0, 0, 0, 1, 0.5f},
+        {1, 1, 1, 0, 0, 0, 1, 0.5f},
+        {1, 1, 1, 0, 0, 0, 1, 0.5f}
+    };
+    float lockA, lockB, loopSize = 20;
+    
     /** --------------end of FX conf--------------  */
 
     int8_t timbreNumber_;

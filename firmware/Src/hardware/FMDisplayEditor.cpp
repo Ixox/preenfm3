@@ -1070,6 +1070,8 @@ const char *fx2Name[] = {
     "Delc", /* 8  */
     "Ping", /* 9  */
     "Diff", /* 10 */
+    "Gra1", /* 11 */
+    "Gra2", /* 12 */
 };
 
 
@@ -1161,6 +1163,14 @@ struct FilterRowDisplay fx2RowDisplay[FILTER2_LAST] = {
     {
         "Time",
         "Size",
+        "Mix " },
+    {
+        "Size",
+        "Sprd",
+        "Mix " },
+    {
+        "Tune",
+        "Sprd",
         "Mix " }
 };
 
