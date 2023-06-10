@@ -1628,7 +1628,7 @@ void Timbre::fxAfterBlock() {
             float _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
             float _in3_a1 = -_in3_a0;
 
-            const float f = 0.82f + param2S * 0.18f;
+            const float f = 0.8f + param2Square * 0.198f;
             const float f2 = 0.75f;
 
             const float fnotch = 1.03f;
@@ -1744,8 +1744,9 @@ void Timbre::fxAfterBlock() {
             float _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
             float _in3_a1 = -_in3_a0;
 
-            float f = 0.92f;
-            float f2 = 0.72;
+            const float f = 0.8f + param2Square * 0.198f;
+            const float f2 = 0.75f;
+
             float f3 = 0.75;
             const float fnotch = 1.03f;
 
@@ -2203,7 +2204,7 @@ void Timbre::fxAfterBlock() {
             if(lockB > 0) {
                 param1S = 0.005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .995f * param1S;
             } else {
-                param1S = 0.00005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .99995f * param1S;
+                param1S = 0.0005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
             }
             param2S = 0.05f * clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1) + 0.95f * param2S;
 
