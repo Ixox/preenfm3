@@ -1162,7 +1162,7 @@ struct FilterRowDisplay fx2RowDisplay[FILTER2_LAST] = {
         "Mix " },
     {
         "Time",
-        "Size",
+        "Feed",
         "Mix " },
     {
         "Size",
