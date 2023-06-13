@@ -2023,7 +2023,8 @@ void Timbre::fxAfterBlock() {
 
             param1S = 0.05f * (this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
             param2S = 0.05f * clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1) + 0.95f * param2S;
-
+            param2S *= param2S;
+            
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
             float inputIncCount = 0;
@@ -2156,16 +2157,16 @@ void Timbre::fxAfterBlock() {
                 band6 += f2 * ((low4) - low6 - band6);
 
                 // notch L
-                hb1_x1 += fnotch * hb1_y1;
-                float high7 = low5 - hb1_x1 - hb1_y1;
-                hb1_y1 += fnotch * high7;
-                float notchL = (high7 + hb1_x1);
+                hp_in2_x0 += fnotch * hp_in2_y0;
+                float high7 = low5 - hp_in2_x0 - hp_in2_y0;
+                hp_in2_y0 += fnotch * high7;
+                float notchL = (high7 + hp_in2_x0);
       
                 // notch R
-                hb1_x2 += fnotch * hb1_y2;
-                float high8 = low6 - hb1_x2 - hb1_y2;
-                hb1_y2 += fnotch * high8;
-                float notchR = (high8 + hb1_x2);
+                hp_in2_x1 += fnotch * hp_in2_y1;
+                float high8 = low6 - hp_in2_x1 - hp_in2_y1;
+                hp_in2_y1 += fnotch * high8;
+                float notchR = (high8 + hp_in2_x1);
 
                 *sp = *sp * dry + notchL * wetL;
                 sp++;
@@ -2196,6 +2197,7 @@ void Timbre::fxAfterBlock() {
                 param1S = 0.0005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
             }
             param2S = 0.05f * clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1) + 0.95f * param2S;
+            param2S *= param2S;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
@@ -2329,16 +2331,16 @@ void Timbre::fxAfterBlock() {
                 band6 += f2 * ((low4) - low6 - band6);
 
                 // notch L
-                hb1_x1 += fnotch * hb1_y1;
-                float high7 = low5 - hb1_x1 - hb1_y1;
-                hb1_y1 += fnotch * high7;
-                float notchL = (high7 + hb1_x1);
+                hp_in2_x0 += fnotch * hp_in2_y0;
+                float high7 = low5 - hp_in2_x0 - hp_in2_y0;
+                hp_in2_y0 += fnotch * high7;
+                float notchL = (high7 + hp_in2_x0);
       
                 // notch R
-                hb1_x2 += fnotch * hb1_y2;
-                float high8 = low6 - hb1_x2 - hb1_y2;
-                hb1_y2 += fnotch * high8;
-                float notchR = (high8 + hb1_x2);
+                hp_in2_x1 += fnotch * hp_in2_y1;
+                float high8 = low6 - hp_in2_x1 - hp_in2_y1;
+                hp_in2_y1 += fnotch * high8;
+                float notchR = (high8 + hp_in2_x1);
 
                 *sp = *sp * dry + notchL * wetL;
                 sp++;
