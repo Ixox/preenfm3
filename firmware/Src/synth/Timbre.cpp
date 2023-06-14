@@ -1117,7 +1117,6 @@ void Timbre::fxAfterBlock() {
 
             float _in2_b1 = (1 - filterB);
             float _in2_a0 = (1 + _in2_b1 * _in2_b1 * _in2_b1) * 0.5f;
-            float _in2_a1 = -_in2_a0;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
                 float monoIn = (*sp + *(sp + 1)) * 0.5f;
@@ -1350,7 +1349,6 @@ void Timbre::fxAfterBlock() {
 
             float _in2_b1 = (1 - filterB);
             float _in2_a0 = (1 + _in2_b1 * _in2_b1 * _in2_b1) * 0.5f;
-            float _in2_a1 = -_in2_a0;
 
             float hpZeroZone  = clamp( (1.3f - param1S) * sqrt3(param1 * quadrantSq * 16), 0, 1);
             filterB2    = 0.32f - 0.3f * hpZeroZone * (1 - (feedbackZeroZone * fabsf(feedbackParam) * 0.125f));
@@ -1613,7 +1611,6 @@ void Timbre::fxAfterBlock() {
             const float filterB     = (filterB2 * filterB2 * 0.5f);
             const float _in2_b1 = (1 - filterB);
             const float _in2_a0 = (1 + _in2_b1 * _in2_b1 * _in2_b1) * 0.5f;
-            const float _in2_a1 = -_in2_a0;
 
             // hp feedback
             float filterC2     = 0.1f + param2Square * 0.3f;
@@ -2022,9 +2019,10 @@ void Timbre::fxAfterBlock() {
             lockB = (1 - lockA);
 
             param1S = 0.05f * (this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
-            param2S = 0.05f * clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1) + 0.95f * param2S;
-            param2S *= param2S;
-            
+            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
+            param2 *= param2;
+            param2S = 0.05f * param2 + 0.95f * param2S;
+
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
             float inputIncCount = 0;
@@ -2052,11 +2050,6 @@ void Timbre::fxAfterBlock() {
                     grainTable[grainNext][GRAIN_VOL] = sqrt3(fabsf(noise[3]));
                     grainTable[grainNext][GRAIN_PAN] = clamp(1 + (noise[6]) * sqrt3(param2S), 0, 2) * 0.5f;
                     grainPrev = grainNext;
-
-                    float filterB2     = 0.35f - sqrt3(fabsf(param1S)) * 0.2f;
-                    float filterB     = (filterB2 * filterB2 * 0.5f);
-                    _in3_b1 = (1 - filterB);
-                    _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
 
                     if(lockB < 0.02f) {
                         loopSize = clamp((1 - param1S) * 1400, 48, 1800);
@@ -2196,8 +2189,10 @@ void Timbre::fxAfterBlock() {
             } else {
                 param1S = 0.0005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
             }
-            param2S = 0.05f * clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1) + 0.95f * param2S;
-            param2S *= param2S;
+
+            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
+            param2 *= param2;
+            param2S = 0.05f * param2 + 0.95f * param2S;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
@@ -2215,7 +2210,7 @@ void Timbre::fxAfterBlock() {
                 if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.33f) {
                     //grain done, compute another one
                     float jitter = param2S * lockA;
-                    float grainRate = sampleRateDivideInv * clamp(0.75f + param1S * 0.5f + jitter * noise[4] * 0.025f, 0.1f, 2);
+                    float grainRate = sampleRateDivideInv * clamp(0.5f + param1S + jitter * noise[4] * 0.025f, 0, 2);
                     grainTable[grainNext][GRAIN_RAMP] = 0;
                     grainTable[grainNext][GRAIN_SIZE] = clamp((1800 + (noise[2]) * 40 * jitter * jitter) * param1S * param1S, 432, delayBufferSize - 100);
                     grainTable[grainNext][GRAIN_POS] = modulo2(delayWritePosF - (800 + jitter * noise[5] * 790), delayBufferSize);
@@ -2226,11 +2221,6 @@ void Timbre::fxAfterBlock() {
                     grainTable[grainNext][GRAIN_VOL] = sqrt3(fabsf(noise[3]));
                     grainTable[grainNext][GRAIN_PAN] = clamp(1 + (noise[6]) * sqrt3(param2S), 0, 2) * 0.5f;
                     grainPrev = grainNext;
-
-                    float filterB2    = (0.35f - sqrt3(fabsf(param1S)) * 0.2f) * lockA + (0.05f) * lockB;
-                    float filterB     = (filterB2 * filterB2 * 0.5f);
-                    _in3_b1 = (1 - filterB);
-                    _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
 
                     if(lockB < 0.02f) {
                         loopSize = clamp((1 - param1S) * 1400, 48, 1800);
