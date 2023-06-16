@@ -2036,7 +2036,7 @@ void Timbre::fxAfterBlock() {
             float _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
 
             if(grainProb) {
-                if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.33f) {
+                if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.27f) {
                     //grain done, compute another one
                     float jitter = param2S * lockA;
                     float grainRate = sampleRateDivideInv * (1 + jitter * noise[4] * 0.0025f);
@@ -2207,7 +2207,7 @@ void Timbre::fxAfterBlock() {
             float _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
 
             if(grainProb) {
-                if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.33f) {
+                if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.27f) {
                     //grain done, compute another one
                     float jitter = param2S * lockA;
                     float grainRate = sampleRateDivideInv * clamp(0.5f + param1S + jitter * noise[4] * 0.025f, 0, 2);
