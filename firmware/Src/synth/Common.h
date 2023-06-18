@@ -220,8 +220,8 @@ enum {
     ROW_NONE
 };
 
-#define NUMBER_OF_ROWS ROW_EFFECT2 + 1
-
+#define NUMBER_OF_ROWS (ROW_EFFECT2+1)
+#define NUMBER_OF_ROWS_FOR_EDITOR (ROW_ENGINE2+1)
 
 
 enum {
