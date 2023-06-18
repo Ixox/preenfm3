@@ -829,7 +829,7 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     }
 
     // flush all parameters
-    for (int currentrow = 0; currentrow < NUMBER_OF_ROWS; currentrow++) {
+    for (int currentrow = 0; currentrow < NUMBER_OF_ROWS_FOR_EDITOR; currentrow++) {
         for (int encoder = 0; encoder < NUMBER_OF_ENCODERS_PFM2; encoder++) {
             struct ParameterDisplay* param = &allParameterRows.row[currentrow]->params[encoder];
             int memoryIndex = currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder;
@@ -908,7 +908,7 @@ void MidiDecoder::decodeNrpn(int timbre) {
 
         struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
 
-        if (row < NUMBER_OF_ROWS) {
+        if (row < NUMBER_OF_ROWS_FOR_EDITOR) {
             if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY
                     || param->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || param->displayType == DISPLAY_TYPE_LFO_KSYN) {
                 value = value * .01f + param->minValue;
