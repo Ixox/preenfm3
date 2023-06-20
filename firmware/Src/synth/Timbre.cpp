@@ -2018,7 +2018,7 @@ void Timbre::fxAfterBlock() {
             lockA = lockA * 0.98f + ((param2S > 0.99f) ? 0 : 1) * 0.02f;
             lockB = (1 - lockA);
 
-            param1S = 0.05f * (this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
+            param1S = 0.05f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
             float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
             param2 *= param2;
             param2S = 0.05f * param2 + 0.95f * param2S;
@@ -2038,7 +2038,7 @@ void Timbre::fxAfterBlock() {
             if(grainProb) {
                 if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.27f) {
                     //grain done, compute another one
-                    float jitter = param2S * lockA;
+                    float jitter = foldAbs(param2S);
                     float grainRate = sampleRateDivideInv * (1 + jitter * noise[4] * 0.0025f);
                     grainTable[grainNext][GRAIN_RAMP] = 0;
                     grainTable[grainNext][GRAIN_SIZE] = clamp((1800 + (noise[2]) * 40 * jitter * jitter) * param1S * param1S, 432, delayBufferSize - 100);
@@ -2185,9 +2185,9 @@ void Timbre::fxAfterBlock() {
             lockB = (1 - lockA);
 
             if(lockB > 0) {
-                param1S = 0.005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .995f * param1S;
+                param1S = 0.005f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .995f * param1S;
             } else {
-                param1S = 0.0005f * (this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
+                param1S = 0.0005f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
             }
 
             float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
@@ -2209,7 +2209,7 @@ void Timbre::fxAfterBlock() {
             if(grainProb) {
                 if(grainTable[grainNext][GRAIN_RAMP] >= 1 && grainTable[grainPrev][GRAIN_RAMP] > 0.27f) {
                     //grain done, compute another one
-                    float jitter = param2S * lockA;
+                    float jitter = param2S;
                     float grainRate = sampleRateDivideInv * clamp(0.5f + param1S + jitter * noise[4] * 0.025f, 0, 2);
                     grainTable[grainNext][GRAIN_RAMP] = 0;
                     grainTable[grainNext][GRAIN_SIZE] = clamp((1800 + (noise[2]) * 40 * jitter * jitter) * param1S * param1S, 432, delayBufferSize - 100);
