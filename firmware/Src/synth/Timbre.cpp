@@ -2015,13 +2015,17 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            lockA = lockA * 0.98f + ((param2S > 0.99f) ? 0 : 1) * 0.02f;
+            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
+            param2 *= param2;
+
+            lockA = lockA * 0.98f + ((param2 > 0.99f) ? 0 : 1) * 0.02f;
             lockB = (1 - lockA);
 
             param1S = 0.05f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
-            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
-            param2 *= param2;
-            param2S = 0.05f * param2 + 0.95f * param2S;
+
+            if(lockA < 0.9999f) {
+                param2S = 0.05f * param2 + 0.95f * param2S;
+            }
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
@@ -2181,18 +2185,19 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            lockA = lockA * 0.98f + ((param2S > 0.99f) ? 0 : 1) * 0.02f;
+            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
+            param2 *= param2;
+            param1S = 0.05f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
+
+            lockA = lockA * 0.98f + ((param2 > 0.99f) ? 0 : 1) * 0.02f;
             lockB = (1 - lockA);
 
-            if(lockB > 0) {
+            if(lockA < 0.9999f) {
                 param1S = 0.005f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .995f * param1S;
+                param2S = 0.05f * param2 + 0.95f * param2S;
             } else {
                 param1S = 0.0005f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
             }
-
-            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
-            param2 *= param2;
-            param2S = 0.05f * param2 + 0.95f * param2S;
 
             const float sampleRateDivide = 4;
             const float sampleRateDivideInv = 1 / sampleRateDivide;
