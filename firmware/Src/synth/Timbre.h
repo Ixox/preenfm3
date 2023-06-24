@@ -200,11 +200,10 @@ private:
     float param1S = 0;
     float matrixFilterFrequencyS = 0;
     float param2S = 0;
-    float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0, delaySize4 = 0;
-    float delaySizeInc1 = 0, delaySizeInc2 = 0, delaySizeInc3 = 0;
-    float delayOut1 = 0, delayOut2 = 0, delayOut3 = 0, delayOut4 = 0;
+    float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0;
+    float delayOut1 = 0;
     float feedback            = 0;
-    float shift = 0, shift2 = 0;
+    float shift = 0,   shift2 = 0;
     int delayWritePos         = 0;
     float delayWritePosF      = 0;
     float delayReadPos        = 0;
@@ -282,7 +281,7 @@ private:
         GRAIN_PAN
     };
 
-    int grainNext = 0, grainPrev = 0;
+    uint8_t grainNext = 0, grainPrev = 0;
     float grainTable[3][8] = {
         {1, 1, 1, 0, 0, 0, 1, 0.5f},
         {1, 1, 1, 0, 0, 0, 1, 0.5f},

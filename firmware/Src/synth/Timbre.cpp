@@ -774,6 +774,7 @@ void Timbre::fxAfterBlock() {
             float *sp  = sampleBlock_;
             
             float delayReadPos90;
+            float delayOut2;
 
             float filterB2 = 0.1f;
             float filterB = (filterB2 * filterB2 * 0.5f);
@@ -889,6 +890,7 @@ void Timbre::fxAfterBlock() {
             float *sp = sampleBlock_;
             
             float delReadPos1, delReadPos2, delReadPos3, monoIn;
+            float delayOut2 = 0, delayOut3 = 0;
 
             const float f = 0.8f;
             const float f2 = 0.7f;
@@ -999,7 +1001,8 @@ void Timbre::fxAfterBlock() {
             float *sp = sampleBlock_;
             
             float delReadPos, delReadPos2;
-
+            float delayOut3 = 0;
+            
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
                 // feedback lp
@@ -1108,6 +1111,7 @@ void Timbre::fxAfterBlock() {
             float *sp = sampleBlock_;
             
             float delayReadPos180, level1, level2;
+            float delayOut2;
 
             // hi pass params
             float hpZeroZone  = 1 - clamp(sqrt3(quadrant) * 4.5f, 0, 1);
@@ -1210,6 +1214,7 @@ void Timbre::fxAfterBlock() {
             float *sp = sampleBlock_;
             
             float level1, level2, level3, level4;
+            float delayOut2 = 0, delayOut3 = 0, delayOut4 = 0;
             float delayReadPos180;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
@@ -1496,7 +1501,8 @@ void Timbre::fxAfterBlock() {
             
             float level1, level2, level3, level4;
             float delayReadPos180;
-
+            float delayOut2 = 0, delayOut3 = 0, delayOut4 = 0;
+    
             for (int k = 0; k < BLOCK_SIZE; k++) {
                 float monoIn = (*sp + *(sp + 1)) * 0.5f;
                 
@@ -1739,6 +1745,7 @@ void Timbre::fxAfterBlock() {
             float f3 = 0.75;
             const float fnotch = 1.03f;
 
+            float delayOut2;
             float *sp = sampleBlock_;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
@@ -1876,6 +1883,7 @@ void Timbre::fxAfterBlock() {
             float inputBuffer5ReadLen = inputBufferLen5 * sizeParamInpt;
 
             float *sp = sampleBlock_;
+            float delayOut2;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
