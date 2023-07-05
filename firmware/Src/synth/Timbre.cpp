@@ -1613,13 +1613,13 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * sampleRateDivideInv * INV_BLOCK_SIZE;
 
             // hp input
-            const float filterB2    = 0.1f + param2Square * 0.42f;
+            const float filterB2    = 0.1f + param2Square * 0.4f;
             const float filterB     = (filterB2 * filterB2 * 0.5f);
             const float _in2_b1 = (1 - filterB);
             const float _in2_a0 = (1 + _in2_b1 * _in2_b1 * _in2_b1) * 0.5f;
 
             // hp feedback
-            float filterC2     = 0.1f + param2Square * 0.32f;
+            float filterC2     = 0.1f + param2Square * 0.3f;
             float filterC     = (filterC2 * filterC2 * 0.5f);
 
             float _in3_b1 = (1 - filterC);
@@ -1641,8 +1641,13 @@ void Timbre::fxAfterBlock() {
                     delayWritePos = (delayWritePos + 1) & delayBufferSizeM1;
                     delayWritePosF = (float) delayWritePos;
                     
-                    // hp input
-                    hb6_x1    = monoIn;
+                    // hp
+                    hb4_x1    = monoIn;
+                    hb4_y1    = _in2_a0 * (hb4_x1 - hb4_x2) + _in2_b1 * hb4_y2;
+                    hb4_y2    = hb4_y1;
+                    hb4_x2    = hb4_x1;
+
+                    hb6_x1    = hb4_y1;
                     hb6_y1    = _in2_a0 * (hb6_x1 - hb6_x2) + _in2_b1 * hb6_y2;
                     hb6_y2    = hb6_y1;
                     hb6_x2    = hb6_x1;
@@ -1766,7 +1771,12 @@ void Timbre::fxAfterBlock() {
                     band1 += f * ((delayOut1 * feedback) - low1 - band1);
                     
                     // hp
-                    hb6_x1    = monoIn;
+                    hb4_x1    = monoIn;
+                    hb4_y1    = _in2_a0 * (hb4_x1 - hb4_x2) + _in2_b1 * hb4_y2;
+                    hb4_y2    = hb4_y1;
+                    hb4_x2    = hb4_x1;
+
+                    hb6_x1    = hb4_y1;
                     hb6_y1    = _in2_a0 * (hb6_x1 - hb6_x2) + _in2_b1 * hb6_y2;
                     hb6_y2    = hb6_y1;
                     hb6_x2    = hb6_x1;
@@ -2263,7 +2273,7 @@ void Timbre::fxAfterBlock() {
 
             float env;
 
-            const float f2 = 0.8f;
+            const float f2 = 0.9f;
             const float fnotch = 1.03f;
 
             float grain1, grain2, grain3;
