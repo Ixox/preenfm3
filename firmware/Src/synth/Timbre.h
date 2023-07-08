@@ -201,7 +201,6 @@ private:
     float matrixFilterFrequencyS = 0;
     float param2S = 0;
     float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0;
-    float delayOut1 = 0;
     float feedback            = 0;
     float shift = 0,   shift2 = 0;
     int delayWritePos         = 0;
@@ -210,7 +209,6 @@ private:
     float delayReadPos2       = 0;
     float delayReadFrac       = 0;
     float delayReadFrac2      = 0;
-    float readPos             = 0;
      
     float low1 = 0, band1 = 0;
     float low2 = 0, band2 = 0;
@@ -220,19 +218,16 @@ private:
     float low6 = 0, band6 = 0;
 
     const int delayBufStereoSize = delayBufferSize * 0.5f;
-    const float delayBufStereoSizeF = delayBufStereoSize;
     const int delayBufStereoSizeM1 = delayBufStereoSize - 1;
     const float delayBufStereoDiv4 = delayBufStereoSize * 0.25f;
     const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
 
-    float delaySumOut = 0;
+    float feedbackInput = 0;
 
     // hp filter
-    float hp_in_x0 = 0;
     float hp_in_y0 = 0;
     float hp_in_y1 = 0;
     float hp_in_x1 = 0;
-    float hp_in2_x0 = 0;
     float hp_in2_y0 = 0;
     float hp_in2_y1 = 0;
     float hp_in2_x1 = 0;
@@ -242,7 +237,16 @@ private:
     float _lx1 = 0;
     float _ly2 = 0;
     float _lx2 = 0;
-    float apcoef1, apcoef2, apcoef3, apcoef4;
+
+    // all pass params
+    const float f1 = 0.0156f;
+    const float apcoef1 = (1.0f - f1) / (1.0f + f1);
+    const float f2 = (0.17f + f1);
+    const float apcoef2 = (1.0f - f2) / (1.0f + f2);
+    const float f3 = (0.17f + f2);
+    const float apcoef3 = (1.0f - f3) / (1.0f + f3);
+    const float f4 = (0.17f + f3);
+    const float apcoef4 = (1.0f - f4) / (1.0f + f4);
 
     // frequency shifter / lowpass filter (hb1 - hb3) / allpass hb4 / hipass hb5
     float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;
@@ -255,7 +259,6 @@ private:
     float hb8_x1 = 0, hb8_x2 = 0, hb8_y1 = 0, hb8_y2 = 0;
     float phase1 = 0;
     float samplen1 = 0;
-    float shifterOutMix = 0;
 
     // diffuser
     int inputWritePos1     = 0;
