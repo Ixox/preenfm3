@@ -733,15 +733,15 @@ void Timbre::fxAfterBlock() {
             wet += extraAmp;
 
             param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
-            float fxParamTmp = foldAbs(param1S * (param1S + matrixFilterFrequency) * 0.125f) * 0.5f;
+            float fxParamTmp = foldAbs(param1S * (param1S + matrixFilterFrequency)) ;
             delayReadFrac = (fxParamTmp + 99 * delayReadFrac) * 0.01f; // smooth change
             
             float currentDelaySize1 = delaySize1;
-            delaySize1 = clamp(1 + delayBufStereoSize * delayReadFrac, 0, delayBufStereoSizeM1);
+            delaySize1 = clamp(delayBufStereoSize * delayReadFrac, 0, delayBufStereoSizeM1);
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
-            feedback = clamp( this->params_.effect2.param2 + matrixFilterParam2, -1, 1) * 0.95f;
+            feedback = clamp( sqrt3(fabsf(this->params_.effect2.param2 + matrixFilterParam2)), -1, 1) * 0.95f;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
 
             float *sp  = sampleBlock_;
@@ -756,7 +756,8 @@ void Timbre::fxAfterBlock() {
             float _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
 
             const float f = 0.75f;
-            const float f2 = 0.74f;
+            const float f2 = 0.8f;
+            const float fnotch = 1.03f;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
                 
@@ -771,12 +772,12 @@ void Timbre::fxAfterBlock() {
                 float feedR   = (low2) * currentFeedback;
 
                 // audio in hp
-                float hp_in_x0 = tanh4(low3) - feedL;
+                float hp_in_x0 = tanh4(low3 * 1.65f) - feedL;
                 hp_in_y0     = _in3_a0 * (hp_in_x0 - hp_in_x1) + _in3_b1 * hp_in_y1;
                 hp_in_y1     = hp_in_y0;
                 hp_in_x1     = hp_in_x0;
 
-                float hp_in2_x0 = tanh4(low4) - feedR;
+                float hp_in2_x0 = tanh4(low4 * 1.65f) - feedR;
                 hp_in2_y0    = _in3_a0 * (hp_in2_x0 - hp_in2_x1) + _in3_b1 * hp_in2_y1;
                 hp_in2_y1    = hp_in2_y0;
                 hp_in2_x1    = hp_in2_x0;
@@ -786,7 +787,7 @@ void Timbre::fxAfterBlock() {
                 delayBuffer_[delayWritePos + delayBufStereoSize] = hp_in2_y0;
 
                 delayReadPos   = modulo2(delayWritePos - currentDelaySize1, delayBufStereoSize);
-                delayReadPos90 = modulo2(delayReadPos - 190, delayBufStereoSize);
+                delayReadPos90 = modulo2(delayReadPos - 37.f, delayBufStereoSize);
 
                 delayOut1 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
                 delayOut2 = delayInterpolation2(delayReadPos90, delayBuffer_, delayBufStereoSizeM1, delayBufStereoSize);
@@ -807,15 +808,27 @@ void Timbre::fxAfterBlock() {
                 low2  += f2 * band2;
                 band2 += f2 * (delayOut2 - low2 - band2);
 
-                _ly2 = apcoef3 * (_ly2 + low2) - _lx2; // allpass 2
+                _ly2 = apcoef2 * (_ly2 + low2) - _lx2; // allpass 2
                 _lx2 = low2;
 
-                hb4_y2 = apcoef4 * (hb4_y2 + _ly2) - hb4_x2; // allpass
+                hb4_y2 = apcoef3 * (hb4_y2 + _ly2) - hb4_x2; // allpass
                 hb4_x2 = _ly2;
 
-                *sp = *sp * dry + (low1 + hb4_y1) * wet;
+                // notch L
+                hb1_x1 += fnotch * hb1_y1;
+                float high7 = (low1 + hb4_y1) - hb1_x1 - hb1_y1;
+                hb1_y1 += fnotch * high7;
+                float notchL = (high7 + hb1_x1);
+
+                // notch R
+                hb1_x2 += fnotch * hb1_y2;
+                float high8 = (low2 + hb4_y2) - hb1_x2 - hb1_y2;
+                hb1_y2 += fnotch * high8;
+                float notchR = (high8 + hb1_x2);
+
+                *sp = *sp * dry + notchL * wet;
                 sp++;
-                *sp = *sp * dry + (low2 + hb4_y2) * wet;
+                *sp = *sp * dry + notchR * wet;
                 sp++;
 
                 currentDelaySize1 += delaySizeInc1;
