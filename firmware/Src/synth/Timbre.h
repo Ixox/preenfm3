@@ -187,12 +187,6 @@ private:
     float iirFilter(float x, float a0, float *yn1, float *yn2, float *xn1, float *xn2) ;
 
     #define delayBufferSize 2048
-    const float delayBufferSizeF       = delayBufferSize;
-    const float delayBufferSize90      = delayBufferSize * 0.25f;
-    const float delayBufferSize180     = delayBufferSize * 0.5f;
-    const int delayBufferSizeM1   = delayBufferSize - 1;
-    const int delayBufferSizeM4   = delayBufferSize - 4;
-    const float delayBufferSizeInv = 1.0f / delayBufferSize;
 
     static float delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize];
     float *delayBuffer_;
@@ -216,11 +210,6 @@ private:
     float low4 = 0, band4 = 0;
     float low5 = 0, band5 = 0;
     float low6 = 0, band6 = 0;
-
-    const int delayBufStereoSize = delayBufferSize * 0.5f;
-    const int delayBufStereoSizeM1 = delayBufStereoSize - 1;
-    const float delayBufStereoDiv4 = delayBufStereoSize * 0.25f;
-    const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
 
     float feedbackInput = 0;
 

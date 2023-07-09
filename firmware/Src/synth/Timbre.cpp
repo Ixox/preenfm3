@@ -221,6 +221,18 @@ const float apcoef3 = (1.0f - f3) / (1.0f + f3);
 const float f4 = (0.17f + f3);
 const float apcoef4 = (1.0f - f4) / (1.0f + f4);
 
+// delay sizes
+const float delayBufferSizeF       = delayBufferSize;
+const float delayBufferSize90      = delayBufferSize * 0.25f;
+const float delayBufferSize180     = delayBufferSize * 0.5f;
+const int delayBufferSizeM1   = delayBufferSize - 1;
+const int delayBufferSizeM4   = delayBufferSize - 4;
+const float delayBufferSizeInv = 1.0f / delayBufferSize;
+const int delayBufStereoSize = delayBufferSize * 0.5f;
+const int delayBufStereoSizeM1 = delayBufStereoSize - 1;
+const float delayBufStereoDiv4 = delayBufStereoSize * 0.25f;
+const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
+
 Timbre::Timbre() {
 
     recomputeNext_ = true;
@@ -743,11 +755,11 @@ void Timbre::fxAfterBlock() {
             wet += extraAmp;
 
             param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
-            float fxParamTmp = foldAbs(param1S * (param1S + matrixFilterFrequency)) ;
+            float fxParamTmp = foldAbs(param1S * (param1S + matrixFilterFrequency));
             delayReadFrac = (fxParamTmp + 99 * delayReadFrac) * 0.01f; // smooth change
             
             float currentDelaySize1 = delaySize1;
-            delaySize1 = clamp(delayBufStereoSize * delayReadFrac, 0, delayBufStereoSizeM1);
+            delaySize1 = clamp(delayBufStereoDiv4 * delayReadFrac, 0, delayBufStereoSizeM1);
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
