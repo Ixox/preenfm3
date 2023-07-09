@@ -755,7 +755,7 @@ void Timbre::fxAfterBlock() {
             wet += extraAmp;
 
             param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
-            float fxParamTmp = foldAbs(param1S * (param1S + matrixFilterFrequency));
+            float fxParamTmp = foldAbs(param1S + param1S * matrixFilterFrequency);
             delayReadFrac = (fxParamTmp + 99 * delayReadFrac) * 0.01f; // smooth change
             
             float currentDelaySize1 = delaySize1;
