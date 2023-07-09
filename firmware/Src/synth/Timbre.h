@@ -238,16 +238,6 @@ private:
     float _ly2 = 0;
     float _lx2 = 0;
 
-    // all pass params
-    const float f1 = 0.0156f;
-    const float apcoef1 = (1.0f - f1) / (1.0f + f1);
-    const float f2 = (0.17f + f1);
-    const float apcoef2 = (1.0f - f2) / (1.0f + f2);
-    const float f3 = (0.17f + f2);
-    const float apcoef3 = (1.0f - f3) / (1.0f + f3);
-    const float f4 = (0.17f + f3);
-    const float apcoef4 = (1.0f - f4) / (1.0f + f4);
-
     // frequency shifter / lowpass filter (hb1 - hb3) / allpass hb4 / hipass hb5
     float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;
     float hb2_x1 = 0, hb2_x2 = 0, hb2_y1 = 0, hb2_y2 = 0;

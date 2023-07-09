@@ -211,6 +211,16 @@ float hann(float x) {
     float s = sqrt3(x * (1 - x));
     return s + s;
 }
+// all pass params
+const float f1 = 0.0156f;
+const float apcoef1 = (1.0f - f1) / (1.0f + f1);
+const float f2 = (0.17f + f1);
+const float apcoef2 = (1.0f - f2) / (1.0f + f2);
+const float f3 = (0.17f + f2);
+const float apcoef3 = (1.0f - f3) / (1.0f + f3);
+const float f4 = (0.17f + f3);
+const float apcoef4 = (1.0f - f4) / (1.0f + f4);
+
 Timbre::Timbre() {
 
     recomputeNext_ = true;
