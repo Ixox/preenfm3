@@ -750,7 +750,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255] * 0.5f;
+            float wet = panTable[mixerGain255] * 0.37f;
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -777,8 +777,8 @@ void Timbre::fxAfterBlock() {
             float _in3_b1 = (1 - filterB);
             float _in3_a0 = (1 + _in3_b1 * _in3_b1 * _in3_b1) * 0.5f;
 
-            const float f = 0.75f;
-            const float f2 = 0.8f;
+            const float f = 0.8f;
+            const float f2 = 0.85f;
             const float fnotch = 1.03f;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
@@ -911,7 +911,7 @@ void Timbre::fxAfterBlock() {
             float _in_a0 = (1 + _in_b1 * _in_b1 * _in_b1) * 0.5f;
 
             for (int k = 0; k < BLOCK_SIZE; k++) {
-                monoIn = (*sp + *(sp + 1)) * 0.5f;
+                monoIn = tanh4(*sp + *(sp + 1)) * 0.66f;
 
                 // input lp
                 low3  += f * band3;
@@ -922,6 +922,8 @@ void Timbre::fxAfterBlock() {
                 hp_in_y0     = _in_a0 * (hp_in_x0 - hp_in_x1) + _in_b1 * hp_in_y1;
                 hp_in_y1     = hp_in_y0;
                 hp_in_x1     = hp_in_x0;
+
+                float bass = low3 - hp_in_y0;
 
                 delayWritePos = (delayWritePos + 1) & delayBufferSizeM1;
                 delayBuffer_[delayWritePos] = hp_in_y0;
@@ -937,8 +939,8 @@ void Timbre::fxAfterBlock() {
                 delReadPos3 = modulo2(delayWritePosF - currentDelaySize3, delayBufferSize);
                 delayOut3  = delayInterpolation(delReadPos3, delayBuffer_, delayBufferSizeM1);
 
-                float delaySumOut = (delayOut1 - delayOut3 + delayOut2) ;
-                float delaySumOut2 = (delayOut3 - delayOut1 + delayOut2) ;
+                float delaySumOut = bass + (delayOut1 - delayOut3 + delayOut2) ;
+                float delaySumOut2 = bass + (delayOut3 - delayOut1 + delayOut2) ;
 
                 feedbackInput = delaySumOut;
 
