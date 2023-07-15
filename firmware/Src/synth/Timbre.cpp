@@ -2447,7 +2447,7 @@ void Timbre::voicesToTimbre(float volumeGain) {
         const float *voiceBlock = voices_[voiceNumber_[k]]->getSampleBlock();
 
         if (unlikely(k == 0)) {
-            if (unlikely(numberOfVoicesToCopy == 1.0f)) {
+            if (unlikely(numberOfVoicesToCopy == 1)) {
                 for (int s = 0; s < BLOCK_SIZE; s++) {
                     *timbreBlock++ = *voiceBlock++ * volumeGain;
                     *timbreBlock++ = *voiceBlock++ * volumeGain;
