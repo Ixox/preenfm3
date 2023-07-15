@@ -750,7 +750,7 @@ void Timbre::fxAfterBlock() {
             float mixerGain_01 = clamp(mixerGain_, 0, 1);
             int mixerGain255 = mixerGain_01 * 255;
             float dry = panTable[255 - mixerGain255];
-            float wet = panTable[mixerGain255] * 0.37f;
+            float wet = panTable[mixerGain255] * 0.5f;
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
@@ -769,7 +769,6 @@ void Timbre::fxAfterBlock() {
             float *sp  = sampleBlock_;
             
             float delayReadPos90;
-            float delayOut1, delayOut2;
 
             float filterB2 = 0.1f;
             float filterB = (filterB2 * filterB2 * 0.5f);
@@ -790,16 +789,30 @@ void Timbre::fxAfterBlock() {
                 band4 += f * (*(sp + 1) - low4 - band4);
 
                 // feedback
-                float feedL   = (low1) * currentFeedback;
-                float feedR   = (low2) * currentFeedback;
+                float feedL  = low5 * currentFeedback;
+                float feedR  = low6 * currentFeedback;
+
+                // L
+                _ly1 = apcoef2 * (_ly1 + feedL) - _lx1; // allpass
+                _lx1 = feedL;
+
+                hb4_y1 = apcoef4 * (hb4_y1 + _ly1) - hb4_x1; // allpass
+                hb4_x1 = _ly1;
+
+                // R
+                _ly2 = apcoef2 * (_ly2 + feedR) - _lx2; // allpass
+                _lx2 = feedR;
+                
+                hb4_y2 = apcoef4 * (hb4_y2 + _ly2) - hb4_x2; // allpass
+                hb4_x2 = _ly2;
 
                 // audio in hp
-                float hp_in_x0 = tanh4(low3 * 1.65f) - feedL;
+                float hp_in_x0 = tanh4((low3 + low3 - hb4_y1));
                 hp_in_y0     = _in3_a0 * (hp_in_x0 - hp_in_x1) + _in3_b1 * hp_in_y1;
                 hp_in_y1     = hp_in_y0;
                 hp_in_x1     = hp_in_x0;
 
-                float hp_in2_x0 = tanh4(low4 * 1.65f) - feedR;
+                float hp_in2_x0 = tanh4((low4 + low4 - hb4_y2));
                 hp_in2_y0    = _in3_a0 * (hp_in2_x0 - hp_in2_x1) + _in3_b1 * hp_in2_y1;
                 hp_in2_y1    = hp_in2_y0;
                 hp_in2_x1    = hp_in2_x0;
@@ -811,40 +824,24 @@ void Timbre::fxAfterBlock() {
                 delayReadPos   = modulo2(delayWritePos - currentDelaySize1, delayBufStereoSize);
                 delayReadPos90 = modulo2(delayReadPos - 37.f, delayBufStereoSize);
 
-                delayOut1 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
-                delayOut2 = delayInterpolation2(delayReadPos90, delayBuffer_, delayBufStereoSizeM1, delayBufStereoSize);
-
-                // L
+                low5 = delayInterpolation(delayReadPos, delayBuffer_, delayBufStereoSizeM1);
+                low6 = delayInterpolation2(delayReadPos90, delayBuffer_, delayBufStereoSizeM1, delayBufStereoSize);
 
                 low1  += f2 * band1;
-                band1 += f2 * (delayOut1 - low1 - band1);
-
-                _ly1 = apcoef2 * (_ly1 + low1) - _lx1; // allpass
-                _lx1 = low1;
-
-                hb4_y1 = apcoef3 * (hb4_y1 + _ly1) - hb4_x1; // allpass
-                hb4_x1 = _ly1;
-
-                // R
+                band1 += f2 * (low5 - low1 - band1);
 
                 low2  += f2 * band2;
-                band2 += f2 * (delayOut2 - low2 - band2);
-
-                _ly2 = apcoef2 * (_ly2 + low2) - _lx2; // allpass 2
-                _lx2 = low2;
-
-                hb4_y2 = apcoef3 * (hb4_y2 + _ly2) - hb4_x2; // allpass
-                hb4_x2 = _ly2;
+                band2 += f2 * (low6 - low2 - band2);
 
                 // notch L
                 hb1_x1 += fnotch * hb1_y1;
-                float high7 = (low1 + hb4_y1) - hb1_x1 - hb1_y1;
+                float high7 = low1 - hb1_x1 - hb1_y1;
                 hb1_y1 += fnotch * high7;
                 float notchL = (high7 + hb1_x1);
 
                 // notch R
                 hb1_x2 += fnotch * hb1_y2;
-                float high8 = (low2 + hb4_y2) - hb1_x2 - hb1_y2;
+                float high8 = low2 - hb1_x2 - hb1_y2;
                 hb1_y2 += fnotch * high8;
                 float notchR = (high8 + hb1_x2);
 
