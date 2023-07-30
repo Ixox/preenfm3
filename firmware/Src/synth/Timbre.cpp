@@ -1091,8 +1091,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
-            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
+            param1S = 0.1f * this->params_.effect2.param1 + .9f * param1S;
+            param2S = 0.1f * (this->params_.effect2.param2 + matrixFilterParam2) + .9f * param2S;
 
             float currentShift = shift;
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
@@ -1320,7 +1320,7 @@ void Timbre::fxAfterBlock() {
             float shiftPlus  = panTable[param255];
             
             // shift val
-            param1S = 0.05f * param1 + .95f * param1S;
+            param1S = 0.1f * param1 + 0.9f * param1S;
             float quadrant = fabsf(param1S - 0.5f);// 2 quadrant for up & down shift
             float quadrantSq = sqrt3(quadrant);
 
