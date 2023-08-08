@@ -2104,6 +2104,14 @@ void Timbre::gateFx() {
 }
 
 void Timbre::afterNewParamsLoad() {
+
+    env1_.applyCurves();
+    env2_.applyCurves();
+    env3_.applyCurves();
+    env4_.applyCurves();
+    env5_.applyCurves();
+    env6_.applyCurves();
+
     for (int k = 0; k < numberOfVoices_; k++) {
         voices_[voiceNumber_[k]]->afterNewParamsLoad();
     }
