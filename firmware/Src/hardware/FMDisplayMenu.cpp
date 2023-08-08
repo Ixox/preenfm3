@@ -212,6 +212,7 @@ void FMDisplayMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
                 if (changePresetSelect(&fullState->preenFMMixerNumber, ticks, (int) fullState->currentMenuItem->maxValue - 1)) {
                     fullState->preenFMMixerPresetNumber = 0;
                     fullState->preenFMMixer = synthState_->getStorage()->getMixerBank()->getFile(fullState->preenFMMixerNumber);
+                    synthState_->propagateAfterNewMixerLoad();
                 }
             } else if (encoder == 3) {
                 changePresetSelect(&fullState->preenFMMixerPresetNumber, ticks, NUMBER_OF_MIXERS_PER_BANK - 1);
@@ -614,6 +615,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
                 break;
             case MENU_DEFAULT_MIXER_LOAD:
                 synthState_->getStorage()->getMixerBank()->loadDefaultMixer();
+                synthState_->propagateAfterNewMixerLoad();
                 break;
             case MENU_DEFAULT_SEQUENCER_SAVE:
                 synthState_->getStorage()->getSequenceBank()->saveDefaultSequence();
@@ -651,6 +653,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
         case MENU_MIXER_LOAD_SELECT:
         case MENU_MIXER_SAVE_SELECT:
             fullState->preenFMMixer = synthState_->getStorage()->getMixerBank()->getFile(fullState->preenFMMixerNumber);
+            synthState_->propagateAfterNewMixerLoad();
             break;
         case MENU_SD_RENAME_PRESET_SELECT_FILE:
         case MENU_PRESET_SAVE_SELECT:
