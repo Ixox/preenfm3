@@ -1125,7 +1125,7 @@ void Timbre::fxAfterBlock() {
             // hi pass params
             float hpZeroZone  = 1 - clamp(sqrt3(quadrant) * 4.5f, 0, 1);
 
-            float filterB2    = 0.1f + (0.32f - (param1S * 0.2f) + hpZeroZone * 0.3f) * clamp(param2S * param2S * 2, 0, 1);
+            float filterB2    = 0.1f + (0.32f - (param1S * 0.2f) + hpZeroZone * 0.3f) * clamp(param2S * 1.2f, 0, 1);
             float filterB     = (filterB2 * filterB2 * 0.5f);
 
             float _in2_b1 = (1 - filterB);
