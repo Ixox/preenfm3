@@ -1124,16 +1124,16 @@ struct FilterRowDisplay fx2RowDisplay[FILTER2_LAST] = {
         NULL,
         "Gain" },
     {
-        "Dpth",
+        "Rate",
         "Feed",
         "Mix " },
     {
+        "Rate",
         "Widt",
-        "Feed",
         "Mix " },
     {
-        "Widt",
-        "Feed",
+        "Rate",
+        "Vibr",
         "Mix " },
     {
         "Detu",
