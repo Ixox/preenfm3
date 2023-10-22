@@ -3990,11 +3990,13 @@ void Voice::fxAfterBlock() {
             //        localStep = fxParam2 = 1 / fxParam1;
 
             float param2Sum = matrixFilterParam2 + currentTimbre->params_.effect1.param2;
-            if(param2Sum != fxParamB1) {
+            float effectTypeF = (float) effectType;
+            if(param2Sum != fxParamB1 || fxParamB2 != effectTypeF) {
                 fxParam1 = 1 << (int) (1.0f + 15.0f * clamp(param2Sum, 0, 1) );
                 fxParam2 = 1 / fxParam1;
             }
             fxParamB1 = param2Sum;
+            fxParamB2 = effectTypeF;
 
             register float localPower = fxParam1;
             register float localStep = fxParam2;

@@ -186,13 +186,9 @@ private:
     float delayInterpolation2(float readPos, float buffer[], int bufferLenM1, int offset);
     float iirFilter(float x, float a0, float *yn1, float *yn2, float *xn1, float *xn2) ;
 
+    int prevFx2Type         = 0;
+
     #define delayBufferSize 2048
-    const float delayBufferSizeF       = delayBufferSize;
-    const float delayBufferSize90      = delayBufferSize * 0.25f;
-    const float delayBufferSize180     = delayBufferSize * 0.5f;
-    const int delayBufferSizeM1   = delayBufferSize - 1;
-    const int delayBufferSizeM4   = delayBufferSize - 4;
-    const float delayBufferSizeInv = 1.0f / delayBufferSize;
 
     static float delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize];
     float *delayBuffer_;
@@ -200,18 +196,15 @@ private:
     float param1S = 0;
     float matrixFilterFrequencyS = 0;
     float param2S = 0;
-    float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0, delaySize4 = 0;
-    float delaySizeInc1 = 0, delaySizeInc2 = 0, delaySizeInc3 = 0;
-    float delayOut1 = 0, delayOut2 = 0, delayOut3 = 0, delayOut4 = 0;
+    float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0;
     float feedback            = 0;
-    float shift = 0, shift2 = 0;
+    float shift = 0,   shift2 = 0;
     int delayWritePos         = 0;
     float delayWritePosF      = 0;
     float delayReadPos        = 0;
     float delayReadPos2       = 0;
     float delayReadFrac       = 0;
     float delayReadFrac2      = 0;
-    float readPos             = 0;
      
     float low1 = 0, band1 = 0;
     float low2 = 0, band2 = 0;
@@ -220,20 +213,12 @@ private:
     float low5 = 0, band5 = 0;
     float low6 = 0, band6 = 0;
 
-    const int delayBufStereoSize = delayBufferSize * 0.5f;
-    const float delayBufStereoSizeF = delayBufStereoSize;
-    const int delayBufStereoSizeM1 = delayBufStereoSize - 1;
-    const float delayBufStereoDiv4 = delayBufStereoSize * 0.25f;
-    const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
-
-    float delaySumOut = 0;
+    float feedbackInput = 0;
 
     // hp filter
-    float hp_in_x0 = 0;
     float hp_in_y0 = 0;
     float hp_in_y1 = 0;
     float hp_in_x1 = 0;
-    float hp_in2_x0 = 0;
     float hp_in2_y0 = 0;
     float hp_in2_y1 = 0;
     float hp_in2_x1 = 0;
@@ -243,7 +228,6 @@ private:
     float _lx1 = 0;
     float _ly2 = 0;
     float _lx2 = 0;
-    float apcoef1, apcoef2, apcoef3, apcoef4;
 
     // frequency shifter / lowpass filter (hb1 - hb3) / allpass hb4 / hipass hb5
     float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;
@@ -256,7 +240,6 @@ private:
     float hb8_x1 = 0, hb8_x2 = 0, hb8_y1 = 0, hb8_y2 = 0;
     float phase1 = 0;
     float samplen1 = 0;
-    float shifterOutMix = 0;
 
     // diffuser
     int inputWritePos1     = 0;
@@ -270,6 +253,26 @@ private:
     const int inputBufferLen4 = 245;
     const int inputBufferLen5 = 269;
 
+    // granulator
+    enum GRAIN_PARAMS {
+        GRAIN_RAMP = 0,
+        GRAIN_POS,
+        GRAIN_SIZE,
+        GRAIN_CURRENT_SHIFT,
+        GRAIN_NEXT_SHIFT,
+        GRAIN_INC,
+        GRAIN_VOL,
+        GRAIN_PAN
+    };
+
+    uint8_t grainNext = 0, grainPrev = 0;
+    float grainTable[3][8] = {
+        {1, 1, 1, 0, 0, 0, 1, 0.5f},
+        {1, 1, 1, 0, 0, 0, 1, 0.5f},
+        {1, 1, 1, 0, 0, 0, 1, 0.5f}
+    };
+    float lockA, lockB, loopSize = 20;
+    
     /** --------------end of FX conf--------------  */
 
     int8_t timbreNumber_;
