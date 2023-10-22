@@ -744,6 +744,17 @@ void Timbre::fxAfterBlock() {
     float matrixFilterPan       = clamp( voices_[lastPlayedNote_]->matrix.getDestination(ALL_PAN), -1, 1);
     float gainTmp               = clamp(this->params_.effect2.param3 + matrixFilterAmp, 0, 16);
 
+    if(prevFx2Type != fx2Type) {
+        //anti click on fx change
+        mixerGain_ = 0;
+        feedbackInput = 0;
+        feedback = 0;
+        for (int s = 0; s < delayBufferSize; s++) {
+            delayBuffer_[s] = 0;
+        }
+    }
+    prevFx2Type = fx2Type;
+
     switch (fx2Type) {
         case FILTER2_FLANGE: {
             mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
