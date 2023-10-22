@@ -293,6 +293,8 @@ void SynthState::encoderTurnedWhileButtonPressed(int encoder, int ticks, int but
 
     if (fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
         displayEditor->encoderTurnedWhileButtonPressed(encoder, ticks, button);
+    } else if (fullState.synthMode == SYNTH_MODE_MIXER) {
+        displayMixer->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     } else if (fullState.synthMode == SYNTH_MODE_SEQUENCER) {
         displaySequencer->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     }

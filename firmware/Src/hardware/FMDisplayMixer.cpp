@@ -932,6 +932,33 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
     }
 }
 
+
+/**
+ * Mixer volume : ENCODER + MENU => modify volumes of all instruments on same DAC
+ */
+void FMDisplayMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+
+    switch (button) {
+    case BUTTON_PFM3_MENU: {
+        const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
+        if (currentButton->state[0]->mixerValueType == MIXER_VALUE_VOLUME) {
+            if (synthState_->fullState.buttonState[BUTTONID_MIXER_MIX] == 0) {
+                // We're modifying volume
+                // We verify output/3 because each DAC can have 3 values (DAC 1 : 1, 1-2, 2)
+                int output = synthState_->mixerState.instrumentState_[encoder6].out / 3;
+                for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
+                    if ((synthState_->mixerState.instrumentState_[i].out / 3) == output) {
+                        this->encoderTurned(i, ticks);
+                    }
+                }
+
+            }
+        }
+    }
+    }
+}
+
+
 void FMDisplayMixer::buttonPressed(int button) {
     struct FullState *fullState = &synthState_->fullState;
 
