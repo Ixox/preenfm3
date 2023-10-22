@@ -19,7 +19,6 @@
 #ifndef SYNTHPARAMLISTENER_H_
 #define SYNTHPARAMLISTENER_H_
 
-#include "stdint.h"
 #include "FMDisplay.h"
 
 class SynthParamListener {
@@ -27,7 +26,7 @@ class SynthParamListener {
 public:
     virtual void newParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
     virtual void newParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
-    virtual void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
+    virtual void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) = 0;
     virtual void newTimbre(int timbre) = 0;
     virtual void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) = 0;
     virtual void newMixerEdit(int oldButton, int newButton) = 0;
