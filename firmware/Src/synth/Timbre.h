@@ -186,6 +186,8 @@ private:
     float delayInterpolation2(float readPos, float buffer[], int bufferLenM1, int offset);
     float iirFilter(float x, float a0, float *yn1, float *yn2, float *xn1, float *xn2) ;
 
+    int prevFx2Type         = 0;
+
     #define delayBufferSize 2048
 
     static float delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize];
