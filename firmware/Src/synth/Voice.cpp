@@ -741,7 +741,6 @@ void Voice::nextBlock() {
             this->env3ValueMem = envNextValue;
 
             oscState3_.frequency = oscState3_.mainFrequencyPlusMatrix;
-            //float* osc3Values = currentTimbre->osc3.getNextBlock(&oscState3_);
             float *osc3Values = currentTimbre->osc3_.getNextBlockWithFeedbackAndEnveloppe(&oscState3_, feedbackModulation, env3Value, env3Inc,
                 oscState3_.frequency, fdbLastValue);
 

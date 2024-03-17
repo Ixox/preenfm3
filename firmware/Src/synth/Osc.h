@@ -139,7 +139,6 @@ public:
         float fIndex = oscState->index;
         int iIndex;
         float* oscValuesToFill = oscValues[4];
-        float localEnv = env;
 
         lastValue[2] = .95f * lastValue[2] + feedback * .05f;
         float phaseModulationAmplitude = lastValue[2] * ((float) max) * .5f;
@@ -147,10 +146,9 @@ public:
         float localLastValue0 = lastValue[0];
         float localLastValue1 = lastValue[1];
 
-        // -- optimisation
-        float localEnvM = localEnv * freqMultiplier;
+        // Optimisation to avoid multiple freqMultiplier in the loop
+        float localEnvM = env * freqMultiplier;
         float envIncM   = envInc   * freqMultiplier;
-        // --
         for (int k = 0; k < 32; k++) {
             fIndex += freq;
             iIndex = fIndex;
@@ -168,16 +166,13 @@ public:
 
             oscValuesToFill[k] = localLastValue0 * localEnvM ;
             localEnvM += envIncM;
-
-            //oscValuesToFill[k] = localLastValue0 * freqMultiplier * localEnv ;
-            //localEnv += envInc;
-
         }
         lastValue[0] = localLastValue0;
         lastValue[1] = localLastValue1;
 
-        env = localEnv + envInc * 32;
-        //env = localEnv;
+        // update env
+        env += envInc * 32;
+
         oscState->index = fIndex;
         return oscValuesToFill;
     }
