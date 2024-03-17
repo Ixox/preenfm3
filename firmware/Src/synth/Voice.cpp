@@ -3690,7 +3690,9 @@ void Voice::nextBlock() {
                 float window = 1.f - phase;
 
                 // sync slave osc
-                oscState1_.index = isSync ? 0 : oscState1_.index;
+                if (unlikely(isSync)) {
+                    oscState1_.index = currentTimbre->osc1_.geIndexFromtPhase(phase);
+                }
 
                 oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix;
                 float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
@@ -3786,9 +3788,9 @@ void Voice::nextBlock() {
                 float window = 1.f - phase;
 
                 // sync slave osc
-                if(isSync) {
-                    oscState1_.index = 0;
-                    oscState2_.index = 0;
+                if (unlikely(isSync)) {
+                    oscState1_.index = currentTimbre->osc1_.geIndexFromtPhase(phase);
+                    oscState2_.index = currentTimbre->osc2_.geIndexFromtPhase(phase);
                 }
 
                 oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix + freq4 * voiceIm3;
@@ -3818,11 +3820,11 @@ void Voice::nextBlock() {
             /* Windowed sync AM, 1 2 3 synced by 4
 
              .---.
-             | 4 |
+             | 4*|
              '---'
              /IM1 |IM2 \IM3
              .---.  .---.  .---.
-             | 1 |  | 2 |  | 3 |
+             |*1 |  |*2 |  |*3 |
              '---'  '---'  '---'
              |Mix1  |Mix2  | Mix3
 
@@ -3884,10 +3886,10 @@ void Voice::nextBlock() {
                 float window = 1.f - phase;
 
                 // sync slave osc
-                if(isSync) {
-                    oscState1_.index = 0;
-                    oscState2_.index = 0;
-                    oscState3_.index = 0;
+                if (unlikely(isSync)) {
+                    oscState1_.index = currentTimbre->osc1_.geIndexFromtPhase(phase);
+                    oscState2_.index = currentTimbre->osc2_.geIndexFromtPhase(phase);
+                    oscState3_.index = currentTimbre->osc3_.geIndexFromtPhase(phase);
                 }
 
                 oscState3_.frequency = freq4 * voiceIm3 + osc3FrequencyPlusMatrix;
@@ -3931,7 +3933,7 @@ void Voice::nextBlock() {
              '---'  '---'     '---'
              \IM1  |IM2    /IM3
              .---.
-             | 1 |
+             |*1 |
              '---'
              */
         {
@@ -3996,7 +3998,9 @@ void Voice::nextBlock() {
                 float window = 1.f - phase;
 
                 // sync slave osc
-                oscState1_.index = isSync ? 0 : oscState1_.index;
+                if (unlikely(isSync)) {
+                    oscState1_.index = currentTimbre->osc1_.geIndexFromtPhase(phase);
+                }
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + osc1FrequencyPlusMatrix;
                 float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;

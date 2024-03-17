@@ -79,6 +79,12 @@ public:
         return oscState->index * waveTable->phaseMul;
     }
 
+    inline float geIndexFromtPhase(float phase)  {
+        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
+        return phase * waveTable->max;
+    }
+
+
    	inline float* getNextBlock(struct OscState *oscState)  {
         int shape = (int) oscillator->shape;
    		int max = waveTables[shape].max;
@@ -224,6 +230,7 @@ public:
     	oscState->index = fIndex;
     	return oscValuesToFill;
     };
+
 
 private:
     DestinationEnum destFreq;
