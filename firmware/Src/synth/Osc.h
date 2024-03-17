@@ -74,6 +74,15 @@ public:
         return waveTable->table[indexInteger];
     }
 
+    inline float getPhase(struct OscState *oscState)  {
+        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
+        return oscState->index * waveTable->phaseMul;
+    }
+
+    inline float geIndexFromtPhase(float phase)  {
+        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
+        return phase * waveTable->max;
+    }
 
 
    	inline float* getNextBlock(struct OscState *oscState)  {
@@ -130,13 +139,16 @@ public:
         float fIndex = oscState->index;
         int iIndex;
         float* oscValuesToFill = oscValues[4];
-        float localEnv = env;
 
         lastValue[2] = .95f * lastValue[2] + feedback * .05f;
         float phaseModulationAmplitude = lastValue[2] * ((float) max) * .5f;
 
         float localLastValue0 = lastValue[0];
         float localLastValue1 = lastValue[1];
+
+        // Optimisation to avoid multiple freqMultiplier in the loop
+        float localEnvM = env * freqMultiplier;
+        float envIncM   = envInc   * freqMultiplier;
         for (int k = 0; k < 32; k++) {
             fIndex += freq;
             iIndex = fIndex;
@@ -152,14 +164,15 @@ public:
             localLastValue0 = newValue - localLastValue1 + .99525f * localLastValue0;
             localLastValue1 = newValue;
 
-            oscValuesToFill[k] = localLastValue0 * freqMultiplier * localEnv ;
-            localEnv += envInc;
-
+            oscValuesToFill[k] = localLastValue0 * localEnvM ;
+            localEnvM += envIncM;
         }
         lastValue[0] = localLastValue0;
         lastValue[1] = localLastValue1;
 
-        env = localEnv;
+        // update env
+        env += envInc * 32;
+
         oscState->index = fIndex;
         return oscValuesToFill;
     }
@@ -212,6 +225,7 @@ public:
     	oscState->index = fIndex;
     	return oscValuesToFill;
     };
+
 
 private:
     DestinationEnum destFreq;

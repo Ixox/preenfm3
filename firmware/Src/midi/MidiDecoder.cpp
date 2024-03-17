@@ -622,6 +622,19 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
                     (float) midiEvent.value[1] * .01f);
             break;
+
+        case CC_FILTER2_TYPE:
+            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT2, ENCODER_EFFECT_TYPE, (float) midiEvent.value[1]);
+            break;
+        case CC_FILTER2_PARAM1:
+        case CC_FILTER2_PARAM2:
+            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT2, midiEvent.value[0] - CC_FILTER2_PARAM1 + 1,
+                    (float) midiEvent.value[1] * INV127);
+            break;
+        case CC_FILTER2_MIX:
+            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT2, midiEvent.value[0] - CC_FILTER2_PARAM1 + 1,
+                    (float) midiEvent.value[1] * .01f);
+            break;
         case CC_ENV_ATK_OP1:
             // ATK_OP1 is not consecutive to the other ones
             this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME, ENCODER_ENV_A,
@@ -1108,6 +1121,19 @@ void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, Paramet
                 cc.value[1] = newValue + .1f;
             } else {
                 cc.value[0] = CC_FILTER_PARAM1 + encoder - 1;
+                if (encoder == ENCODER_EFFECT_PARAM3) {
+                    cc.value[1] = newValue * 100.0f + .1f;
+                } else {
+                    cc.value[1] = newValue * 128.0f + .1f;
+                }
+            }
+            break;
+        case ROW_EFFECT2:
+            if (encoder == ENCODER_EFFECT_TYPE) {
+                cc.value[0] = CC_FILTER2_TYPE;
+                cc.value[1] = newValue + .1f;
+            } else {
+                cc.value[0] = CC_FILTER2_PARAM1 + encoder - 1;
                 if (encoder == ENCODER_EFFECT_PARAM3) {
                     cc.value[1] = newValue * 100.0f + .1f;
                 } else {

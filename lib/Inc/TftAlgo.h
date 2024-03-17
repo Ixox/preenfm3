@@ -29,7 +29,9 @@
 enum {
 	OPERATOR = 1,
 	IM,
+	IMSYNC,
 	MIX,
+	OPERATORSYNC,
 	END,
 };
 

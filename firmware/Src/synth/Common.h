@@ -99,6 +99,7 @@ struct WaveTable {
     float useFreq;
     float floatToAdd;
     float precomputedValue;
+    float phaseMul;
 };
 
 struct AlgoInformation {
@@ -764,6 +765,10 @@ enum Algorithm {
     ALG26,
     ALG27,
     ALG28,
+    ALG29,
+    ALG30,
+    ALG31,
+    ALG32,
     ALGO_END
 };
 

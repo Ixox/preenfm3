@@ -165,6 +165,7 @@ void Osc::init(SynthState* synthState, struct OscillatorParams *oscParams, Desti
     if (waveTables[0].precomputedValue <= 0) {
         for (int k=0; k<NUMBER_OF_WAVETABLES; k++) {
             waveTables[k].precomputedValue = (waveTables[k].max + 1) * waveTables[k].useFreq * PREENFM_FREQUENCY_INVERSED;
+            waveTables[k].phaseMul = 1.f / (waveTables[k].max + 1);
         }
     }
     if (oscValuesCpt == 1) {
