@@ -739,6 +739,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_UNISON_SPREAD:
             this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_SPREAD,
                     (float)midiEvent.value[1] * INV127);
+            break;
         case CC_SEQ_START_ALL:
             this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_ALL, midiEvent.value[1]);
             break;

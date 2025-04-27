@@ -7125,7 +7125,7 @@ void Voice::fxAfterBlock() {
                 // Left voice
                 *sp = buf4L + ((-buf4L + *sp) * r);
 
-                *sp -= tanh3(0.005f + buf4L) * (fb + buf4R * 0.05f);
+                *sp -= tanh3(buf4L) * (fb + buf4R * 0.05f);
                 *sp *= attn;
                 buf1L = *sp + inAtn * buf1inL + invCut * buf1L; // Pole 1
                 buf1inL = *sp;
@@ -7141,7 +7141,7 @@ void Voice::fxAfterBlock() {
                 // Right voice
                 *sp = buf4R + ((-buf4R + *sp) * r);
 
-                *sp -= tanh3(0.005f + buf4R) * (fb - buf4L * 0.05f);
+                *sp -= tanh3(buf4R) * (fb - buf4L * 0.05f);
                 *sp *= attn;
                 buf1R = *sp + inAtn * buf1inR + invCut * buf1R; // Pole 1
                 buf1inR = *sp;
@@ -7216,7 +7216,7 @@ void Voice::fxAfterBlock() {
             for (int k = BLOCK_SIZE; k--;) {
 
                 // Left voice
-                *sp = *sp - sat25(0.025f + buf4L * (res + buf4R * 0.05f));
+                *sp = *sp - sat25(buf4L * (res + buf4R * 0.05f));
                 buf1L = ((*sp - buf1L) * cut) + buf1L;
                 buf2L = ((buf1L - buf2L) * cut) + buf2L;
                 _ly1L = coef1 * (_ly1L + buf2L) - _lx1L; // allpass
@@ -7228,7 +7228,7 @@ void Voice::fxAfterBlock() {
                 *sp++ = clamp(buf4L * finalGain, -ratioTimbres, ratioTimbres);
 
                 // Right voice
-                *sp = *sp - sat25(0.025f + buf4R * (res - buf4L * 0.05f));
+                *sp = *sp - sat25(buf4R * (res - buf4L * 0.05f));
                 buf1R = ((*sp - buf1R) * cut) + buf1R;
                 buf2R = ((buf1R - buf2R) * cut) + buf2R;
                 _ly1R = coef1 * (_ly1R + buf2R) - _lx1R; // allpass

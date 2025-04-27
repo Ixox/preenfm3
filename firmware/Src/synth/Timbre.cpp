@@ -211,6 +211,10 @@ float hann(float x) {
     float s = sqrt3(x * (1 - x));
     return s + s;
 }
+inline 
+float max(float x1, float x2) {
+    return (x1>x2)?x1:x2;
+}
 // all pass params
 const float f1 = 0.0156f;
 const float apcoef1 = (1.0f - f1) / (1.0f + f1);
@@ -2453,6 +2457,221 @@ void Timbre::fxAfterBlock() {
         }
 
         break;
+        case FILTER2_STEREO_BP: {
+
+            mixerGain_ = 0.02f * gainTmp + .98f * mixerGain_;
+            float mixerGain_01 = clamp(mixerGain_, 0, 1);
+            int mixerGain255 = mixerGain_01 * 255;
+            float dry = panTable[255 - mixerGain255];
+            float wet = panTable[mixerGain255];
+            float extraAmp = clamp(mixerGain_ - 1, 0, 1);
+            wet += extraAmp;
+
+            param1S = 0.02f * (this->params_.effect2.param1) + .98f * param1S;
+
+            const float f = param1S * param1S * param1S * 0.9f;
+            const float matrixFreqSqrt = copysign(sqrt3(fabsf(matrixFilterFrequency)) , matrixFilterFrequency);
+            const float matrixFreqAtnn = matrixFilterFrequency * 0.125f;
+
+            float bpf1 = clamp(0.015f + fold((f + matrixFreqAtnn) * 0.25f) * 3.8f, 0.01f, 1.23f);
+            float bpf2 = clamp(0.015f + fold((f - matrixFreqAtnn) * 0.25f) * 3.8f, 0.01f, 1.23f);
+
+            float *sp  = sampleBlock_;
+
+            float filterParam2 = clamp(matrixFilterParam2 + this->params_.effect2.param2, 0, 1) * (1 - param1S * param1S * 0.06f);
+
+            const float fb = sqrt3(0.5f - filterParam2 * 0.495f);
+            const float scale = sqrt3(fb);
+
+            const float inputGain = 2.5f;
+            const float finalGain = (1 - filterParam2 * filterParam2 * 0.5f);
+
+            wet *= finalGain;
+            
+            float wetL = wet * (1 + matrixFilterPan);
+            float wetR = wet * (1 - matrixFilterPan);
+
+            float high1 = 0;
+            float high2 = 0;
+            float high5 = 0;
+            float high6 = 0;
+
+            float fAttn = f * 0.33f;
+
+            const float f1 = clamp(0.10f + fAttn, 0.01f, 0.99f);
+            float coef1 = (1.0f - f1) / (1.0f + f1);
+            const float f2 = clamp(0.25f + fAttn, 0.01f, 0.99f);
+            float coef2 = (1.0f - f2) / (1.0f + f2);
+            const float f3 = clamp(0.23f + fAttn, 0.01f, 0.99f);
+            float coef3 = (1.0f - f3) / (1.0f + f3);
+
+            const float sampleRateDivide = 2;
+            float inputIncCount = 0;
+
+            float drift = _ly1;
+            float nexDrift = noise[7] * 0.005f;
+            float deltaD = (nexDrift - drift) * 0.000625f;
+            _ly1 = nexDrift;
+
+            // input hp coefs calc :
+            const float cutoff = 0.05f;
+            const float _in_b1 = (1 - cutoff);
+            const float _in_a0 = (1 + _in_b1 * _in_b1 * _in_b1) * 0.5f;
+            const float _in_a1 = -_in_a0;
+
+            // limiter
+            const float threshold = 0.7f;
+            const float kneeWidth = 0.6f;
+            const float kneeWidthInv = 1 / (2 * kneeWidth);
+            const float threshKneeP = threshold + kneeWidth * 0.5f;
+            const float threshKneeM = threshold - kneeWidth * 0.5f;
+
+            const int delaySize = 1024;
+            const int delaySizeM1 = delaySize - 1;
+
+            const float attackCoeff = 0.9f;
+            const float releaseCoeff = 0.9995f;
+            const float holdTime = 0.02f;
+            const int holdSampleCount = static_cast<int>(holdTime * PREENFM_FREQUENCY);
+            int holdSamples = 0;
+
+            hb4_x1 = clamp(hb4_x1, 0, 1);
+            hb4_x2 = clamp(hb4_x2, 0, 1);
+
+            float target_gain = 1.0f;
+
+            for (int k = BLOCK_SIZE; k--;)
+            {
+                float fbM = fb + drift;
+                drift += deltaD;
+
+                inputIncCount++;
+
+                if (inputIncCount >= sampleRateDivide)
+                {
+                    inputIncCount = 0;
+
+                    // hp input L
+                    hb5_x1 = (*sp) * inputGain;
+                    hb5_y1 = _in_a0 * hb5_x1 + _in_a1 * hb5_x2 + _in_b1 * hb5_y2;
+                    hb5_y2 = hb5_y1;
+                    hb5_x2 = hb5_x1;
+
+                    hb6_x1 = hb5_y1;
+                    hb6_y1 = _in_a0 * hb6_x1 + _in_a1 * hb6_x2 + _in_b1 * hb6_y2;
+                    hb6_y2 = hb6_y1;
+                    hb6_x2 = hb6_x1;
+
+                    hb6_y1 = _in_a0 * hb6_x1 + _in_a1 * hb6_x2 + _in_b1 * hb6_y2;
+                    hb6_y2 = hb6_y1;
+                    hb6_x2 = hb6_x1;
+
+                    // hp input R
+                    hb7_x1 = *(sp+1) * inputGain;
+                    hb7_y1 = _in_a0 * hb7_x1 + _in_a1 * hb7_x2 + _in_b1 * hb7_y2;
+                    hb7_y2 = hb7_y1;
+                    hb7_x2 = hb7_x1;
+
+                    hb8_x1 = hb7_y1;
+                    hb8_y1 = _in_a0 * hb8_x1 + _in_a1 * hb8_x2 + _in_b1 * hb8_y2;
+                    hb8_y2 = hb8_y1;
+                    hb8_x2 = hb8_x1;
+
+                    hb8_y1 = _in_a0 * hb8_x1 + _in_a1 * hb8_x2 + _in_b1 * hb8_y2;
+                    hb8_y2 = hb8_y1;
+                    hb8_x2 = hb8_x1;
+
+                    // limiter delay
+
+                    delayWritePos = (delayWritePos + 1) & delaySizeM1;
+                    
+                    delayBuffer_[delayWritePos] = hb3_y1;
+                    delayBuffer_[delayWritePos + delaySize] = hb3_y2;
+                }
+
+                // Left voice
+
+                hb1_y1 = coef1 * (hb1_y1 + hb6_y1) - hb1_x1; // allpass
+                hb1_x1 = hb6_y1;
+
+                low1 = low1 + bpf1 * band1;
+                high1 = scale * hb1_y1 - low1 - fbM * (band1);
+                band1 = bpf1 * high1 + band1;
+
+                hb2_y1 = coef2 * (hb2_y1 + band1) - hb2_x1; // allpass 2
+                hb2_x1 = band1;
+
+                low2 = low2 + bpf1 * band2;
+                high2 = scale * hb2_y1 - low2 - fbM * (band2);
+                band2 = bpf1 * high2 + band2;
+
+                hb3_y1 = coef3 * (hb3_y1 + band2) - hb3_x1; // allpass 3
+                hb3_x1 = band2;
+
+                // Right voice
+
+                hb1_y2 = coef1 * (hb1_y2 + hb8_y1) - hb1_x2; // allpass
+                hb1_x2 = hb8_y1;
+
+                low5 = low5 + bpf2 * band5;
+                high5 = scale * hb1_y2 - low5 - fbM * (band5);
+                band5 = bpf2 * high5 + band5;
+
+
+                hb2_y2 = coef2 * (hb2_y2 + band5) - hb2_x2; // allpass 2
+                hb2_x2 = band5;
+
+                low6 = low6 + bpf2 * band6;
+                high6 = scale * hb2_y2 - low6 - fbM * (band6);
+                band6 = bpf2 * high6 + band6;
+
+                hb3_y2 = coef3 * (hb3_y2 + band6) - hb3_x2; // allpass 3
+                hb3_x2 = band6;
+
+                // limiter ------------
+
+                float gain = hb4_x1;
+                float envelope = hb4_x2;
+
+                int readpos = (delayWritePos - delaySize) & delaySizeM1;
+
+                float fltOut1 = delayBuffer_[readpos];
+                float fltOut2 = delayBuffer_[delaySize + readpos];
+
+                float absLeft = fabsf(fltOut1);
+                float absRight = fabsf(fltOut2);
+                float absSample = (absLeft > absRight) ? absLeft : absRight;
+
+                envelope = max(absSample, envelope * releaseCoeff);
+
+                target_gain = 1.0f;
+
+                if (envelope > threshKneeP) {
+                    target_gain = threshKneeP / envelope;
+                    holdSamples = holdSampleCount;
+                } else if (envelope > threshKneeM) {
+                    // soft knee
+                    float x = envelope - threshKneeM;
+                    float y = x * x * kneeWidthInv;
+                    target_gain = (threshKneeM + y) / envelope;
+                }
+                
+                if (holdSamples-- < 1) {
+                    gain = gain * attackCoeff + target_gain * (1.0f - attackCoeff);
+                }
+
+                hb4_x1 = gain;
+                hb4_x2 = envelope;
+
+                //  ------------
+
+                *sp = *sp * dry + fltOut1 * wetL * gain;
+                sp++;
+
+                *sp = *sp * dry + fltOut2 * wetR * gain;
+                sp++;
+            }
+        }
         default:
             // NO EFFECT
             break;
