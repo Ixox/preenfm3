@@ -133,4 +133,4 @@ See [doc/compilation.md](doc/compilation.md) for detailed build information and 
 
 ## License
 
-The firmware is distributed under the GNU General Public License v3. See the source file headers for details.
+The firmware is distributed under the GNU General Public License v3. See [LICENSE](LICENSE) for the full text and [third_party/NOTICE](third_party/NOTICE) for third-party licensing. See the source file headers for details.
