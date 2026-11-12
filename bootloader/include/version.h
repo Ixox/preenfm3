@@ -1,0 +1,1 @@
+#define PFM3_BOOTLOADER_VERSION "1.10"

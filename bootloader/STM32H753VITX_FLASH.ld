@@ -188,23 +188,23 @@ SECTIONS
   } >DTCMRAM
 
 
-  .ram_d1 : 
+  .ram_d1 (NOLOAD) : 
   {
     *(.ram_d1)
   } >RAM_D1
   
-  .ram_d2 : 
+  .ram_d2 (NOLOAD) : 
   {
     *(.ram_d2)
   } >RAM_D2
   
-  .ram_d2b : 
+  .ram_d2b (NOLOAD) : 
   {
     *(.ram_d2b)
   } >RAM_D2B
   
   /* User_heap_stack section, used to check that there is enough "RAM_D1" Ram  type memory left */
-  ._user_heap_stack :
+  ._user_heap_stack (NOLOAD) :
   {
     . = ALIGN(8);
     PROVIDE ( end = . );
