@@ -20,6 +20,7 @@
 #include "Voice.h"
 #include "Timbre.h"
 #include "MsfaEngine.h"
+#include "MsfaDebug.h"
 
 
 float Voice::glidePhaseInc[13];
@@ -673,6 +674,9 @@ void Voice::msfaNoteOn(const uint8_t *program, uint8_t note, uint8_t velocity, u
     this->holdedByPedal = false;
 
     msfaVoiceStart(msfaState_, program, note, velocity, 1, ts);
+
+    msfaDebugLog("V note=%d state=%08x active=%d\n", note, (unsigned) msfaState_,
+        msfaVoiceIsActive(msfaState_));
 }
 
 void Voice::msfaNoteOff() {
@@ -682,10 +686,14 @@ void Voice::msfaNoteOff() {
     msfaVoiceKeyUp(msfaState_);
     this->released = true;
     this->holdedByPedal = false;
+    msfaDebugLog("O note=%d state=%08x\n", this->note, (unsigned) msfaState_);
 }
 
 void Voice::msfaNextBlock(MsfaTimbreState *ts) {
     if (!msfaVoiceIsActive(msfaState_)) {
+        if (this->playing) {
+            msfaDebugLog("Z note=%d state=%08x\n", this->note, (unsigned) msfaState_);
+        }
         emptyBuffer();
         return;
     }
@@ -696,6 +704,7 @@ void Voice::msfaNextBlock(MsfaTimbreState *ts) {
     if (!stillPlaying) {
         this->playing = false;
         this->released = false;
+        msfaDebugLog("E note=%d state=%08x\n", this->note, (unsigned) msfaState_);
     }
 }
 

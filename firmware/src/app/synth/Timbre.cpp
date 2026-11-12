@@ -22,6 +22,7 @@
 #include "Voice.h"
 #include "Hexter.h"
 #include "MsfaEngine.h"
+#include "MsfaDebug.h"
 
 #define INV127 .00787401574803149606f
 #define INV16 .0625
@@ -809,8 +810,11 @@ uint8_t Timbre::msfaVoicesNextBlock() {
 }
 
 void Timbre::msfaNoteOn(char note, char velocity) {
-    if (unlikely(numberOfVoices_ == 0
-            || mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note] == 0.0f)) {
+    float scaleFrequency = mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note];
+    msfaDebugLog("T note=%d vel=%d nv=%d sf=%d\n", note, velocity, (int) numberOfVoices_,
+        (int) (scaleFrequency * 1000.0f));
+
+    if (unlikely(numberOfVoices_ == 0 || scaleFrequency == 0.0f)) {
         return;
     }
 
@@ -859,6 +863,8 @@ void Timbre::msfaNoteOn(char note, char velocity) {
 
     voices_[voiceToUse]->msfaNoteOn(msfaProgram_[timbreNumber_], note, velocity, voiceIndex_++, msfaState_);
 
+    msfaDebugLog("A note=%d use=%d idx=%u\n", note, voiceToUse, (unsigned) (voiceIndex_ - 1));
+
     lastPlayedNote_ = voiceToUse;
     if (note <= lowerNote_ || lowerNoteReleased_) {
         lowerNote_ = note;
@@ -883,6 +889,7 @@ void Timbre::msfaNoteOff(char note) {
                 voices_[n]->setHoldedByPedal(true);
             } else {
                 voices_[n]->msfaNoteOff();
+                msfaDebugLog("N note=%d v=%d\n", note, n);
             }
         }
     }

@@ -8,6 +8,7 @@
 #include <new>
 
 #include "MsfaEngine.h"
+#include "MsfaDebug.h"
 #include "controllers.h"
 #include "dx7note.h"
 #include "fm_core.h"
@@ -35,6 +36,7 @@ struct MsfaVoiceState {
     bool released;
     uint8_t note;
     uint8_t velocity;
+    uint8_t debugBlocks;
 
     MsfaVoiceState();
 };
@@ -61,7 +63,8 @@ MsfaVoiceState::MsfaVoiceState()
       active(false),
       released(false),
       note(0),
-      velocity(0) {
+      velocity(0),
+      debugBlocks(0) {
     for (int i = 0; i < N; i++) {
         buffer[i] = 0;
     }
@@ -146,6 +149,12 @@ void msfaVoiceStart(MsfaVoiceState *state, const uint8_t *program, uint8_t note,
     state->released = false;
     state->note = note;
     state->velocity = velocity;
+    state->debugBlocks = 0;
+
+    msfaDebugLog("S note=%d vel=%d play=%d fin=%d b0=%d ops=%02x alg=%d\n",
+        note, velocity, state->noteObj.isPlaying(), state->noteObj.isFinished(),
+        (int) state->noteObj.debugBasePitch(0), state->noteObj.debugOpSwitch(),
+        state->noteObj.debugAlgorithm());
 }
 
 void msfaVoiceKeyUp(MsfaVoiceState *state) {
@@ -173,6 +182,7 @@ bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out) {
         state->bufferPos = 0;
     }
 
+    int32_t raw0 = state->buffer[state->bufferPos];
     for (int i = 0; i < BLOCK_SIZE; i++) {
         int32_t val = state->buffer[state->bufferPos + i] >> 4;
         int32_t clip = val < -(1 << 24) ? -32768 : (val >= (1 << 24) ? 32767 : (val >> 9));
@@ -182,7 +192,16 @@ bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out) {
     }
     state->bufferPos += BLOCK_SIZE;
 
-    if (!state->noteObj.isPlaying()) {
+    if (state->debugBlocks < 4) {
+        msfaDebugLog("R note=%d b=%d play=%d fin=%d act=%d raw=%d out=%d eL=%d eO=%d st=%d dn=%d\n",
+            state->note, state->bufferPos, state->noteObj.isPlaying(), state->noteObj.isFinished(),
+            state->active, (int) raw0, (int) (out[-64] * 1000000.0f),
+            state->noteObj.debugEnvLevel(0), state->noteObj.debugEnvOutLevel(0),
+            state->noteObj.debugEnvStage(0), state->noteObj.debugEnvDown(0));
+        state->debugBlocks++;
+    }
+
+    if (!state->noteObj.isPlaying() || (state->released && state->noteObj.isFinished())) {
         state->active = false;
         return false;
     }
@@ -205,12 +224,14 @@ void msfaVoiceReset(MsfaVoiceState *state) {
     state->bufferPos = N;
     state->note = 0;
     state->velocity = 0;
+    state->debugBlocks = 0;
     for (int i = 0; i < N; i++) {
         state->buffer[i] = 0;
     }
 }
 
 void msfaEngineInit() {
+    msfaDebugInit();
     msfaTuning = createStandardTuning();
 
     for (int i = 0; i < MAX_NUMBER_OF_VOICES; i++) {

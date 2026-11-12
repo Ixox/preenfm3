@@ -52,6 +52,14 @@ public:
     void keyup();
     
     bool isPlaying();
+    bool isFinished();
+    int32_t debugBasePitch(int op) const { return basepitch_[op]; }
+    int debugAlgorithm() const { return algorithm_; }
+    uint8_t debugOpSwitch() const { return opSwitch_; }
+    int debugEnvOutLevel(int op) const { return env_[op].getOutLevel(); }
+    int debugEnvLevel(int op) const { return env_[op].getLevel(); }
+    int debugEnvStage(int op) const { return env_[op].getStage(); }
+    bool debugEnvDown(int op) const { return env_[op].isDown(); }
     
     // PG:add the update
     void update(const uint8_t patch[156], int midinote, int velocity, int channel);
