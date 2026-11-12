@@ -235,6 +235,7 @@ const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
 
 Timbre::Timbre() {
 
+    engine_ = SYNTH_ENGINE_PFM3;
     recomputeNext_ = true;
     currentGate_ = 0;
     sbMax_ = &sampleBlock_[64];
@@ -310,11 +311,24 @@ void Timbre::initVoicePointer(int n, Voice *voice) {
     voices_[n] = voice;
 }
 
+void Timbre::setEngine(SynthEngineType engine) {
+    if (engine_ == engine) {
+        return;
+    }
+    stopPlayingNow();
+    engine_ = engine;
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        msfaAfterNewParamsLoad();
+    } else {
+        pfm3AfterNewParamsLoad();
+    }
+}
+
 void Timbre::noteOn(char note, char velocity) {
     if (params_.engineArp1.clock) {
         arpeggiatorNoteOn(note, velocity);
     } else {
-        preenNoteOn(note, velocity);
+        engineNoteOn(note, velocity);
     }
 }
 
@@ -322,7 +336,7 @@ void Timbre::noteOff(char note) {
     if (params_.engineArp1.clock) {
         arpeggiatorNoteOff(note);
     } else {
-        preenNoteOff(note);
+        engineNoteOff(note);
     }
 }
 
@@ -621,6 +635,9 @@ void Timbre::cleanNextBlock() {
 }
 
 void Timbre::prepareMatrixForNewBlock() {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        return;
+    }
     for (int k = 0; k < numberOfVoices_; k++) {
         voices_[voiceNumber_[k]]->prepareMatrixForNewBlock();
     }
@@ -628,6 +645,9 @@ void Timbre::prepareMatrixForNewBlock() {
 
 
 void Timbre::glide() {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        return;
+    }
     if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
         for (int vv = 0; vv < numberOfVoices_; vv++) {
             int v = voiceNumber_[vv];
@@ -643,6 +663,13 @@ void Timbre::glide() {
 }
 
 uint8_t Timbre::voicesNextBlock() {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        return msfaVoicesNextBlock();
+    }
+    return pfm3VoicesNextBlock();
+}
+
+uint8_t Timbre::pfm3VoicesNextBlock() {
     uint8_t numberOfPlayingVoices_ = 0;
     if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
         cleanNextBlock();
@@ -727,6 +754,42 @@ uint8_t Timbre::voicesNextBlock() {
     }
 
     return numberOfPlayingVoices_;
+}
+
+uint8_t Timbre::msfaVoicesNextBlock() {
+    cleanNextBlock();
+    return 0;
+}
+
+void Timbre::msfaNoteOn(char note, char velocity) {
+}
+
+void Timbre::msfaNoteOff(char note) {
+}
+
+void Timbre::pfm3AfterNewParamsLoad() {
+    env1_.applyCurves();
+    env2_.applyCurves();
+    env3_.applyCurves();
+    env4_.applyCurves();
+    env5_.applyCurves();
+    env6_.applyCurves();
+
+    for (int k = 0; k < numberOfVoices_; k++) {
+        voices_[voiceNumber_[k]]->afterNewParamsLoad();
+    }
+
+    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
+        env1_.reloadADSR(j);
+        env2_.reloadADSR(j);
+        env3_.reloadADSR(j);
+        env4_.reloadADSR(j);
+        env5_.reloadADSR(j);
+        env6_.reloadADSR(j);
+    }
+}
+
+void Timbre::msfaAfterNewParamsLoad() {
 }
 
 void Timbre::fxAfterBlock() {
@@ -2560,24 +2623,10 @@ void Timbre::gateFx() {
 
 void Timbre::afterNewParamsLoad() {
 
-    env1_.applyCurves();
-    env2_.applyCurves();
-    env3_.applyCurves();
-    env4_.applyCurves();
-    env5_.applyCurves();
-    env6_.applyCurves();
-
-    for (int k = 0; k < numberOfVoices_; k++) {
-        voices_[voiceNumber_[k]]->afterNewParamsLoad();
-    }
-
-    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
-        env1_.reloadADSR(j);
-        env2_.reloadADSR(j);
-        env3_.reloadADSR(j);
-        env4_.reloadADSR(j);
-        env5_.reloadADSR(j);
-        env6_.reloadADSR(j);
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        msfaAfterNewParamsLoad();
+    } else {
+        pfm3AfterNewParamsLoad();
     }
 
     resetArpeggiator();
@@ -2725,11 +2774,11 @@ void Timbre::SendNote(uint8_t note, uint8_t velocity) {
     // If there are some Note Off messages for the note about to be triggeered
     // remove them from the queue and process them now.
     if (event_scheduler_.Remove(note, 0)) {
-        preenNoteOff(note);
+        engineNoteOff(note);
     }
 
     // Send a note on and schedule a note off later.
-    preenNoteOn(note, velocity);
+    engineNoteOn(note, velocity);
     event_scheduler_.Schedule(note, 0, midi_clock_tick_per_step[(int) params_.engineArp2.duration] - 1, 0);
 }
 
@@ -2746,9 +2795,9 @@ void Timbre::SendScheduledNotes() {
         }
         if (entry.note != kZombieSlot) {
             if (entry.velocity == 0) {
-                preenNoteOff(entry.note);
+                engineNoteOff(entry.note);
             } else {
-                preenNoteOn(entry.note, entry.velocity);
+                engineNoteOn(entry.note, entry.velocity);
             }
         }
         current = entry.next;

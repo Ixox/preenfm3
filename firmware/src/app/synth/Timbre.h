@@ -78,12 +78,40 @@ public:
     void noteOn(char note, char velocity);
     void noteOff(char note);
 
+    void setEngine(SynthEngineType engine);
+    SynthEngineType getEngine() const {
+        return engine_;
+    }
+
     void noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity);
     void noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff);
 
     void preenNoteOn(char note, char velocity);
     inline void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
     void preenNoteOff(char note);
+
+    inline void engineNoteOn(char note, char velocity) {
+        if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+            msfaNoteOn(note, velocity);
+        } else {
+            preenNoteOn(note, velocity);
+        }
+    }
+
+    inline void engineNoteOff(char note) {
+        if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+            msfaNoteOff(note);
+        } else {
+            preenNoteOff(note);
+        }
+    }
+
+    uint8_t pfm3VoicesNextBlock();
+    uint8_t msfaVoicesNextBlock();
+    void msfaNoteOn(char note, char velocity);
+    void msfaNoteOff(char note);
+    void pfm3AfterNewParamsLoad();
+    void msfaAfterNewParamsLoad();
 
     void numberOfVoicesChanged(uint8_t newNumberOfVoices) {
         if (likely(newNumberOfVoices > 0)) {
@@ -276,6 +304,7 @@ private:
     /** --------------end of FX conf--------------  */
 
     int8_t timbreNumber_;
+    SynthEngineType engine_;
     struct OneSynthParams params_;
     struct MixerState *mixerState_;
     float sampleBlock_[BLOCK_SIZE * 2];

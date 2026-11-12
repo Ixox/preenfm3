@@ -30,6 +30,7 @@
 
 const char* outDisplay[] = { "1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6" };
 const char* compDisplay[]= { "Off", "Slow", "Medium", "Fast"};
+const char* engineDisplay[]= { "PFM3", "MSFA" };
 const char* enableNames[] = { "Off", "On" };
 const char* levelMeterWhere[] = { "Off", "Mix", "All" };
 const char* scalaMapNames[] = { "Keybrd", "Continu" };
@@ -104,14 +105,19 @@ const struct Pfm3MixerButton outButton = {
 };
 
 const struct Pfm3MixerButtonState voiceButtonState = {
-      "Number of voices", MIXER_VALUE_NUMBER_OF_VOICES,
+      "Max voices", MIXER_VALUE_NUMBER_OF_VOICES,
         {0, 16, 17, DISPLAY_TYPE_INT, nullNames}
+};
+
+const struct Pfm3MixerButtonState engineButtonState = {
+      "Engine", MIXER_VALUE_ENGINE,
+        {0, SYNTH_ENGINE_COUNT - 1, SYNTH_ENGINE_COUNT, DISPLAY_TYPE_STRINGS, engineDisplay}
 };
 
 const struct Pfm3MixerButton voiceButton = {
   "Voices",
-  2,
-  { &voiceButtonState, &compButtonState }
+  3,
+  { &engineButtonState, &voiceButtonState, &compButtonState }
 };
 
 
@@ -295,6 +301,9 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
             break;
         case MIXER_VALUE_NUMBER_OF_VOICES:
             valueP = (void*) &synthState_->mixerState.instrumentState_[encoder].numberOfVoices;
+            break;
+        case MIXER_VALUE_ENGINE:
+            valueP = (void*) &synthState_->mixerState.instrumentState_[encoder].engine;
             break;
         case MIXER_VALUE_MIDI_CHANNEL:
             valueP = (void*) &synthState_->mixerState.instrumentState_[encoder].midiChannel;
