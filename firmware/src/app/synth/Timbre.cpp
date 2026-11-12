@@ -340,6 +340,11 @@ void Timbre::loadMsfaPackedPatch(const uint8_t *packedPatch) {
     msfaAfterNewParamsLoad();
 }
 
+void Timbre::loadMsfaProgram(const uint8_t *program) {
+    memcpy(msfaProgram_[timbreNumber_], program, MSFA_PROGRAM_SIZE);
+    msfaAfterNewParamsLoad();
+}
+
 void Timbre::setEngine(SynthEngineType engine) {
     if (engine_ == engine) {
         return;

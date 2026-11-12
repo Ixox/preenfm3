@@ -18,6 +18,8 @@
 
 
 #include <MixerBank.h>
+#include "PatchBank.h"
+#include <string.h>
 #include <ScalaFile.h>
 #include "Sequencer.h"
 #include "MixerState.h"
@@ -46,6 +48,9 @@ void MixerBank::init(struct OneSynthParams*timbre1, struct OneSynthParams*timbre
     this->timbre[3] = timbre4;
     this->timbre[4] = timbre5;
     this->timbre[5] = timbre6;
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        msfaProgram[t] = nullptr;
+    }
 }
 
 void MixerBank::setMixerState(struct MixerState* mixerState) {
@@ -123,8 +128,20 @@ bool MixerBank::saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerS
     mixerStateToSave->getFullState(storageBuffer, &mixerStateSize);
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        FlashSynthParams *toSave = (FlashSynthParams *)(storageBuffer + ALIGNED_PATCH_SIZE * t + ALIGNED_MIXER_SIZE);
-        convertParamsToFlash(this->timbre[t], toSave, true);
+        uint8_t *slot = (uint8_t*) (storageBuffer + ALIGNED_PATCH_SIZE * t + ALIGNED_MIXER_SIZE);
+        if (mixerStateToSave->instrumentState_[t].engine == SYNTH_ENGINE_MSFA && msfaProgram[t] != nullptr) {
+            for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
+                slot[p] = 0;
+            }
+            memcpy(&slot[0], msfaProgram[t], MSFA_PROGRAM_SIZE);
+            for (int n = 0; n < 12; n++) {
+                slot[160 + n] = this->timbre[t]->presetName[n];
+            }
+            *(uint32_t*) (&slot[ALIGNED_PATCH_SIZE - 5]) = PRESET_MSFA;
+        } else {
+            FlashSynthParams *toSave = (FlashSynthParams *) slot;
+            convertParamsToFlash(this->timbre[t], toSave, true);
+        }
     }
     f_lseek(file, mixerNumber * FULL_MIXER_SIZE);
     f_write(file, (void*) storageBuffer, ALIGNED_MIXER_SIZE + ALIGNED_PATCH_SIZE * NUMBER_OF_TIMBRES, &byteWritten) ;
@@ -147,19 +164,37 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         f_lseek(file, mixerNumber * FULL_MIXER_SIZE + ALIGNED_MIXER_SIZE + t * ALIGNED_PATCH_SIZE);
-        result = f_read(file, storageBuffer, PFM3_PATCH_FLASH_SIZE, &byteRead);
-        if (result == FR_OK && byteRead == PFM3_PATCH_FLASH_SIZE) {
-            convertFlashToParams((struct FlashSynthParams *) storageBuffer, this->timbre[t], true);
+        result = f_read(file, storageBuffer, ALIGNED_PATCH_SIZE, &byteRead);
+        if (result == FR_OK && byteRead == ALIGNED_PATCH_SIZE) {
+            uint32_t version = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
 
-            // Init scala scale if enabled
-            if (mixerState->instrumentState_[t].scalaEnable == 1) {
-                if (scalaFile->loadScalaScale(mixerState, t) == 0) {
-                    // could not find the asked scala scale
-                    mixerState->instrumentState_[t].scalaEnable = 0;
-                    for (int c = 0; c < 12; c++) {
-                        mixerState->instrumentState_[t].scalaScaleFileName[c] = 0;
+            if (version == PRESET_MSFA) {
+                if (msfaProgram[t] != nullptr) {
+                    memcpy(msfaProgram[t], &storageBuffer[0], MSFA_PROGRAM_SIZE);
+                }
+                for (int n = 0; n < 12; n++) {
+                    this->timbre[t]->presetName[n] = storageBuffer[160 + n];
+                }
+                this->timbre[t]->presetName[12] = 0;
+                if (this->timbre[t]->presetName[0] == 0) {
+                    const char *fallback = "MSFA";
+                    for (int n = 0; n < 5; n++) {
+                        this->timbre[t]->presetName[n] = fallback[n];
                     }
-                    mixerState->instrumentState_[t].scaleScaleNumber = 0;
+                }
+            } else {
+                convertFlashToParams((struct FlashSynthParams *) storageBuffer, this->timbre[t], true);
+
+                // Init scala scale if enabled
+                if (mixerState->instrumentState_[t].scalaEnable == 1) {
+                    if (scalaFile->loadScalaScale(mixerState, t) == 0) {
+                        // could not find the asked scala scale
+                        mixerState->instrumentState_[t].scalaEnable = 0;
+                        for (int c = 0; c < 12; c++) {
+                            mixerState->instrumentState_[t].scalaScaleFileName[c] = 0;
+                        }
+                        mixerState->instrumentState_[t].scaleScaleNumber = 0;
+                    }
                 }
             }
         } else {

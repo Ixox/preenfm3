@@ -573,6 +573,7 @@ public:
         return isPlayingNote;
     }
     void loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params);
+    void savePreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params);
     void loadNewPreset(int timbre);
     void loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params);
     void loadMixer(PFM3File const *bank, int patchNumber);

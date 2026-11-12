@@ -19,10 +19,12 @@
 #define PATCHBANK_H_
 
 #include "PreenFMFileType.h"
+#include "Common.h"
 
 enum PRESET_VERSION {
     PRESET_VERSION1 = 0,
-    PRESET_VERSION2 = 292928062 // random 32 bits number for the first preenfm3
+    PRESET_VERSION2 = 292928062, // random 32 bits number for the first preenfm3
+    PRESET_MSFA = 981344537    // random 32 bits number for MSFA presets
 };
 
 // Let's stick to VERSION1 : VERSION2 seems dangerous :)
@@ -34,11 +36,13 @@ public:
     virtual ~PatchBank();
 
     void createPatchBank(const char *name);
-    void savePatch(const struct PFM3File *bank, int patchNumber, const struct OneSynthParams *params);
+    void savePatch(const struct PFM3File *bank, int patchNumber, const struct OneSynthParams *params,
+                   SynthEngineType engine = SYNTH_ENGINE_PFM3, const uint8_t *msfaProgram = nullptr);
     void setArpeggiatorPartOfThePreset(uint8_t *pointer) {
         arpeggiatorPartOfThePreset_ = pointer;
     }
-    void loadPatch(const struct PFM3File *bank, int patchNumber, struct OneSynthParams *params);
+    bool loadPatch(const struct PFM3File *bank, int patchNumber, struct OneSynthParams *params,
+                   SynthEngineType *engine = nullptr, uint8_t *msfaProgram = nullptr);
     const char* loadPatchName(const struct PFM3File *bank, int patchNumber);
 
     bool decodeBufferAndApplyPreset(uint8_t *buffer, struct OneSynthParams *params);

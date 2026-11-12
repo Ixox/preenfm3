@@ -500,7 +500,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
                     synthState_->params->presetName[k] = fullState->name[k];
                 }
                 synthState_->params->presetName[length] = '\0';
-                synthState_->getStorage()->getPatchBank()->savePatch(fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->params);
+                synthState_->savePreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->params);
                 break;
             case MENU_MIXER_SAVE_ENTER_NAME:
                 // Let save the mixer !
