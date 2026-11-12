@@ -172,3 +172,26 @@ target_include_directories(hexter INTERFACE
 target_sources(hexter INTERFACE
     ${TP}/hexter/Hexter.cpp
 )
+
+# ---------------------------------------------------------------------------
+# MSFA (Dexed DX7 engine)
+# ---------------------------------------------------------------------------
+
+add_library(msfa INTERFACE)
+target_include_directories(msfa INTERFACE
+    ${TP}/msfa
+)
+target_sources(msfa INTERFACE
+    ${TP}/msfa/dx7note.cc
+    ${TP}/msfa/env.cc
+    ${TP}/msfa/exp2.cc
+    ${TP}/msfa/fm_core.cc
+    ${TP}/msfa/fm_op_kernel.cc
+    ${TP}/msfa/freqlut.cc
+    ${TP}/msfa/lfo.cc
+    ${TP}/msfa/pitchenv.cc
+    ${TP}/msfa/porta.cpp
+    ${TP}/msfa/sin.cc
+    ${TP}/msfa/platform_stubs.cc
+    ${TP}/msfa/msfa_init.cc
+)

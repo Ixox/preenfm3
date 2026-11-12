@@ -172,6 +172,11 @@ SECTIONS
   {
     *(.ram_d2b)
   } >RAM_D2B
+
+  .ram_d2c :
+  {
+    *(.ram_d2c)
+  } >RAM_D2C
   
   .ram_d3 : 
   {

@@ -5,8 +5,8 @@ This file records licensing for third-party components under third_party/.
 It is informational; each vendored source file or directory keeps its own
 copyright and license notice.
 
-MSFA (Dexed) -- planned / to be vendored
-----------------------------------------
+MSFA (Dexed) -- vendored under third_party/msfa
+-----------------------------------------------
 - MSFA is the engine from Google's music-synthesizer-for-android project.
   The original files carry "Copyright 2012 Google Inc." and the Apache
   License 2.0.
@@ -15,8 +15,9 @@ MSFA (Dexed) -- planned / to be vendored
   headers. Dexed's README states that the msfa component stays Apache-2.0.
 - Dexed's own plugin/application code and its patch/Cartridge code are
   GPL-3.0.
-- When MSFA is vendored under third_party/msfa, keep the upstream license
-  headers and add the upstream Apache-2.0 text in that directory.
+- The vendored copy keeps the upstream license headers. The Apache-2.0 text
+  is in third_party/msfa/LICENSE, and the local changes/stubs are described in
+  third_party/msfa/README.md.
 - The preenFM3 firmware as a whole is distributed under GPL-3.0 (see
   ../LICENSE). Apache-2.0 code can be combined with GPL-3.0; the Apache-2.0
   files remain under Apache-2.0.

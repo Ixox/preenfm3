@@ -31,6 +31,7 @@
 #include "Encoders.h"
 #include "Hexter.h"
 #include "Sequencer.h"
+#include "msfa_init.h"
 
 extern UART_HandleTypeDef huart1;
 extern SAI_HandleTypeDef hsai_BlockA1;
@@ -99,6 +100,10 @@ void preenfm3Init() {
     ILI9341_Init();
 
     dependencyInjection();
+
+    // MSFA uses static lookup tables built for the audio sample rate. This
+    // must happen once, before the SAI DMA callbacks start.
+    msfaInit(PREENFM_FREQUENCY);
 
     fmDisplay3.setRefreshStatus(20);
 
