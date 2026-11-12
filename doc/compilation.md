@@ -162,15 +162,15 @@ The C++ compiler has the same list plus:
 ### DebugLQFP144
 
 - `USE_HAL_DRIVER`
-- `LQFP144`
 - `STM32H753xx`
 - `DEBUG`
 
 ### Release
 
 - `USE_HAL_DRIVER`
-- `LQFP144`
 - `STM32H753xx`
+
+The `LQFP144` define present in the legacy CubeIDE project is not needed: no source tests it, and the board variant is detected at runtime from PD0–PD3 in `preen_lib/src/board/preenfm3lib.c`.
 
 ## Linker
 
@@ -232,7 +232,6 @@ A CMake build is feasible, but it is a **medium-sized migration**, not a simple 
 | CPU | `-mcpu=cortex-m7 -mthumb` |
 | FPU | `-mfpu=fpv5-d16 -mfloat-abi=hard` |
 | MCU define | `STM32H753xx` |
-| Board define | `LQFP144` |
 | HAL define | `USE_HAL_DRIVER` |
 | Debug define | `DEBUG` for `DebugLQFP144` only |
 | Firmware linker script | `preenfm3_2MB.ld` |
@@ -343,7 +342,6 @@ add_executable(preenfm3.elf
 target_compile_definitions(preenfm3.elf PRIVATE
   USE_HAL_DRIVER
   STM32H753xx
-  LQFP144
 )
 target_include_directories(preenfm3.elf PRIVATE
   firmware/include
@@ -378,7 +376,7 @@ target_link_libraries(bootloader.elf PRIVATE preenfm3lib)
 5. Port `bootloader/.cproject` into `bootloader/CMakeLists.txt`; link the same `preenfm3lib`.
 6. Recreate the source exclusions explicitly; do not simply glob entire directories.
 7. Reproduce include paths per target instead of using one global include list.
-8. Reproduce `USE_HAL_DRIVER`, `STM32H753xx`, `LQFP144` and `DEBUG`.
+8. Reproduce `USE_HAL_DRIVER`, `STM32H753xx` and `DEBUG`.
 9. Use the correct linker script per target; resolve the current C/C++ linker mismatch.
 10. Copy exact compiler/linker flags from the generated CubeIDE makefiles instead of guessing.
 11. Add post-build `.bin`/`.hex` generation if required.

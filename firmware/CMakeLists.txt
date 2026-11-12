@@ -33,7 +33,6 @@ target_include_directories(preenfm3_firmware PRIVATE
 target_compile_definitions(preenfm3_firmware PRIVATE
     USE_HAL_DRIVER
     STM32H753xx
-    LQFP144
 )
 
 set(PRE_ENFM3_FW_OPTIMIZATION "" CACHE STRING

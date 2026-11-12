@@ -32,7 +32,6 @@ target_include_directories(preenfm3_bootloader PRIVATE
 target_compile_definitions(preenfm3_bootloader PRIVATE
     USE_HAL_DRIVER
     STM32H753xx
-    LQFP144
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

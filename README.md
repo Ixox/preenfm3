@@ -52,9 +52,9 @@ The main firmware build configurations are:
 
 Common build settings:
 
-- Toolchain: GNU Tools for STM32 (`arm-none-eabi-`)
+- Toolchain: GNU Arm Embedded (`arm-none-eabi-`), validated with `arm-none-eabi-gcc` 16.2.0
 - MCU: `STM32H753VITx`
-- Defines: `USE_HAL_DRIVER`, `STM32H753xx`, `LQFP144`
+- Defines: `USE_HAL_DRIVER`, `STM32H753xx`
 - Firmware linker script: `firmware/preenfm3_2MB.ld`
 - Bootloader linker script: `bootloader/STM32H753VITX_FLASH.ld`
 
@@ -63,8 +63,8 @@ Common build settings:
 Requirements:
 
 - CMake 3.20 or newer
-- `arm-none-eabi-gcc`
-- `arm-none-eabi-newlib`
+- `arm-none-eabi-gcc` — validated with version 16.2.0
+- `arm-none-eabi-newlib` — validated with version 4.6.0.20260123
 
 Configure and build:
 
