@@ -46,9 +46,9 @@ public:
 	Hexter();
 	virtual ~Hexter() {}
 	void loadHexterPatch(uint8_t* packedPatch, struct OneSynthParams *params);
+	static void patchUnpack(uint8_t *packed_patch, uint8_t *unpacked_patch);
 
 protected:
-	void patchUnpack(uint8_t *packed_patch, uint8_t *unpacked_patch);
 	int limit(int x, int min, int max);
 	void setIM(struct OneSynthParams *params, int im, uint8_t *patch, int op);
 	void setIMWithMax(struct OneSynthParams *params, int im, uint8_t *patch, int op, float max);

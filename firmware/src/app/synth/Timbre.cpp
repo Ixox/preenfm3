@@ -17,8 +17,10 @@
 
 
 #include <math.h>
+#include <string.h>
 #include "Timbre.h"
 #include "Voice.h"
+#include "Hexter.h"
 
 #define INV127 .00787401574803149606f
 #define INV16 .0625
@@ -28,6 +30,8 @@
 float midiNoteScale[2][NUMBER_OF_TIMBRES][128] __attribute__((section(".ram_d1")));
 float Timbre::unisonPhase[14] = { .37f, .11f, .495f, .53f, .03f, .19f, .89f, 0.23f, .71f, .19f, .31f, .43f, .59f, .97f };
 float Timbre::delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize] __attribute__ ((section(".ram_d2b")));
+uint8_t Timbre::msfaPackedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE] __attribute__ ((section(".ram_d1")));
+uint8_t Timbre::msfaProgram_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE] __attribute__ ((section(".ram_d1")));
 
 #define CALLED_PER_SECOND (PREENFM_FREQUENCY / 32.0f)
 
@@ -278,6 +282,15 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
 
     timbreNumber_ = timbreNumber;
 
+    for (int i = 0; i < MSFA_PACKED_PATCH_SIZE; i++) {
+        msfaPackedPatch_[timbreNumber_][i] = 0;
+    }
+    for (int i = 0; i < MSFA_PROGRAM_SIZE; i++) {
+        msfaProgram_[timbreNumber_][i] = 0;
+    }
+    // All operators enabled
+    msfaProgram_[timbreNumber_][155] = 0x3F;
+
     for (int s = 0; s < 2; s++) {
         for (int n = 0; n < 128; n++) {
             midiNoteScale[s][timbreNumber][n] = INV127 * (float) n;
@@ -309,6 +322,16 @@ void Timbre::setVoiceNumber(int v, int n) {
 
 void Timbre::initVoicePointer(int n, Voice *voice) {
     voices_[n] = voice;
+}
+
+void Timbre::loadMsfaPackedPatch(const uint8_t *packedPatch) {
+    uint8_t *packed = msfaPackedPatch_[timbreNumber_];
+    uint8_t *program = msfaProgram_[timbreNumber_];
+    memcpy(packed, packedPatch, MSFA_PACKED_PATCH_SIZE);
+    Hexter::patchUnpack(packed, program);
+    // Dexed expects a 156th byte holding the operator on/off bitmask.
+    program[155] = 0x3F;
+    msfaAfterNewParamsLoad();
 }
 
 void Timbre::setEngine(SynthEngineType engine) {
