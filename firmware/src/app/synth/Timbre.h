@@ -40,6 +40,8 @@ enum {
     CLOCK_EXTERNAL
 };
 
+struct MsfaTimbreState;
+
 class Timbre {
     friend class Synth;
     friend class Voice;
@@ -310,6 +312,7 @@ private:
 
     int8_t timbreNumber_;
     SynthEngineType engine_;
+    MsfaTimbreState *msfaState_;
     static uint8_t msfaPackedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE];
     static uint8_t msfaProgram_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE];
     struct OneSynthParams params_;

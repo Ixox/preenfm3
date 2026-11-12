@@ -21,6 +21,7 @@
 #include "Timbre.h"
 #include "Voice.h"
 #include "Hexter.h"
+#include "MsfaEngine.h"
 
 #define INV127 .00787401574803149606f
 #define INV16 .0625
@@ -291,6 +292,10 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
     // All operators enabled
     msfaProgram_[timbreNumber_][155] = 0x3F;
 
+    msfaState_ = msfaGetTimbreState(timbreNumber_);
+    msfaTimbreInit(msfaState_);
+    msfaTimbreLoadProgram(msfaState_, msfaProgram_[timbreNumber_]);
+
     for (int s = 0; s < 2; s++) {
         for (int n = 0; n < 128; n++) {
             midiNoteScale[s][timbreNumber][n] = INV127 * (float) n;
@@ -364,6 +369,11 @@ void Timbre::noteOff(char note) {
 }
 
 void Timbre::noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity)  {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        msfaNoteOn(note, velocity);
+        return;
+    }
+
 	int voiceToUse = voiceNumber_[channel -1];
 
     if (unlikely(voiceToUse == -1)) {
@@ -382,6 +392,11 @@ void Timbre::noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity)  {
 
 
 void Timbre::noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff) {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        msfaNoteOff(note);
+        return;
+    }
+
     int voiceToUse = voiceNumber_[channel -1];
 
     if (unlikely(voiceToUse == -1)) {
@@ -780,14 +795,97 @@ uint8_t Timbre::pfm3VoicesNextBlock() {
 }
 
 uint8_t Timbre::msfaVoicesNextBlock() {
-    cleanNextBlock();
-    return 0;
+    msfaTimbreNextBlock(msfaState_);
+
+    uint8_t playing = 0;
+    for (int k = 0; k < numberOfVoices_; k++) {
+        Voice *voice = voices_[voiceNumber_[k]];
+        voice->msfaNextBlock(msfaState_);
+        if (voice->isPlaying()) {
+            playing++;
+        }
+    }
+    return playing;
 }
 
 void Timbre::msfaNoteOn(char note, char velocity) {
+    if (unlikely(numberOfVoices_ == 0
+            || mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note] == 0.0f)) {
+        return;
+    }
+
+    note &= 0x7f;
+
+    msfaTimbreKeyDown(msfaState_);
+
+    int voiceToUse = -1;
+
+    // Retrigger the voice already playing this note.
+    for (int k = 0; k < numberOfVoices_; k++) {
+        int n = voiceNumber_[k];
+        if (voices_[n]->isPlaying() && voices_[n]->getNote() == note) {
+            voiceToUse = n;
+            break;
+        }
+    }
+
+    // Otherwise take a free voice.
+    if (voiceToUse == -1) {
+        for (int k = 0; k < numberOfVoices_; k++) {
+            int n = voiceNumber_[k];
+            if (!voices_[n]->isPlaying()) {
+                voiceToUse = n;
+                break;
+            }
+        }
+    }
+
+    // Otherwise steal the oldest voice.
+    if (voiceToUse == -1) {
+        uint32_t indexMin = UINT32_MAX;
+        for (int k = 0; k < numberOfVoices_; k++) {
+            int n = voiceNumber_[k];
+            uint32_t index = voices_[n]->getIndex();
+            if (index < indexMin) {
+                indexMin = index;
+                voiceToUse = n;
+            }
+        }
+    }
+
+    if (voiceToUse == -1) {
+        return;
+    }
+
+    voices_[voiceToUse]->msfaNoteOn(msfaProgram_[timbreNumber_], note, velocity, voiceIndex_++, msfaState_);
+
+    lastPlayedNote_ = voiceToUse;
+    if (note <= lowerNote_ || lowerNoteReleased_) {
+        lowerNote_ = note;
+        lowerNoteReleased_ = false;
+    }
 }
 
 void Timbre::msfaNoteOff(char note) {
+    if (note == lowerNote_) {
+        lowerNoteReleased_ = true;
+    }
+
+    for (int k = 0; k < numberOfVoices_; k++) {
+        int n = voiceNumber_[k];
+
+        if (!voices_[n]->isPlaying()) {
+            continue;
+        }
+
+        if (voices_[n]->getNote() == note) {
+            if (unlikely(holdPedal_)) {
+                voices_[n]->setHoldedByPedal(true);
+            } else {
+                voices_[n]->msfaNoteOff();
+            }
+        }
+    }
 }
 
 void Timbre::pfm3AfterNewParamsLoad() {
@@ -813,13 +911,22 @@ void Timbre::pfm3AfterNewParamsLoad() {
 }
 
 void Timbre::msfaAfterNewParamsLoad() {
+    uint8_t *program = msfaProgram_[timbreNumber_];
+
+    for (int k = 0; k < numberOfVoices_; k++) {
+        Voice *voice = voices_[voiceNumber_[k]];
+        // Reset the matrix used by the FX2/gate path; MSFA does not fill it.
+        voice->resetMatrix();
+        voice->msfaUpdateProgram(program);
+    }
+    msfaTimbreLoadProgram(msfaState_, program);
 }
 
 void Timbre::fxAfterBlock() {
 
 	int fx2Type = params_.effect2.type;
     
-    if(!voices_[lastPlayedNote_]->isPlaying()) {
+    if (likely(engine_ != SYNTH_ENGINE_MSFA) && !voices_[lastPlayedNote_]->isPlaying()) {
         // hack : this voice is not playing but still need to calculate lfo
         voices_[lastPlayedNote_]->matrix.computeAllDestinations();
     }
@@ -3142,18 +3249,30 @@ void Timbre::midiClockSongPositionStep(int songPosition) {
 }
 
 void Timbre::resetMatrixDestination(float oldValue) {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        return;
+    }
     for (int k = 0; k < numberOfVoices_; k++) {
         voices_[voiceNumber_[k]]->matrix.resetDestination(oldValue);
     }
 }
 
 void Timbre::setMatrixSource(enum SourceEnum source, float newValue) {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        msfaTimbreSetController(msfaState_, source, newValue);
+        return;
+    }
+
     for (int k = 0; k < numberOfVoices_; k++) {
         voices_[voiceNumber_[k]]->matrix.setSource(source, newValue);
     }
 }
 
 void Timbre::setMatrixSourceMPE(uint8_t channel, enum SourceEnum source, float newValue) {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        return;
+    }
+
     int voiceToUse = voiceNumber_[channel -1];
 
     if (unlikely(voiceToUse == -1)) {
@@ -3165,6 +3284,10 @@ void Timbre::setMatrixSourceMPE(uint8_t channel, enum SourceEnum source, float n
 
 
 void Timbre::setMatrixPolyAfterTouch(uint8_t note, float newValue) {
+    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
+        return;
+    }
+
     for (int k = 0; k < numberOfVoices_; k++) {
         int voiceIndex = voiceNumber_[k];
         if (unlikely(voices_[voiceIndex]->isPlaying() && voices_[voiceIndex]->getNote() == note)) {
