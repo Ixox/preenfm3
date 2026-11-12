@@ -24,6 +24,7 @@
 
 class SynthState;
 class TftDisplay;
+class FMDisplayMsfaEditor;
 
 struct Pfm3OneButtonState {
     const char *stateLabel;
@@ -52,10 +53,12 @@ class FMDisplayEditor {
 public:
     FMDisplayEditor();
 
-    void init(SynthState *synthState, FirmwareTftDisplay *tft) {
-        synthState_ = synthState;
-        tft_ = tft;
-    }
+    void init(SynthState *synthState, FirmwareTftDisplay *tft);
+
+    bool isMsfaTimbre() const;
+    const struct Pfm3EditMenu* currentEditMenu() const;
+    const char* mainMenuName(int button) const;
+    void markPresetModified(int timbre);
 
     void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
@@ -88,6 +91,8 @@ public:
     void refreshLfoEnv();
 
 private:
+    friend class FMDisplayMsfaEditor;
+
     void checkOperatorNumber();
     bool isInOperatorPage(uint8_t pageNumber);
     bool isInMatrixPage(uint8_t pageNumber);
@@ -96,6 +101,7 @@ private:
     uint8_t getX(int encoder);
     FirmwareTftDisplay *tft_;
     SynthState *synthState_;
+    FMDisplayMsfaEditor *msfaEditor_;
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
     bool hideParam_[NUMBER_OF_ENCODERS];

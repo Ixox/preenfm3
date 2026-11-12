@@ -51,11 +51,13 @@ public:
 	void setBufferAdress(uint16_t *bufferAdress);
 	void setFGBufferAdress(uint8_t *bufferAdress);
 	void drawAlgo(int algo);
+	void drawDx7Algo(int algo);
 	void highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void highlightOperator(bool draw, uint8_t opNum);
     const uint8_t* getDigitBits(uint8_t digit);
 
 private:
+	void drawAlgoFromTable(const uint8_t *algoInfo);
 	void drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 	void setColor(uint16_t col);
 	void drawNumber(int x, int y, int digit);

@@ -173,6 +173,7 @@ public:
     void oscilloRecord32Samples(float *samples);
 
     void drawAlgo(int algo);
+    void drawDx7Algo(int algo);
     void highlightOperator(int op);
     void eraseHighlightOperator(int op);
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);

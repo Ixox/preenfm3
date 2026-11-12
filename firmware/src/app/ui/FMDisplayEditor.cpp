@@ -18,8 +18,10 @@
 
 #include <FirmwareTftDisplay.h>
 #include "FMDisplayEditor.h"
+#include "FMDisplayMsfaEditor.h"
 #include "FMDisplay.h"
 #include "SynthState.h"
+#include "Timbre.h"
 #include "preenfm3.h"
 
 extern bool carrierOperator[28][6];
@@ -2994,7 +2996,10 @@ struct PfmMainMenu mainMenu = {
     &pfm3PerfMenu,
 };
 
+static FMDisplayMsfaEditor msfaEditorInstance;
+
 FMDisplayEditor::FMDisplayEditor() {
+    msfaEditor_ = &msfaEditorInstance;
     for (int k = 0; k < NUMBER_OF_TIMBRES; k++) {
         valueChangedCounter_[k] = 0;
         presetModifed_[k] = false;
@@ -3017,9 +3022,46 @@ FMDisplayEditor::FMDisplayEditor() {
     }
 }
 
+void FMDisplayEditor::init(SynthState *synthState, FirmwareTftDisplay *tft) {
+    synthState_ = synthState;
+    tft_ = tft;
+    msfaEditor_->init(this, synthState, tft);
+}
+
+bool FMDisplayEditor::isMsfaTimbre() const {
+    return synthState_->mixerState.instrumentState_[currentTimbre_].engine == SYNTH_ENGINE_MSFA;
+}
+
+const struct Pfm3EditMenu* FMDisplayEditor::currentEditMenu() const {
+    int page = synthState_->fullState.mainPage;
+    if (isMsfaTimbre() && page >= 0 && page <= 3) {
+        return msfaEditor_->getEditMenu(page);
+    }
+    if (page >= 0 && page < 6) {
+        return mainMenu.editMenu[page];
+    }
+    return mainMenu.editMenu[0];
+}
+
+const char* FMDisplayEditor::mainMenuName(int button) const {
+    if (isMsfaTimbre() && button >= 0 && button <= 3) {
+        return msfaEditor_->getEditMenu(button)->mainMenuName;
+    }
+    return mainMenu.editMenu[button]->mainMenuName;
+}
+
+void FMDisplayEditor::markPresetModified(int timbre) {
+    presetModifed_[timbre] = true;
+    if (timbre == currentTimbre_) {
+        displayPreset();
+    }
+}
+
 void FMDisplayEditor::newTimbre(int timbre) {
-    checkOperatorNumber();
     currentTimbre_ = timbre;
+    if (!isMsfaTimbre()) {
+        checkOperatorNumber();
+    }
 }
 
 uint8_t FMDisplayEditor::getX(int encoder) {
@@ -3032,6 +3074,10 @@ uint8_t FMDisplayEditor::getX(int encoder) {
 
 void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
+
+    if (isMsfaTimbre()) {
+        return;
+    }
 
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
@@ -3225,6 +3271,11 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
 }
 
 void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
+    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 3) {
+        msfaEditor_->displayParamValue(encoder, color);
+        return;
+    }
+
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
     uint8_t buttonState = synthState_->fullState.buttonState[page->buttonId];
@@ -3268,6 +3319,11 @@ void FMDisplayEditor::displayParamValue(int encoder, TFT_COLOR color) {
 
 void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) {
 
+    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 3) {
+        msfaEditor_->refreshEditorByStep(refreshStatus, endRefreshStatus);
+        return;
+    }
+
     if (synthState_->fullState.mainPage == -1) {
         switch (refreshStatus) {
         case 20:
@@ -3283,24 +3339,31 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
         case 15:
         case 14: {
             int button = 19 - refreshStatus;
-            tft_->drawButton(mainMenu.editMenu[button]->mainMenuName, 270, 29, button, 0, 1);
+            tft_->drawButton(mainMenuName(button), 270, 29, button, 0, 1);
             break;
         }
-        case 13:
-            tft_->setCursorInPixel(54, 60);
-            tft_->print("E d i t o r", COLOR_CYAN, COLOR_BLACK);
+        case 13: {
+            const char *title = isMsfaTimbre() ? "DX7" : "preenfm3";
+            int length = isMsfaTimbre() ? 3 : 8;
+            tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
+            tft_->print(title, COLOR_CYAN, COLOR_BLACK);
             break;
+        }
 
         case 11:
 //          tft->setCursorInPixel(5, 100);
 //          tft->print("Choose button bellow", COLOR_DARK_BLUE, COLOR_BLACK);
             break;
         case 10:
-            tft_->drawAlgo(synthState_->params->engine1.algo);
+            if (isMsfaTimbre()) {
+                tft_->drawDx7Algo(synthState_->getTimbre(currentTimbre_)->getMsfaProgram()[134]);
+            } else {
+                tft_->drawAlgo(synthState_->params->engine1.algo);
+            }
             break;
         }
     } else {
-        const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
+        const struct Pfm3EditMenu *editMenu = currentEditMenu();
         const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 
         switch (refreshStatus) {
@@ -3310,7 +3373,11 @@ void FMDisplayEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSta
             tft_->clear();
             displayPreset();
             tft_->oscilloForceNextDisplay();
-            tft_->drawAlgo(synthState_->params->engine1.algo);
+            if (isMsfaTimbre()) {
+                tft_->drawDx7Algo(synthState_->getTimbre(currentTimbre_)->getMsfaProgram()[134]);
+            } else {
+                tft_->drawAlgo(synthState_->params->engine1.algo);
+            }
             break;
         case 20:
             tft_->pauseRefresh();
@@ -3499,27 +3566,31 @@ void FMDisplayEditor::resetHideParams() {
 void FMDisplayEditor::tempoClick() {
     static float lastVolume, lastGainReduction;
 
-    for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
-        if (valueChangedCounter_[e] > 0) {
-            valueChangedCounter_[e]--;
-            if (valueChangedCounter_[e] == 0) {
-                if (synthState_->fullState.mainPage != -1) {
-                    tft_->setCharBackgroundColor(COLOR_BLACK);
-                    displayParamValue(e, COLOR_WHITE);
+    if (isMsfaTimbre()) {
+        msfaEditor_->tempoClick();
+    } else {
+        for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
+            if (valueChangedCounter_[e] > 0) {
+                valueChangedCounter_[e]--;
+                if (valueChangedCounter_[e] == 0) {
+                    if (synthState_->fullState.mainPage != -1) {
+                        tft_->setCharBackgroundColor(COLOR_BLACK);
+                        displayParamValue(e, COLOR_WHITE);
+                    }
                 }
             }
-        }
-        if (imChangedCounter_[e] > 0) {
-            imChangedCounter_[e]--;
-            if (imChangedCounter_[e] == 0) {
-                struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][e];
-                tft_->eraseHighlightIM(e, im.source, im.destination);
+            if (imChangedCounter_[e] > 0) {
+                imChangedCounter_[e]--;
+                if (imChangedCounter_[e] == 0) {
+                    struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][e];
+                    tft_->eraseHighlightIM(e, im.source, im.destination);
+                }
             }
-        }
-        if (mixChangedCounter_[e] > 0) {
-            mixChangedCounter_[e]--;
-            if (mixChangedCounter_[e] == 0) {
-                tft_->eraseHighlightOperator(mixChangeOperatorNumber_[e]);
+            if (mixChangedCounter_[e] > 0) {
+                mixChangedCounter_[e]--;
+                if (mixChangedCounter_[e] == 0) {
+                    tft_->eraseHighlightOperator(mixChangeOperatorNumber_[e]);
+                }
             }
         }
     }
@@ -3804,6 +3875,11 @@ void FMDisplayEditor::encoderTurnedPfm3(int encoder6, int ticks) {
         return;
     }
 
+    if (isMsfaTimbre() && fullState->mainPage <= 3) {
+        msfaEditor_->encoderTurned(encoder6, ticks);
+        return;
+    }
+
     // Convert to legacy preenfm2 encoder and row
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
@@ -3999,6 +4075,11 @@ void FMDisplayEditor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
 
 void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
 
+    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 3) {
+        msfaEditor_->encoderTurnedWhileButtonPressed(encoder6, ticks, button);
+        return;
+    }
+
     // SYNTH_MODE_EDIT
     switch (button) {
     case BUTTON_PREVIOUS_INSTRUMENT: {
@@ -4102,10 +4183,19 @@ void FMDisplayEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, i
 }
 
 void FMDisplayEditor::buttonPressed(int button) {
+    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 3) {
+        msfaEditor_->buttonPressed(button);
+        return;
+    }
+
     if (synthState_->fullState.mainPage == -1) {
         if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {
             synthState_->fullState.mainPage = button;
-            synthState_->fullState.editPage = editPageSelected_[synthState_->fullState.mainPage];
+            int editPage = editPageSelected_[synthState_->fullState.mainPage];
+            if (editPage >= currentEditMenu()->numberOfButtons) {
+                editPage = 0;
+            }
+            synthState_->fullState.editPage = editPage;
          }
     } else {
         switch (button) {
@@ -4176,6 +4266,11 @@ void FMDisplayEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) 
 }
 
 void FMDisplayEditor::buttonLongPressed(int instrument, int button) {
+    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 3) {
+        msfaEditor_->buttonLongPressed(instrument, button);
+        return;
+    }
+
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
         // Can be copied ?
         bool canBeCopied = isInMatrixPage(synthState_->fullState.mainPage) || isInOperatorPage(synthState_->fullState.mainPage) || (isInModulatorPage(synthState_->fullState.mainPage) && synthState_->fullState.editPage == 0);
@@ -4291,6 +4386,10 @@ bool FMDisplayEditor::isInModulatorPage(uint8_t pageNumber) {
 }
 
 void FMDisplayEditor::refreshOscillatorOperatorShape() {
+    if (isMsfaTimbre()) {
+        tft_->oscilloBgActionClear();
+        return;
+    }
     int op = synthState_->fullState.operatorNumber;
     OscillatorParams *oscillatorParams = &synthState_->params->osc1;
 
@@ -4298,6 +4397,10 @@ void FMDisplayEditor::refreshOscillatorOperatorShape() {
 }
 
 void FMDisplayEditor::refreshOscillatorOperatorEnvelope() {
+    if (isMsfaTimbre()) {
+        tft_->oscilloBgActionClear();
+        return;
+    }
     int op = synthState_->fullState.operatorNumber;
     EnvelopeTimeMemory *envTime = &synthState_->params->env1Time;
     EnvelopeLevelMemory *envLevel = &synthState_->params->env1Level;
@@ -4309,6 +4412,10 @@ void FMDisplayEditor::refreshOscillatorOperatorEnvelope() {
 }
 
 void FMDisplayEditor::refreshLfoOscillator() {
+    if (isMsfaTimbre()) {
+        tft_->oscilloBgActionClear();
+        return;
+    }
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 
@@ -4326,6 +4433,10 @@ void FMDisplayEditor::refreshLfoOscillator() {
 }
 
 void FMDisplayEditor::refreshLfoEnv() {
+    if (isMsfaTimbre()) {
+        tft_->oscilloBgActionClear();
+        return;
+    }
     const struct Pfm3EditMenu *editMenu = mainMenu.editMenu[synthState_->fullState.mainPage];
     const struct Pfm3OneButton *page = editMenu->pages[synthState_->fullState.editPage];
 

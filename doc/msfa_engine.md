@@ -680,39 +680,78 @@ The operator on/off bitmask is not in the original DX7 sysex; Dexed uses
 `patch[155]`. Default it to `0x3F` (all on) when loading a DX7 patch unless
 the patch already provides the Dexed extension.
 
-### 5.5 Suggested MSFA editor navigation
+### 5.5 MSFA editor navigation
 
-The PFM3 editor has six main pages (buttons 1–6) and **six encoders per
-page**. Each page state maps all six encoders through
-`RowEncoder rowEncoder[6]` (`FMDisplayEditor.h:28-31`). Reuse that model with
-six MSFA pages:
+The MSFA editor is implemented in `FMDisplayMsfaEditor`
+(`firmware/src/app/ui/FMDisplayMsfaEditor.{h,cpp}`) and owned by
+`FMDisplayEditor`. It uses the same six-button / six-encoder model as the PFM3
+editor. The six buttons are drawn as a 2×3 grid. Pages 1–4 (`Global`, `Level`,
+`Osc`, `EG`) are MSFA-specific; pages 5–6 reuse the PFM3 `Arp/Fx` and `Perf`
+menus.
 
-| Main page (button) | Page states (button presses) | Six encoders |
-|---|---|---|
-| `MSFA` | 0: global; 1: LFO | Global: Algorithm, Feedback, Transpose, Osc key sync, LFO speed, LFO delay. LFO: PMD, AMD, LFO key sync, LFO waveform, PMS, spare |
-| `Oper` | 0: oscillator; 1: level/mod | Oscillator: Coarse, Fine, Detune, Output level, Osc mode, Rate scaling. Level/mod: KVS, AMS, Break point, Left depth, Right depth, spare |
-| `EG` | 0: operator rates; 1: operator levels; 2: pitch rates; 3: pitch levels | Rates: R1–R4 plus two spare. Levels: L1–L4 plus two spare. Pitch rates: R1–R4 plus two spare. Pitch levels: L1–L4 plus two spare |
-| `Scale` | 0: levels; 1: curves; 2: switches | Levels: Break point, Left depth, Right depth, Rate scaling, two spare. Curves: Left curve, Right curve, KVS, AMS, two spare. Switches: operator enabled plus five spare |
-| `Arp/Fx` | reuse existing `pfm3ArpFilterMenu` (`FMDisplayEditor.cpp:2978-2985`) | Existing arpeggiator, FX1 and FX2 pages |
-| `Perf` | reuse existing `pfm3PerfMenu` (`FMDisplayEditor.cpp:2972-2976`) | Existing performance page |
+#### Main menu
 
-Operator selection:
+| Row | Btn 1 | Btn 2 | Btn 3 |
+|-----|-------|-------|-------|
+| 1 | Global | Level | Osc |
+| 2 | EG | Arp/Fx | Perf |
 
-- Reuse `fullState.operatorNumber` (`Menu.h:181`) and the existing
-  `Oper` page pattern (`operatorEditMenu`, `FMDisplayEditor.cpp:2901-2910`).
-- On `Oper`, `EG` and `Scale` pages, buttons 4 and 6 can change the selected
-  operator (as `FMDisplayEditor::buttonPressed()` does for the PFM3 operator
-  page at `FMDisplayEditor.cpp:4127-4144`).
-- Button 5 can toggle the selected operator on/off (the Dexed extension is
-  supported), or be unused to match the existing “nothing” button.
+#### Global (per timbre)
 
-Unused encoder slots in a state should use the MSFA equivalent of
-`ROW_NONE` / `ENCODER_NONE`. If a page needs more than six parameters, add
-another page state rather than trying to exceed the six-encoder layout.
+| Row | Btn 1 | Btn 2 | Btn 3 |
+|-----|-------|-------|-------|
+| 1 | Engine | LFO | Pitch Env |
+| 2 | — | — | — |
 
-The existing `Pfm3OneButtonState` mechanism supports multiple states per page;
-a page cycles through them by pressing its button
-(`FMDisplayEditor::buttonPressed()` — `FMDisplayEditor.cpp:4145-4149`).
+| Sub-btn | State | Enc 1 | Enc 2 | Enc 3 | Enc 4 | Enc 5 | Enc 6 |
+|---------|-------|-------|-------|-------|-------|-------|-------|
+| **Engine** | Engine | Algorithm | Feedback | Osc key sync | — | — | — |
+| **LFO** | Modulation | AMD | PMD | — | — | — | — |
+| | LFO | Speed | Delay | Waveform | Key sync | PMS | — |
+| **Pitch Env** | Pitch R | Pitch EG R1 | R2 | R3 | R4 | — | — |
+| | Pitch L | Pitch EG L1 | L2 | L3 | L4 | — | — |
+
+#### Level (per operator)
+
+| Row | Btn 1 | Btn 2 | Btn 3 |
+|-----|-------|-------|-------|
+| 1 | Amp | Scal | — |
+| 2 | OP1/2 | OP3/4 | OP5/6 |
+
+| Sub-btn | State | Enc 1 | Enc 2 | Enc 3 | Enc 4 | Enc 5 | Enc 6 |
+|---------|-------|-------|-------|-------|-------|-------|-------|
+| **Amp** | Amp | Operator enabled | Output level | KVS | AMS | — | — |
+| **Scal** | Scal | Break point | Left depth | Right depth | Left curve | Right curve | Rate scaling |
+
+#### Osc (per operator)
+
+| Row | Btn 1 | Btn 2 | Btn 3 |
+|-----|-------|-------|-------|
+| 1 | Freq | — | — |
+| 2 | OP1/2 | OP3/4 | OP5/6 |
+
+| Sub-btn | State | Enc 1 | Enc 2 | Enc 3 | Enc 4 | Enc 5 | Enc 6 |
+|---------|-------|-------|-------|-------|-------|-------|-------|
+| **Freq** | Freq | Oscillator mode | Coarse | Fine | Detune | — | — |
+
+#### EG (per operator)
+
+| Row | Btn 1 | Btn 2 | Btn 3 |
+|-----|-------|-------|-------|
+| 1 | Rate | Level | — |
+| 2 | OP1/2 | OP3/4 | OP5/6 |
+
+| Sub-btn | State | Enc 1 | Enc 2 | Enc 3 | Enc 4 | Enc 5 | Enc 6 |
+|---------|-------|-------|-------|-------|-------|-------|-------|
+| **Rate** | Op Rate | EG R1 | R2 | R3 | R4 | — | — |
+| **Level** | Op Level | EG L1 | L2 | L3 | L4 | — | — |
+
+Operator selection uses buttons 4–6 (`OP1/2`, `OP3/4`, `OP5/6`) and
+`fullState.operatorNumber`, the same mechanism as the PFM3 operator page.
+Pages with more than six parameters use additional page states; pressing the
+sub-page button cycles through them. Empty encoder slots use `MSFA_NONE`.
+`Pfm3OneButtonState` still drives the state labels and the encoder-to-parameter
+mapping (`FMDisplayEditor.h:28-31`).
 
 ### 5.6 Display and visual helpers
 
