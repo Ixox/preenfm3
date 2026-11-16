@@ -93,14 +93,14 @@ bool SequenceBank::isCorrectFile(char *name, int size) {
 }
 
 void SequenceBank::setSequencer(Sequencer* sequencer) {
-    this->sequencer = sequencer;
+    this->sequencer_ = sequencer;
 }
 
 bool SequenceBank::isReadOnly(struct PFM3File *file) {
     const char* fullSeqBankName = getFullName(file->name);
     uint32_t bankVersion;
     UINT byteRead;
-    this->sequencer = sequencer;
+    this->sequencer_ = sequencer_;
     if (f_open(&sequenceFile, fullSeqBankName, FA_READ) == FR_OK) {
         f_read(&sequenceFile, (void *)&bankVersion, 4, &byteRead);
         f_close(&sequenceFile);
@@ -145,7 +145,7 @@ void SequenceBank::loadSequenceDataVersion1(FIL* sequenceFile, int patchNumber) 
 
     // We load 1024 bytes for sequencer fullstate
     f_read(sequenceFile, storageBuffer, 1024, &byteRead);
-    sequencer->setFullState((uint8_t*)storageBuffer);
+    sequencer_->setFullState((uint8_t*)storageBuffer);
 
     f_read(sequenceFile, actions, 16384, &byteRead);
     f_read(sequenceFile, stepNotes, 12336, &byteRead);
@@ -161,7 +161,7 @@ void SequenceBank::loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber) 
 
     // We load 1024 bytes for sequencer fullstate
     f_read(sequenceFile, storageBuffer, 1024, &byteRead);
-    sequencer->setFullState((uint8_t*)storageBuffer);
+    sequencer_->setFullState((uint8_t*)storageBuffer);
 
     f_read(sequenceFile, actions, 16384, &byteRead);
     f_read(sequenceFile, stepNotes, 24576, &byteRead);
@@ -185,25 +185,25 @@ const char* SequenceBank::loadSequenceName(const struct PFM3File* bank, int patc
             case SEQUENCE_BANK_VERSION1: {
                 f_lseek(&sequenceFile, 4 + (1024 + 16384 + 12336) * patchNumber);
                 f_read(&sequenceFile, storageBuffer, 20, &byteRead);
-                const char* sequenceNameInBuffer = sequencer->getSequenceNameInBuffer(storageBuffer);
+                const char* sequenceNameInBuffer = sequencer_->getSequenceNameInBuffer(storageBuffer);
                 for (int s = 0; s < 12; s++) {
-                    sequenceName[s] = sequenceNameInBuffer[s];
+                    sequenceName_[s] = sequenceNameInBuffer[s];
                 }
-                sequenceName[12] = 0;
+                sequenceName_[12] = 0;
                 f_close(&sequenceFile);
-                return sequenceName;
+                return sequenceName_;
                 break;
             }
             case SEQUENCE_BANK_VERSION2: {
                 f_lseek(&sequenceFile, 4 + (1024 + 16384 + 24576) * patchNumber);
                 f_read(&sequenceFile, storageBuffer, 20, &byteRead);
-                const char* sequenceNameInBuffer = sequencer->getSequenceNameInBuffer(storageBuffer);
+                const char* sequenceNameInBuffer = sequencer_->getSequenceNameInBuffer(storageBuffer);
                 for (int s = 0; s < 12; s++) {
-                    sequenceName[s] = sequenceNameInBuffer[s];
+                    sequenceName_[s] = sequenceNameInBuffer[s];
                 }
-                sequenceName[12] = 0;
+                sequenceName_[12] = 0;
                 f_close(&sequenceFile);
-                return sequenceName;
+                return sequenceName_;
                 break;
             }
         }
@@ -247,7 +247,7 @@ void SequenceBank::createSequenceFile(const char* name) {
         tft.print("/");
         tft.print(NUMBER_OF_SEQUENCES_PER_BANK);
 
-        sequencer->getFullDefaultState((uint8_t*)storageBuffer, &seqStatesize, s + 1);
+        sequencer_->getFullDefaultState((uint8_t*)storageBuffer, &seqStatesize, s + 1);
         // We save 1024 bytes for sequencer fullstate
         f_write(&sequenceFile, storageBuffer, 1024, &byteWritten);
 
@@ -273,7 +273,7 @@ void SequenceBank::saveSequence(const struct PFM3File* sequencePFMFile, int sequ
 
     const char* fullSeqBankName = getFullName(sequencePFMFile->name);
 
-    sequencer->setSequenceName(sequenceName);
+    sequencer_->setSequenceName(sequenceName);
 
     if (f_open(&sequenceFile, fullSeqBankName, FA_WRITE) == FR_OK) {
         f_lseek(&sequenceFile, 4 + ((1024 + 16384 + 24576) * sequenceNumber));
@@ -337,7 +337,7 @@ bool SequenceBank::saveSequencerData(FIL* file) {
     }
 
     // We copy the state to property files
-    sequencer->getFullState((uint8_t*)storageBuffer, &seqStateSize);
+    sequencer_->getFullState((uint8_t*)storageBuffer, &seqStateSize);
 
     // and save 1024 chars
     f_write(&sequenceFile, storageBuffer, 1024, &byteWritten);

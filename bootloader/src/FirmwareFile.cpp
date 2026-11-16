@@ -25,49 +25,49 @@ __attribute__((section(".ram_d2"))) struct FirmwarePFM3File firmwareAlloc[16];
 
 
 FirmwareFile::FirmwareFile() {
-    isInitialized = false;
-    numberOfFilesMax = 16;
-    myFiles = firmwareAlloc;
+    isInitialized_ = false;
+    numberOfFilesMax_ = 16;
+    myFiles_ = firmwareAlloc;
 }
 
 FirmwareFile::~FirmwareFile() {
 }
 
 uint32_t FirmwareFile::getNumberOfFiles() {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
-    return numberOfFiles;
+    return numberOfFiles_;
 }
 
 
 
 const struct FirmwarePFM3File* FirmwareFile::getFile(uint32_t fileNumber) {
-    if (!isInitialized) {
+    if (!isInitialized_) {
         initFiles();
     }
-    if (fileNumber < 0 || fileNumber >= numberOfFilesMax) {
-        return &myFiles[0];
+    if (fileNumber < 0 || fileNumber >= numberOfFilesMax_) {
+        return &myFiles_[0];
     }
-    return &myFiles[fileNumber];
+    return &myFiles_[fileNumber];
 }
 
 // Init bank
 int FirmwareFile::initFiles() {
 
-    numberOfFiles = 0;
+    numberOfFiles_ = 0;
     FRESULT res;
     DIR dir;
     static FILINFO fno;
 
-    for (uint32_t k = 0; k < numberOfFilesMax; k++) {
-        myFiles[k].fileType = FILE_EMPTY;
+    for (uint32_t k = 0; k < numberOfFilesMax_; k++) {
+        myFiles_[k].fileType = FILE_EMPTY;
     }
 
     res = f_opendir(&dir, getFolderName());
     if (res == FR_OK) {
 
-        while (numberOfFiles < numberOfFilesMax) {
+        while (numberOfFiles_ < numberOfFilesMax_) {
             bool beforePoint = true;
             res = f_readdir(&dir, &fno);
             if (res != FR_OK || fno.fname[0] == 0) {
@@ -77,31 +77,31 @@ int FirmwareFile::initFiles() {
                 if (isCorrectFile((char*) fno.fname, fno.fsize)) {
                     for (int k = 0; k < 13; k++) {
                         if (fno.fname[k] == ' ') {
-                            myFiles[numberOfFiles].name[k] = '_';
+                            myFiles_[numberOfFiles_].name[k] = '_';
                         } else if (fno.fname[k] == 0 && beforePoint) {
-                            myFiles[numberOfFiles].name[k] = '~';
+                            myFiles_[numberOfFiles_].name[k] = '~';
                         } else {
                             if (fno.fname[k] == '.') {
                                 beforePoint = false;
                             }
-                            myFiles[numberOfFiles].name[k] = fno.fname[k];
+                            myFiles_[numberOfFiles_].name[k] = fno.fname[k];
                         }
                     }
-                    myFiles[numberOfFiles].size = fno.fsize;
+                    myFiles_[numberOfFiles_].size = fno.fsize;
                     if (fno.fname[0] == '_') {
-                        myFiles[numberOfFiles].fileType = FILE_READ_ONLY;
+                        myFiles_[numberOfFiles_].fileType = FILE_READ_ONLY;
                     } else {
-                        myFiles[numberOfFiles].fileType = FILE_OK;
+                        myFiles_[numberOfFiles_].fileType = FILE_OK;
                     }
-                    numberOfFiles++;
+                    numberOfFiles_++;
                 }
             }
         }
         f_closedir(&dir);
     }
-    sortFiles(myFiles, numberOfFiles);
-    isInitialized = true;
-    return numberOfFiles;
+    sortFiles(myFiles_, numberOfFiles_);
+    isInitialized_ = true;
+    return numberOfFiles_;
 }
 
 const char* FirmwareFile::getFolderName() {
@@ -128,15 +128,15 @@ const char* FirmwareFile::getFullName(const char* fileName) {
     int pos = 0;
     int cpt = 0;
     for (int k =0; k < strlen(pathName) && cpt++<24; k++) {
-        this->fullName[pos++] = pathName[k];
+        this->fullName_[pos++] = pathName[k];
     }
-    this->fullName[pos++] = '/';
+    this->fullName_[pos++] = '/';
     cpt = 0;
     for (int k = 0; k <strlen(fileName) && cpt++<14 ; k++) {
-        this->fullName[pos++] = fileName[k];
+        this->fullName_[pos++] = fileName[k];
     }
-    this->fullName[pos] = 0;
-    return this->fullName;
+    this->fullName_[pos] = 0;
+    return this->fullName_;
 }
 
 int FirmwareFile::strlen(const char *str) {

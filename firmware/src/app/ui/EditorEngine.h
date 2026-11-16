@@ -91,7 +91,7 @@ public:
         ParameterDisplay *param, float oldValue, float newValue) {}
 
     // Linked list of registered editors (owned by ScreenEditor).
-    EditorEngine *nextEditor = nullptr;
+    EditorEngine *nextEditor_ = nullptr;
 
 protected:
     uint8_t getEncoderX(int encoder) const {

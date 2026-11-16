@@ -49,16 +49,16 @@ public:
 	*/
 
 	void midiContinue() {
-		ticks = 0;
+		ticks_ = 0;
 	}
 
 
 protected:
-	Matrix *matrix;
-    uint8_t destination;
-    uint8_t source;
+	Matrix *matrix_;
+    uint8_t destination_;
+    uint8_t source_;
 	// Midi Clock sync
-	int ticks;
+	int ticks_;
 
 	// Precalcul 1/freq
     static int initTab;

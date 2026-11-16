@@ -252,7 +252,7 @@ public:
         return lowerNote_;
     }
     float getLowerNoteFrequency() {
-        return lowerNoteFrequency;
+        return lowerNoteFrequency_;
     }
 
     char* getPresetName() {
@@ -313,72 +313,72 @@ private:
     float delayInterpolation2(float readPos, float buffer[], int bufferLenM1, int offset);
     float iirFilter(float x, float a0, float *yn1, float *yn2, float *xn1, float *xn2) ;
 
-    int prevFx2Type         = 0;
+    int prevFx2Type_         = 0;
 
     #define delayBufferSize 2048
 
     static float delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize];
     float *delayBuffer_;
 
-    float param1S = 0;
-    float matrixFilterFrequencyS = 0;
-    float param2S = 0;
-    float delaySize1 = 0, delaySize2 = 0, delaySize3 = 0;
-    float feedback            = 0;
-    float shift = 0,   shift2 = 0;
-    int delayWritePos         = 0;
-    float delayWritePosF      = 0;
-    float delayReadPos        = 0;
-    float delayReadPos2       = 0;
-    float delayReadFrac       = 0;
-    float delayReadFrac2      = 0;
+    float param1S_ = 0;
+    float matrixFilterFrequencyS_ = 0;
+    float param2S_ = 0;
+    float delaySize1_ = 0, delaySize2_ = 0, delaySize3_ = 0;
+    float feedback_            = 0;
+    float shift_ = 0,   shift2_ = 0;
+    int delayWritePos_         = 0;
+    float delayWritePosF_      = 0;
+    float delayReadPos_        = 0;
+    float delayReadPos2_       = 0;
+    float delayReadFrac_       = 0;
+    float delayReadFrac2_      = 0;
      
-    float low1 = 0, band1 = 0;
-    float low2 = 0, band2 = 0;
-    float low3 = 0, band3 = 0;
-    float low4 = 0, band4 = 0;
-    float low5 = 0, band5 = 0;
-    float low6 = 0, band6 = 0;
+    float low1_ = 0, band1_ = 0;
+    float low2_ = 0, band2_ = 0;
+    float low3_ = 0, band3_ = 0;
+    float low4_ = 0, band4_ = 0;
+    float low5_ = 0, band5_ = 0;
+    float low6_ = 0, band6_ = 0;
 
-    float feedbackInput = 0;
+    float feedbackInput_ = 0;
 
     // hp filter
-    float hp_in_y0 = 0;
-    float hp_in_y1 = 0;
-    float hp_in_x1 = 0;
-    float hp_in2_y0 = 0;
-    float hp_in2_y1 = 0;
-    float hp_in2_x1 = 0;
+    float hp_in_y0_ = 0;
+    float hp_in_y1_ = 0;
+    float hp_in_x1_ = 0;
+    float hp_in2_y0_ = 0;
+    float hp_in2_y1_ = 0;
+    float hp_in2_x1_ = 0;
 
     // allpass filters
-    float _ly1 = 0;
-    float _lx1 = 0;
-    float _ly2 = 0;
-    float _lx2 = 0;
+    float _ly1_ = 0;
+    float _lx1_ = 0;
+    float _ly2_ = 0;
+    float _lx2_ = 0;
 
     // frequency shifter / lowpass filter (hb1 - hb3) / allpass hb4 / hipass hb5
-    float hb1_x1 = 0, hb1_x2 = 0, hb1_y1 = 0, hb1_y2 = 0;
-    float hb2_x1 = 0, hb2_x2 = 0, hb2_y1 = 0, hb2_y2 = 0;
-    float hb3_x1 = 0, hb3_x2 = 0, hb3_y1 = 0, hb3_y2 = 0;
-    float hb4_x1 = 0, hb4_x2 = 0, hb4_y1 = 0, hb4_y2 = 0;
-    float hb5_x1 = 0, hb5_x2 = 0, hb5_y1 = 0, hb5_y2 = 0;
-    float hb6_x1 = 0, hb6_x2 = 0, hb6_y1 = 0, hb6_y2 = 0;
-    float hb7_x1 = 0, hb7_x2 = 0, hb7_y1 = 0, hb7_y2 = 0;
-    float hb8_x1 = 0, hb8_x2 = 0, hb8_y1 = 0, hb8_y2 = 0;
-    float phase1 = 0;
-    float samplen1 = 0;
+    float hb1_x1_ = 0, hb1_x2_ = 0, hb1_y1_ = 0, hb1_y2_ = 0;
+    float hb2_x1_ = 0, hb2_x2_ = 0, hb2_y1_ = 0, hb2_y2_ = 0;
+    float hb3_x1_ = 0, hb3_x2_ = 0, hb3_y1_ = 0, hb3_y2_ = 0;
+    float hb4_x1_ = 0, hb4_x2_ = 0, hb4_y1_ = 0, hb4_y2_ = 0;
+    float hb5_x1_ = 0, hb5_x2_ = 0, hb5_y1_ = 0, hb5_y2_ = 0;
+    float hb6_x1_ = 0, hb6_x2_ = 0, hb6_y1_ = 0, hb6_y2_ = 0;
+    float hb7_x1_ = 0, hb7_x2_ = 0, hb7_y1_ = 0, hb7_y2_ = 0;
+    float hb8_x1_ = 0, hb8_x2_ = 0, hb8_y1_ = 0, hb8_y2_ = 0;
+    float phase1_ = 0;
+    float samplen1_ = 0;
 
     // diffuser
-    int inputWritePos1     = 0;
-    int inputWritePos2     = 0;
-    int inputWritePos3     = 0;
-    int inputWritePos4     = 0;
-    int inputWritePos5     = 0;
-    const int inputBufferLen1 = 126;
-    const int inputBufferLen2 = 180;
-    const int inputBufferLen3 = 204;
-    const int inputBufferLen4 = 245;
-    const int inputBufferLen5 = 269;
+    int inputWritePos1_     = 0;
+    int inputWritePos2_     = 0;
+    int inputWritePos3_     = 0;
+    int inputWritePos4_     = 0;
+    int inputWritePos5_     = 0;
+    const int inputBufferLen1_ = 126;
+    const int inputBufferLen2_ = 180;
+    const int inputBufferLen3_ = 204;
+    const int inputBufferLen4_ = 245;
+    const int inputBufferLen5_ = 269;
 
     // granulator
     enum GRAIN_PARAMS {
@@ -392,13 +392,13 @@ private:
         GRAIN_PAN
     };
 
-    uint8_t grainNext = 0, grainPrev = 0;
-    float grainTable[3][8] = {
+    uint8_t grainNext_ = 0, grainPrev_ = 0;
+    float grainTable_[3][8] = {
         {1, 1, 1, 0, 0, 0, 1, 0.5f},
         {1, 1, 1, 0, 0, 0, 1, 0.5f},
         {1, 1, 1, 0, 0, 0, 1, 0.5f}
     };
-    float lockA, lockB, loopSize = 20;
+    float lockA_, lockB_, loopSize_ = 20;
     
     /** --------------end of FX conf--------------  */
 
@@ -455,7 +455,7 @@ private:
     uint8_t recording_;
 
     uint8_t lowerNote_;
-    float lowerNoteFrequency;
+    float lowerNoteFrequency_;
     bool lowerNoteReleased_;
     // static
     static uint32_t voiceIndex_;

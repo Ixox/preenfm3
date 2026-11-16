@@ -67,41 +67,41 @@ uint16_t convertTo565(uint32_t x) {
 }
 
 TftDisplay::TftDisplay() {
-    pushToTftInProgress = false;
-    pushingPart = 0;
+    pushToTftInProgress_ = false;
+    pushingPart_ = 0;
 
-    tftDirtyBits = TFT_PART_ALL_BITS;
+    tftDirtyBits_ = TFT_PART_ALL_BITS;
 
-    areaY[TFT_PART_HEADER] = 0;
-    areaHeight[TFT_PART_HEADER] = 40;
+    areaY_[TFT_PART_HEADER] = 0;
+    areaHeight_[TFT_PART_HEADER] = 40;
 
-    areaY[TFT_PART_VALUES] = 40;
-    areaHeight[TFT_PART_VALUES] = 40;
-    areaY[TFT_PART_VALUES2] = 80;
-    areaHeight[TFT_PART_VALUES2] = 40;
-    areaY[TFT_PART_VALUES3] = 120;
-    areaHeight[TFT_PART_VALUES3] = 40;
+    areaY_[TFT_PART_VALUES] = 40;
+    areaHeight_[TFT_PART_VALUES] = 40;
+    areaY_[TFT_PART_VALUES2] = 80;
+    areaHeight_[TFT_PART_VALUES2] = 40;
+    areaY_[TFT_PART_VALUES3] = 120;
+    areaHeight_[TFT_PART_VALUES3] = 40;
 
-    areaY[TFT_PART_OSCILLO] = 160;
-    areaHeight[TFT_PART_OSCILLO] = 40;
-    areaY[TFT_PART_OSCILLO2] = 200;
-    areaHeight[TFT_PART_OSCILLO2] = 40;
-    areaY[TFT_PART_OSCILLO3] = 240;
-    areaHeight[TFT_PART_OSCILLO3] = 30;
+    areaY_[TFT_PART_OSCILLO] = 160;
+    areaHeight_[TFT_PART_OSCILLO] = 40;
+    areaY_[TFT_PART_OSCILLO2] = 200;
+    areaHeight_[TFT_PART_OSCILLO2] = 40;
+    areaY_[TFT_PART_OSCILLO3] = 240;
+    areaHeight_[TFT_PART_OSCILLO3] = 30;
 
-    areaY[TFT_PART_BUTTONS] = 270;
-    areaHeight[TFT_PART_BUTTONS] = 50;
+    areaY_[TFT_PART_BUTTONS] = 270;
+    areaHeight_[TFT_PART_BUTTONS] = 50;
 
-    currentAction.actionType = 0;
-    lastOscilloSaturateTic = 0;
-    currentActionStep = 0;
+    currentAction_.actionType = 0;
+    lastOscilloSaturateTic_ = 0;
+    currentActionStep_ = 0;
 
-    oscilloSamplePeriod = PREENFM_FREQUENCY / 440;
-    oscilloSampleInc = oscilloSamplePeriod / OSCILLO_WIDTH;
-    oscilloPhaseIndex = 0.0f;
+    oscilloSamplePeriod_ = PREENFM_FREQUENCY / 440;
+    oscilloSampleInc_ = oscilloSamplePeriod_ / OSCILLO_WIDTH;
+    oscilloPhaseIndex_ = 0.0f;
 
     for (int o = 0; o < OSCILLO_BUFFER_SIZE; o++) {
-        oscilloFullPeriodSampl[o] = 0.0f;
+        oscilloFullPeriodSampl_[o] = 0.0f;
     }
 
     memset(tftMemory, 0, 240 * 320 * 2);
@@ -129,15 +129,15 @@ TftDisplay::TftDisplay() {
         tftPalette565[c] = convertTo565(tftPalette[c]);
     }
 
-    charColor = COLOR_GREEN;
-    charBackgroundColor = COLOR_BLACK;
-    tftRefreshing = true;
-    fgAlgoDirty = true;
-    flatOscilloAlreadyDisplayed = true;
-    tftPushMillis = 0;
-    tftGetStatusMillis = 0;
-    part = 0;
-    olscilloYScale = 1.0f;
+    charColor_ = COLOR_GREEN;
+    charBackgroundColor_ = COLOR_BLACK;
+    tftRefreshing_ = true;
+    fgAlgoDirty_ = true;
+    flatOscilloAlreadyDisplayed_ = true;
+    tftPushMillis_ = 0;
+    tftGetStatusMillis_ = 0;
+    part_ = 0;
+    olscilloYScale_ = 1.0f;
     tftMustBeReset_ = false;
 }
 
@@ -147,11 +147,11 @@ TftDisplay::~TftDisplay() {
 
 void TftDisplay::init(TftAlgo* tftAlgo) {
 
-    this->tftAlgo = tftAlgo;
+    this->tftAlgo_ = tftAlgo;
     // Characters
     int tftTmpIndex = 0;
 
-    fgBigChars = &tftForeground[tftTmpIndex];
+    fgBigChars_ = &tftForeground[tftTmpIndex];
 
 
     for (int ch = 0; ch < NUMBER_OF_CHARS; ch++) {
@@ -172,7 +172,7 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     tftTmpIndex++;
     tftTmpIndex *= 4;
 
-    fgSmallChars = &tftForeground[tftTmpIndex];
+    fgSmallChars_ = &tftForeground[tftTmpIndex];
 
     for (int ch = 0; ch < 96; ch++) {
         int index = ch * Font_7x10.height;
@@ -192,7 +192,7 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     tftTmpIndex++;
     tftTmpIndex *= 4;
 
-    fgSegmentDigit = &tftForeground[tftTmpIndex];
+    fgSegmentDigit_ = &tftForeground[tftTmpIndex];
 
     for (int c = 0; c < 12; c++) {
         for (int i = 0; i < 9; i++) {
@@ -219,13 +219,13 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     tftTmpIndex++;
     tftTmpIndex *= 4;
 
-    fgOscillo = &tftForeground[tftTmpIndex];
+    fgOscillo_ = &tftForeground[tftTmpIndex];
 
-    memset(fgOscillo, 0, 160 * 101);
+    memset(fgOscillo_, 0, 160 * 101);
     tftTmpIndex += 160 * 101;
 
-    fgAlgo = &tftForeground[tftTmpIndex];
-    memset(fgAlgo, 0, 80 * 100);
+    fgAlgo_ = &tftForeground[tftTmpIndex];
+    memset(fgAlgo_, 0, 80 * 100);
     tftTmpIndex += 80 * 100;
 
     // Check tftTmpIndex here for tftForeground size
@@ -236,7 +236,7 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     int bgIndex = 0;
 
     for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
-        bgColorChar[c] = &tftBackground[bgIndex];
+        bgColorChar_[c] = &tftBackground[bgIndex];
         for (int i = 0; i < 20 * 11; i++) {
             tftBackground[bgIndex + i] = tftPalette565[c];
         }
@@ -244,28 +244,28 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     }
 
     // BG OScillo
-    bgOscillo = &tftBackground[bgIndex];
+    bgOscillo_ = &tftBackground[bgIndex];
 
-    memset(bgOscillo, 0, 160 * 100 * 2);
+    memset(bgOscillo_, 0, 160 * 100 * 2);
     uint16_t oscilloColor = 0x0842;
     for (int x = 0; x < 160; x++) {
-        bgOscillo[x] = oscilloColor;
-        bgOscillo[x + 99 * 160] = oscilloColor;
+        bgOscillo_[x] = oscilloColor;
+        bgOscillo_[x + 99 * 160] = oscilloColor;
     }
     for (int y = 0; y < 100; y++) {
-        bgOscillo[y * 160] = oscilloColor;
-        bgOscillo[y * 160 + 159] = oscilloColor;
+        bgOscillo_[y * 160] = oscilloColor;
+        bgOscillo_[y * 160 + 159] = oscilloColor;
     }
     bgIndex += 160 * 100;
 
 
-    bgAlgo = &tftBackground[bgIndex];
+    bgAlgo_ = &tftBackground[bgIndex];
 
-    memset(bgAlgo, 0, 80 * 100 * 2);
+    memset(bgAlgo_, 0, 80 * 100 * 2);
     bgIndex += 80 * 100;
     // Check bgIndex here for tftBackground size (must be multiplied by 2)
 
-    currentAction.actionType = 0;
+    currentAction_.actionType = 0;
 }
 
 void TftDisplay::reset() {
@@ -281,35 +281,35 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
     uint16_t yBottom = y + height;
 
     if (unlikely(y < 40)) {
-        tftDirtyBits |= 0b00000001;
+        tftDirtyBits_ |= 0b00000001;
     }
 
     if (unlikely(y < 80 && yBottom >= 40)) {
-        tftDirtyBits |= 0b00000010;
+        tftDirtyBits_ |= 0b00000010;
     }
 
     if (unlikely(y < 120 && yBottom >= 80)) {
-        tftDirtyBits |= 0b00000100;
+        tftDirtyBits_ |= 0b00000100;
     }
 
     if (unlikely(y < 160 && yBottom >= 120)) {
-        tftDirtyBits |= 0b00001000;
+        tftDirtyBits_ |= 0b00001000;
     }
 
     if (unlikely(y < 200 && yBottom >= 160)) {
-        tftDirtyBits |= 0b00010000;
+        tftDirtyBits_ |= 0b00010000;
     }
 
     if (unlikely(y < 240 && yBottom >= 200)) {
-        tftDirtyBits |= 0b00100000;
+        tftDirtyBits_ |= 0b00100000;
     }
 
     if (unlikely(y < 270 && yBottom >= 230)) {
-        tftDirtyBits |= 0b01000000;
+        tftDirtyBits_ |= 0b01000000;
     }
 
     if (unlikely(yBottom >= 270)) {
-        tftDirtyBits |= 0b10000000;
+        tftDirtyBits_ |= 0b10000000;
     }
 }
 
@@ -320,10 +320,10 @@ void TftDisplay::tic(bool checkDisplayPower) {
     uint32_t offset;
     uint32_t currentMillis = HAL_GetTick();
 
-    if (unlikely((currentMillis - tftPushMillis) > 20)) {
+    if (unlikely((currentMillis - tftPushMillis_) > 20)) {
 
         // Only if previous DMA pushed is finished
-        if (checkDisplayPower && (currentMillis - tftGetStatusMillis) > 500) {
+        if (checkDisplayPower && (currentMillis - tftGetStatusMillis_) > 500) {
             status_[1] = 1;
             if (ILI9341_ReadPowerMode(status_) != HAL_OK) {
                 status_[1] = 1;
@@ -337,45 +337,45 @@ void TftDisplay::tic(bool checkDisplayPower) {
             }
             // status_2 allows to make sure we got 2 wrong number in a row
             status_[3] = status_[1];
-            tftGetStatusMillis = currentMillis;
+            tftGetStatusMillis_ = currentMillis;
             return;
         }
 
         if (pushToTft()) {
            // a part have been pushed
-           tftPushMillis = currentMillis;
+           tftPushMillis_ = currentMillis;
            return;
         }
     }
 
 
     // If doing nothing try to take next action
-    if ((currentAction.actionType == 0) && (tftActions.getCount() > 0)) {
-        currentAction = tftActions.remove();
-        currentActionStep = 0;
+    if ((currentAction_.actionType == 0) && (tftActions_.getCount() > 0)) {
+        currentAction_ = tftActions_.remove();
+        currentActionStep_ = 0;
     }
 
-    switch (currentAction.actionType) {
+    switch (currentAction_.actionType) {
     case TFT_NOP:
         return;
     case TFT_DISPLAY_ONE_CHAR:
         // Display Char
         if (PFM_IS_DMA2D_READY()) {
 
-            WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[currentAction.param4]);
+            WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[currentAction_.param4]);
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
 
-            offset = currentAction.param2 * 240 + currentAction.param1;
+            offset = currentAction_.param2 * 240 + currentAction_.param1;
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 11);
             MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (18 | (11 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgBigChars + currentAction.param3 * 18 * 11));
-            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgColorChar[currentAction.param5]));
+            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgBigChars_ + currentAction_.param3 * 18 * 11));
+            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgColorChar_[currentAction_.param5]));
             WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
 
-            setDirtyArea(currentAction.param2, 18);
+            setDirtyArea(currentAction_.param2, 18);
 
-            currentAction.actionType = 0;
+            currentAction_.actionType = 0;
 
             PFM_START_DMA2D();
         }
@@ -384,19 +384,19 @@ void TftDisplay::tic(bool checkDisplayPower) {
         // Display Char
         if (PFM_IS_DMA2D_READY()) {
 
-            WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[currentAction.param4]);
+            WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[currentAction_.param4]);
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
-            offset = currentAction.param2 * 240 + currentAction.param1;
+            offset = currentAction_.param2 * 240 + currentAction_.param1;
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 7);
             MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (10 | (7 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgSmallChars + currentAction.param3 * 10 * 7));
-            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgColorChar[currentAction.param5]));
+            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgSmallChars_ + currentAction_.param3 * 10 * 7));
+            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgColorChar_[currentAction_.param5]));
             WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
 
-            setDirtyArea(currentAction.param2, 10);
+            setDirtyArea(currentAction_.param2, 10);
 
-            currentAction.actionType = 0;
+            currentAction_.actionType = 0;
             PFM_START_DMA2D();
         }
         break;
@@ -406,20 +406,20 @@ void TftDisplay::tic(bool checkDisplayPower) {
         if (PFM_IS_DMA2D_READY()) {
 
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_R2M);
-            WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[currentAction.param5]);
+            WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[currentAction_.param5]);
 
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
 
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL),
-                    (areaHeight[currentAction.param3] | (240 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + areaY[currentAction.param3] * 240));
+                    (areaHeight_[currentAction_.param3] | (240 << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + areaY_[currentAction_.param3] * 240));
             PFM_START_DMA2D();
 
-            if (currentAction.param3 == 0) {
-                tftDirtyBits = TFT_PART_ALL_BITS;
-                currentAction.actionType = 0;
+            if (currentAction_.param3 == 0) {
+                tftDirtyBits_ = TFT_PART_ALL_BITS;
+                currentAction_.actionType = 0;
             } else {
-                currentAction.param3--;
+                currentAction_.param3--;
             }
         }
         break;
@@ -427,7 +427,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
         // 2 steps
         // 0 : copy oscillo+background => tftMemory
         // 1 : copy back background=>oscillo
-        switch (currentAction.param3) {
+        switch (currentAction_.param3) {
         case 0:
             // Display Oscilloscope
             if (PFM_IS_DMA2D_READY()) {
@@ -436,10 +436,10 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
                 // Keep red color for 5 refreshes after saturation detected
                 // param param1 == 1 means last oscillo refresh saturated
-                if (unlikely(currentAction.param1 == 1)) {
-                    lastOscilloSaturateTic = currentTic;
+                if (unlikely(currentAction_.param1 == 1)) {
+                    lastOscilloSaturateTic_ = currentTic;
                 }
-                if (unlikely(currentAction.param1 == 1 || (currentTic < (lastOscilloSaturateTic + 10)))) {
+                if (unlikely(currentAction_.param1 == 1 || (currentTic < (lastOscilloSaturateTic_ + 10)))) {
                     WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_RED]);
                 } else {
                     WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_GREEN]);
@@ -449,11 +449,11 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 160);
                 MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (160 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgOscillo));
-                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgOscillo));
+                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgOscillo_));
+                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgOscillo_));
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
                 PFM_START_DMA2D();
-                currentAction.param3 = 1;
+                currentAction_.param3 = 1;
             }
             break;
         case 1:
@@ -465,16 +465,16 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
                 // Output is rgb565 (16 bits) and we fill A8 (8 bits) so we can divide the height by 2
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (50 | (160 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgOscillo));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgOscillo_));
                 PFM_START_DMA2D();
-                currentAction.actionType = 0;
-                tftDirtyBits |= TFT_PART_OSCILLO_BITS;
+                currentAction_.actionType = 0;
+                tftDirtyBits_ |= TFT_PART_OSCILLO_BITS;
             }
             break;
         }
         break;
     case TFT_DRAW_ALGO:
-        switch (currentAction.param3) {
+        switch (currentAction_.param3) {
         case 0:
             // Clear ALGO ON BackGround
             if (PFM_IS_DMA2D_READY()) {
@@ -483,24 +483,24 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(bgAlgo));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(bgAlgo_));
                 PFM_START_DMA2D();
 
-                currentAction.param3 = 1;
+                currentAction_.param3 = 1;
             }
             break;
         case 1:
-            this->tftAlgo->setBufferAdress(bgAlgo);
-            if (currentAction.param1 & 0x80) {
-                this->tftAlgo->drawDx7Algo(currentAction.param1 & 0x7f);
+            this->tftAlgo_->setBufferAdress(bgAlgo_);
+            if (currentAction_.param1 & 0x80) {
+                this->tftAlgo_->drawDx7Algo(currentAction_.param1 & 0x7f);
             } else {
-                this->tftAlgo->drawAlgo(currentAction.param1);
+                this->tftAlgo_->drawAlgo(currentAction_.param1);
             }
 
-            if (fgAlgoDirty) {
-                currentAction.param3 = 2;
+            if (fgAlgoDirty_) {
+                currentAction_.param3 = 2;
             } else {
-                currentAction.param3 = 3;
+                currentAction_.param3 = 3;
             }
             break;
         case 2:
@@ -513,11 +513,11 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
                 // 40 and not 80 because fgAlgo is a 8 bits buffer
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo_));
                 PFM_START_DMA2D();
 
-                fgAlgoDirty = false;
-                currentAction.param3 = 3;
+                fgAlgoDirty_ = false;
+                currentAction_.param3 = 3;
             }
 
             break;
@@ -530,37 +530,37 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 80);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )fgAlgo);
-                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgAlgo));
+                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )fgAlgo_);
+                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgAlgo_));
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
                 PFM_START_DMA2D();
 
-                tftDirtyBits |= TFT_PART_OSCILLO_BITS;
-                currentAction.actionType = 0;
+                tftDirtyBits_ |= TFT_PART_OSCILLO_BITS;
+                currentAction_.actionType = 0;
             }
             break;
         }
 
         break;
     case TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR:
-        this->tftAlgo->setFGBufferAdress(fgAlgo);
-        this->tftAlgo->highlightOperator(false, currentAction.param1);
+        this->tftAlgo_->setFGBufferAdress(fgAlgo_);
+        this->tftAlgo_->highlightOperator(false, currentAction_.param1);
 
         // Switch to draw_algo step 2
         // To copy ALGO to TFT
-        fgAlgoDirty = true;
-        currentAction.actionType = TFT_DRAW_ALGO;
-        currentAction.param3 = 3;
+        fgAlgoDirty_ = true;
+        currentAction_.actionType = TFT_DRAW_ALGO;
+        currentAction_.param3 = 3;
         break;
     case TFT_HIGHLIGHT_ALGO_OPERATOR:
-        this->tftAlgo->setFGBufferAdress(fgAlgo);
-        this->tftAlgo->highlightOperator(true, currentAction.param1);
+        this->tftAlgo_->setFGBufferAdress(fgAlgo_);
+        this->tftAlgo_->highlightOperator(true, currentAction_.param1);
 
         // Switch to draw_algo step 2
         // To copy ALGO to TFT
-        fgAlgoDirty = true;
-        currentAction.actionType = TFT_DRAW_ALGO;
-        currentAction.param3 = 3;
+        fgAlgoDirty_ = true;
+        currentAction_.actionType = TFT_DRAW_ALGO;
+        currentAction_.param3 = 3;
         break;
     case TFT_CLEAR_ALGO_FG:
         // Clear ALGO ON Foreground
@@ -571,88 +571,88 @@ void TftDisplay::tic(bool checkDisplayPower) {
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
             // 40 and not 80 because fgAlgo is a 8 bits buffer
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo_));
             PFM_START_DMA2D();
 
-            fgAlgoDirty = false;
-            currentAction.actionType = TFT_DRAW_ALGO;
-            currentAction.param3 = 3;
+            fgAlgoDirty_ = false;
+            currentAction_.actionType = TFT_DRAW_ALGO;
+            currentAction_.param3 = 3;
         }
         break;
     case TFT_HIGHTLIGHT_ALGO_IM:
-        this->tftAlgo->setFGBufferAdress(fgAlgo);
-        this->tftAlgo->highlightIM(true, currentAction.param1, currentAction.param4, currentAction.param5);
+        this->tftAlgo_->setFGBufferAdress(fgAlgo_);
+        this->tftAlgo_->highlightIM(true, currentAction_.param1, currentAction_.param4, currentAction_.param5);
 
         // Switch to draw_algo step 2
         // To copy ALGO to TFT
-        fgAlgoDirty = true;
-        currentAction.actionType = TFT_DRAW_ALGO;
-        currentAction.param3 = 3;
+        fgAlgoDirty_ = true;
+        currentAction_.actionType = TFT_DRAW_ALGO;
+        currentAction_.param3 = 3;
         break;
     case TFT_ERASE_HIGHTLIGHT_ALGO_IM:
-        this->tftAlgo->setFGBufferAdress(fgAlgo);
-        this->tftAlgo->highlightIM(false, currentAction.param1, currentAction.param4, currentAction.param5);
+        this->tftAlgo_->setFGBufferAdress(fgAlgo_);
+        this->tftAlgo_->highlightIM(false, currentAction_.param1, currentAction_.param4, currentAction_.param5);
 
         // Switch to draw_algo step 2
         // To copy ALGO to TFT
-        fgAlgoDirty = true;
-        currentAction.actionType = TFT_DRAW_ALGO;
-        currentAction.param3 = 3;
+        fgAlgoDirty_ = true;
+        currentAction_.actionType = TFT_DRAW_ALGO;
+        currentAction_.param3 = 3;
         break;
     case TFT_HIGHLIGHT_ALGO_FEEDBACK:
-        this->tftAlgo->setFGBufferAdress(fgAlgo);
-        this->tftAlgo->highlightFeedback(true, currentAction.param4, currentAction.param5);
+        this->tftAlgo_->setFGBufferAdress(fgAlgo_);
+        this->tftAlgo_->highlightFeedback(true, currentAction_.param4, currentAction_.param5);
 
         // Switch to draw_algo step 2
         // To copy ALGO to TFT
-        fgAlgoDirty = true;
-        currentAction.actionType = TFT_DRAW_ALGO;
-        currentAction.param3 = 3;
+        fgAlgoDirty_ = true;
+        currentAction_.actionType = TFT_DRAW_ALGO;
+        currentAction_.param3 = 3;
         break;
     case TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK:
-        this->tftAlgo->setFGBufferAdress(fgAlgo);
-        this->tftAlgo->highlightFeedback(false, currentAction.param4, currentAction.param5);
+        this->tftAlgo_->setFGBufferAdress(fgAlgo_);
+        this->tftAlgo_->highlightFeedback(false, currentAction_.param4, currentAction_.param5);
 
         // Switch to draw_algo step 2
         // To copy ALGO to TFT
-        fgAlgoDirty = true;
-        currentAction.actionType = TFT_DRAW_ALGO;
-        currentAction.param3 = 3;
+        fgAlgoDirty_ = true;
+        currentAction_.actionType = TFT_DRAW_ALGO;
+        currentAction_.param3 = 3;
         break;
     case TFT_DRAW_FILL_AREA:
         // Fill area of tftMemory defined by params
         if (PFM_IS_DMA2D_READY()) {
 
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_R2M);
-            WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[currentAction.param5]);
+            WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[currentAction_.param5]);
 
-            offset = currentAction.param1 + currentAction.param2 * 240;
+            offset = currentAction_.param1 + currentAction_.param2 * 240;
 
-            MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - currentAction.param3);
+            MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - currentAction_.param3);
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL),
-                    (currentAction.param4 | (currentAction.param3 << DMA2D_POSITION_NLR_PL)));
+                    (currentAction_.param4 | (currentAction_.param3 << DMA2D_POSITION_NLR_PL)));
             WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
 
             PFM_START_DMA2D();
 
-            setDirtyArea(currentAction.param2, currentAction.param4);
-            currentAction.actionType = 0;
+            setDirtyArea(currentAction_.param2, currentAction_.param4);
+            currentAction_.actionType = 0;
         }
         break;
     case TFT_RESTART_REFRESH:
-        tftRefreshing = true;
+        tftRefreshing_ = true;
         // start from the top
-        part = 0;
-        currentAction.actionType = 0;
+        part_ = 0;
+        currentAction_.actionType = 0;
         break;
     case TFT_PAUSE_REFRESH:
-        tftRefreshing = false;
-        currentAction.actionType = 0;
+        tftRefreshing_ = false;
+        currentAction_.actionType = 0;
         break;
     case TFT_WAITCYCLE:
-        currentAction.param2 --;
-        if (currentAction.param2 == 0) {
-            currentAction.actionType = 0;
+        currentAction_.param2 --;
+        if (currentAction_.param2 == 0) {
+            currentAction_.actionType = 0;
         }
         break;
     }
@@ -665,7 +665,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
  */
 bool TftDisplay::pushToTft() {
 
-    if (tftDirtyBits == 0 || !tftRefreshing) {
+    if (tftDirtyBits_ == 0 || !tftRefreshing_) {
         return false;
     }
 
@@ -677,13 +677,13 @@ bool TftDisplay::pushToTft() {
     // 4 max - can break before
     int p;
     for (p = 0; p < TFT_NUMBER_OF_PARTS ; p++) {
-        if ((tftDirtyBits & (1UL << part)) > 0) {
+        if ((tftDirtyBits_ & (1UL << part_)) > 0) {
             // Update TFT part
             ILI9341_Select();
 
 
-            uint16_t height = areaHeight[part];
-            uint16_t y = areaY[part];
+            uint16_t height = areaHeight_[part_];
+            uint16_t y = areaY_[part_];
 
             if (ILI9341_SetAddressWindow(y, y + height - 1) == HAL_OK) {
 
@@ -693,15 +693,15 @@ bool TftDisplay::pushToTft() {
                 __DSB();
 
                 if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
-                    tftDirtyBits &= ~(1UL << part);
-                    pushingPart = part;
-                    pushToTftInProgress = true;
+                    tftDirtyBits_ &= ~(1UL << part_);
+                    pushingPart_ = part_;
+                    pushToTftInProgress_ = true;
                 }
             }
-            part = (part + 1) % TFT_NUMBER_OF_PARTS;
+            part_ = (part_ + 1) % TFT_NUMBER_OF_PARTS;
             break;
         }
-        part = (part + 1) % TFT_NUMBER_OF_PARTS;
+        part_ = (part_ + 1) % TFT_NUMBER_OF_PARTS;
     }
 
 
@@ -710,28 +710,28 @@ bool TftDisplay::pushToTft() {
 
 void TftDisplay::pushToTftFinished() {
     ILI9341_Unselect();
-    pushToTftInProgress = false;
+    pushToTftInProgress_ = false;
 }
 
 void TftDisplay::pushToTftError() {
     // Keep the dirty bit set so the part is retried on the next push.
     ILI9341_Unselect();
-    pushToTftInProgress = false;
+    pushToTftInProgress_ = false;
 }
 
 void TftDisplay::setCursor(uint8_t x, uint16_t y) {
-    cursorX = x * TFT_BIG_CHAR_WIDTH;
-    cursorY = y * TFT_BIG_CHAR_HEIGHT;
+    cursorX_ = x * TFT_BIG_CHAR_WIDTH;
+    cursorY_ = y * TFT_BIG_CHAR_HEIGHT;
 }
 
 void TftDisplay::setCursorSmallChar(uint8_t x, uint16_t y) {
-    cursorX = x * TFT_SMALL_CHAR_WIDTH;
-    cursorY = y * TFT_SMALL_CHAR_HEIGHT;
+    cursorX_ = x * TFT_SMALL_CHAR_WIDTH;
+    cursorY_ = y * TFT_SMALL_CHAR_HEIGHT;
 }
 
 void TftDisplay::setCursorInPixel(uint8_t x, uint16_t y) {
-    cursorX = x;
-    cursorY = y;
+    cursorX_ = x;
+    cursorY_ = y;
 }
 
 void TftDisplay::clearMixerValues() {
@@ -742,13 +742,13 @@ void TftDisplay::clearMixerValues() {
     newAction.param3 = 80;
     newAction.param4 = 190;
     newAction.param5 = COLOR_BLACK;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
     // Clear info line
     newAction.param1 = 0;
     newAction.param2 = 50;
     newAction.param3 = 240;
     newAction.param4 = 20;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::clearMixerLabels() {
@@ -759,7 +759,7 @@ void TftDisplay::clearMixerLabels() {
     newAction.param3 = 160;
     newAction.param4 = 190;
     newAction.param5 = COLOR_BLACK;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 
@@ -768,8 +768,8 @@ void TftDisplay::clear() {
     newAction.actionType = TFT_DRAW_FILL_TFT;
     newAction.param3 = TFT_NUMBER_OF_PARTS - 1;
     newAction.param5 = COLOR_BLACK;
-    tftActions.insert(newAction);
-    bHasJustBeenCleared = true;
+    tftActions_.insert(newAction);
+    bHasJustBeenCleared_ = true;
 }
 
 void TftDisplay::print(float f) {
@@ -862,7 +862,7 @@ void TftDisplay::print(const char* str, TFT_COLOR color, TFT_COLOR bgColor) {
 }
 
 void TftDisplay::printSpaceTillEndOfLine() {
-    while (this->cursorX <= 240 - TFT_BIG_CHAR_WIDTH) {
+    while (this->cursorX_ <= 240 - TFT_BIG_CHAR_WIDTH) {
         print(' ');
     }
 }
@@ -918,8 +918,8 @@ void TftDisplay::printSmallChar(int n) {
 void TftDisplay::print(char c, TFT_COLOR color, TFT_COLOR bgColor) {
     TFTAction newAction;
     newAction.actionType = TFT_DISPLAY_ONE_CHAR;
-    newAction.param1 = cursorX;
-    newAction.param2 = cursorY;
+    newAction.param1 = cursorX_;
+    newAction.param2 = cursorY_;
     if ((c >= 32) && (c <= 32 + 94)) {
         newAction.param3 = c - 32;
     } else {
@@ -927,60 +927,60 @@ void TftDisplay::print(char c, TFT_COLOR color, TFT_COLOR bgColor) {
     }
     newAction.param4 = color;
     newAction.param5 = bgColor;
-    tftActions.insert(newAction);
-    cursorX += TFT_BIG_CHAR_WIDTH;
+    tftActions_.insert(newAction);
+    cursorX_ += TFT_BIG_CHAR_WIDTH;
 }
 
 void TftDisplay::print(char c) {
     TFTAction newAction;
     newAction.actionType = TFT_DISPLAY_ONE_CHAR;
-    newAction.param1 = cursorX;
-    newAction.param2 = cursorY;
+    newAction.param1 = cursorX_;
+    newAction.param2 = cursorY_;
     if ((c >= 32) && (c <= 32 + NUMBER_OF_CHARS)) {
         newAction.param3 = c - 32;
     } else {
         newAction.param3 = 3;
     }
-    newAction.param4 = charColor;
-    newAction.param5 = charBackgroundColor;
-    tftActions.insert(newAction);
-    cursorX += TFT_BIG_CHAR_WIDTH;
+    newAction.param4 = charColor_;
+    newAction.param5 = charBackgroundColor_;
+    tftActions_.insert(newAction);
+    cursorX_ += TFT_BIG_CHAR_WIDTH;
 }
 
 void TftDisplay::printSmallChar(char c) {
     TFTAction newAction;
     newAction.actionType = TFT_DISPLAY_ONE_SMALL_CHAR;
-    newAction.param1 = cursorX;
-    newAction.param2 = cursorY;
+    newAction.param1 = cursorX_;
+    newAction.param2 = cursorY_;
     if ((c >= 32) && (c < 32 + 97)) {
         newAction.param3 = c - 32;
     } else {
         newAction.param3 = 3;
     }
-    newAction.param4 = charColor;
-    newAction.param5 = charBackgroundColor;
-    tftActions.insert(newAction);
-    cursorX += TFT_SMALL_CHAR_WIDTH;
+    newAction.param4 = charColor_;
+    newAction.param5 = charBackgroundColor_;
+    tftActions_.insert(newAction);
+    cursorX_ += TFT_SMALL_CHAR_WIDTH;
 }
 
 void TftDisplay::oscilloRrefresh() {
-    float oscilloSampleReadPtr = oscilloSamplePeriod - oscilloPhaseIndexToUse;
+    float oscilloSampleReadPtr = oscilloSamplePeriod_ - oscilloPhaseIndexToUse_;
     bool saturate = false;
     int32_t maxYValue = 0;
-    float multiplier = olscilloYScale * 50.0f;
+    float multiplier = olscilloYScale_ * 50.0f;
     uint32_t total = 0;
     for (int x = 0; x < 160; x++) {
         // Use _usat on value before multiplying ?????
-        int8_t oValue = (int8_t) (oscilloFullPeriodSampl[(int) oscilloSampleReadPtr] * multiplier);
+        int8_t oValue = (int8_t) (oscilloFullPeriodSampl_[(int) oscilloSampleReadPtr] * multiplier);
         total += abs(oValue);
         if (unlikely(oValue > 50)) {
             saturate = true;
-            oscilloYValue[x] = 50;
+            oscilloYValue_[x] = 50;
         } else if (unlikely(oValue < -50)) {
             saturate = true;
-            oscilloYValue[x] = -50;
+            oscilloYValue_[x] = -50;
         } else {
-            oscilloYValue[x] = oValue;
+            oscilloYValue_[x] = oValue;
         }
 
         if (oValue > 0) {
@@ -993,36 +993,36 @@ void TftDisplay::oscilloRrefresh() {
             }
         }
 
-        oscilloSampleReadPtr += oscilloSampleInc;
-        if (oscilloSampleReadPtr > oscilloSamplePeriod) {
-            oscilloSampleReadPtr -= oscilloSamplePeriod;
+        oscilloSampleReadPtr += oscilloSampleInc_;
+        if (oscilloSampleReadPtr > oscilloSamplePeriod_) {
+            oscilloSampleReadPtr -= oscilloSamplePeriod_;
         }
     }
 
     // flatOscillo must be displayed only once
     if (total == 0) {
-        if (!flatOscilloAlreadyDisplayed) {
+        if (!flatOscilloAlreadyDisplayed_) {
             total = 1;
-            flatOscilloAlreadyDisplayed = true;
+            flatOscilloAlreadyDisplayed_ = true;
         }
     } else {
-        flatOscilloAlreadyDisplayed = false;
+        flatOscilloAlreadyDisplayed_ = false;
     }
 
     if (total > 0) {
         int indexMiddle = 50 * 160;
 
         for (int x = 0; x < 159; x++) {
-            if (oscilloYValue[x] < (oscilloYValue[x + 1] - 1)) {
-                for (int oy = oscilloYValue[x]; oy < oscilloYValue[x + 1]; oy++) {
-                    fgOscillo[indexMiddle + x + oy * 160] = 0xff;
+            if (oscilloYValue_[x] < (oscilloYValue_[x + 1] - 1)) {
+                for (int oy = oscilloYValue_[x]; oy < oscilloYValue_[x + 1]; oy++) {
+                    fgOscillo_[indexMiddle + x + oy * 160] = 0xff;
                 }
-            } else if (oscilloYValue[x] > (oscilloYValue[x + 1] + 1)) {
-                for (int oy = oscilloYValue[x]; oy > oscilloYValue[x + 1]; oy--) {
-                    fgOscillo[indexMiddle + x + oy * 160] = 0xff;
+            } else if (oscilloYValue_[x] > (oscilloYValue_[x + 1] + 1)) {
+                for (int oy = oscilloYValue_[x]; oy > oscilloYValue_[x + 1]; oy--) {
+                    fgOscillo_[indexMiddle + x + oy * 160] = 0xff;
                 }
             } else {
-                fgOscillo[indexMiddle + x + oscilloYValue[x] * 160] = 0xff;
+                fgOscillo_[indexMiddle + x + oscilloYValue_[x] * 160] = 0xff;
             }
         }
         // Ask for tft push and refresh
@@ -1032,19 +1032,19 @@ void TftDisplay::oscilloRrefresh() {
         //newAction.param1 = saturate ? 1 : 0;
         newAction.param1 = 0;
         newAction.param3 = 0;
-        tftActions.insert(newAction);
+        tftActions_.insert(newAction);
 
         // Dynamically adjust olscilloYScale
         if (saturate) {
-            olscilloYScale -= 1.0f;
+            olscilloYScale_ -= 1.0f;
         } else {
-            if (maxYValue < 25 && olscilloYScale < 8.0f) {
-                olscilloYScale += 1.0f;
+            if (maxYValue < 25 && olscilloYScale_ < 8.0f) {
+                olscilloYScale_ += 1.0f;
             }
         }
     }
     // We can start filling again the oscillo buffer
-	oscilloDataWritePtr = 0;
+	oscilloDataWritePtr_ = 0;
 }
 
 void TftDisplay::fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height, uint8_t color) {
@@ -1055,28 +1055,28 @@ void TftDisplay::fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height,
     newAction.param3 = width;
     newAction.param4 = height;
     newAction.param5 = color;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 
 }
 
 void TftDisplay::oscilloNewLowerFrequency(float lf) {
-    oscilloSamplePeriod = PREENFM_FREQUENCY / lf;
-    if (oscilloSamplePeriod > OSCILLO_BUFFER_SIZE) {
-        oscilloSamplePeriod = OSCILLO_BUFFER_SIZE;
+    oscilloSamplePeriod_ = PREENFM_FREQUENCY / lf;
+    if (oscilloSamplePeriod_ > OSCILLO_BUFFER_SIZE) {
+        oscilloSamplePeriod_ = OSCILLO_BUFFER_SIZE;
     }
-    oscilloSampleInc = (float) oscilloSamplePeriod / OSCILLO_WIDTH;
+    oscilloSampleInc_ = (float) oscilloSamplePeriod_ / OSCILLO_WIDTH;
 
     // oscilloPhaseIndexToUse = oscilloSamplePeriod - (oscilloPhaseIndex % ((int)oscilloSamplePeriod + 1));
-    int divInt = oscilloPhaseIndex / oscilloSamplePeriod;
+    int divInt = oscilloPhaseIndex_ / oscilloSamplePeriod_;
 
-    oscilloPhaseIndexToUse = oscilloPhaseIndex - divInt * oscilloSamplePeriod;
+    oscilloPhaseIndexToUse_ = oscilloPhaseIndex_ - divInt * oscilloSamplePeriod_;
 }
 
 void TftDisplay::oscilloRecord32Samples(float *samples) {
-    oscilloPhaseIndex += 32.0f;
-    if (oscilloDataWritePtr < oscilloSamplePeriod) {
+    oscilloPhaseIndex_ += 32.0f;
+    if (oscilloDataWritePtr_ < oscilloSamplePeriod_) {
         for (int r = 0; r < 32; r++) {
-            oscilloFullPeriodSampl[oscilloDataWritePtr++] = samples[r * 2];
+            oscilloFullPeriodSampl_[oscilloDataWritePtr_++] = samples[r * 2];
         }
     }
 }
@@ -1086,7 +1086,7 @@ void TftDisplay::drawAlgo(int algo) {
     newAction.actionType = TFT_DRAW_ALGO;
     newAction.param1 = algo;
     newAction.param3 = 0;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::drawDx7Algo(int algo) {
@@ -1094,17 +1094,17 @@ void TftDisplay::drawDx7Algo(int algo) {
     newAction.actionType = TFT_DRAW_ALGO;
     newAction.param1 = algo | 0x80;
     newAction.param3 = 0;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 bool TftDisplay::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
-    return tftAlgo->getDx7Feedback(algo, opSource, opDest);
+    return tftAlgo_->getDx7Feedback(algo, opSource, opDest);
 }
 
 void TftDisplay::clearAlgoFG() {
     TFTAction newAction;
     newAction.actionType = TFT_CLEAR_ALGO_FG;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::highlightOperator(int op) {
@@ -1112,7 +1112,7 @@ void TftDisplay::highlightOperator(int op) {
     newAction.actionType = TFT_HIGHLIGHT_ALGO_OPERATOR;
     newAction.param1 = op;
     newAction.param3 = 0;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::eraseHighlightOperator(int op) {
@@ -1120,7 +1120,7 @@ void TftDisplay::eraseHighlightOperator(int op) {
     newAction.actionType = TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR;
     newAction.param1 = op;
     newAction.param3 = 0;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
@@ -1130,7 +1130,7 @@ void TftDisplay::highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
     newAction.param3 = 0;
     newAction.param4 = opSource;
     newAction.param5 = opDest;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
@@ -1140,7 +1140,7 @@ void TftDisplay::eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDes
     newAction.param3 = 0;
     newAction.param4 = opSource;
     newAction.param5 = opDest;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::highlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
@@ -1150,7 +1150,7 @@ void TftDisplay::highlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDe
     newAction.param3 = 0;
     newAction.param4 = opSource;
     newAction.param5 = opDest;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::eraseHighlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
@@ -1160,19 +1160,19 @@ void TftDisplay::eraseHighlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t
     newAction.param3 = 0;
     newAction.param4 = opSource;
     newAction.param5 = opDest;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::restartRefreshTft() {
     TFTAction newAction;
     newAction.actionType = TFT_RESTART_REFRESH;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 void TftDisplay::pauseRefresh() {
     TFTAction newAction;
     newAction.actionType = TFT_PAUSE_REFRESH;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 
@@ -1180,7 +1180,7 @@ void TftDisplay::waitCycle(uint16_t waitCycle) {
     TFTAction newAction;
     newAction.actionType = TFT_WAITCYCLE;
     newAction.param2 = waitCycle;
-    tftActions.insert(newAction);
+    tftActions_.insert(newAction);
 }
 
 #define BUTTON_WIDTH 72

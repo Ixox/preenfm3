@@ -70,7 +70,7 @@ Encoders::Encoders() {
 Encoders::~Encoders() {}
 
 void Encoders::clearState() {
-    firstListener = 0;
+    firstListener_ = 0;
 
     for (int k = 0; k < NUMBER_OF_ENCODERS; k++) {
         lastMove_[k] = LAST_MOVE_NONE;

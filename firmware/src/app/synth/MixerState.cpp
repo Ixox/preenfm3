@@ -86,19 +86,19 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     buffer[index++] = (char)(100.0f * reverbLevel_) ;
 
 
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_DECAY]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_SIZE]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_DIFFUSION]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_DAMPING]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_LFODEPTH]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_LFOSPEED]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_INPUTBASE]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_LOOPHP]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_NOTCHBASE]);
-    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_DECAY]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_SIZE]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_DAMPING]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_LOOPHP]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE]);
+    buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD]);
 
     *size = index;
 }
@@ -538,19 +538,19 @@ void MixerState::restoreFullStateVersion6(char *buffer) {
     reverbLevel_ = .01f * buffer[index++] ;
 
     // No loop in case we add/remove params later
-    fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_DECAY] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_SIZE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_DECAY] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_SIZE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
 
     fxBus_.paramChanged();
 }
@@ -614,19 +614,19 @@ void MixerState::restoreFullStateVersion7(char *buffer) {
     reverbLevel_ = .01f * buffer[index++] ;
 
     // No loop in case we add/remove params later
-    fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_DECAY] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_SIZE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_DECAY] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_SIZE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
 
     fxBus_.paramChanged();
 }

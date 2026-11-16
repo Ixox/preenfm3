@@ -23,37 +23,37 @@ float expValues[] = {0, 0.0594630944, 0.1224620483, 0.189207115, 0.2599210499, 0
 
 void LfoStepSeq::init(struct StepSequencerParams* stepSeqParam, struct StepSequencerSteps *stepSeqSteps, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
 	Lfo::init(matrix, source, (DestinationEnum)0);
-    this->seqParams = stepSeqParam;
-    this->seqSteps = stepSeqSteps;
-    this->matrixGateDestination = dest;
-	gated = false;
+    this->seqParams_ = stepSeqParam;
+    this->seqSteps_ = stepSeqSteps;
+    this->matrixGateDestination_ = dest;
+	gated_ = false;
 	valueChanged(0);
-	ticks = 1536;
+	ticks_ = 1536;
 	midiClock(0, true);
 }
 
 void LfoStepSeq::midiClock(int songPosition, bool computeStep) {
 
-	ticks &= 0x7ff;
+	ticks_ &= 0x7ff;
 
-    switch ((int)this->seqParams->bpm)  {
+    switch ((int)this->seqParams_->bpm)  {
 	case LFO_SEQ_MIDICLOCK_DIV_4:
 		// Midi Clock  / 4
 		if ((songPosition & 0x1)==0) {
 			if (computeStep) {
-                phaseStep = 0.5f * invTab[ticks];
-                ticks = 0;
+                phaseStep_ = 0.5f * invTab[ticks_];
+                ticks_ = 0;
 			}
-            phase = (float)(songPosition & 0x3f) * .25f;
+            phase_ = (float)(songPosition & 0x3f) * .25f;
 		}
 		break;
 	case LFO_SEQ_MIDICLOCK_DIV_2:
 		if ((songPosition & 0x1)==0) {
 			if (computeStep) {
-                phaseStep = 1.0f * invTab[ticks];
-				ticks = 0;
+                phaseStep_ = 1.0f * invTab[ticks_];
+				ticks_ = 0;
 			}
-			phase = (float)(songPosition & 0x1f) * .5f;
+			phase_ = (float)(songPosition & 0x1f) * .5f;
 		}
 		break;
 	case LFO_SEQ_MIDICLOCK:
@@ -61,28 +61,28 @@ void LfoStepSeq::midiClock(int songPosition, bool computeStep) {
 			if (computeStep) {
 			    // We're called evey 2 ticks which is half a quarter
 			    // We want to move forward 4 beats per quarter so : 2 beats per half a quarter
-                phaseStep = 2.0f * invTab[ticks];
-				ticks = 0;
+                phaseStep_ = 2.0f * invTab[ticks_];
+				ticks_ = 0;
 			}
-			phase = (songPosition & 0xF);
+			phase_ = (songPosition & 0xF);
 		}
 		break;
 	case LFO_SEQ_MIDICLOCK_TIME_2:
 		if ((songPosition & 0x1)==0) {
 			if (computeStep) {
-                phaseStep = 4.0f * invTab[ticks];
-				ticks = 0;
+                phaseStep_ = 4.0f * invTab[ticks_];
+				ticks_ = 0;
 			}
-			phase = ((songPosition << 1) & 0xF);
+			phase_ = ((songPosition << 1) & 0xF);
 		}
 		break;
 	case LFO_SEQ_MIDICLOCK_TIME_4:
 		if ((songPosition & 0x1)==0) {
 			if (computeStep) {
-                phaseStep = 8.0f * invTab[ticks];
-				ticks = 0;
+                phaseStep_ = 8.0f * invTab[ticks_];
+				ticks_ = 0;
 			}
-            phase = ((songPosition << 1) & 0xF);
+            phase_ = ((songPosition << 1) & 0xF);
 		}
 		break;
 	}
@@ -91,61 +91,61 @@ void LfoStepSeq::midiClock(int songPosition, bool computeStep) {
 
 void LfoStepSeq::valueChanged(int encoder) {
 	if (encoder < 2) {
-		if (seqParams->bpm < LFO_SEQ_MIDICLOCK_DIV_4 ) {
+		if (seqParams_->bpm < LFO_SEQ_MIDICLOCK_DIV_4 ) {
 		    // bpm / 60 = Herz
 		    // We have 4 tick per beat so * 4
 		    // 4/60 = .066666
-			phaseStep = seqParams->bpm * 0.066666666666666f * PREENFM_FREQUENCY_INVERSED_LFO;
+			phaseStep_ = seqParams_->bpm * 0.066666666666666f * PREENFM_FREQUENCY_INVERSED_LFO;
 		}
 	}
 }
 
 void LfoStepSeq::nextValueInMatrix() {
 
-	ticks++;
+	ticks_++;
 
-	phase += phaseStep;
-	int phaseInteger = phase;
-	phase -= phaseInteger;
-	float phaseDecimal = phase;
+	phase_ += phaseStep_;
+	int phaseInteger = phase_;
+	phase_ -= phaseInteger;
+	float phaseDecimal = phase_;
 	phaseInteger &= 0xf; // modulo 16
-	phase += phaseInteger;
+	phase_ += phaseInteger;
 
 	// Add gate and matrix value
-	float gatePlusMatrix = seqParams->gate + (this->matrix->getDestination(matrixGateDestination));
+	float gatePlusMatrix = seqParams_->gate + (this->matrix_->getDestination(matrixGateDestination_));
 
 	// We'll reach the new value phaseStep by phaseStep to reduce audio click !
 	if (gatePlusMatrix <= 0) {
-		target = 0;
+		target_ = 0;
 	} else if (gatePlusMatrix < 1.0) {
 		// Gated ?
-		if (!gated && phaseDecimal > gatePlusMatrix) {
-			target = 0;
-			gated = true;
+		if (!gated_ && phaseDecimal > gatePlusMatrix) {
+			target_ = 0;
+			gated_ = true;
 		}
 		// End of gate ?
-		if (gated && phaseDecimal < gatePlusMatrix) {
-			target = seqSteps->steps[(int)phase]; // 16 steps
-			gated = false;
+		if (gated_ && phaseDecimal < gatePlusMatrix) {
+			target_ = seqSteps_->steps[(int)phase_]; // 16 steps
+			gated_ = false;
 		}
 	} else {
-		target = seqSteps->steps[(int)phase];
+		target_ = seqSteps_->steps[(int)phase_];
 	}
 
-	if (currentValue < target) {
-		currentValue++;
+	if (currentValue_ < target_) {
+		currentValue_++;
 	}
-	if (currentValue > target) {
-		currentValue--;
+	if (currentValue_ > target_) {
+		currentValue_--;
 	}
 	//matrix->setSource(source, expValues[currentValue]);
-	matrix->setSource((enum SourceEnum)source, expValues[currentValue]);
+	matrix_->setSource((enum SourceEnum)source_, expValues[currentValue_]);
 }
 
 void LfoStepSeq::noteOn() {
-	if (seqParams->bpm < LFO_SEQ_MIDICLOCK_DIV_4) {
-		phase = 0;
-		target = seqSteps->steps[0];
+	if (seqParams_->bpm < LFO_SEQ_MIDICLOCK_DIV_4) {
+		phase_ = 0;
+		target_ = seqSteps_->steps[0];
 	}
 }
 

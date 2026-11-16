@@ -31,53 +31,53 @@ public:
 	void valueChanged(int encoder) {
         switch (encoder) {
         case 0:
-            stateInc[ENV_STATE_ON_A] = 0.0008f / (envParams->attack + 0.0001);
+            stateInc_[ENV_STATE_ON_A] = 0.0008f / (envParams_->attack + 0.0001);
             break;
         case 1:
-            stateInc[ENV_STATE_ON_D] = 0.0008f / (envParams->decay + 0.0001);
+            stateInc_[ENV_STATE_ON_D] = 0.0008f / (envParams_->decay + 0.0001);
             break;
         case 2:
-            stateTarget[ENV_STATE_ON_D] =  envParams->sustain;
-            stateTarget[ENV_STATE_ON_S] =  envParams->sustain;
+            stateTarget_[ENV_STATE_ON_D] =  envParams_->sustain;
+            stateTarget_[ENV_STATE_ON_S] =  envParams_->sustain;
             break;
         case 3:
-            stateInc[ENV_STATE_ON_R] = 0.0008f / (envParams->release + 0.0001);
+            stateInc_[ENV_STATE_ON_R] = 0.0008f / (envParams_->release + 0.0001);
             break;
         }	}
 
     void newState() {
 
-        if (env.envState == ENV_STATE_DEAD) {
-            env.currentValue = 0;
+        if (env_.envState == ENV_STATE_DEAD) {
+            env_.currentValue = 0;
         }
-        env.previousStateValue = env.currentValue;
-        env.nextStateValue = stateTarget[env.envState];
-        env.currentPhase = 0;
+        env_.previousStateValue = env_.currentValue;
+        env_.nextStateValue = stateTarget_[env_.envState];
+        env_.currentPhase = 0;
     }
 
 
     void nextValueInMatrix() {
-        env.currentPhase += stateInc[env.envState];
+        env_.currentPhase += stateInc_[env_.envState];
 
-        if (unlikely(env.currentPhase  >= 1.0f)) {
-            env.currentValue = env.nextStateValue;
-            env.envState++;
+        if (unlikely(env_.currentPhase  >= 1.0f)) {
+            env_.currentValue = env_.nextStateValue;
+            env_.envState++;
             newState();
-        } else if (likely(stateInc[env.envState] > 0)) {
-            env.currentValue = env.previousStateValue * (1- env.currentPhase) + env.nextStateValue * env.currentPhase;
+        } else if (likely(stateInc_[env_.envState] > 0)) {
+            env_.currentValue = env_.previousStateValue * (1- env_.currentPhase) + env_.nextStateValue * env_.currentPhase;
         }
 
-		matrix->setSource((enum SourceEnum) source, env.currentValue);
+		matrix_->setSource((enum SourceEnum) source_, env_.currentValue);
 	}
 
 	void noteOn() {
-        env.currentValue = 0;
-        env.envState = ENV_STATE_ON_A;
+        env_.currentValue = 0;
+        env_.envState = ENV_STATE_ON_A;
         newState();
 	}
 
 	void noteOff() {
-		env.envState = ENV_STATE_ON_R;
+		env_.envState = ENV_STATE_ON_R;
 		newState();
 	}
 
@@ -86,12 +86,12 @@ public:
 
 private:
     // target values of ADSR
-    float stateTarget[ENV_NUMBER_OF_STATES];
+    float stateTarget_[ENV_NUMBER_OF_STATES];
     // float
-    float stateInc[ENV_NUMBER_OF_STATES];
+    float stateInc_[ENV_NUMBER_OF_STATES];
 
-    EnvelopeLfoParams* envParams;
-	EnvData env;
+    EnvelopeLfoParams* envParams_;
+	EnvData env_;
 };
 
 #endif /* LFOENV_H_ */

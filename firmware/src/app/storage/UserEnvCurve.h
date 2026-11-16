@@ -41,9 +41,9 @@ private:
     void normalize(float *buffer, int numberOfSamples);
     int numberOfSampleError(int f);
 
-    int numberOfSample;
-    char userEnvCurveNames[4][5];
-    int floatRead;
+    int numberOfSample_;
+    char userEnvCurveNames_[4][5];
+    int floatRead_;
 };
 
 #endif /* USERCURVES_H_ */

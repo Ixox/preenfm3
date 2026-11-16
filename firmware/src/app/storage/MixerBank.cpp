@@ -43,24 +43,24 @@ MixerBank::~MixerBank() {
 
 void MixerBank::init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3,
         Timbre *timbre4, Timbre *timbre5, Timbre *timbre6) {
-    this->timbre[0] = timbre1;
-    this->timbre[1] = timbre2;
-    this->timbre[2] = timbre3;
-    this->timbre[3] = timbre4;
-    this->timbre[4] = timbre5;
-    this->timbre[5] = timbre6;
+    this->timbre_[0] = timbre1;
+    this->timbre_[1] = timbre2;
+    this->timbre_[2] = timbre3;
+    this->timbre_[3] = timbre4;
+    this->timbre_[4] = timbre5;
+    this->timbre_[5] = timbre6;
 }
 
 void MixerBank::setMixerState(struct MixerState* mixerState) {
-    this->mixerState = mixerState;
+    this->mixerState_ = mixerState;
 }
 
 void MixerBank::setSequencer(Sequencer* sequencer) {
-    this->sequencer = sequencer;
+    this->sequencer_ = sequencer;
 }
 
 void MixerBank::setScalaFile(ScalaFile* scalaFile) {
-    this->scalaFile = scalaFile;
+    this->scalaFile_ = scalaFile;
 }
 
 const char* MixerBank::getFolderName() {
@@ -105,7 +105,7 @@ bool MixerBank::saveDefaultMixer() {
     FRESULT fatFSResult = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_OPEN_ALWAYS | FA_WRITE);
     if (fatFSResult == FR_OK) {
         f_lseek(&mixerFile, 0);
-        savedOK = saveMixerData(&mixerFile, 0, this->mixerState);
+        savedOK = saveMixerData(&mixerFile, 0, this->mixerState_);
 
         f_close(&mixerFile);
     } else {
@@ -130,8 +130,8 @@ bool MixerBank::saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerS
         for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
             slot[p] = 0;
         }
-        this->timbre[t]->getStorageBlob(slot, ALIGNED_PATCH_SIZE - 5);
-        *(uint32_t*) (&slot[ALIGNED_PATCH_SIZE - 5]) = this->timbre[t]->getStorageMagic();
+        this->timbre_[t]->getStorageBlob(slot, ALIGNED_PATCH_SIZE - 5);
+        *(uint32_t*) (&slot[ALIGNED_PATCH_SIZE - 5]) = this->timbre_[t]->getStorageMagic();
     }
     f_lseek(file, mixerNumber * FULL_MIXER_SIZE);
     f_write(file, (void*) storageBuffer, ALIGNED_MIXER_SIZE + ALIGNED_PATCH_SIZE * NUMBER_OF_TIMBRES, &byteWritten) ;
@@ -150,36 +150,36 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
 
     f_lseek(file, mixerNumber * FULL_MIXER_SIZE);
     f_read(file, storageBuffer, MIXER_SIZE, &byteRead);
-    mixerState->restoreFullState(storageBuffer);
+    mixerState_->restoreFullState(storageBuffer);
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         f_lseek(file, mixerNumber * FULL_MIXER_SIZE + ALIGNED_MIXER_SIZE + t * ALIGNED_PATCH_SIZE);
         result = f_read(file, storageBuffer, ALIGNED_PATCH_SIZE, &byteRead);
         if (result == FR_OK && byteRead == ALIGNED_PATCH_SIZE) {
             uint32_t version = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
-            if (this->timbre[t]->loadStorageBlob((const uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5, version)) {
-                mixerState->instrumentState_[t].engine = this->timbre[t]->getEngine();
+            if (this->timbre_[t]->loadStorageBlob((const uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5, version)) {
+                mixerState_->instrumentState_[t].engine = this->timbre_[t]->getEngine();
 
                 // Init scala scale if enabled
-                if (mixerState->instrumentState_[t].scalaEnable == 1) {
-                    if (scalaFile->loadScalaScale(mixerState, t) == 0) {
+                if (mixerState_->instrumentState_[t].scalaEnable == 1) {
+                    if (scalaFile_->loadScalaScale(mixerState_, t) == 0) {
                         // could not find the asked scala scale
-                        mixerState->instrumentState_[t].scalaEnable = 0;
+                        mixerState_->instrumentState_[t].scalaEnable = 0;
                         for (int c = 0; c < 12; c++) {
-                            mixerState->instrumentState_[t].scalaScaleFileName[c] = 0;
+                            mixerState_->instrumentState_[t].scalaScaleFileName[c] = 0;
                         }
-                        mixerState->instrumentState_[t].scaleScaleNumber = 0;
+                        mixerState_->instrumentState_[t].scaleScaleNumber = 0;
                     }
                 }
             } else {
-                this->timbre[t]->sharedParams().presetName[0] = '#';
-                this->timbre[t]->sharedParams().presetName[1] = '#';
-                this->timbre[t]->sharedParams().presetName[2] = 0;
+                this->timbre_[t]->sharedParams().presetName[0] = '#';
+                this->timbre_[t]->sharedParams().presetName[1] = '#';
+                this->timbre_[t]->sharedParams().presetName[2] = 0;
             }
         } else {
-            this->timbre[t]->sharedParams().presetName[0] = '#';
-            this->timbre[t]->sharedParams().presetName[1] = '#';
-            this->timbre[t]->sharedParams().presetName[2] = 0;
+            this->timbre_[t]->sharedParams().presetName[0] = '#';
+            this->timbre_[t]->sharedParams().presetName[1] = '#';
+            this->timbre_[t]->sharedParams().presetName[2] = 0;
         }
     }
     return true;
@@ -233,7 +233,7 @@ void MixerBank::createMixerBank(const char* name) {
         tft.print(NUMBER_OF_MIXERS_PER_BANK);
 
 
-        mixerState->getFullDefaultState(storageBuffer, &defaultMixerSize, mixerNumber + 1);
+        mixerState_->getFullDefaultState(storageBuffer, &defaultMixerSize, mixerNumber + 1);
         f_write(&mixerFile, (void*) storageBuffer, ALIGNED_MIXER_SIZE + ALIGNED_PATCH_SIZE * NUMBER_OF_TIMBRES, &byteWritten);
     }
     f_close(&mixerFile);
@@ -258,22 +258,22 @@ const char* MixerBank::loadMixerName(const struct PFM3File* mixer, int mixerNumb
     load(fullBankName, FULL_MIXER_SIZE * mixerNumber, (void*) storageBuffer, 16);
     char* presetNameBuffer =  MixerState::getMixNameFromFile(storageBuffer);
     for (int p = 0; p < 12; p++) {
-        presetName[p] = presetNameBuffer[p];
+        presetName_[p] = presetNameBuffer[p];
     }
-    presetName[12] = 0;
-    return presetName;
+    presetName_[12] = 0;
+    return presetName_;
 }
 
 bool MixerBank::saveMixer(const struct PFM3File* mixer, int mixerNumber, char* mixerName) {
     const char* fullBankName = getFullName(mixer->name);
 
-    fsu_->copy(this->mixerState->mixName_, mixerName, 12);
+    fsu_->copy(this->mixerState_->mixName_, mixerName, 12);
 
     FRESULT result = f_open(&mixerFile, fullBankName, FA_WRITE);
     if (result == FR_OK) {
         // Point to asked mixer
         f_lseek(&mixerFile, FULL_MIXER_SIZE * mixerNumber );
-        saveMixerData(&mixerFile, mixerNumber, this->mixerState);
+        saveMixerData(&mixerFile, mixerNumber, this->mixerState_);
         f_close(&mixerFile);
     } else {
         return false;

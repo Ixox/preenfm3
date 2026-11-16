@@ -44,15 +44,15 @@ uint8_t sysexBuffer[SYSEX_BUFFER_SIZE];
 
 
 MidiDecoder::MidiDecoder() {
-    currentEventState.eventState = MIDI_EVENT_WAITING;
-    currentEventState.index = 0;
-    this->isExternalMidiClockStarted = false;
-    this->midiClockCpt = 0;
-    this->runningStatus = 0;
+    currentEventState_.eventState = MIDI_EVENT_WAITING;
+    currentEventState_.index = 0;
+    this->isExternalMidiClockStarted_ = false;
+    this->midiClockCpt_ = 0;
+    this->runningStatus_ = 0;
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        omniOn[t] = false;
-        bankNumber[t] = 0;
-        bankNumberLSB[t] = 0;
+        omniOn_[t] = false;
+        bankNumber_[t] = 0;
+        bankNumberLSB_[t] = 0;
     }
 
     for (int k = 0; k < 64; k++) {
@@ -66,11 +66,11 @@ MidiDecoder::~MidiDecoder() {
 }
 
 void MidiDecoder::setSynth(Synth* synth) {
-    this->synth = synth;
+    this->synth_ = synth;
 }
 
 void MidiDecoder::setVisualInfo(VisualInfo *visualInfo) {
-    this->visualInfo = visualInfo;
+    this->visualInfo_ = visualInfo;
 }
 
 void MidiDecoder::newByte(unsigned char byte) {
@@ -78,57 +78,57 @@ void MidiDecoder::newByte(unsigned char byte) {
     if (byte >= 0xF8) {
         switch (byte) {
         case MIDI_CLOCK:
-            this->midiClockCpt++;
-            this->synth->midiTick(true);
-            if (unlikely(this->midiClockCpt == 6)) {
-                if (this->isExternalMidiClockStarted) {
-                    this->songPosition++;
+            this->midiClockCpt_++;
+            this->synth_->midiTick(true);
+            if (unlikely(this->midiClockCpt_ == 6)) {
+                if (this->isExternalMidiClockStarted_) {
+                    this->songPosition_++;
                 }
-                this->midiClockCpt = 0;
-                this->synth->midiClockSongPositionStep(this->songPosition);
+                this->midiClockCpt_ = 0;
+                this->synth_->midiClockSongPositionStep(this->songPosition_);
 
-                if (unlikely((this->songPosition & 0x3) == 0)) {
-                    this->visualInfo->midiClock(true);
+                if (unlikely((this->songPosition_ & 0x3) == 0)) {
+                    this->visualInfo_->midiClock(true);
                 }
-                if (unlikely((this->songPosition & 0x3) == 0x2)) {
-                    this->visualInfo->midiClock(false);
+                if (unlikely((this->songPosition_ & 0x3) == 0x2)) {
+                    this->visualInfo_->midiClock(false);
                 }
             }
             break;
         case MIDI_START:
-            if (!this->isExternalMidiClockStarted) {
-                this->isExternalMidiClockStarted = true;
-                this->songPosition = 0;
-                this->midiClockCpt = 0;
-                this->synth->midiClockStart(true);
+            if (!this->isExternalMidiClockStarted_) {
+                this->isExternalMidiClockStarted_ = true;
+                this->songPosition_ = 0;
+                this->midiClockCpt_ = 0;
+                this->synth_->midiClockStart(true);
             }
             break;
         case MIDI_CONTINUE:
-            if (!this->isExternalMidiClockStarted) {
-                this->isExternalMidiClockStarted = true;
-                this->midiClockCpt = 0;
-                this->synth->midiClockContinue(this->songPosition, true);
+            if (!this->isExternalMidiClockStarted_) {
+                this->isExternalMidiClockStarted_ = true;
+                this->midiClockCpt_ = 0;
+                this->synth_->midiClockContinue(this->songPosition_, true);
             }
             break;
         case MIDI_STOP:
-            if (this->isExternalMidiClockStarted) {
-                this->isExternalMidiClockStarted = false;
-                this->synth->midiClockStop(true);
-                this->visualInfo->midiClock(false);
+            if (this->isExternalMidiClockStarted_) {
+                this->isExternalMidiClockStarted_ = false;
+                this->synth_->midiClockStop(true);
+                this->visualInfo_->midiClock(false);
             }
             break;
         }
     } else {
-        switch (currentEventState.eventState) {
+        switch (currentEventState_.eventState) {
         case MIDI_EVENT_WAITING:
             if (unlikely(byte >= 0x80)) {
                 // Running status is cleared later in newMEssageType() if byte >= 0xF0
-                this->runningStatus = byte;
+                this->runningStatus_ = byte;
                 newMessageType(byte);
             } else {
                 // midi source use running status...
-                if (this->runningStatus > 0) {
-                    newMessageType(this->runningStatus);
+                if (this->runningStatus_ > 0) {
+                    newMessageType(this->runningStatus_);
                     newMessageData(byte);
                 }
             }
@@ -137,18 +137,18 @@ void MidiDecoder::newByte(unsigned char byte) {
             newMessageData(byte);
             break;
         case MIDI_EVENT_SYSEX:
-            if (likely(currentEventState.index < SYSEX_BUFFER_SIZE)) {
-                sysexBuffer[currentEventState.index++] = byte;
+            if (likely(currentEventState_.index < SYSEX_BUFFER_SIZE)) {
+                sysexBuffer[currentEventState_.index++] = byte;
             }
             if (byte == MIDI_SYSEX_END) {
-                if (currentEventState.index < SYSEX_BUFFER_SIZE) {
+                if (currentEventState_.index < SYSEX_BUFFER_SIZE) {
                     // End of sysex =>Analyse Sysex
-                    if (this->analyseSysexBuffer(sysexBuffer, currentEventState.index) == 1) {
-                        currentEventState.eventState = MIDI_EVENT_COMPLETE;
+                    if (this->analyseSysexBuffer(sysexBuffer, currentEventState_.index) == 1) {
+                        currentEventState_.eventState = MIDI_EVENT_COMPLETE;
                     }
                 }
-                currentEventState.eventState = MIDI_EVENT_WAITING;
-                currentEventState.index = 0;
+                currentEventState_.eventState = MIDI_EVENT_WAITING;
+                currentEventState_.index = 0;
             }
             break;
         }
@@ -156,49 +156,49 @@ void MidiDecoder::newByte(unsigned char byte) {
 }
 
 void MidiDecoder::newMessageData(unsigned char byte) {
-    currentEvent.value[currentEventState.index++] = byte;
-    if (currentEventState.index == currentEventState.numberOfBytes) {
-        midiEventReceived(currentEvent);
-        currentEventState.eventState = MIDI_EVENT_WAITING;
-        currentEventState.index = 0;
+    currentEvent_.value[currentEventState_.index++] = byte;
+    if (currentEventState_.index == currentEventState_.numberOfBytes) {
+        midiEventReceived(currentEvent_);
+        currentEventState_.eventState = MIDI_EVENT_WAITING;
+        currentEventState_.index = 0;
     }
 }
 
 void MidiDecoder::newMessageType(unsigned char byte) {
-    currentEvent.eventType = (EventType) (byte & 0xf0);
-    currentEvent.channel = byte & 0x0f;
+    currentEvent_.eventType = (EventType) (byte & 0xf0);
+    currentEvent_.channel = byte & 0x0f;
 
-    switch (currentEvent.eventType) {
+    switch (currentEvent_.eventType) {
     case MIDI_NOTE_OFF:
     case MIDI_NOTE_ON:
     case MIDI_CONTROL_CHANGE:
     case MIDI_PITCH_BEND:
     case MIDI_POLY_AFTER_TOUCH:
-        currentEventState.numberOfBytes = 2;
-        currentEventState.eventState = MIDI_EVENT_IN_PROGRESS;
+        currentEventState_.numberOfBytes = 2;
+        currentEventState_.eventState = MIDI_EVENT_IN_PROGRESS;
         break;
     case MIDI_AFTER_TOUCH:
     case MIDI_PROGRAM_CHANGE:
-        currentEventState.numberOfBytes = 1;
-        currentEventState.eventState = MIDI_EVENT_IN_PROGRESS;
+        currentEventState_.numberOfBytes = 1;
+        currentEventState_.eventState = MIDI_EVENT_IN_PROGRESS;
         break;
     case MIDI_SYSTEM_COMMON:
-        this->runningStatus = 0;
+        this->runningStatus_ = 0;
         switch (byte) {
         case MIDI_SYSEX:
-            currentEventState.eventState = MIDI_EVENT_SYSEX;
-            currentEventState.index = 0;
+            currentEventState_.eventState = MIDI_EVENT_SYSEX;
+            currentEventState_.index = 0;
             break;
         case MIDI_SONG_POSITION:
-            currentEvent.eventType = MIDI_SONG_POSITION;
+            currentEvent_.eventType = MIDI_SONG_POSITION;
             // Channel hack to make it accepted
-            if (this->synthState_->mixerState.instrumentState_[0].midiChannel == 0) {
-                currentEvent.channel = 0;
+            if (this->synthState_->mixerState_.instrumentState_[0].midiChannel == 0) {
+                currentEvent_.channel = 0;
             } else {
-                currentEvent.channel = this->synthState_->mixerState.instrumentState_[0].midiChannel - 1;
+                currentEvent_.channel = this->synthState_->mixerState_.instrumentState_[0].midiChannel - 1;
             }
-            currentEventState.numberOfBytes = 2;
-            currentEventState.eventState = MIDI_EVENT_IN_PROGRESS;
+            currentEventState_.numberOfBytes = 2;
+            currentEventState_.eventState = MIDI_EVENT_IN_PROGRESS;
             break;
         }
         break;
@@ -213,14 +213,14 @@ void MidiDecoder::newMessageType(unsigned char byte) {
 void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
     int timbreIndex = 0;
     int timbres[6];
-    bool isInst1MPE = this->synthState_->mixerState.MPE_inst1_ > 0;
+    bool isInst1MPE = this->synthState_->mixerState_.MPE_inst1_ > 0;
 
     if (unlikely(isInst1MPE)) {
     	// Special MPE Case
     	midiEventForInstrument1MPE(midiEvent);
     }
 
-    if (unlikely(midiEvent.channel == (this->synthState_->mixerState.globalChannel_ - 1))) {
+    if (unlikely(midiEvent.channel == (this->synthState_->mixerState_.globalChannel_ - 1))) {
         // Midi global => all timbres
     	// add instrument 1 if not MPE
     	if (likely(!isInst1MPE)) {
@@ -231,34 +231,34 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
         timbres[timbreIndex++] = 3;
         timbres[timbreIndex++] = 4;
         timbres[timbreIndex++] = 5;
-    } else if (unlikely(midiEvent.channel == (this->synthState_->mixerState.currentChannel_ - 1))) {
+    } else if (unlikely(midiEvent.channel == (this->synthState_->mixerState_.currentChannel_ - 1))) {
         // Midi current
-        timbres[timbreIndex++] = currentTimbre;
+        timbres[timbreIndex++] = currentTimbre_;
     } else {
-        if (omniOn[0] || this->synthState_->mixerState.instrumentState_[0].midiChannel == 0
-                || (this->synthState_->mixerState.instrumentState_[0].midiChannel - 1) == midiEvent.channel) {
+        if (omniOn_[0] || this->synthState_->mixerState_.instrumentState_[0].midiChannel == 0
+                || (this->synthState_->mixerState_.instrumentState_[0].midiChannel - 1) == midiEvent.channel) {
         	if (likely(!isInst1MPE)) {
         		timbres[timbreIndex++] = 0;
         	}
         }
-        if (omniOn[1] || this->synthState_->mixerState.instrumentState_[1].midiChannel == 0
-                || (this->synthState_->mixerState.instrumentState_[1].midiChannel - 1) == midiEvent.channel) {
+        if (omniOn_[1] || this->synthState_->mixerState_.instrumentState_[1].midiChannel == 0
+                || (this->synthState_->mixerState_.instrumentState_[1].midiChannel - 1) == midiEvent.channel) {
             timbres[timbreIndex++] = 1;
         }
-        if (omniOn[2] || this->synthState_->mixerState.instrumentState_[2].midiChannel == 0
-                || (this->synthState_->mixerState.instrumentState_[2].midiChannel - 1) == midiEvent.channel) {
+        if (omniOn_[2] || this->synthState_->mixerState_.instrumentState_[2].midiChannel == 0
+                || (this->synthState_->mixerState_.instrumentState_[2].midiChannel - 1) == midiEvent.channel) {
             timbres[timbreIndex++] = 2;
         }
-        if (omniOn[3] || this->synthState_->mixerState.instrumentState_[3].midiChannel == 0
-                || (this->synthState_->mixerState.instrumentState_[3].midiChannel - 1) == midiEvent.channel) {
+        if (omniOn_[3] || this->synthState_->mixerState_.instrumentState_[3].midiChannel == 0
+                || (this->synthState_->mixerState_.instrumentState_[3].midiChannel - 1) == midiEvent.channel) {
             timbres[timbreIndex++] = 3;
         }
-        if (omniOn[4] || this->synthState_->mixerState.instrumentState_[4].midiChannel == 0
-                || (this->synthState_->mixerState.instrumentState_[4].midiChannel - 1) == midiEvent.channel) {
+        if (omniOn_[4] || this->synthState_->mixerState_.instrumentState_[4].midiChannel == 0
+                || (this->synthState_->mixerState_.instrumentState_[4].midiChannel - 1) == midiEvent.channel) {
             timbres[timbreIndex++] = 4;
         }
-        if (omniOn[5] || this->synthState_->mixerState.instrumentState_[5].midiChannel == 0
-                || (this->synthState_->mixerState.instrumentState_[5].midiChannel - 1) == midiEvent.channel) {
+        if (omniOn_[5] || this->synthState_->mixerState_.instrumentState_[5].midiChannel == 0
+                || (this->synthState_->mixerState_.instrumentState_[5].midiChannel - 1) == midiEvent.channel) {
             timbres[timbreIndex++] = 5;
         }
     }
@@ -272,12 +272,12 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
     case MIDI_NOTE_OFF:
         for (int tk = 0; tk < timbreIndex; tk++) {
             int timbre = timbres[tk];
-            char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+            char note = midiEvent.value[0] + this->synthState_->mixerState_.instrumentState_[timbre].shiftNote;
             if (likely(
-                    midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
-                    && midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)
+                    midiEvent.value[0] >= this->synthState_->mixerState_.instrumentState_[timbre].firstNote
+                    && midiEvent.value[0] <= this->synthState_->mixerState_.instrumentState_[timbre].lastNote)
                     && note >= 0 && note <= 127) {
-                this->synth->noteOff(timbre, note);
+                this->synth_->noteOff(timbre, note);
             }
         }
         break;
@@ -285,16 +285,16 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
         // Some keyboards send note-off this way
         for (int tk = 0; tk < timbreIndex; tk++) {
             int timbre = timbres[tk];
-            char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+            char note = midiEvent.value[0] + this->synthState_->mixerState_.instrumentState_[timbre].shiftNote;
             if (likely(
-                    midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
-                    && midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote
+                    midiEvent.value[0] >= this->synthState_->mixerState_.instrumentState_[timbre].firstNote
+                    && midiEvent.value[0] <= this->synthState_->mixerState_.instrumentState_[timbre].lastNote
                     && note >= 0 && note <= 127)) {
                 if (midiEvent.value[1] == 0) {
-                    this->synth->noteOff(timbre, note);
+                    this->synth_->noteOff(timbre, note);
                 } else {
-                    this->synth->noteOn(timbre, note, midiEvent.value[1]);
-                    visualInfo->noteOn(timbre, true);
+                    this->synth_->noteOn(timbre, note, midiEvent.value[1]);
+                    visualInfo_->noteOn(timbre, true);
                 }
             }
         }
@@ -307,41 +307,41 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
     case MIDI_POLY_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
             int timbre = timbres[tk];
-            char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+            char note = midiEvent.value[0] + this->synthState_->mixerState_.instrumentState_[timbre].shiftNote;
             if (likely(note >= 0 && note <= 127)) {
-                this->synth->getTimbre(timbres[tk])->setMatrixPolyAfterTouch(note, INV127 * midiEvent.value[1]);
+                this->synth_->getTimbre(timbres[tk])->setMatrixPolyAfterTouch(note, INV127 * midiEvent.value[1]);
             }
         }
         break;
     case MIDI_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
-            this->synth->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
+            this->synth_->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
         }
         break;
     case MIDI_PITCH_BEND: {
         int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
         for (int tk = 0; tk < timbreIndex; tk++) {
-            this->synth->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
+            this->synth_->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
         }
         break;
     }
     case MIDI_PROGRAM_CHANGE:
-        if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE]) {
+        if (this->synthState_->fullState_.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE]) {
             AsyncAction newAction;
             newAction.fullBytes = 0l;
             newAction.action.actionType = LOAD_PRESET;
             for (int tk = 0; tk < timbreIndex; tk++) {
                 newAction.action.timbre |= (1 << timbres[tk]);
             }
-            newAction.action.param1 = bankNumber[timbres[0]];
-            newAction.action.param2 = bankNumberLSB[timbres[0]];
+            newAction.action.param1 = bankNumber_[timbres[0]];
+            newAction.action.param2 = bankNumberLSB_[timbres[0]];
             newAction.action.param3 = midiEvent.value[0];
             asyncActions.insert(newAction);
         }
         break;
     case MIDI_SONG_POSITION:
-        this->songPosition = ((int) midiEvent.value[1] << 7) + midiEvent.value[0];
-        this->synth->midiClockSetSongPosition(this->songPosition, true);
+        this->songPosition_ = ((int) midiEvent.value[1] << 7) + midiEvent.value[0];
+        this->synth_->midiClockSetSongPosition(this->songPosition_, true);
         break;
     }
 }
@@ -362,11 +362,11 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
 		case MIDI_PITCH_BEND: {
 			int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
 			// PITCH BEND in MPE mode we devide by 819.2 and not 8192 to have a x10 value
-			this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
+			this->synth_->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float) pb * .00012207031250000000f);
 			break;
 		}
 	    case MIDI_AFTER_TOUCH: {
-	        this->synth->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
+	        this->synth_->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
 	        break;
 	    }
 		}
@@ -376,43 +376,43 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
 
 	switch (midiEvent.eventType) {
     case MIDI_NOTE_OFF: {
-		char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+		char note = midiEvent.value[0] + this->synthState_->mixerState_.instrumentState_[timbre].shiftNote;
 		if (likely(
-				midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
-				&& midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote)
+				midiEvent.value[0] >= this->synthState_->mixerState_.instrumentState_[timbre].firstNote
+				&& midiEvent.value[0] <= this->synthState_->mixerState_.instrumentState_[timbre].lastNote)
 				&& note >= 0 && note <= 127) {
-			this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
+			this->synth_->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
 		}
         break;
     }
     case MIDI_NOTE_ON: {
-		char note = midiEvent.value[0] + this->synthState_->mixerState.instrumentState_[timbre].shiftNote;
+		char note = midiEvent.value[0] + this->synthState_->mixerState_.instrumentState_[timbre].shiftNote;
 		if (likely(
-				midiEvent.value[0] >= this->synthState_->mixerState.instrumentState_[timbre].firstNote
-				&& midiEvent.value[0] <= this->synthState_->mixerState.instrumentState_[timbre].lastNote
+				midiEvent.value[0] >= this->synthState_->mixerState_.instrumentState_[timbre].firstNote
+				&& midiEvent.value[0] <= this->synthState_->mixerState_.instrumentState_[timbre].lastNote
 				&& note >= 0 && note <= 127)) {
 			if (midiEvent.value[1] == 0) {
-				this->synth->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
+				this->synth_->getTimbre(0)->noteOffMPE(midiEvent.channel, note, midiEvent.value[1]);
 			} else {
-				this->synth->getTimbre(0)->noteOnMPE(midiEvent.channel, note, midiEvent.value[1]);
-				visualInfo->noteOn(0, true);
+				this->synth_->getTimbre(0)->noteOnMPE(midiEvent.channel, note, midiEvent.value[1]);
+				visualInfo_->noteOn(0, true);
 			}
 		}
         break;
     }
     case MIDI_AFTER_TOUCH: {
-        this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, INV127 * midiEvent.value[0]);
+        this->synth_->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, INV127 * midiEvent.value[0]);
         break;
     }
     case MIDI_CONTROL_CHANGE:
 		switch (midiEvent.value[0]) {
 		case CC_MPE_SLIDE_CC74:
-			this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+			this->synth_->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
 		}
         break;
     case MIDI_PITCH_BEND:
 		int pb = ((int) midiEvent.value[1] << 7) + (int) midiEvent.value[0] - 8192;
-		this->synth->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_PITCHBEND_MPE, (float) pb * .00012207031250000000f);
+		this->synth_->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_PITCHBEND_MPE, (float) pb * .00012207031250000000f);
         break;
 	}
 }
@@ -420,54 +420,54 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
 
 
 void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
-    int receives = this->synthState_->fullState.midiConfigValue[MIDICONFIG_RECEIVES];
+    int receives = this->synthState_->fullState_.midiConfigValue[MIDICONFIG_RECEIVES];
 
     // User CC are higher priority even if they hide some important preenfm3 CC
-    if (unlikely(this->synthState_->mixerState.userCC_[0] == midiEvent.value[0])) {
-        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC1, INV127 * midiEvent.value[1]);
+    if (unlikely(this->synthState_->mixerState_.userCC_[0] == midiEvent.value[0])) {
+        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC1, INV127 * midiEvent.value[1]);
         return;
     }
-    if (unlikely(this->synthState_->mixerState.userCC_[1] == midiEvent.value[0])) {
-        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC2, INV127 * midiEvent.value[1]);
+    if (unlikely(this->synthState_->mixerState_.userCC_[1] == midiEvent.value[0])) {
+        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC2, INV127 * midiEvent.value[1]);
         return;
     }
-    if (unlikely(this->synthState_->mixerState.userCC_[2] == midiEvent.value[0])) {
-        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC3, INV127 * midiEvent.value[1]);
+    if (unlikely(this->synthState_->mixerState_.userCC_[2] == midiEvent.value[0])) {
+        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC3, INV127 * midiEvent.value[1]);
         return;
     }
-    if (unlikely(this->synthState_->mixerState.userCC_[3] == midiEvent.value[0])) {
-        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC4, INV127 * midiEvent.value[1]);
+    if (unlikely(this->synthState_->mixerState_.userCC_[3] == midiEvent.value[0])) {
+        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC4, INV127 * midiEvent.value[1]);
         return;
     }
 
-    if (midiEvent.channel == this->synthState_->mixerState.globalChannel_ - 1) {
+    if (midiEvent.channel == this->synthState_->mixerState_.globalChannel_ - 1) {
         // treat global channel CC
         switch (midiEvent.value[0])
         {
         case CC_MFX_PRESET:
-            this->synthState_->mixerState.reverbPreset_ = midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.nextPresetNum = midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.slowParamChange();
+            this->synthState_->mixerState_.reverbPreset_ = midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.nextPresetNum_ = midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.slowParamChange();
             break;
         case CC_MFX_PREDELAYTIME:
-            this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_PREDELAYTIME] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.slowParamChange();
+            this->synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = INV127 * midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.slowParamChange();
             break;
         case CC_MFX_PREDELAYMIX:
-            this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_PREDELAYMIX] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.slowParamChange();
+            this->synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = INV127 * midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.slowParamChange();
             break;
         case CC_MFX_INPUTTILT:
-            this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_INPUTBASE] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.slowParamChange();
+            this->synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = INV127 * midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.slowParamChange();
             break;
         case CC_MFX_MOD_SPEED:
-            this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_LFOSPEED] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.slowParamChange();
+            this->synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = INV127 * midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.slowParamChange();
             break;
         case CC_MFX_MOD_DEPTH:
-            this->synthState_->mixerState.fxBus_.masterfxConfig[GLOBALFX_LFODEPTH] = INV127 * midiEvent.value[1];
-            this->synthState_->mixerState.fxBus_.slowParamChange();
+            this->synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = INV127 * midiEvent.value[1];
+            this->synthState_->mixerState_.fxBus_.slowParamChange();
             break;
         }
     }
@@ -475,51 +475,51 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     // the following one should always been treated...
     switch (midiEvent.value[0]) {
     case CC_BANK_SELECT:
-        bankNumber[timbre] = midiEvent.value[1];
+        bankNumber_[timbre] = midiEvent.value[1];
         break;
     case CC_BANK_SELECT_LSB:
-        bankNumberLSB[timbre] = midiEvent.value[1];
+        bankNumberLSB_[timbre] = midiEvent.value[1];
         break;
     case CC_MODWHEEL:
-        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MODWHEEL, INV127 * midiEvent.value[1]);
+        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MODWHEEL, INV127 * midiEvent.value[1]);
         break;
     case CC_BREATH:
-        this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_BREATH, INV127 * midiEvent.value[1]);
+        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_BREATH, INV127 * midiEvent.value[1]);
         break;
     case CC_ALL_NOTES_OFF:
-        this->synth->stopArpegiator(timbre);
-        this->synth->allNoteOff(timbre);
+        this->synth_->stopArpegiator(timbre);
+        this->synth_->allNoteOff(timbre);
         break;
     case CC_ALL_SOUND_OFF:
-        this->synth->allSoundOff(timbre);
+        this->synth_->allSoundOff(timbre);
         break;
     case CC_HOLD_PEDAL:
-        this->synth->setHoldPedal(timbre, midiEvent.value[1]);
+        this->synth_->setHoldPedal(timbre, midiEvent.value[1]);
         break;
     case CC_OMNI_OFF:
         // Omni on && omni OFF only accepted on original channel
-        if (this->synthState_->mixerState.instrumentState_[timbre].midiChannel == midiEvent.channel) {
-            this->synth->stopArpegiator(timbre);
-            this->synth->allNoteOff(timbre);
-            omniOn[timbre] = false;
+        if (this->synthState_->mixerState_.instrumentState_[timbre].midiChannel == midiEvent.channel) {
+            this->synth_->stopArpegiator(timbre);
+            this->synth_->allNoteOff(timbre);
+            omniOn_[timbre] = false;
         }
         break;
     case CC_OMNI_ON:
         // Omni on && omni OFF only accepted on original channel
-        if (this->synthState_->mixerState.instrumentState_[timbre].midiChannel == midiEvent.channel) {
-            this->synth->stopArpegiator(timbre);
-            this->synth->allNoteOff(timbre);
-            omniOn[timbre] = true;
+        if (this->synthState_->mixerState_.instrumentState_[timbre].midiChannel == midiEvent.channel) {
+            this->synth_->stopArpegiator(timbre);
+            this->synth_->allNoteOff(timbre);
+            omniOn_[timbre] = true;
         }
         break;
     case CC_RESET:
-        this->synth->stopArpegiator(timbre);
-        this->synth->allNoteOff(timbre);
-        this->runningStatus = 0;
-        this->songPosition = 0;
+        this->synth_->stopArpegiator(timbre);
+        this->synth_->allNoteOff(timbre);
+        this->runningStatus_ = 0;
+        this->songPosition_ = 0;
         break;
     case CC_CURRENT_INSTRUMENT:
-        this->synth->setCurrentInstrument(midiEvent.value[1]);
+        this->synth_->setCurrentInstrument(midiEvent.value[1]);
         break;
     }
 
@@ -528,87 +528,87 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         // Global mixer/MPE/sequencer CCs.
         switch (midiEvent.value[0]) {
         case CC_MIXER_VOLUME:
-            this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_VOLUME, (float) midiEvent.value[1] * INV127);
+            this->synth_->setNewMixerValueFromMidi(timbre, MIXER_VALUE_VOLUME, (float) midiEvent.value[1] * INV127);
             break;
         case CC_MIXER_PAN:
-            this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
+            this->synth_->setNewMixerValueFromMidi(timbre, MIXER_VALUE_PAN, (float) midiEvent.value[1] - 63);
             break;
         case CC_MIXER_SEND:
-            this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, (float) midiEvent.value[1] * INV127);
+            this->synth_->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, (float) midiEvent.value[1] * INV127);
             break;
         case CC_MPE_SLIDE_CC74:
             // No CC74 on global midi channel
-            if (!(this->synthState_->mixerState.MPE_inst1_ > 0) || timbre != 0) {
-                this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+            if (!(this->synthState_->mixerState_.MPE_inst1_ > 0) || timbre != 0) {
+                this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
             }
             break;
         case CC_SEQ_START_ALL:
-            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_ALL, midiEvent.value[1]);
+            this->synth_->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_ALL, midiEvent.value[1]);
             break;
         case CC_SEQ_START_INST:
-            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_INST, midiEvent.value[1]);
+            this->synth_->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_INST, midiEvent.value[1]);
             break;
         case CC_SEQ_RECORD_INST:
-            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_RECORD_INST, midiEvent.value[1]);
+            this->synth_->setNewSeqValueFromMidi(timbre, SEQ_VALUE_RECORD_INST, midiEvent.value[1]);
             break;
         case CC_SEQ_TRANSPOSE:
-            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_TRANSPOSE, midiEvent.value[1]);
+            this->synth_->setNewSeqValueFromMidi(timbre, SEQ_VALUE_TRANSPOSE, midiEvent.value[1]);
             break;
         case CC_SEQ_SET_SEQUENCE:
-            this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_SEQUENCE_NUMBER, midiEvent.value[1]);
+            this->synth_->setNewSeqValueFromMidi(timbre, SEQ_VALUE_SEQUENCE_NUMBER, midiEvent.value[1]);
             break;
         default:
             break;
         }
 
         // Engine-owned parameter CCs.
-        this->synth->getTimbre(timbre)->midiControlChange(midiEvent.value[0], midiEvent.value[1]);
+        this->synth_->getTimbre(timbre)->midiControlChange(midiEvent.value[0], midiEvent.value[1]);
     }
 
     // Do we accept NRPN in the menu
     if (receives & 0x02) {
         switch (midiEvent.value[0]) {
         case 99:
-            this->currentNrpn[timbre].paramMSB = midiEvent.value[1];
+            this->currentNrpn_[timbre].paramMSB = midiEvent.value[1];
             break;
         case 98:
-            this->currentNrpn[timbre].paramLSB = midiEvent.value[1];
+            this->currentNrpn_[timbre].paramLSB = midiEvent.value[1];
             break;
         case 6:
-            this->currentNrpn[timbre].valueMSB = midiEvent.value[1];
+            this->currentNrpn_[timbre].valueMSB = midiEvent.value[1];
             break;
         case 38:
-            this->currentNrpn[timbre].valueLSB = midiEvent.value[1];
-            this->currentNrpn[timbre].readyToSend = true;
+            this->currentNrpn_[timbre].valueLSB = midiEvent.value[1];
+            this->currentNrpn_[timbre].readyToSend = true;
             break;
         case 96:
             // nrpn increment
-            if (this->currentNrpn[timbre].valueLSB == 127) {
-                this->currentNrpn[timbre].valueLSB = 0;
-                this->currentNrpn[timbre].valueMSB++;
+            if (this->currentNrpn_[timbre].valueLSB == 127) {
+                this->currentNrpn_[timbre].valueLSB = 0;
+                this->currentNrpn_[timbre].valueMSB++;
             } else {
-                this->currentNrpn[timbre].valueLSB++;
+                this->currentNrpn_[timbre].valueLSB++;
             }
-            this->currentNrpn[timbre].readyToSend = true;
+            this->currentNrpn_[timbre].readyToSend = true;
             break;
         case 97:
             // nrpn decremenet
-            if (this->currentNrpn[timbre].valueLSB == 0) {
-                this->currentNrpn[timbre].valueLSB = 127;
-                this->currentNrpn[timbre].valueMSB--;
+            if (this->currentNrpn_[timbre].valueLSB == 0) {
+                this->currentNrpn_[timbre].valueLSB = 127;
+                this->currentNrpn_[timbre].valueMSB--;
             } else {
-                this->currentNrpn[timbre].valueLSB--;
+                this->currentNrpn_[timbre].valueLSB--;
             }
-            this->currentNrpn[timbre].readyToSend = true;
+            this->currentNrpn_[timbre].readyToSend = true;
             break;
         default:
             break;
         }
 
-        if (this->currentNrpn[timbre].readyToSend) {
-            uint16_t param = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
-            uint16_t value = (this->currentNrpn[timbre].valueMSB << 7) + this->currentNrpn[timbre].valueLSB;
-            this->currentNrpn[timbre].readyToSend = false;
+        if (this->currentNrpn_[timbre].readyToSend) {
+            uint16_t param = (this->currentNrpn_[timbre].paramMSB << 7) + this->currentNrpn_[timbre].paramLSB;
+            uint16_t value = (this->currentNrpn_[timbre].valueMSB << 7) + this->currentNrpn_[timbre].valueLSB;
+            this->currentNrpn_[timbre].readyToSend = false;
 
             if (param == (127 << 7) + 127) {
                 AsyncAction asyncAction;
@@ -617,7 +617,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                 asyncAction.action.timbre = timbre;
                 asyncActions.insert(asyncAction);
             } else {
-                this->synth->getTimbre(timbre)->midiNrpn(param, value);
+                this->synth_->getTimbre(timbre)->midiNrpn(param, value);
             }
         }
     }
@@ -628,7 +628,7 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     cc.eventType = MIDI_CONTROL_CHANGE;
 
     // Si channel = ALL envoie sur 1
-    int channel = this->synthState_->mixerState.instrumentState_[timbre].midiChannel - 1;
+    int channel = this->synthState_->mixerState_.instrumentState_[timbre].midiChannel - 1;
     if (channel == -1) {
         channel = 0;
     }
@@ -636,7 +636,7 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
 
     int index = 0;
     struct MidiParamMessage message;
-    while (this->synth->getTimbre(timbre)->midiPatchParam(timbre, index, message)) {
+    while (this->synth_->getTimbre(timbre)->midiPatchParam(timbre, index, message)) {
         index++;
 
         if (!message.isNrpn) {
@@ -679,20 +679,20 @@ void MidiDecoder::newMixerValueFromExternal(int timbre, int mixerValueType, floa
 
 void MidiDecoder::newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
     struct MidiParamMessage message;
-    if (this->synth->getTimbre(timbre)->midiPfm3ParamFeedback(currentrow, encoder, newValue, message)) {
+    if (this->synth_->getTimbre(timbre)->midiPfm3ParamFeedback(currentrow, encoder, newValue, message)) {
         sendMidiParamFeedback(timbre, message);
     }
 }
 
 void MidiDecoder::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
     struct MidiParamMessage message;
-    if (this->synth->getTimbre(timbre)->midiParamFeedback(paramId, context, newValue, message)) {
+    if (this->synth_->getTimbre(timbre)->midiParamFeedback(paramId, context, newValue, message)) {
         sendMidiParamFeedback(timbre, message);
     }
 }
 
 void MidiDecoder::sendMidiParamFeedback(int timbre, const struct MidiParamMessage &message) {
-    int channel = this->synthState_->mixerState.instrumentState_[timbre].midiChannel - 1;
+    int channel = this->synthState_->mixerState_.instrumentState_[timbre].midiChannel - 1;
 
     struct MidiEvent cc;
     cc.eventType = MIDI_CONTROL_CHANGE;
@@ -723,11 +723,11 @@ void MidiDecoder::sendMidiParamFeedback(int timbre, const struct MidiParamMessag
         cc.value[0] = message.cc;
         cc.value[1] = message.ccValue;
 
-        if (lastSentCC.value[1] != cc.value[1] || lastSentCC.value[0] != cc.value[0] || lastSentCC.channel != cc.channel) {
+        if (lastSentCC_.value[1] != cc.value[1] || lastSentCC_.value[0] != cc.value[0] || lastSentCC_.channel != cc.channel) {
             writeMidiCCOut(&cc);
             sendMidiDin5Out();
             sendMidiUsbOut();
-            lastSentCC = cc;
+            lastSentCC_ = cc;
         }
     }
 }
@@ -736,7 +736,7 @@ void MidiDecoder::sendMidiParamFeedback(int timbre, const struct MidiParamMessag
 void MidiDecoder::writeMidiCCOut(struct MidiEvent *toSend) {
 
     // We don't send midi to both USB and USART at the same time...
-    if (this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
+    if (this->synthState_->fullState_.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
         // usbBuf[0] = [number of cable on 4 bits] [event type on 4 bites]
         *usbMidiOutBuffWrt++ = 0x00 | (toSend->eventType >> 4);
         *usbMidiOutBuffWrt++ = toSend->eventType + toSend->channel;
@@ -764,7 +764,7 @@ void MidiDecoder::sendMidiUsbOutIfBufferFull() {
 
 
 void MidiDecoder::sendMidiUsbOut() {
-    if (usbMidiOutBuffWrt != usbMidiOutBuff && this->synthState_->fullState.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
+    if (usbMidiOutBuffWrt != usbMidiOutBuff && this->synthState_->fullState_.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
 
         USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, usbMidiOutBuff, usbMidiOutBuffWrt - usbMidiOutBuff);
         // go back to begining of buffer
@@ -784,7 +784,7 @@ uint8_t MidiDecoder::analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size) {
         case 4:
         case 5:
         case 6:
-            this->synth->setNewMixerValueFromMidi(sysexBuffer[1] - 1, MIXER_VALUE_VOLUME, (float) sysexBuffer[2] * INV127);
+            this->synth_->setNewMixerValueFromMidi(sysexBuffer[1] - 1, MIXER_VALUE_VOLUME, (float) sysexBuffer[2] * INV127);
             return 1 ;
         }
     }
@@ -802,7 +802,7 @@ void MidiDecoder::processAsyncActions() {
             case LOAD_PRESET:
                 for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
                     if (((1 << t) & asyncAction.action.timbre)  > 0) {
-                        synth->loadPreenFMPatchFromMidi(t, asyncAction.action.param1, asyncAction.action.param2, asyncAction.action.param3);
+                        synth_->loadPreenFMPatchFromMidi(t, asyncAction.action.param1, asyncAction.action.param2, asyncAction.action.param3);
                     }
                 }
                 break;

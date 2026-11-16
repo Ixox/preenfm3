@@ -31,7 +31,7 @@ public:
     virtual void newPfm3Page(FullState* fullState) = 0;
 
 
-    SynthMenuListener* nextListener;
+    SynthMenuListener* nextListener_;
 };
 
 #endif /* SYNTHMENULISTENER_H_ */

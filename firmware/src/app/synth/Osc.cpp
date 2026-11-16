@@ -159,8 +159,8 @@ void Osc::init(SynthState* synthState, struct OscillatorParams *oscParams, Desti
     this->synthState_ = synthState;
     silence[0] = 0;
 
-    this->destFreq = df;
-    this->oscillator = oscParams;
+    this->destFreq_ = df;
+    this->oscillator_ = oscParams;
 
     if (waveTables[0].precomputedValue <= 0) {
         for (int k=0; k<NUMBER_OF_WAVETABLES; k++) {
@@ -182,19 +182,19 @@ void Osc::init(SynthState* synthState, struct OscillatorParams *oscParams, Desti
 
 void Osc::newNote(struct OscState* oscState, float newNoteFrequency, float phase) {
 
-    oscState->index = waveTables[(int) oscillator->shape].max * phase;
-    switch ((int)oscillator->frequencyType) {
+    oscState->index = waveTables[(int) oscillator_->shape].max * phase;
+    switch ((int)oscillator_->frequencyType) {
     case OSC_FT_KEYBOARD:
-        oscState->mainFrequency = newNoteFrequency * oscillator->frequencyMul * (1.0f + oscillator->detune * .05f) * (synthState_->mixerState.tuning_ * INV440);
+        oscState->mainFrequency = newNoteFrequency * oscillator_->frequencyMul * (1.0f + oscillator_->detune * .05f) * (synthState_->mixerState_.tuning_ * INV440);
         break;
     case OSC_FT_FIXE:
-        oscState->mainFrequency = oscillator->frequencyMul* 1000.0f + oscillator->detune * 100.0f;
+        oscState->mainFrequency = oscillator_->frequencyMul* 1000.0f + oscillator_->detune * 100.0f;
         if (oscState->mainFrequency < 0.0f) {
             oscState->mainFrequency = 0.0f;
         }
         break;
     case OSC_FT_KEYHZ:
-        oscState->mainFrequency = newNoteFrequency * oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
+        oscState->mainFrequency = newNoteFrequency * oscillator_->frequencyMul * (synthState_->mixerState_.tuning_ * INV440) + oscillator_->detune;
         break;
     }
     oscState->frequency = oscState->mainFrequency;
@@ -202,15 +202,15 @@ void Osc::newNote(struct OscState* oscState, float newNoteFrequency, float phase
 
 
 void Osc::glideToNote(struct OscState* oscState, float newNoteFrequency) {
-    switch ((int)oscillator->frequencyType) {
+    switch ((int)oscillator_->frequencyType) {
     case OSC_FT_KEYBOARD:
-        oscState->nextFrequency = newNoteFrequency *  oscillator->frequencyMul  * (1.0f + oscillator->detune * .05f) * (synthState_->mixerState.tuning_ * INV440);
+        oscState->nextFrequency = newNoteFrequency *  oscillator_->frequencyMul  * (1.0f + oscillator_->detune * .05f) * (synthState_->mixerState_.tuning_ * INV440);
         break;
     case OSC_FT_FIXE:
         oscState->nextFrequency = oscState->mainFrequency;
         break;
     case OSC_FT_KEYHZ:
-        oscState->nextFrequency = newNoteFrequency * oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
+        oscState->nextFrequency = newNoteFrequency * oscillator_->frequencyMul * (synthState_->mixerState_.tuning_ * INV440) + oscillator_->detune;
         break;
     }
     oscState->fromFrequency = oscState->mainFrequency;
@@ -219,13 +219,13 @@ void Osc::glideToNote(struct OscState* oscState, float newNoteFrequency) {
 
 float Osc::getNoteRealFrequencyEstimation(struct OscState* oscState, float newNoteFrequency) {
     float realNoteFrequencyEstimation = 0;
-    switch ((int)oscillator->frequencyType) {
+    switch ((int)oscillator_->frequencyType) {
     case OSC_FT_KEYBOARD:
-        realNoteFrequencyEstimation = newNoteFrequency *  oscillator->frequencyMul * (1.0f + oscillator->detune * .05f) * (synthState_->mixerState.tuning_ * INV440);
+        realNoteFrequencyEstimation = newNoteFrequency *  oscillator_->frequencyMul * (1.0f + oscillator_->detune * .05f) * (synthState_->mixerState_.tuning_ * INV440);
     case OSC_FT_FIXE:
         realNoteFrequencyEstimation = oscState->mainFrequency;
     case OSC_FT_KEYHZ:
-        realNoteFrequencyEstimation = newNoteFrequency *  oscillator->frequencyMul * (synthState_->mixerState.tuning_ * INV440) + oscillator->detune;
+        realNoteFrequencyEstimation = newNoteFrequency *  oscillator_->frequencyMul * (synthState_->mixerState_.tuning_ * INV440) + oscillator_->detune;
     }
     if (unlikely(realNoteFrequencyEstimation < 1)) {
         return 1;

@@ -56,7 +56,7 @@ public:
 
 
 protected:
-    char fullName[40];
+    char fullName_[40];
 
 };
 

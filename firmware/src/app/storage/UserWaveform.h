@@ -42,9 +42,9 @@ private:
     void normalize(float* buffer, int numberOfSamples);
     int numberOfSampleError(int f);
 
-    int numberOfSample;
-    char userWaveFormNames[6][5];
-    int floatRead;
+    int numberOfSample_;
+    char userWaveFormNames_[6][5];
+    int floatRead_;
 };
 
 #endif /* USERWAVEFORMS_H_ */

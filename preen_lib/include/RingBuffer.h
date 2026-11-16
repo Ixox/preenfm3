@@ -29,29 +29,29 @@ public:
 	};
 
 	void clear() {
-        this->head = 0;
-        this->tail = 0;
+        this->head_ = 0;
+        this->tail_ = 0;
 	}
 
 	void insert(T element) {
-	    this->buf[this->tail] = element;
-	    this->tail = (this->tail == size-1) ? 0 : this->tail + 1;
+	    this->buf_[this->tail_] = element;
+	    this->tail_ = (this->tail_ == size-1) ? 0 : this->tail_ + 1;
 	}
 
 	T remove() {
-	    T element = this->buf[this->head];
-	    this->head = (this->head == size-1) ? 0 : this->head + 1;
+	    T element = this->buf_[this->head_];
+	    this->head_ = (this->head_ == size-1) ? 0 : this->head_ + 1;
 	    return element;
 	}
 
 	bool isFull() {
-	   return (this->tail + 1 == this->head) ||
-	        (this->tail == (size-1) && this->head == 0);
+	   return (this->tail_ + 1 == this->head_) ||
+	        (this->tail_ == (size-1) && this->head_ == 0);
 	}
 
 	int getCount() {
-	    int count = this->tail - this->head;
-	    if (this->tail < this->head) {
+	    int count = this->tail_ - this->head_;
+	    if (this->tail_ < this->head_) {
 	    	count += size;
 	    }
 	    return count;
@@ -64,9 +64,9 @@ public:
 	}
 
 private:
-    volatile int head;
-    volatile int tail;
-    T buf[size+1];
+    volatile int head_;
+    volatile int tail_;
+    T buf_[size+1];
 
 };
 

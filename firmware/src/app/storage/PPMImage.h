@@ -33,10 +33,10 @@ public:
 private:
     void init();
     void updateImageName(int cpt);
-    int cptImage;
-    int sharpIndexInName;
-    bool isInitialized;
-    char imageTitle[32];
+    int cptImage_;
+    int sharpIndexInName_;
+    bool isInitialized_;
+    char imageTitle_[32];
 };
 
 #endif

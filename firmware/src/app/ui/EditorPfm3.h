@@ -71,9 +71,9 @@ private:
     bool multipleEdition_;
     // Remember previous lfo freq value
     // Buffer to copy and past
-    int8_t bufferPageNumber;
-    uint8_t bufferEditNumber;
-    float bufferParam[6];
+    int8_t bufferPageNumber_;
+    uint8_t bufferEditNumber_;
+    float bufferParam_[6];
 };
 
 #endif

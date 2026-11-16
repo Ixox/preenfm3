@@ -48,34 +48,34 @@ public:
 #endif
 
 #ifndef BOOTLOADER
-    MixerBank* getMixerBank() { return &mixerBank; }
-    ConfigurationFile* getConfigurationFile() { return &configurationFile; }
-    DX7SysexFile* getDX7SysexFile() { return &dx7SysexFile; }
-    PatchBank* getPatchBank() { return &patchBank; }
-    ScalaFile* getScalaFile() { return &scalaFile; }
-    UserWaveform* getUserWaveform() { return &userWaveForm; };
-    UserEnvCurve* getUserEnvCurve() { return &userEnvCurve; };
+    MixerBank* getMixerBank() { return &mixerBank_; }
+    ConfigurationFile* getConfigurationFile() { return &configurationFile_; }
+    DX7SysexFile* getDX7SysexFile() { return &dx7SysexFile_; }
+    PatchBank* getPatchBank() { return &patchBank_; }
+    ScalaFile* getScalaFile() { return &scalaFile_; }
+    UserWaveform* getUserWaveform() { return &userWaveForm_; };
+    UserEnvCurve* getUserEnvCurve() { return &userEnvCurve_; };
 #ifdef PPMIMAGE_ENABLE
-    PPMImage* getPPMImage() { return &ppmImage; };
+    PPMImage* getPPMImage() { return &ppmImage_; };
 #endif
-    SequenceBank* getSequenceBank() { return &sequenceBank; };
+    SequenceBank* getSequenceBank() { return &sequenceBank_; };
 #else
 #endif
 
 private:
-    FileSystemUtils fsu;
+    FileSystemUtils fsu_;
 #ifndef BOOTLOADER
-    MixerBank mixerBank;
-    ConfigurationFile configurationFile;
-    DX7SysexFile dx7SysexFile;
-    PatchBank patchBank;
-    ScalaFile scalaFile;
-    UserWaveform userWaveForm;
-    UserEnvCurve userEnvCurve;
+    MixerBank mixerBank_;
+    ConfigurationFile configurationFile_;
+    DX7SysexFile dx7SysexFile_;
+    PatchBank patchBank_;
+    ScalaFile scalaFile_;
+    UserWaveform userWaveForm_;
+    UserEnvCurve userEnvCurve_;
 #ifdef PPMIMAGE_ENABLE
-    PPMImage ppmImage;
+    PPMImage ppmImage_;
 #endif
-    SequenceBank sequenceBank;
+    SequenceBank sequenceBank_;
 #else
 #endif
 };

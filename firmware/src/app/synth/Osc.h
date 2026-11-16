@@ -54,11 +54,11 @@ public:
     inline void calculateFrequencyWithMatrix(struct OscState *oscState, Matrix* matrix, float expHarm) {
         oscState->mainFrequencyPlusMatrix = oscState->mainFrequency;
         oscState->mainFrequencyPlusMatrix *= expHarm;
-        oscState->mainFrequencyPlusMatrix +=  (oscState->mainFrequency  * (matrix->getDestination(destFreq) + matrix->getDestination(ALL_OSC_FREQ)) * .1f);
+        oscState->mainFrequencyPlusMatrix +=  (oscState->mainFrequency  * (matrix->getDestination(destFreq_) + matrix->getDestination(ALL_OSC_FREQ)) * .1f);
     }
 
     inline const struct WaveTable* getWaveTable() {
-        return &waveTables[(int) oscillator->shape];
+        return &waveTables[(int) oscillator_->shape];
     }
 
     inline float getNextSample(struct OscState *oscState, const struct WaveTable* waveTable)  {
@@ -77,18 +77,18 @@ public:
     }
 
     inline float getPhase(struct OscState *oscState)  {
-        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
+        struct WaveTable* waveTable = &waveTables[(int) oscillator_->shape];
         return oscState->index * waveTable->phaseMul;
     }
 
     inline float geIndexFromtPhase(float phase)  {
-        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
+        struct WaveTable* waveTable = &waveTables[(int) oscillator_->shape];
         return phase * waveTable->max;
     }
 
 
    	inline float* getNextBlock(struct OscState *oscState)  {
-        int shape = (int) oscillator->shape;
+        int shape = (int) oscillator_->shape;
    		int max = waveTables[shape].max;
    		float *wave = waveTables[shape].table;
    		float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
@@ -134,7 +134,7 @@ public:
 
 
     inline float* getNextBlockWithFeedbackAndEnveloppe(struct OscState *oscState, float feedback, float& env, float envInc, float freqMultiplier, float* lastValue) {
-        int shape = (int) oscillator->shape;
+        int shape = (int) oscillator_->shape;
         int max = waveTables[shape].max;
         float *wave = waveTables[shape].table;
         float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
@@ -181,7 +181,7 @@ public:
 
 
    	float* getNextBlockHQ(struct OscState *oscState)  {
-        int shape = (int) oscillator->shape;
+        int shape = (int) oscillator_->shape;
    		int max = waveTables[shape].max;
    		float *wave = waveTables[shape].table;
    		float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
@@ -230,8 +230,8 @@ public:
 
 
 private:
-    DestinationEnum destFreq;
+    DestinationEnum destFreq_;
     static float* oscValues[5];
     static int oscValuesCpt;
-    OscillatorParams* oscillator;
+    OscillatorParams* oscillator_;
 };

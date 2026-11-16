@@ -33,16 +33,16 @@ public:
 
 
 private:
-	StepSequencerParams* seqParams;
-	StepSequencerSteps* seqSteps;
+	StepSequencerParams* seqParams_;
+	StepSequencerSteps* seqSteps_;
 
-    float phase;
-    float phaseStep;
-    int gateValue;
-    int target;
-    int currentValue;
-    bool gated;
-    DestinationEnum matrixGateDestination;
+    float phase_;
+    float phaseStep_;
+    int gateValue_;
+    int target_;
+    int currentValue_;
+    bool gated_;
+    DestinationEnum matrixGateDestination_;
 };
 
 #endif /* LFOENV_H_ */

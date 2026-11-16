@@ -61,12 +61,12 @@ struct table allLfoTables[CURVE_TYPE_MAX] =  {
 
 void Env::init(struct EnvelopeTimeMemory *envParamTime, struct EnvelopeLevelMemory *envParamLevel, uint8_t envNumber, float *algoNumber, struct EnvelopeCurveParams *envCurve)
 {
-	this->envTime = envParamTime;
-	this->envLevel = envParamLevel;
-	this->envNumber = envNumber;
-	this->algoNumber = algoNumber;
-	this->isLoop = checkIsLoop();
-	this->envCurve = envCurve;
+	this->envTime_ = envParamTime;
+	this->envLevel_ = envParamLevel;
+	this->envNumber_ = envNumber;
+	this->algoNumber_ = algoNumber;
+	this->isLoop_ = checkIsLoop();
+	this->envCurve_ = envCurve;
 
     if (initTab == 0) {
         initTab = 1;

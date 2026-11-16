@@ -53,7 +53,7 @@ protected:
 
     bool hideParam_[NUMBER_OF_ENCODERS];
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
-    float lfoFreqPreviousValue[5];
+    float lfoFreqPreviousValue_[5];
 };
 
 #endif

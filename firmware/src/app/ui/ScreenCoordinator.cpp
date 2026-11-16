@@ -73,7 +73,7 @@ void ScreenCoordinator::afterNewMixerLoad() {
 }
 
 void ScreenCoordinator::refreshAllScreenByStep() {
-    switch (this->synthState_->fullState.synthMode) {
+    switch (this->synthState_->fullState_.synthMode) {
         case SYNTH_MODE_MIXER:
             mixer_->refreshMixerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
             break;
@@ -110,7 +110,7 @@ void ScreenCoordinator::newTimbre(int timbre) {
     currentTimbre_ = timbre;
     editor_->newTimbre(timbre);
 
-    if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR) {
+    if (this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR) {
         tft_->clearActions();
         tft_->pauseRefresh();
         tft_->clear();
@@ -119,10 +119,10 @@ void ScreenCoordinator::newTimbre(int timbre) {
         editor_->displayPreset();
         refreshStatus_ = 20;
         endRefreshStatus_ = 0;
-    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
+    } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_MIXER) {
         refreshStatus_ = 19;
         endRefreshStatus_ = 14;
-    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+    } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
         sequencer_->newTimbre(timbre, refreshStatus_, endRefreshStatus_);
     }
 }
@@ -153,7 +153,7 @@ void ScreenCoordinator::newPfm3ParamValueFromExternal(int timbre, int currentRow
     checkPresetModified(timbre);
 
     // If Operator we must send
-    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR && this->synthState_->fullState.mainPage != -1 && timbre == currentTimbre_) {
+    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR && this->synthState_->fullState_.mainPage != -1 && timbre == currentTimbre_) {
 
         editor_->newPfm3ParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
     }
@@ -239,7 +239,7 @@ void ScreenCoordinator::midiClock(bool show) {
     int x = 240 - 4 * TFT_SMALL_CHAR_WIDTH;
     int y = 1;
     tft_->setCursorInPixel(x, y);
-    switch (this->synthState_->fullState.synthMode) {
+    switch (this->synthState_->fullState_.synthMode) {
         case SYNTH_MODE_MIXER:
             tft_->setCharBackgroundColor(COLOR_DARK_GREEN);
             break;
@@ -269,7 +269,7 @@ void ScreenCoordinator::noteOn(int timbre, bool show) {
     int x = 240 - (3 - (timbre % 3)) * TFT_SMALL_CHAR_WIDTH;
     int y = 1 + (timbre / 3) * TFT_SMALL_CHAR_HEIGHT;
     tft_->setCursorInPixel(x, y);
-    switch (this->synthState_->fullState.synthMode) {
+    switch (this->synthState_->fullState_.synthMode) {
         case SYNTH_MODE_MIXER:
             tft_->setCharBackgroundColor(COLOR_DARK_GREEN);
             break;
@@ -293,7 +293,7 @@ void ScreenCoordinator::noteOn(int timbre, bool show) {
     } else {
         tft_->printSmallChar(' ');
     }
-    if (likely(this->synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER)) {
+    if (likely(this->synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER)) {
         // special case for SEQUENCER
         if (show) {
             if (noteOnCounter_[timbre] == 0) {
@@ -316,11 +316,11 @@ void ScreenCoordinator::tempoClick() {
         }
     }
 
-    if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
+    if (this->synthState_->fullState_.synthMode == SYNTH_MODE_MIXER) {
         mixer_->tempoClick();
-    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR) {
+    } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR) {
         editor_->tempoClick();
-    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+    } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
         sequencer_->tempoClick();
     }
 }
@@ -328,9 +328,9 @@ void ScreenCoordinator::tempoClick() {
 void ScreenCoordinator::afterNewParamsLoad(int timbre) {
     editor_->setPresetModified(timbre, false);
 
-    if (currentTimbre_ == timbre && this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR) {
+    if (currentTimbre_ == timbre && this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR) {
         refreshStatus_ = 20;
-    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
+    } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_MIXER) {
         tft_->clearMixerLabels();
         refreshStatus_ = 19;
         endRefreshStatus_ = 14;
@@ -371,8 +371,8 @@ void ScreenCoordinator::stopNote(int timbre, char note) {
 void ScreenCoordinator::checkPresetModified(int timbre) {
     if (!editor_->isPresetModifed(timbre)) {
         editor_->setPresetModified(timbre, true);
-        if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR && timbre == currentTimbre_) {
-            int length = getLength(this->synthState_->pfm3Preset->presetName);
+        if (this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR && timbre == currentTimbre_) {
+            int length = getLength(this->synthState_->pfm3Preset_->presetName);
             tft_->setCursor(3 + length, 0);
             tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
             tft_->print('*');

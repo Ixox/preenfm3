@@ -30,14 +30,14 @@ extern uint16_t tftMemory[240 * 320];
 
 
 PPMImage::PPMImage() {
-    cptImage = 0;
+    cptImage_ = 0;
 
     char imageTitlePattern[] = "0:/PPM/img_####.ppm";
     for (int i = 0; i < 32; i++) {
-    	imageTitle[i] = 0;
+    	imageTitle_[i] = 0;
     }
     for (int i = 0; imageTitlePattern[i] != 0; i++) {
-    	imageTitle[i] = imageTitlePattern[i];
+    	imageTitle_[i] = imageTitlePattern[i];
     }
 }
 
@@ -50,11 +50,11 @@ void PPMImage::init() {
     FRESULT fresult = FR_OK;
 
     // Calculcate sharpIndexInName once
-    sharpIndexInName = 0;
-    while (imageTitle[sharpIndexInName] != '#'
-			&& imageTitle[sharpIndexInName] != 0
-			&& sharpIndexInName < 50) {
-    	sharpIndexInName++;
+    sharpIndexInName_ = 0;
+    while (imageTitle_[sharpIndexInName_] != '#'
+			&& imageTitle_[sharpIndexInName_] != 0
+			&& sharpIndexInName_ < 50) {
+    	sharpIndexInName_++;
     }
 
     // We don't care about the result and we call this only once in the init() method
@@ -63,32 +63,32 @@ void PPMImage::init() {
     do {
         cpt++;
         updateImageName(cpt);
-        fresult = f_stat(imageTitle, &fileInfo );
+        fresult = f_stat(imageTitle_, &fileInfo );
     } while (fresult != FR_NO_FILE);
 
-    cptImage = cpt;
+    cptImage_ = cpt;
 }
 
 void PPMImage::updateImageName(int cpt) {
-	imageTitle[sharpIndexInName] = '0' + ((cpt % 10000) / 1000);
-	imageTitle[sharpIndexInName+1] = '0' + ((cpt % 1000) / 100);
-	imageTitle[sharpIndexInName+2] = '0' + ((cpt % 100) / 10);
-	imageTitle[sharpIndexInName+3] = '0' + (cpt % 10);
+	imageTitle_[sharpIndexInName_] = '0' + ((cpt % 10000) / 1000);
+	imageTitle_[sharpIndexInName_+1] = '0' + ((cpt % 1000) / 100);
+	imageTitle_[sharpIndexInName_+2] = '0' + ((cpt % 100) / 10);
+	imageTitle_[sharpIndexInName_+3] = '0' + (cpt % 10);
 }
 
 void PPMImage::saveImage() {
 
 
-	if (!isInitialized) {
-        isInitialized = true;
+	if (!isInitialized_) {
+        isInitialized_ = true;
         init();
     }
 
     UINT byteWriten;
     int errorNumber = 0;
-    updateImageName(cptImage);
+    updateImageName(cptImage_);
 
-    if (f_open(&imageFile, imageTitle, FA_OPEN_ALWAYS | FA_WRITE) != FR_OK) {
+    if (f_open(&imageFile, imageTitle_, FA_OPEN_ALWAYS | FA_WRITE) != FR_OK) {
     	errorNumber = 1;
     }
     if (f_write(&imageFile, "P6\n240 320\n255\n", 15, &byteWriten)) {
@@ -131,10 +131,10 @@ void PPMImage::saveImage() {
 	    tft.print(errorNumber);
     }
     tft.setCursor(4, 6);
-	tft.print(imageTitle + 12);
+	tft.print(imageTitle_ + 12);
 
 	HAL_Delay(1000);
 
-    cptImage = (cptImage + 1) % 10000;
+    cptImage_ = (cptImage_ + 1) % 10000;
 }
 #endif

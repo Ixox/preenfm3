@@ -39,34 +39,34 @@ public:
 
 
     bool isReleased() {
-        return this->released;
+        return this->released_;
     }
     bool isPlaying() {
-        return this->playing;
+        return this->playing_;
     }
     uint32_t getIndex() {
-        return this->index;
+        return this->index_;
     }
     uint8_t slot() const {
         return slot_;
     }
     char getNote() {
-        return this->note;
+        return this->note_;
     }
     char getMidiVelocity() {
-        return this->midiVelocity;
+        return this->midiVelocity_;
     }
     float getNoteFrequency() {
-        return this->noteFrequency;
+        return this->noteFrequency_;
     }
     bool isHoldedByPedal() {
-        return this->holdedByPedal;
+        return this->holdedByPedal_;
     }
     void setHoldedByPedal(bool holded) {
-        this->holdedByPedal = holded;
+        this->holdedByPedal_ = holded;
     }
     void bindTimbre(Timbre *timbre) {
-        currentTimbre = timbre;
+        currentTimbre_ = timbre;
     }
     void setPendingTimbre(Timbre *timbre) {
         pendingTimbre_ = timbre;
@@ -83,14 +83,14 @@ public:
 
             
     Timbre* getCurrentTimbre() {
-        return currentTimbre;
+        return currentTimbre_;
     }
 
 
     void resetVoiceState();
 
     float* const getSampleBlock() {
-        return sampleBlock;
+        return sampleBlock_;
     }
 
 
@@ -100,36 +100,36 @@ private:
 
 
     // voice status
-    bool released;
-    bool playing;
-    bool isFullOfZero;
-    uint32_t index;
+    bool released_;
+    bool playing_;
+    bool isFullOfZero_;
+    uint32_t index_;
     uint8_t slot_;
-    char note;
-    char midiVelocity;
-    float noteFrequency;
-    float velocity;
+    char note_;
+    char midiVelocity_;
+    float noteFrequency_;
+    float velocity_;
 
-    bool holdedByPedal;
+    bool holdedByPedal_;
     // Fixing the "plop" when all notes are buisy...
-    Timbre *currentTimbre;
+    Timbre *currentTimbre_;
     Timbre *pendingTimbre_;
     bool transferReady_;
 
 
     // Voice needs its own sample block to apply effects
-    float sampleBlock[BLOCK_SIZE * 2];
-    float mixerGain;
+    float sampleBlock_[BLOCK_SIZE * 2];
+    float mixerGain_;
 
     // Filter
-    float fxParam1, fxParam2, fxParam3;
-    float fxParamA1, fxParamA2;
-    float fxParamB1, fxParamB2;
-    float v0L, v1L, v2L, v3L, v4L, v5L, v6L, v7L, v8L;
-    float v0R, v1R, v2R, v3R, v4R, v5R, v6R, v7R, v8R;
-    float fxPhase;
+    float fxParam1_, fxParam2_, fxParam3_;
+    float fxParamA1_, fxParamA2_;
+    float fxParamB1_, fxParamB2_;
+    float v0L_, v1L_, v2L_, v3L_, v4L_, v5L_, v6L_, v7L_, v8L_;
+    float v0R_, v1R_, v2R_, v3R_, v4R_, v5R_, v6R_, v7R_, v8R_;
+    float fxPhase_;
     // save float fxParam1 to detect modification
-    float fxParam1PlusMatrix;
+    float fxParam1PlusMatrix_;
 
 
 };

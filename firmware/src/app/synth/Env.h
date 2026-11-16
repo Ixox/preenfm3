@@ -66,24 +66,24 @@ class Env
 public:
     Env() {
 
-        nextState[ENV_STATE_ON_A] = ENV_STATE_ON_D;
-        nextState[ENV_STATE_ON_D] = ENV_STATE_ON_S;
-        nextState[ENV_STATE_ON_S] = ENV_STATE_ON_REAL_S;
-        nextState[ENV_STATE_ON_REAL_S] = ENV_STATE_ON_REAL_S;
-        nextState[ENV_STATE_ON_R] = ENV_STATE_DEAD;
-        nextState[ENV_STATE_ON_QUICK_R] = ENV_STATE_DEAD;
+        nextState_[ENV_STATE_ON_A] = ENV_STATE_ON_D;
+        nextState_[ENV_STATE_ON_D] = ENV_STATE_ON_S;
+        nextState_[ENV_STATE_ON_S] = ENV_STATE_ON_REAL_S;
+        nextState_[ENV_STATE_ON_REAL_S] = ENV_STATE_ON_REAL_S;
+        nextState_[ENV_STATE_ON_R] = ENV_STATE_DEAD;
+        nextState_[ENV_STATE_ON_QUICK_R] = ENV_STATE_DEAD;
 
-        tables[ENV_STATE_ON_REAL_S].table = envLinear;
-        tables[ENV_STATE_ON_REAL_S].size = 1;
-        tables[ENV_STATE_ON_QUICK_R].table = envLinear;
-        tables[ENV_STATE_ON_QUICK_R].size = 1;
+        tables_[ENV_STATE_ON_REAL_S].table = envLinear;
+        tables_[ENV_STATE_ON_REAL_S].size = 1;
+        tables_[ENV_STATE_ON_QUICK_R].table = envLinear;
+        tables_[ENV_STATE_ON_QUICK_R].size = 1;
 
         // Quick release reaches 0 in 6 blocks
-        stateTarget[ENV_STATE_ON_QUICK_R] = 0.0f;
-        stateInc[ENV_STATE_ON_QUICK_R] = 0.166667f;
+        stateTarget_[ENV_STATE_ON_QUICK_R] = 0.0f;
+        stateInc_[ENV_STATE_ON_QUICK_R] = 0.166667f;
 
 
-        stateTarget[ENV_STATE_DEAD] = 0.0f;
+        stateTarget_[ENV_STATE_DEAD] = 0.0f;
     }
 
     virtual ~Env(void) {
@@ -92,15 +92,15 @@ public:
     void init(struct EnvelopeTimeMemory *envTime, struct EnvelopeLevelMemory *envLevel, uint8_t envNumber, float* algoNumber, struct EnvelopeCurveParams *envCurve);
 
     void applyCurves() {
-        applyCurveToSegment((int)envCurve->attackCurve,  ENV_STATE_ON_A);
-        applyCurveToSegment((int)envCurve->decayCurve,   ENV_STATE_ON_D);
-        applyCurveToSegment((int)envCurve->sustainCurve, ENV_STATE_ON_S);
-        applyCurveToSegment((int)envCurve->releaseCurve, ENV_STATE_ON_R);
+        applyCurveToSegment((int)envCurve_->attackCurve,  ENV_STATE_ON_A);
+        applyCurveToSegment((int)envCurve_->decayCurve,   ENV_STATE_ON_D);
+        applyCurveToSegment((int)envCurve_->sustainCurve, ENV_STATE_ON_S);
+        applyCurveToSegment((int)envCurve_->releaseCurve, ENV_STATE_ON_R);
     }
 
     void applyCurveToSegment(int segment, int segmentPos) {
-        tables[segmentPos].table = allLfoTables[segment].table;
-        tables[segmentPos].size  = allLfoTables[segment].size;
+        tables_[segmentPos].table = allLfoTables[segment].table;
+        tables_[segmentPos].size  = allLfoTables[segment].size;
     }
 
     void reloadADSR(int encoder) {
@@ -110,23 +110,23 @@ public:
     	// 3 Release
         switch (encoder) {
         case 0:
-        	stateTarget[ENV_STATE_ON_A] =  envLevel->attackLevel;
+        	stateTarget_[ENV_STATE_ON_A] =  envLevel_->attackLevel;
             // Not necessary... recalculated in noteOn....
         	// stateInc[ENV_STATE_ON_A] = incTab[(int)(envParamsA->attackTime * 100.0f)];
             break;
         case 1:
-        	stateTarget[ENV_STATE_ON_D] =  envLevel->decayLevel;
-        	stateInc[ENV_STATE_ON_D] = incTab[(int)(envTime->decayTime * 100.0f)];
+        	stateTarget_[ENV_STATE_ON_D] =  envLevel_->decayLevel;
+        	stateInc_[ENV_STATE_ON_D] = incTab[(int)(envTime_->decayTime * 100.0f)];
             break;
         case 2:
-        	stateTarget[ENV_STATE_ON_S] =  envLevel->sustainLevel;
-        	stateTarget[ENV_STATE_ON_REAL_S] =  envLevel->sustainLevel;
-        	stateInc[ENV_STATE_ON_S] = incTab[(int)(envTime->sustainTime * 100.0f)];
-            stateInc[ENV_STATE_ON_REAL_S] = 0.0f;
+        	stateTarget_[ENV_STATE_ON_S] =  envLevel_->sustainLevel;
+        	stateTarget_[ENV_STATE_ON_REAL_S] =  envLevel_->sustainLevel;
+        	stateInc_[ENV_STATE_ON_S] = incTab[(int)(envTime_->sustainTime * 100.0f)];
+            stateInc_[ENV_STATE_ON_REAL_S] = 0.0f;
         	break;
         case 3:
-        	stateTarget[ENV_STATE_ON_R] =  envLevel->releaseLevel;
-            isLoop = checkIsLoop();
+        	stateTarget_[ENV_STATE_ON_R] =  envLevel_->releaseLevel;
+            isLoop_ = checkIsLoop();
             // Not necessary... recalculated in noteOff....
         	// stateInc[ENV_STATE_ON_R] = incTab[(int)(envParamsB->releaseTime * 100.0f)];
             break;
@@ -134,23 +134,23 @@ public:
     }
 
     void initLoopState() {
-        isLoop = false;
+        isLoop_ = false;
     }
 
     inline bool checkIsLoop() {
         // loopable only for modulators
-        bool isModulator = algoOpInformation[(int)*this->algoNumber][this->envNumber] == OPERATOR_MODULATOR;
+        bool isModulator = algoOpInformation[(int)*this->algoNumber_][this->envNumber_] == OPERATOR_MODULATOR;
         // loop trick : modulator enveloppe loop if release = 1:0
-        return isModulator && (envLevel->releaseLevel == 1.0f) && (envTime->releaseTime == 0.0f);
+        return isModulator && (envLevel_->releaseLevel == 1.0f) && (envTime_->releaseTime == 0.0f);
     }
 
     void newState(struct EnvData* env) {
-        if (unlikely(isLoop && (env->envState > ENV_STATE_ON_S))) {
+        if (unlikely(isLoop_ && (env->envState > ENV_STATE_ON_S))) {
             //loop env
             env->envState = ENV_STATE_ON_A;
         }
         env->previousStateValue = env->currentValue;
-        env->nextStateValue = stateTarget[env->envState];
+        env->nextStateValue = stateTarget_[env->envState];
         env->currentPhase = 0;
     }
 
@@ -173,26 +173,26 @@ public:
             incPhase = env->stateIncDecay;
             break;
         default:
-            incPhase = stateInc[env->envState];
+            incPhase = stateInc_[env->envState];
             break;
         }
 		env->currentPhase += incPhase;
 
 		if (unlikely(env->currentPhase  >= 1.0f)) {
 			env->currentValue = env->nextStateValue;
-			env->envState = nextState[env->envState];
+			env->envState = nextState_[env->envState];
 			newState(env);
 
 	        return env->currentValue;
 		}
 
 		if (likely(incPhase > 0.0f)) {
-			float fIndex = env->currentPhase * tables[env->envState].size;
+			float fIndex = env->currentPhase * tables_[env->envState].size;
 			int index = (int)fIndex;
 
 			float floatingPart = fIndex - index;
-			float from = tables[env->envState].table[index];
-			float to = tables[env->envState].table[index + 1];
+			float from = tables_[env->envState].table[index];
+			float to = tables_[env->envState].table[index + 1];
 			float tmpValue = from * (1.0f - floatingPart) + to *  floatingPart;
 			// When table value is 0 => next value
 			// When table value is 1 => previous value
@@ -206,14 +206,14 @@ public:
 
     float noteOnAfterMatrixCompute(struct EnvData* env, Matrix* matrix) {
 
-        float attack = envTime->attackTime + matrix->getDestination((enum DestinationEnum)(ENV1_ATTACK + envNumber));
-        float decay = envTime->decayTime;
+        float attack = envTime_->attackTime + matrix->getDestination((enum DestinationEnum)(ENV1_ATTACK + envNumber_));
+        float decay = envTime_->decayTime;
 
-        if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_CARRIER) {
+        if (unlikely(algoOpInformation[(int)*this->algoNumber_][this->envNumber_]) == OPERATOR_CARRIER) {
             attack += matrix->getDestination(ALL_ENV_ATTACK);
             decay += matrix->getDestination(ALL_ENV_DECAY);
         }
-        if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_MODULATOR) {
+        if (unlikely(algoOpInformation[(int)*this->algoNumber_][this->envNumber_]) == OPERATOR_MODULATOR) {
             attack += matrix->getDestination(ALL_ENV_ATTACK_MODULATOR);
             decay += matrix->getDestination(ALL_ENV_DECAY_MODULATOR);
         }
@@ -256,21 +256,21 @@ public:
 
     void noteOff(struct EnvData* env, Matrix* matrix) {
 
-        float release = envTime->releaseTime;
-        if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_CARRIER) {
+        float release = envTime_->releaseTime;
+        if (unlikely(algoOpInformation[(int)*this->algoNumber_][this->envNumber_]) == OPERATOR_CARRIER) {
             release += matrix->getDestination(ALL_ENV_RELEASE);
         }
-        if (unlikely(algoOpInformation[(int)*this->algoNumber][this->envNumber]) == OPERATOR_MODULATOR) {
+        if (unlikely(algoOpInformation[(int)*this->algoNumber_][this->envNumber_]) == OPERATOR_MODULATOR) {
             release += matrix->getDestination(ALL_ENV_RELEASE_MODULATOR);
         }
     	if (release < 0.0f) {
     		release = 0.0f;
         }
     	// The lower we are the shorter the release is...
-    	if (env->currentValue > stateTarget[ENV_STATE_ON_R]) {
-    		release *= (1.0f + (env->currentValue -  stateTarget[ENV_STATE_ON_R])) / 2.0f;
+    	if (env->currentValue > stateTarget_[ENV_STATE_ON_R]) {
+    		release *= (1.0f + (env->currentValue -  stateTarget_[ENV_STATE_ON_R])) / 2.0f;
     	} else {
-    		release *= (1.0f + (stateTarget[ENV_STATE_ON_R] - env->currentValue)) / 2.0f;
+    		release *= (1.0f + (stateTarget_[ENV_STATE_ON_R] - env->currentValue)) / 2.0f;
     	}
         env->stateIncRelease = incTab[(int)(release * 100.0f)];
     	env->envState = ENV_STATE_ON_R;
@@ -284,22 +284,22 @@ public:
 
 private:
     // target values of ADSR
-    float stateTarget[ENV_NUMBER_OF_STATES];
+    float stateTarget_[ENV_NUMBER_OF_STATES];
     // float
 
-    float stateInc[ENV_NUMBER_OF_STATES];
-    uint8_t nextState[ENV_NUMBER_OF_STATES];
-    struct table tables[ENV_NUMBER_OF_STATES];
+    float stateInc_[ENV_NUMBER_OF_STATES];
+    uint8_t nextState_[ENV_NUMBER_OF_STATES];
+    struct table tables_[ENV_NUMBER_OF_STATES];
 
-    EnvelopeTimeMemory* envTime;
-    EnvelopeLevelMemory* envLevel;
-    EnvelopeCurveParams *envCurve;
+    EnvelopeTimeMemory* envTime_;
+    EnvelopeLevelMemory* envLevel_;
+    EnvelopeCurveParams *envCurve_;
     
-    uint8_t envNumber;
-    float* algoNumber;
+    uint8_t envNumber_;
+    float* algoNumber_;
 
     // loopable envelope
-    bool isLoop;
+    bool isLoop_;
 
     static int initTab;
     static float incTab[1601];

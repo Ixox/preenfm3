@@ -32,15 +32,15 @@ public:
 	void valueChanged(int encoder) {
 	    switch (encoder) {
 	    case ENCODER_LFO_KSYNC:
-            this->rampInv = 50 * invTab[(int)(lfo->keybRamp * 50.0f)];
-            this->ramp = lfo->keybRamp;
-            if (this->ramp < 0 ) {
+            this->rampInv_ = 50 * invTab[(int)(lfo_->keybRamp * 50.0f)];
+            this->ramp_ = lfo_->keybRamp;
+            if (this->ramp_ < 0 ) {
                 // resync all LFO
-                phase = 0;
+                phase_ = 0;
             }
             break;
 	    case ENCODER_LFO_FREQ:
-	        isNotMidiSynchronized = ((lfo->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16);
+	        isNotMidiSynchronized_ = ((lfo_->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16);
 	        break;
 	    }
 	}
@@ -59,18 +59,18 @@ public:
 
 
 private:
-	LfoType type;
-	LfoParams* lfo ;
-    float currentRamp, ramp, rampInv;
-    float phase;
-    float* initPhase;
-    DestinationEnum destination;
-    float currentRandomValue;
-    float nextRandomValue = 0;
-    float noiseLp = 0;
-    float currentFreq ;
+	LfoType type_;
+	LfoParams* lfo_ ;
+    float currentRamp_, ramp_, rampInv_;
+    float phase_;
+    float* initPhase_;
+    DestinationEnum destination_;
+    float currentRandomValue_;
+    float nextRandomValue_ = 0;
+    float noiseLp_ = 0;
+    float currentFreq_ ;
     //
-    bool isNotMidiSynchronized;
+    bool isNotMidiSynchronized_;
 
 };
 

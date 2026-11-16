@@ -22,7 +22,7 @@
 #include "SynthState.h"
 
 const struct EditorEditMenu* EditorEngine::currentEditMenu() const {
-    return parent_->getMainMenu(synthState_->fullState.mainPage);
+    return parent_->getMainMenu(synthState_->fullState_.mainPage);
 }
 
 const struct EditorOneButton* EditorEngine::currentPage() const {
@@ -30,7 +30,7 @@ const struct EditorOneButton* EditorEngine::currentPage() const {
     if (editMenu == nullptr) {
         return nullptr;
     }
-    int editPage = synthState_->fullState.editPage;
+    int editPage = synthState_->fullState_.editPage;
     if (editPage >= editMenu->numberOfButtons) {
         editPage = 0;
     }
@@ -43,7 +43,7 @@ struct RowEncoder EditorEngine::rowEncoderFor(int encoder) const {
         struct RowEncoder none = { ROW_NONE, ENCODER_NONE };
         return none;
     }
-    return page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[encoder];
+    return page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder];
 }
 
 int EditorEngine::currentTimbre() const {

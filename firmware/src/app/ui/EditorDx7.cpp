@@ -281,9 +281,9 @@ int EditorDx7::getCommonPage(int page) const {
 }
 
 void EditorDx7::drawPageHeader() {
-    if (synthState_->fullState.mainPage == 1) {
+    if (synthState_->fullState_.mainPage == 1) {
         tft_->print("Op ");
-        tft_->print(synthState_->fullState.operatorNumber + 1);
+        tft_->print(synthState_->fullState_.operatorNumber + 1);
         tft_->print(" ");
     }
 }
@@ -319,7 +319,7 @@ void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
 }
 
 void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     const struct EditorOneButton *page = currentPage();
     if (page == nullptr) {
         return;
@@ -333,7 +333,7 @@ void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
     tft_->setCharColor(color);
 
     if (rowEncoder.row != DX7_NONE) {
-        displayValue(rowEncoder.row, getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, synthState_->fullState.operatorNumber));
+        displayValue(rowEncoder.row, getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, synthState_->fullState_.operatorNumber));
     } else {
         tft_->print("     ");
     }
@@ -345,7 +345,7 @@ void EditorDx7::drawAlgorithm() {
 
 void EditorDx7::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
         const struct EditorOneButton *page) {
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
         tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5,
             fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
@@ -374,7 +374,7 @@ void EditorDx7::drawParameterName(int button, const struct RowEncoder &rowEncode
 }
 
 void EditorDx7::encoderTurned(int encoder6, int ticks) {
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
 
     if (fullState->mainPage < 0) {
         return;
@@ -417,7 +417,7 @@ void EditorDx7::encoderTurned(int encoder6, int ticks) {
 void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
     (void) timbre; (void) oldValue;
 
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     if (fullState->mainPage < 0 || fullState->mainPage > 1
         || paramId <= DX7_NONE || paramId >= DX7_PARAM_COUNT) {
         return;
@@ -472,7 +472,7 @@ void EditorDx7::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int but
 }
 
 void EditorDx7::buttonPressed(int button) {
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     int mainPage = fullState->mainPage;
     const struct EditorEditMenu *editMenu = currentEditMenu();
     const struct EditorOneButton *page = currentPage();
@@ -520,14 +520,14 @@ void EditorDx7::buttonPressed(int button) {
 }
 
 void EditorDx7::buttonLongPressed(int instrument, int button) {
-    int mainPage = synthState_->fullState.mainPage;
+    int mainPage = synthState_->fullState_.mainPage;
 
     if (mainPage != 1) {
         return;
     }
 
     uint8_t *program = timbre()->getPatchMemory();
-    int block = (5 - synthState_->fullState.operatorNumber) * 21;
+    int block = (5 - synthState_->fullState_.operatorNumber) * 21;
 
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
         for (int i = 0; i < 21; i++) {
@@ -550,7 +550,7 @@ void EditorDx7::buttonLongPressed(int instrument, int button) {
 }
 
 void EditorDx7::refreshOscilloBG() {
-    if (synthState_->fullState.mainPage == 1) {
+    if (synthState_->fullState_.mainPage == 1) {
         refreshOscillatorOperatorEnvelope();
     } else {
         tft_->oscilloBgActionClear();
@@ -558,7 +558,7 @@ void EditorDx7::refreshOscilloBG() {
 }
 
 void EditorDx7::refreshOscillatorOperatorEnvelope() {
-    int op = synthState_->fullState.operatorNumber;
+    int op = synthState_->fullState_.operatorNumber;
     Dx7EnvelopeDisplay env;
     getDx7EnvelopeDisplay(timbre()->getPatchMemory(), op, &env);
 
@@ -572,7 +572,7 @@ void EditorDx7::tempoClick() {
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;
-            if (valueChangedCounter_[e] == 0 && synthState_->fullState.mainPage >= 0) {
+            if (valueChangedCounter_[e] == 0 && synthState_->fullState_.mainPage >= 0) {
                 tft_->setCharBackgroundColor(COLOR_BLACK);
                 displayParamValue(e, COLOR_WHITE);
             }

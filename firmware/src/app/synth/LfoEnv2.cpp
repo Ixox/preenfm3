@@ -19,18 +19,18 @@
 
 
 LfoEnv2::LfoEnv2() {
-    stateTarget[ENV2_STATE_ON_S] = 0.0f;
-    stateTarget[ENV2_STATE_ON_A] = 1.0f;
-    stateTarget[ENV2_STATE_ON_D] = 0.0f;
-    stateTarget[ENV2_STATE_DEAD] = 0.0f;
+    stateTarget_[ENV2_STATE_ON_S] = 0.0f;
+    stateTarget_[ENV2_STATE_ON_A] = 1.0f;
+    stateTarget_[ENV2_STATE_ON_D] = 0.0f;
+    stateTarget_[ENV2_STATE_DEAD] = 0.0f;
 
-    stateInc[ENV2_STATE_DEAD] = 0.0f;
+    stateInc_[ENV2_STATE_DEAD] = 0.0f;
 }
 
 
 void LfoEnv2::init(struct Envelope2LfoParams * envParams, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
 	Lfo::init(matrix, source, dest);
-	this->envParams = envParams;
+	this->envParams_ = envParams;
 	this->valueChanged(0);
     this->valueChanged(1);
     this->valueChanged(2);

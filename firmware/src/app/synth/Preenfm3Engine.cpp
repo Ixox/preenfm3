@@ -208,7 +208,7 @@ void Preenfm3Engine::noteOn(char note, char velocity) {
         timbre_->lastPlayedNote_ = timbre_->voiceNumber_[0];
         timbre_->lowerNote_ = note;
         timbre_->lowerNoteReleased_ = false;
-        timbre_->lowerNoteFrequency = getNoteRealFrequencyEstimation(timbre_->voices_[timbre_->voiceNumber_[0]], noteFrequency);
+        timbre_->lowerNoteFrequency_ = getNoteRealFrequencyEstimation(timbre_->voices_[timbre_->voiceNumber_[0]], noteFrequency);
         return;
     }
 
@@ -241,7 +241,7 @@ void Preenfm3Engine::noteOn(char note, char velocity) {
         timbre_->lowerNote_ = note;
         timbre_->lowerNoteReleased_ = false;
         if (!transferPending) {
-            timbre_->lowerNoteFrequency = getNoteRealFrequencyEstimation(timbre_->voices_[voiceToUse], noteFrequency);
+            timbre_->lowerNoteFrequency_ = getNoteRealFrequencyEstimation(timbre_->voices_[voiceToUse], noteFrequency);
         }
     }
 }
@@ -291,7 +291,7 @@ void Preenfm3Engine::noteOff(char note) {
                 glideToNote(timbre_->voices_[n], timbre_->voices_[n]->getNote(), timbre_->voices_[n]->getNoteFrequency());
                 glideFirstNoteOff(timbre_->voices_[n]);
                 // Sync Osccilo
-                timbre_->lowerNoteFrequency = getNoteRealFrequencyEstimation(timbre_->voices_[n], timbre_->voices_[n]->getNoteFrequency());
+                timbre_->lowerNoteFrequency_ = getNoteRealFrequencyEstimation(timbre_->voices_[n], timbre_->voices_[n]->getNoteFrequency());
                 if (likely(!isUnison)) {
                     return;
                 }
@@ -310,7 +310,7 @@ void Preenfm3Engine::preenNoteOnUpdateMatrix(int voiceToUse, int note, int veloc
 
 void Preenfm3Engine::bindVoiceState(Voice *voice) {
     resetPfm3VoiceState(voice);
-    voice->currentTimbre = timbre_;
+    voice->currentTimbre_ = timbre_;
     Pfm3VoiceState &state = pfm3State(voice);
 
     state.matrix.init(context_->matrixRows);
@@ -343,7 +343,7 @@ void Preenfm3Engine::bindVoiceState(Voice *voice) {
     state.pan6Left = context_->panLeft[5];
     state.pan6Right = context_->panRight[5];
 
-    voice->mixerGain = context_->mixerGain;
+    voice->mixerGain_ = context_->mixerGain;
 
     state.env1ValueMem = 0;
     state.env2ValueMem = 0;
@@ -354,8 +354,8 @@ void Preenfm3Engine::bindVoiceState(Voice *voice) {
 }
 
 void Preenfm3Engine::glideFirstNoteOff(Voice *voice) {
-    voice->note = pfm3State(voice).nextGlidingNote;
-    voice->noteFrequency = pfm3State(voice).nextGlidingNoteFrequency;
+    voice->note_ = pfm3State(voice).nextGlidingNote;
+    voice->noteFrequency_ = pfm3State(voice).nextGlidingNoteFrequency;
     pfm3State(voice).nextGlidingNote = 0;
 }
 
@@ -364,7 +364,7 @@ void Preenfm3Engine::glideToNote(Voice *voice, short newNote, float newNoteFrequ
     pfm3State(voice).glidePhase = 0.0f;
     pfm3State(voice).nextGlidingNote = newNote;
     pfm3State(voice).nextGlidingNoteFrequency = newNoteFrequency;
-    if (voice->holdedByPedal) {
+    if (voice->holdedByPedal_) {
         glideFirstNoteOff(voice);
     }
 
@@ -404,23 +404,23 @@ float Preenfm3Engine::getNoteRealFrequencyEstimation(Voice *voice, float newNote
 }
 
 void Preenfm3Engine::noteOnVoiceWithoutPop(Voice *voice, short newNote, float newNoteFrequency, short velocity, uint32_t index, float phase) {
-    voice->index = index;
-    if (voice->pendingTimbre_ == nullptr && !voice->released
+    voice->index_ = index;
+    if (voice->pendingTimbre_ == nullptr && !voice->released_
         && pfm3Params().engine1.playMode != PLAY_MODE_POLY
         && pfm3Params().engine2.glideType != GLIDE_TYPE_OFF) {
         glideToNote(voice, newNote, newNoteFrequency);
-        voice->holdedByPedal = false;
+        voice->holdedByPedal_ = false;
         pfm3State(voice).newGlide = false;
     } else {
-        voice->note = newNote;
-        voice->midiVelocity = velocity;
-        voice->noteFrequency = newNoteFrequency;
+        voice->note_ = newNote;
+        voice->midiVelocity_ = velocity;
+        voice->noteFrequency_ = newNoteFrequency;
         pfm3State(voice).newNotePending = true;
         pfm3State(voice).pendingNoteVelocity = velocity;
         pfm3State(voice).pendingNote = newNote;
         pfm3State(voice).pendingNoteFrequency = newNoteFrequency;
         pfm3State(voice).phase_ = phase;
-        voice->released = false;
+        voice->released_ = false;
 
         Pfm3VoiceState &state = pfm3State(voice);
         env_[0].noteOffQuick(&state.envState1_);
@@ -441,17 +441,17 @@ void Preenfm3Engine::noteOnVoice(Voice *voice, short newNote, float newNoteFrequ
     if (unlikely(params.engine1.playMode != PLAY_MODE_POLY
         && params.engine2.glideType == GLIDE_TYPE_ALWAYS)) {
         if (unlikely(pfm3State(voice).nextMainFrequency != 0.0f)) {
-            voice->noteFrequency = pfm3State(voice).nextMainFrequency;
+            voice->noteFrequency_ = pfm3State(voice).nextMainFrequency;
         } else {
-            voice->noteFrequency = newNoteFrequency;
+            voice->noteFrequency_ = newNoteFrequency;
         }
         glideToNote(voice, newNote, newNoteFrequency);
         pfm3State(voice).newGlide = true;
-        voice->note = newNote;
+        voice->note_ = newNote;
         pfm3State(voice).nextMainFrequency = newNoteFrequency;
     } else {
-        voice->note = newNote;
-        voice->noteFrequency = newNoteFrequency;
+        voice->note_ = newNote;
+        voice->noteFrequency_ = newNoteFrequency;
 
         if (unlikely(params.engine2.unisonDetune < 0.0f)) {
             phase = 0.25f;
@@ -466,14 +466,14 @@ void Preenfm3Engine::noteOnVoice(Voice *voice, short newNote, float newNoteFrequ
         osc_[5].newNote(&state.oscState6_, newNoteFrequency, phase);
     }
 
-    voice->midiVelocity = velocity;
-    voice->released = false;
-    voice->playing = true;
-    voice->isFullOfZero = false;
+    voice->midiVelocity_ = velocity;
+    voice->released_ = false;
+    voice->playing_ = true;
+    voice->isFullOfZero_ = false;
     pfm3State(voice).pendingNote = 0;
     pfm3State(voice).newNotePending = false;
-    voice->holdedByPedal = false;
-    voice->index = index;
+    voice->holdedByPedal_ = false;
+    voice->index_ = index;
     state.fdbLastValue[0] = 0.0f;
     state.fdbLastValue[1] = 0.0f;
     state.fdbLastValue[2] = 0.0f;
@@ -487,7 +487,7 @@ void Preenfm3Engine::noteOnVoice(Voice *voice, short newNote, float newNoteFrequ
 
     int zeroVelo = (16 - params.engine1.velocity) * 8;
     int newVelocity = zeroVelo + ((velocity * (128 - zeroVelo)) >> 7);
-    voice->velocity = newVelocity * .0078125f;
+    voice->velocity_ = newVelocity * .0078125f;
 
     pfm3State(voice).newNotePlayed = true;
     lfoNoteOn(voice);
@@ -499,14 +499,14 @@ void Preenfm3Engine::endNoteOrBeginNextOne(Voice *voice) {
             pfm3State(voice).newNotePending = false;
             voice->transferReady_ = true;
         } else if (pfm3State(voice).pendingNote <= 127) {
-            noteOnVoice(voice, pfm3State(voice).pendingNote, pfm3State(voice).pendingNoteFrequency, pfm3State(voice).pendingNoteVelocity, voice->index, pfm3State(voice).phase_);
+            noteOnVoice(voice, pfm3State(voice).pendingNote, pfm3State(voice).pendingNoteFrequency, pfm3State(voice).pendingNoteVelocity, voice->index_, pfm3State(voice).phase_);
         } else {
-            noteOnVoice(voice, pfm3State(voice).pendingNote - 128, pfm3State(voice).pendingNoteFrequency, pfm3State(voice).pendingNoteVelocity, voice->index, pfm3State(voice).phase_);
+            noteOnVoice(voice, pfm3State(voice).pendingNote - 128, pfm3State(voice).pendingNoteFrequency, pfm3State(voice).pendingNoteVelocity, voice->index_, pfm3State(voice).phase_);
             pfm3State(voice).noteAlreadyFinished = 1;
         }
     } else {
-        voice->playing = false;
-        voice->released = false;
+        voice->playing_ = false;
+        voice->released_ = false;
     }
     Pfm3VoiceState &state = pfm3State(voice);
     state.freqAi = 0.0f;
@@ -577,8 +577,8 @@ void Preenfm3Engine::afterParamsLoadVoice(Voice *voice) {
         state.lfoStepSeq[0].valueChanged(j);
         state.lfoStepSeq[1].valueChanged(j);
     }
-    voice->v0L = voice->v1L = 0.0f;
-    voice->v0R = voice->v1R = 0.0f;
+    voice->v0L_ = voice->v1L_ = 0.0f;
+    voice->v0R_ = voice->v1R_ = 0.0f;
 }
 
 void Preenfm3Engine::resetMatrix(Voice *voice) {
@@ -609,7 +609,7 @@ void Preenfm3Engine::lfoValueChangeOnVoice(Voice *voice, int currentRow, int enc
 }
 
 void Preenfm3Engine::noteOffVoice(Voice *voice) {
-    if (unlikely(!voice->playing)) {
+    if (unlikely(!voice->playing_)) {
         return;
     }
     if (likely(!pfm3State(voice).newNotePending)) {
@@ -617,9 +617,9 @@ void Preenfm3Engine::noteOffVoice(Voice *voice) {
             pfm3State(voice).noteAlreadyFinished = 1;
             return;
         }
-        voice->released = true;
+        voice->released_ = true;
         pfm3State(voice).gliding = false;
-        voice->holdedByPedal = false;
+        voice->holdedByPedal_ = false;
 
         Pfm3VoiceState &state = pfm3State(voice);
         env_[0].noteOff(&state.envState1_, &state.matrix);
@@ -636,16 +636,16 @@ void Preenfm3Engine::noteOffVoice(Voice *voice) {
 }
 
 void Preenfm3Engine::noteOffVoiceQuick(Voice *voice) {
-    if (unlikely(!voice->playing)) {
+    if (unlikely(!voice->playing_)) {
         return;
     }
     if (pfm3State(voice).newNotePlayed) {
         killVoice(voice);
         return;
     }
-    voice->released = true;
+    voice->released_ = true;
     pfm3State(voice).gliding = false;
-    voice->holdedByPedal = false;
+    voice->holdedByPedal_ = false;
 
     Pfm3VoiceState &state = pfm3State(voice);
     env_[0].noteOffQuick(&state.envState1_);
@@ -671,7 +671,7 @@ void Preenfm3Engine::killVoice(Voice *voice) {
 }
 
 void Preenfm3Engine::startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff) {
-    noteOnVoice(voice, note, noteFrequency, velocity, voice->index, phase);
+    noteOnVoice(voice, note, noteFrequency, velocity, voice->index_, phase);
     if (alreadyOff) {
         pfm3State(voice).noteAlreadyFinished = 1;
     }
@@ -908,7 +908,7 @@ void Preenfm3Engine::updateAllMixOscsAndPans(Voice *voice) {
 void Preenfm3Engine::renderVoice(Voice *voice) {
     Pfm3VoiceState &pfm3State_ = pfm3State(voice);
     Timbre *currentTimbre = timbre_;
-    float &velocity = voice->velocity;
+    float &velocity = voice->velocity_;
 
     // After matrix
     if (unlikely(pfm3State(voice).newNotePlayed)) {
@@ -946,7 +946,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
     float env5Inc;
     float env6Inc;
 
-    float *sample = voice->sampleBlock;
+    float *sample = voice->sampleBlock_;
     float inv32 = .03125f;
 
     if (unlikely( pfm3State_.matrix.getDestination(ALL_OSC_FREQ_HARM) != pfm3State_.targetFreqHarm) || currentTimbre->getMPESetting() > 0) {
@@ -5034,8 +5034,8 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
 
     int oldValue = timbre_->getSeqStepValue(whichStepSeq, step);
     if (oldValue != newValue) {
-        int oldStep = synthState_->stepSelect[whichStepSeq];
-        synthState_->stepSelect[whichStepSeq] = step;
+        int oldStep = synthState_->stepSelect_[whichStepSeq];
+        synthState_->stepSelect_[whichStepSeq] = step;
         if (oldStep != step) {
             synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep,
                 step);
@@ -5085,7 +5085,7 @@ bool Preenfm3Engine::midiNrpn(int timbre, uint16_t param, uint16_t value) {
 }
 
 bool Preenfm3Engine::midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage &out) const {
-    int sendCCOrNRPN = synthState_->fullState.midiConfigValue[MIDICONFIG_SENDS];
+    int sendCCOrNRPN = synthState_->fullState_.midiConfigValue[MIDICONFIG_SENDS];
 
     if (sendCCOrNRPN == 2) {
         out.isNrpn = true;
@@ -5096,7 +5096,7 @@ bool Preenfm3Engine::midiPfm3ParamFeedback(int row, int encoder, float newValue,
                 return false;
             }
             int currentStepSeq = row - ROW_LFOSEQ1;
-            out.nrpn = ((currentStepSeq + 2) << 7) | synthState_->stepSelect[currentStepSeq];
+            out.nrpn = ((currentStepSeq + 2) << 7) | synthState_->stepSelect_[currentStepSeq];
             out.nrpnValue = (unsigned char) newValue;
             return true;
         }

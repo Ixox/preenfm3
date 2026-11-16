@@ -108,15 +108,15 @@ void ByosEngine::startVoice(Voice *voice, int note, int velocity, uint32_t index
     osc_[0].newNote(&state.osc[0], noteFrequency, 0.0f);
     osc_[1].newNote(&state.osc[1], noteFrequency, 0.0f);
 
-    voice->note = (char) note;
-    voice->midiVelocity = (char) velocity;
-    voice->noteFrequency = noteFrequency;
-    voice->velocity = state.velocityGain;
-    voice->index = index;
-    voice->playing = true;
-    voice->released = false;
-    voice->isFullOfZero = false;
-    voice->holdedByPedal = false;
+    voice->note_ = (char) note;
+    voice->midiVelocity_ = (char) velocity;
+    voice->noteFrequency_ = noteFrequency;
+    voice->velocity_ = state.velocityGain;
+    voice->index_ = index;
+    voice->playing_ = true;
+    voice->released_ = false;
+    voice->isFullOfZero_ = false;
+    voice->holdedByPedal_ = false;
 }
 
 void ByosEngine::releaseVoice(Voice *voice) {
@@ -125,13 +125,13 @@ void ByosEngine::releaseVoice(Voice *voice) {
         state.envLevel = 0.0f;
         state.envStage = BYOS_ENV_IDLE;
         state.envInc = 0.0f;
-        voice->playing = false;
-        voice->released = false;
+        voice->playing_ = false;
+        voice->released_ = false;
         return;
     }
     state.envStage = BYOS_ENV_RELEASE;
     state.envInc = -state.envLevel / (params_.release * PREENFM_FREQUENCY);
-    voice->released = true;
+    voice->released_ = true;
 }
 
 void ByosEngine::noteOn(char note, char velocity) {
@@ -155,7 +155,7 @@ void ByosEngine::noteOn(char note, char velocity) {
     if (note <= timbre_->lowerNote_ || timbre_->lowerNoteReleased_) {
         timbre_->lowerNote_ = note;
         timbre_->lowerNoteReleased_ = false;
-        timbre_->lowerNoteFrequency = noteFrequency;
+        timbre_->lowerNoteFrequency_ = noteFrequency;
     }
 }
 
@@ -182,8 +182,8 @@ void ByosEngine::noteOff(char note) {
 void ByosEngine::killVoice(Voice *voice) {
     voice->resetVoiceState();
     resetVoiceState(voice);
-    voice->playing = false;
-    voice->released = false;
+    voice->playing_ = false;
+    voice->released_ = false;
 }
 
 void ByosEngine::noteOffVoice(Voice *voice) {
@@ -228,13 +228,13 @@ void ByosEngine::renderVoice(Voice *voice) {
             if (state.envLevel <= 0.0f) {
                 state.envLevel = 0.0f;
                 state.envStage = BYOS_ENV_IDLE;
-                voice->playing = false;
-                voice->released = false;
+                voice->playing_ = false;
+                voice->released_ = false;
             }
         }
 
         float sample = 0.0f;
-        if (voice->playing) {
+        if (voice->playing_) {
             float op1 = osc_[0].getNextSample(&state.osc[0], waveTable0);
             float op2 = osc_[1].getNextSample(&state.osc[1], waveTable1);
             sample = (op1 * (1.0f - params_.mix) + op2 * params_.mix) * state.envLevel * state.velocityGain;

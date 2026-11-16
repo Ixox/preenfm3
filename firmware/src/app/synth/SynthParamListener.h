@@ -42,7 +42,7 @@ public:
 
     virtual void newPresetName(int timbre) {};
 
-    SynthParamListener* nextListener;
+    SynthParamListener* nextListener_;
 };
 
 #endif /* SYNTHPARAMLISTENER_H_ */

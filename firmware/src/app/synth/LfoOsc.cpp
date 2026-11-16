@@ -23,108 +23,108 @@ extern float noise[32];
 
 void LfoOsc::init(struct LfoParams *lfoParams, float* phase, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
     Lfo::init(matrix, source, dest);
-    this->type = LFO_TRIANGLE;
-    this->ramp = 0;
-    this->initPhase = phase;
-    this->rampInv = 10000000 ;
-    this->currentRamp = 0;
-    this->lfo = lfoParams;
+    this->type_ = LFO_TRIANGLE;
+    this->ramp_ = 0;
+    this->initPhase_ = phase;
+    this->rampInv_ = 10000000 ;
+    this->currentRamp_ = 0;
+    this->lfo_ = lfoParams;
     valueChanged(3);
-    this->destination = dest;
-    this->currentRandomValue = 0.0f;
+    this->destination_ = dest;
+    this->currentRandomValue_ = 0.0f;
 
-    ticks = 1536;
+    ticks_ = 1536;
     midiClock(0, true);
 }
 
 
 void LfoOsc::midiClock(int songPosition, bool computeStep) {
 
-    ticks &= 0x7ff;
+    ticks_ &= 0x7ff;
 
-    switch ((int)(lfo->freq * 10.0f + .05f)) {
+    switch ((int)(lfo_->freq * 10.0f + .05f)) {
     case LFO_MIDICLOCK_MC_DIV_16:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE / 32.0f * invTab[ticks];
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 32.0f * invTab[ticks_];
+                ticks_ = 0;
             }
-            phase = (songPosition & 0x3E) * 0.015625f + *this->initPhase;
+            phase_ = (songPosition & 0x3E) * 0.015625f + *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_DIV_8:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE / 16.0f * invTab[ticks];
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 16.0f * invTab[ticks_];
+                ticks_ = 0;
             }
-            phase = (songPosition & 0x1E) * 0.03125f + *this->initPhase;
+            phase_ = (songPosition & 0x1E) * 0.03125f + *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_DIV_4:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE / 8.0f * invTab[ticks];
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 8.0f * invTab[ticks_];
+                ticks_ = 0;
             }
-            phase = (songPosition & 0xE) * 0.0625f + *this->initPhase;
+            phase_ = (songPosition & 0xE) * 0.0625f + *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_DIV_2:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE / 4.0f * invTab[ticks];
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 4.0f * invTab[ticks_];
+                ticks_ = 0;
             }
             // 0,2,4,6
-            phase = (songPosition & 0x6) * .125f + *this->initPhase;
+            phase_ = (songPosition & 0x6) * .125f + *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC:
         // Midi Clock
         if ((songPosition & 0x1) == 0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE / 2.0f * invTab[ticks];
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 2.0f * invTab[ticks_];
+                ticks_ = 0;
             }
             // 0 or 2 -> 0 ou .5
-            phase = (songPosition & 0x2) * .25f + *this->initPhase;
+            phase_ = (songPosition & 0x2) * .25f + *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_2:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks];
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_];
+                ticks_ = 0;
             }
-            phase =  *this->initPhase;
+            phase_ =  *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_3:
         if ((songPosition & 0x3)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks] * 3.0;
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_] * 3.0;
+                ticks_ = 0;
             }
-            phase = *this->initPhase;
+            phase_ = *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_4:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks] * 2.0f;
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_] * 2.0f;
+                ticks_ = 0;
             }
-            phase = *this->initPhase;
+            phase_ = *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_8:
         if ((songPosition & 0x1)==0) {
             if (computeStep) {
-                currentFreq = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks] * 4.0f;
-                ticks = 0;
+                currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_] * 4.0f;
+                ticks_ = 0;
             }
-            phase = *this->initPhase;
+            phase_ = *this->initPhase_;
         }
         break;
     }
@@ -134,119 +134,119 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
 void LfoOsc::nextValueInMatrix() {
     float lfoValue;
 
-    ticks ++;
+    ticks_ ++;
 
-    if (this->isNotMidiSynchronized) {
-        currentFreq = lfo->freq + this->matrix->getDestination(destination);
+    if (this->isNotMidiSynchronized_) {
+        currentFreq_ = lfo_->freq + this->matrix_->getDestination(destination_);
     }
-    phase += currentFreq * PREENFM_FREQUENCY_INVERSED_LFO;
+    phase_ += currentFreq_ * PREENFM_FREQUENCY_INVERSED_LFO;
 
-    switch ((int)lfo->shape) {
+    switch ((int)lfo_->shape) {
     case LFO_TRIANGLE:
     {
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1;
         }
-        if (phase < .5f) {
-            lfoValue = phase * 4.0f -1.0f ;
+        if (phase_ < .5f) {
+            lfoValue = phase_ * 4.0f -1.0f ;
         } else {
-            lfoValue = 1.0f - (phase - .5f ) * 4.0f;
+            lfoValue = 1.0f - (phase_ - .5f ) * 4.0f;
         }
         break;
     }
     case LFO_SAW:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1;
         }
-        lfoValue = -1.0f + phase * 2.0f;
+        lfoValue = -1.0f + phase_ * 2.0f;
         break;
     case LFO_SIN:
     {
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1;
         }
-        int sinIndex = (int) (phase * waveTables[0].max);
+        int sinIndex = (int) (phase_ * waveTables[0].max);
         sinIndex &= waveTables[0].max;
         lfoValue = sinTable[sinIndex];
         break;
     }
     case LFO_SQUARE:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1;
         }
-        if (phase < .5) {
+        if (phase_ < .5) {
             lfoValue = -1.0f;
         } else {
             lfoValue = 1.0f;
         }
         break;
     case LFO_RANDOM:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1.0f;
-            currentRandomValue = noise[0];
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1.0f;
+            currentRandomValue_ = noise[0];
         }
 
-        lfoValue = currentRandomValue;
+        lfoValue = currentRandomValue_;
         break;
     case LFO_BROWNIAN:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1.0f;
-            noiseLp = noise[0] * 0.4f + noiseLp * 0.6f;
-            currentRandomValue = noiseLp;
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1.0f;
+            noiseLp_ = noise[0] * 0.4f + noiseLp_ * 0.6f;
+            currentRandomValue_ = noiseLp_;
         }
 
-        lfoValue = currentRandomValue;
+        lfoValue = currentRandomValue_;
         break;
     case LFO_WANDERING:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
-            currentRandomValue = nextRandomValue;
-            nextRandomValue = noise[0];
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1;
+            currentRandomValue_ = nextRandomValue_;
+            nextRandomValue_ = noise[0];
         }
 
-        lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;
+        lfoValue = phase_ * (nextRandomValue_ - currentRandomValue_) + currentRandomValue_;
         break;
     case LFO_FLOW:
-        if (unlikely(phase >= 1.0f)) {
-            phase -= 1;
-            noiseLp = noise[0] * 0.4f + noiseLp * 0.6f;
-            currentRandomValue = nextRandomValue;
-            nextRandomValue = noiseLp;
+        if (unlikely(phase_ >= 1.0f)) {
+            phase_ -= 1;
+            noiseLp_ = noise[0] * 0.4f + noiseLp_ * 0.6f;
+            currentRandomValue_ = nextRandomValue_;
+            nextRandomValue_ = noiseLp_;
         }
 
-        lfoValue = phase * (nextRandomValue - currentRandomValue) + currentRandomValue;
+        lfoValue = phase_ * (nextRandomValue_ - currentRandomValue_) + currentRandomValue_;
         break;
     }
 
 
-    if (unlikely(currentRamp < ramp)) {
-        lfoValue = lfoValue * currentRamp  * rampInv ;
-        currentRamp += PREENFM_FREQUENCY_INVERSED_LFO;
+    if (unlikely(currentRamp_ < ramp_)) {
+        lfoValue = lfoValue * currentRamp_  * rampInv_ ;
+        currentRamp_ += PREENFM_FREQUENCY_INVERSED_LFO;
     }
 
-    lfoValue += lfo->bias;
+    lfoValue += lfo_->bias;
 
-    matrix->setSource((enum SourceEnum)source, lfoValue);
+    matrix_->setSource((enum SourceEnum)source_, lfoValue);
 }
 
 
 void LfoOsc::noteOn() {
-    if (ramp >= 0.0f) {
-        currentRamp = 0.0f;
-        if ((lfo->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16) {
+    if (ramp_ >= 0.0f) {
+        currentRamp_ = 0.0f;
+        if ((lfo_->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16) {
 
-            phase = *this->initPhase;
+            phase_ = *this->initPhase_;
         }
         // Retriger value if random...
-        if (unlikely(lfo->shape == LFO_RANDOM)) {
-            currentRandomValue = noise[0];
-        } else if (unlikely(lfo->shape >= LFO_BROWNIAN)) {
-            noiseLp = noise[0] * 0.4f + noiseLp * 0.6f;
-            currentRandomValue = noiseLp;
+        if (unlikely(lfo_->shape == LFO_RANDOM)) {
+            currentRandomValue_ = noise[0];
+        } else if (unlikely(lfo_->shape >= LFO_BROWNIAN)) {
+            noiseLp_ = noise[0] * 0.4f + noiseLp_ * 0.6f;
+            currentRandomValue_ = noiseLp_;
         }
     } else {
         // For KSyn Off
-        currentRamp = 1; // greater than 0 :
+        currentRamp_ = 1; // greater than 0 :
     }
 }
 

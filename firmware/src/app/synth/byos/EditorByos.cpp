@@ -152,7 +152,7 @@ Timbre* EditorByos::timbre() {
 
 void EditorByos::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
         const struct EditorOneButton *page) {
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     if (button < editMenu->numberOfButtons) {
         const struct EditorOneButton *buttonPage = editMenu->pages[button];
         tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
@@ -268,7 +268,7 @@ void EditorByos::newEngineParamValue(int timbre, int paramId, int context, float
     (void) oldValue;
     (void) newValue;
 
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     const struct EditorOneButton *page = currentPage();
     if (page == nullptr) {
         return;
@@ -283,7 +283,7 @@ void EditorByos::newEngineParamValue(int timbre, int paramId, int context, float
 }
 
 void EditorByos::buttonPressed(int button) {
-    struct FullState *fullState = &synthState_->fullState;
+    struct FullState *fullState = &synthState_->fullState_;
     int mainPage = fullState->mainPage;
     const struct EditorEditMenu *editMenu = currentEditMenu();
     const struct EditorOneButton *page = currentPage();

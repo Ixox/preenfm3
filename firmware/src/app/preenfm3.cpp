@@ -145,7 +145,7 @@ void preenfm3Init() {
 
     // the TFT should be ready, we can turn on the led backlight
     // the TFT should be ready, we can turn on the led backlight
-    uint8_t tft_bl =  synthState.fullState.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
+    uint8_t tft_bl =  synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
 
     TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -153,7 +153,7 @@ void preenfm3Init() {
     if (erreurSD > 0) {
         HAL_Delay(2000);
         // Refresh all
-        fmDisplay3.newSynthMode(&synthState.fullState);
+        fmDisplay3.newSynthMode(&synthState.fullState_);
     }
     HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
 }
@@ -213,7 +213,7 @@ void preenfm3Loop() {
         }
     }
 
-    if (synthState.fullState.synthMode == SYNTH_MODE_EDITOR) {
+    if (synthState.fullState_.synthMode == SYNTH_MODE_EDITOR) {
         // Oscillo refreqh : 8 Hz = 125 ms
         if (unlikely((currentMillis - oscilloMillis) >= 125)) {
             oscilloMillis = currentMillis;
@@ -230,7 +230,7 @@ void preenfm3Loop() {
     }
 
 
-    if (synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1) {
+    if (synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1) {
         // Detect TFT errors
         if (unlikely(tft.mustBeReset())) {
             tft.reset();
@@ -246,7 +246,7 @@ void preenfm3Loop() {
         }
     }
 
-    if (synthState.fullState.midiConfigValue[MIDICONFIG_CPU_USAGE]) {
+    if (synthState.fullState_.midiConfigValue[MIDICONFIG_CPU_USAGE]) {
         if (unlikely((currentMillis - cpuUsageMillis) > 1000)) {
             cpuUsageMillis = currentMillis;
             int cpuUsage = (int)(synth.getCpuUsage() * 10.0f);
@@ -291,14 +291,14 @@ void preenfm3Tic() {
 
 	// check encoder/buttons status : 500 times per seconds
     if ((tftCpt & 0x1) == 0) {
-        encoders.checkStatus(synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
+        encoders.checkStatus(synthState.fullState_.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState_.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
     }
 
     // In case of sequencer running on internal BPM
     sequencer.ticMillis();
 
     // TFT DMA2D opertations
-    tft.tic(synthState.fullState.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
+    tft.tic(synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
 
     // Pfm3 Misc tics
     switch (tftCpt & 0xff) {
@@ -385,7 +385,7 @@ void preenfm3_USART1_IRQHandler() {
         uint8_t midiByte = huart1.Instance->RDR;
         usartBufferIn.insert(midiByte);
         // Insert in usartBufferOut if midi through
-        if (synthState.mixerState.midiThru_ != 0) {
+        if (synthState.mixerState_.midiThru_ != 0) {
             // Can we insert now ? if TX fifo not full
             if (READ_BIT(huart1.Instance->ISR, USART_ISR_TXE_TXFNF) != 0) {
                 huart1.Instance->TDR = midiByte;
@@ -470,13 +470,13 @@ void dependencyInjection() {
     sdCard.init(synth.getTimbre(0), synth.getTimbre(1), synth.getTimbre(2),
             synth.getTimbre(3), synth.getTimbre(4), synth.getTimbre(5));
 
-    sdCard.getMixerBank()->setMixerState(&synthState.mixerState);
+    sdCard.getMixerBank()->setMixerState(&synthState.mixerState_);
     sdCard.getMixerBank()->setScalaFile(sdCard.getScalaFile());
     sdCard.getMixerBank()->setSequencer(&sequencer);
     sdCard.getSequenceBank()->setSequencer(&sequencer);
 
     // Load preferences
-    sdCard.getConfigurationFile()->loadConfig(synthState.fullState.midiConfigValue);
+    sdCard.getConfigurationFile()->loadConfig(synthState.fullState_.midiConfigValue);
     sdCard.getMixerBank()->loadDefaultMixer();
     sdCard.getSequenceBank()->loadDefaultSequence();
     sdCard.getUserWaveform()->loadUserWaveforms();
@@ -485,8 +485,8 @@ void dependencyInjection() {
 
 
     // To call after config loaded
-    sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
-    displayMixer.setReverbParamVisible(synthState.fullState.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
+    sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState_.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
+    displayMixer.setReverbParamVisible(synthState.fullState_.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
 
 }
 
@@ -503,7 +503,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xa:
             case 0xe:
             case 0x3:
-                if (synthState.mixerState.midiThru_ != 0) {
+                if (synthState.mixerState_.midiThru_ != 0) {
                     usartBufferOut.insert(buffer[usbr+1]);
                     usartBufferOut.insert(buffer[usbr+2]);
                     usartBufferOut.insert(buffer[usbr+3]);
@@ -520,7 +520,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xc:
             case 0xd:
             case 0x2:
-                if (synthState.mixerState.midiThru_ != 0) {
+                if (synthState.mixerState_.midiThru_ != 0) {
                     usartBufferOut.insert(buffer[usbr+1]);
                     usartBufferOut.insert(buffer[usbr+2]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
@@ -533,7 +533,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
                 // ========= 1 byte =======================
             case 0xF:
                 usbMidi.insert(buffer[usbr + 1]);
-                if (synthState.mixerState.midiThru_ != 0) {
+                if (synthState.mixerState_.midiThru_ != 0) {
                     usartBufferOut.insert(buffer[usbr+1]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
                 }

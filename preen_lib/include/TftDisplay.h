@@ -168,7 +168,7 @@ public:
     void clearMixerLabels();
     void fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height, uint8_t color);
     virtual void clearActions() {
-        tftActions.clear();
+        tftActions_.clear();
     }
 
     // Oscillo
@@ -187,26 +187,26 @@ public:
     void eraseHighlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void clearAlgoFG();
     void setCursoraddXY(uint8_t x, uint16_t y) {
-        cursorX +=x;
-        cursorY +=y;
+        cursorX_ +=x;
+        cursorY_ +=y;
     }
     void setCharColor(TFT_COLOR newColor) {
-        charColor = (uint8_t) newColor;
+        charColor_ = (uint8_t) newColor;
     }
     void setCharBackgroundColor(TFT_COLOR newColor) {
-        charBackgroundColor = (uint8_t) newColor;
+        charBackgroundColor_ = (uint8_t) newColor;
     }
     int getNumberOfPendingActions() {
-        return tftActions.getCount();
+        return tftActions_.getCount();
     }
 
     void printValueWithSpace(int value);
     void printFloatWithSpace(float value);
 
-    void oscilloForceNextDisplay() { flatOscilloAlreadyDisplayed = false; }
+    void oscilloForceNextDisplay() { flatOscilloAlreadyDisplayed_ = false; }
 
-    bool hasJustBeenCleared() { return bHasJustBeenCleared; }
-    void resetHasJustBeenCleared() { bHasJustBeenCleared = false; }
+    bool hasJustBeenCleared() { return bHasJustBeenCleared_; }
+    void resetHasJustBeenCleared() { bHasJustBeenCleared_ = false; }
 
     void drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr);
 
@@ -214,12 +214,12 @@ public:
     void reset();
 
 protected:
-    int8_t oscilloYValue[OSCILLO_WIDTH];
-    uint16_t *bgOscillo;
-    RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions;
-    TFTAction currentAction;
-    uint8_t currentActionStep;
-    TftAlgo *tftAlgo;
+    int8_t oscilloYValue_[OSCILLO_WIDTH];
+    uint16_t *bgOscillo_;
+    RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions_;
+    TFTAction currentAction_;
+    uint8_t currentActionStep_;
+    TftAlgo *tftAlgo_;
 
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
@@ -228,46 +228,46 @@ private:
     void oscilloFillWithRand(int randtype);
     void oscilloBgDrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 
-    uint32_t lastOscilloSaturateTic;
-    uint32_t tftPushMillis;
-    uint32_t tftGetStatusMillis;
+    uint32_t lastOscilloSaturateTic_;
+    uint32_t tftPushMillis_;
+    uint32_t tftGetStatusMillis_;
     // adress of the segment digit;
-    uint8_t *fgSegmentDigit;
-    uint8_t *fgBigChars;
-    uint8_t *fgSmallChars;
-    uint8_t *fgOscillo;
-    uint8_t *fgAlgo;
-    uint8_t cursorX;
-    uint16_t cursorY;
-    bool fgAlgoDirty;
+    uint8_t *fgSegmentDigit_;
+    uint8_t *fgBigChars_;
+    uint8_t *fgSmallChars_;
+    uint8_t *fgOscillo_;
+    uint8_t *fgAlgo_;
+    uint8_t cursorX_;
+    uint16_t cursorY_;
+    bool fgAlgoDirty_;
 
 
-    float oscilloSamplePeriod;
-    float oscilloLowerFrequency;
-    float oscilloSampleInc;
+    float oscilloSamplePeriod_;
+    float oscilloLowerFrequency_;
+    float oscilloSampleInc_;
 //	float oscilloSampleReadPtr;
-    int oscilloDataWritePtr;
-    float oscilloPhaseIndex;
-    uint32_t oscilloPhaseIndexToUse;
-    float olscilloYScale;
+    int oscilloDataWritePtr_;
+    float oscilloPhaseIndex_;
+    uint32_t oscilloPhaseIndexToUse_;
+    float olscilloYScale_;
 
-    float oscilloFullPeriodSampl[OSCILLO_BUFFER_SIZE];
-    uint8_t charBackgroundColor, charColor;
-    uint16_t *bgColorChar[NUMBER_OF_TFT_COLORS];
-    uint16_t *bgAlgo;
+    float oscilloFullPeriodSampl_[OSCILLO_BUFFER_SIZE];
+    uint8_t charBackgroundColor_, charColor_;
+    uint16_t *bgColorChar_[NUMBER_OF_TFT_COLORS];
+    uint16_t *bgAlgo_;
 
     // TFT refresh
-    bool tftRefreshing;
-    uint16_t areaHeight[TFT_NUMBER_OF_PARTS];
-    uint16_t areaY[TFT_NUMBER_OF_PARTS];
+    bool tftRefreshing_;
+    uint16_t areaHeight_[TFT_NUMBER_OF_PARTS];
+    uint16_t areaY_[TFT_NUMBER_OF_PARTS];
 
-    bool flatOscilloAlreadyDisplayed;
-    bool bHasJustBeenCleared;
+    bool flatOscilloAlreadyDisplayed_;
+    bool bHasJustBeenCleared_;
 
-    bool pushToTftInProgress;
-    uint8_t pushingPart;
-    uint32_t tftDirtyBits;
-    uint8_t part;
+    bool pushToTftInProgress_;
+    uint8_t pushingPart_;
+    uint32_t tftDirtyBits_;
+    uint8_t part_;
 
     // 3 bytes to deal with power status
     uint8_t status_[4];

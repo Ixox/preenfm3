@@ -200,13 +200,13 @@ void Dx7SynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t no
     voice->resetVoiceState();
     dx7VoiceReset(state);
 
-    voice->note = note;
-    voice->midiVelocity = velocity;
-    voice->index = index;
-    voice->playing = true;
-    voice->released = false;
-    voice->isFullOfZero = false;
-    voice->holdedByPedal = false;
+    voice->note_ = note;
+    voice->midiVelocity_ = velocity;
+    voice->index_ = index;
+    voice->playing_ = true;
+    voice->released_ = false;
+    voice->isFullOfZero_ = false;
+    voice->holdedByPedal_ = false;
 
     // The DX7 program carries a voice transpose (24 = no transposition).
     // Keep voice->note raw for note-off matching; the DX7 voice uses the
@@ -231,8 +231,8 @@ void Dx7SynthEngine::keyUp(Voice *voice) {
         return;
     }
     dx7VoiceKeyUp(state);
-    voice->released = true;
-    voice->holdedByPedal = false;
+    voice->released_ = true;
+    voice->holdedByPedal_ = false;
 }
 
 void Dx7SynthEngine::bindVoice(Voice *voice) {
@@ -260,7 +260,7 @@ void Dx7SynthEngine::noteOn(char note, char velocity) {
     if (note <= timbre_->lowerNote_ || timbre_->lowerNoteReleased_) {
         timbre_->lowerNote_ = note;
         timbre_->lowerNoteReleased_ = false;
-        timbre_->lowerNoteFrequency = diatonicScaleFrequency[(int) note];
+        timbre_->lowerNoteFrequency_ = diatonicScaleFrequency[(int) note];
     }
 }
 
@@ -306,18 +306,18 @@ uint8_t Dx7SynthEngine::voicesNextBlock() {
 
 void Dx7SynthEngine::renderVoice(Voice *voice) {
     if (!isDx7VoiceActive(getDx7VoiceState(voice->slot()))) {
-        if (voice->playing) {
+        if (voice->playing_) {
         }
         voice->emptyBuffer();
         return;
     }
 
-    bool stillPlaying = dx7VoiceRender(getDx7VoiceState(voice->slot()), dx7State_, voice->sampleBlock);
-    voice->isFullOfZero = false;
+    bool stillPlaying = dx7VoiceRender(getDx7VoiceState(voice->slot()), dx7State_, voice->sampleBlock_);
+    voice->isFullOfZero_ = false;
 
     if (!stillPlaying) {
-        voice->playing = false;
-        voice->released = false;
+        voice->playing_ = false;
+        voice->released_ = false;
     }
 }
 

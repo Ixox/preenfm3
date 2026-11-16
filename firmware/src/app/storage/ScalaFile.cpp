@@ -30,8 +30,8 @@ extern float diatonicScaleFrequency[];
 
 ScalaFile::ScalaFile() {
 	this->numberOfFilesMax_ = NUMBEROFSCALASCALEFILES;
-	this->scalaScaleFile = scalaScaleFileAlloc;
-	this->myFiles_ = scalaScaleFile;
+	this->scalaScaleFile_ = scalaScaleFileAlloc;
+	this->myFiles_ = scalaScaleFile_;
 }
 
 ScalaFile::~ScalaFile() {
@@ -83,9 +83,9 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
     char *readProperties = scalaBuffer;
     int state = 0;
 
-    numberOfDegrees[instrumentNumber] = 0;
+    numberOfDegrees_[instrumentNumber] = 0;
     for (int i=0; i< 24; i++) {
-    	interval[instrumentNumber][i] = 0.0f;
+    	interval_[instrumentNumber][i] = 0.0f;
     }
     while (loop !=-1 && (readProperties - scalaBuffer) < size) {
     	loop = fsu_->getLine(readProperties, line);
@@ -96,15 +96,15 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
                     break;
                 case 1:
                     // line contains number of degrees
-                	numberOfDegrees[instrumentNumber] = fsu_->toInt(line);
-                	if (numberOfDegrees[instrumentNumber] > MAX_NUMBER_OF_INTERVALS) {
-                		numberOfDegrees[instrumentNumber] = MAX_NUMBER_OF_INTERVALS;
+                	numberOfDegrees_[instrumentNumber] = fsu_->toInt(line);
+                	if (numberOfDegrees_[instrumentNumber] > MAX_NUMBER_OF_INTERVALS) {
+                		numberOfDegrees_[instrumentNumber] = MAX_NUMBER_OF_INTERVALS;
                 	}
                     break;
                 default:
                     // contains the frequencey (state-2)
                 	if ((state -2) < MAX_NUMBER_OF_INTERVALS) {
-                		interval[instrumentNumber][state -2] = getScalaIntervale(line);
+                		interval_[instrumentNumber][state -2] = getScalaIntervale(line);
                 	}
                     break;
             }
@@ -112,7 +112,7 @@ float* ScalaFile::loadScalaScale(MixerState* mixerState, int instrumentNumber) {
     	}
     	readProperties += loop;
     }
-    if (numberOfDegrees[instrumentNumber] == 0) {
+    if (numberOfDegrees_[instrumentNumber] == 0) {
         return diatonicScaleFrequency;
     }
     return applyScalaScale(mixerState, instrumentNumber);
@@ -125,10 +125,10 @@ float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) 
 
     float *instrumentScalaFrequency = scalaFrequency[instrumentNumber];
 
-	float octaveRatio = interval[instrumentNumber][numberOfDegrees[instrumentNumber]-1];
-	int octaveDegree = numberOfDegrees[instrumentNumber];
+	float octaveRatio = interval_[instrumentNumber][numberOfDegrees_[instrumentNumber]-1];
+	int octaveDegree = numberOfDegrees_[instrumentNumber];
 	if (mixerState->instrumentState_[instrumentNumber].scalaMapping == SCALA_MAPPING_KEYB) {
-		octaveDegree = ((numberOfDegrees[instrumentNumber] + 11) / 12) * 12;
+		octaveDegree = ((numberOfDegrees_[instrumentNumber] + 11) / 12) * 12;
 	}
 
 	// Fill middle C with 262.626 Hz.
@@ -154,14 +154,14 @@ float* ScalaFile::applyScalaScale(MixerState* mixerState, int instrumentNumber) 
 
 	// Fill all notes
 	for (int octave = firstC ; octave <= 127; octave += octaveDegree) {
-		for (int n = 1; n < numberOfDegrees[instrumentNumber]; n++) {
+		for (int n = 1; n < numberOfDegrees_[instrumentNumber]; n++) {
 			if (octave + n <= 127) {
-			    instrumentScalaFrequency[octave + n] = instrumentScalaFrequency[octave] * interval[instrumentNumber][n-1];
+			    instrumentScalaFrequency[octave + n] = instrumentScalaFrequency[octave] * interval_[instrumentNumber][n-1];
 				lastNote = octave + n;
 			}
 		}
 		// Remaining note must be silent
-		for (int nn = numberOfDegrees[instrumentNumber] ; nn < octaveDegree; nn++) {
+		for (int nn = numberOfDegrees_[instrumentNumber] ; nn < octaveDegree; nn++) {
 			if (octave + nn <= 127) {
 			    instrumentScalaFrequency[octave + nn] = 0.0f;
 				lastNote = octave + nn;

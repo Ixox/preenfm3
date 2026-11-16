@@ -24,5 +24,5 @@ Matrix::~Matrix() {
 }
 
 void Matrix::init(struct MatrixRowParams *matrixRows) {
-    this->rows = matrixRows;
+    this->rows_ = matrixRows;
 }

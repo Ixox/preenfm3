@@ -171,7 +171,7 @@ private:
 
     float smoothPan_[NUMBER_OF_TIMBRES];
     float smoothVolume_[NUMBER_OF_TIMBRES];
-    float *fxSample;
+    float *fxSample_;
 
     chunkware_simple::SimpleComp instrumentCompressor_[NUMBER_OF_TIMBRES];
 };

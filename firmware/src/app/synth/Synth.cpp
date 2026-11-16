@@ -61,7 +61,7 @@ void Synth::init(SynthState *synthState) {
     }
     // Here synthState is already initialized
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        timbres_[t].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[t].numberOfVoices);
+        timbres_[t].numberOfVoicesChanged(this->synthState_->mixerState_.instrumentState_[t].numberOfVoices);
         smoothVolume_[t] = 0.0f;
         smoothPan_[t] = 0.0f;
 
@@ -84,7 +84,7 @@ void Synth::init(SynthState *synthState) {
 }
 
 void Synth::noteOn(int timbre, char note, char velocity) {
-    if (synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+    if (synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
         sequencer_->insertNote(timbre, note, velocity);
     }
     timbres_[timbre].noteOn(note, velocity);
@@ -92,7 +92,7 @@ void Synth::noteOn(int timbre, char note, char velocity) {
 }
 
 void Synth::noteOff(int timbre, char note) {
-    if (synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
+    if (synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
         sequencer_->insertNote(timbre, note, 0);
     }
     timbres_[timbre].noteOff(note);
@@ -302,7 +302,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
     }
 
     // fxBus - prepare empty mixing block
-    FxBus* fxBus = &this->synthState_->mixerState.fxBus_;
+    FxBus* fxBus = &this->synthState_->mixerState_.fxBus_;
     fxBus->mixSumInit();
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
@@ -311,11 +311,11 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
             continue;
         }
         //Gate and mixer are per timbre
-        if (abs(smoothVolume_[timbre] - synthState_->mixerState.instrumentState_[timbre].volume) < .0005f) {
-            smoothVolume_[timbre] = synthState_->mixerState.instrumentState_[timbre].volume;
+        if (abs(smoothVolume_[timbre] - synthState_->mixerState_.instrumentState_[timbre].volume) < .0005f) {
+            smoothVolume_[timbre] = synthState_->mixerState_.instrumentState_[timbre].volume;
         } else {
             smoothVolume_[timbre] = smoothVolume_[timbre] * .9f
-                + synthState_->mixerState.instrumentState_[timbre].volume * .1f;
+                + synthState_->mixerState_.instrumentState_[timbre].volume * .1f;
         }
 
         // We divide by 5 to have headroom before saturating (>1.0f)
@@ -325,7 +325,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
         // Smooth pan to avoid audio noise
         smoothPan_[timbre] = smoothPan_[timbre] * .95f
-            + ((float) synthState_->mixerState.instrumentState_[timbre].pan / 63.0f) * .05f;
+            + ((float) synthState_->mixerState_.instrumentState_[timbre].pan / 63.0f) * .05f;
 
         float *sampleFromTimbre = timbres_[timbre].getSampleBlock();
 
@@ -334,11 +334,11 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         instrumentCompressor_[timbre].processBlock(sampleFromTimbre);
 
         // Send to bus fx, to mix with other timbres
-        fxBus->mixAdd(timbres_[timbre].getSampleBlock(), synthState_->mixerState.instrumentState_[timbre].send, synthState_->mixerState.reverbLevel_);
+        fxBus->mixAdd(timbres_[timbre].getSampleBlock(), synthState_->mixerState_.instrumentState_[timbre].send, synthState_->mixerState_.reverbLevel_);
     }
 
     // fxBus - mixing block process
-    switch (synthState_->mixerState.reverbOutput_) {
+    switch (synthState_->mixerState_.reverbOutput_) {
     case 0:
         fxBus->processBlock(buffer1);
         break;
@@ -355,9 +355,9 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
         // Max is 0x7fffff * [-1:1]
         //float sampleMultipler = (float) 0x7fffff;
-        float sampleMultipler = panTable[(int)((1 - synthState_->mixerState.instrumentState_[timbre].send) * 255)] * (float) 0x7fffff;
+        float sampleMultipler = panTable[(int)((1 - synthState_->mixerState_.instrumentState_[timbre].send) * 255)] * (float) 0x7fffff;
 
-        switch (synthState_->mixerState.instrumentState_[timbre].out) {
+        switch (synthState_->mixerState_.instrumentState_[timbre].out) {
             // 0 => out1+out2, 1 => out1, 2=> out2
             // 3 => out3+out4, 4 => out3, 5=> out4
             // 6 => out5+out6, 7 => out5, 8=> out8
@@ -535,21 +535,21 @@ void Synth::afterNewMixerLoad() {
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         synthState_->scalaSettingsChanged(timbre);
-        timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
-        timbres_[timbre].setEngine((SynthEngineType) this->synthState_->mixerState.instrumentState_[timbre].engine);
+        timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState_.instrumentState_[timbre].numberOfVoices);
+        timbres_[timbre].setEngine((SynthEngineType) this->synthState_->mixerState_.instrumentState_[timbre].engine);
         timbres_[timbre].afterNewParamsLoad();
         // values to force check lfo used
         timbres_[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
         // Update compressor
         newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, -1,
-            this->synthState_->mixerState.instrumentState_[timbre].compressorType);
+            this->synthState_->mixerState_.instrumentState_[timbre].compressorType);
     }
 
     // Update MPE
-    newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_1, 0, -1, this->synthState_->mixerState.MPE_inst1_);
+    newMixerValue(MIXER_VALUE_GLOBAL_SETTINGS_1, 0, -1, this->synthState_->mixerState_.MPE_inst1_);
 
     // Update Reverb local variables
-    this->synthState_->mixerState.fxBus_.paramChanged();
+    this->synthState_->mixerState_.fxBus_.paramChanged();
 }
 
 void Synth::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
@@ -586,14 +586,14 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
         case MIXER_VALUE_GLOBAL_SETTINGS_3:
         	// Did we change the reverb preset
         	if(timbre == 0) {
-        	    this->synthState_->mixerState.fxBus_.presetChanged(this->synthState_->mixerState.reverbPreset_);
+        	    this->synthState_->mixerState_.fxBus_.presetChanged(this->synthState_->mixerState_.reverbPreset_);
         	} else if (timbre >= 3 && timbre <= 5) {
-        	    this->synthState_->mixerState.fxBus_.paramChanged();
+        	    this->synthState_->mixerState_.fxBus_.paramChanged();
         	}
         	break;
         case MIXER_VALUE_GLOBAL_SETTINGS_4:
         case MIXER_VALUE_GLOBAL_SETTINGS_5:
-            this->synthState_->mixerState.fxBus_.paramChanged();
+            this->synthState_->mixerState_.fxBus_.paramChanged();
         	break;
         case MIXER_VALUE_MIDI_CHANNEL:
         case MIXER_VALUE_MIDI_FIRST_NOTE:
@@ -662,28 +662,28 @@ void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patc
 void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue) {
     switch (mixerValue) {
         case MIXER_VALUE_VOLUME: {
-            float oldValue = this->synthState_->mixerState.instrumentState_[timbre].volume;
-            this->synthState_->mixerState.instrumentState_[timbre].volume = newValue;
+            float oldValue = this->synthState_->mixerState_.instrumentState_[timbre].volume;
+            this->synthState_->mixerState_.instrumentState_[timbre].volume = newValue;
             if (oldValue != newValue) {
                 this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
             }
             break;
         }
         case MIXER_VALUE_PAN: {
-            float oldValue = this->synthState_->mixerState.instrumentState_[timbre].pan;
+            float oldValue = this->synthState_->mixerState_.instrumentState_[timbre].pan;
             // Can be 64
             if (newValue > 63.0f) {
                 newValue = 63.0f;
             }
-            this->synthState_->mixerState.instrumentState_[timbre].pan = newValue;
+            this->synthState_->mixerState_.instrumentState_[timbre].pan = newValue;
             if (oldValue != newValue) {
                 this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
             }
             break;
         }
         case MIXER_VALUE_SEND: {
-            float oldValue = this->synthState_->mixerState.instrumentState_[timbre].send;
-            this->synthState_->mixerState.instrumentState_[timbre].send = newValue;
+            float oldValue = this->synthState_->mixerState_.instrumentState_[timbre].send;
+            this->synthState_->mixerState_.instrumentState_[timbre].send = newValue;
             if (oldValue != newValue) {
                 this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
             }

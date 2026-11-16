@@ -70,15 +70,15 @@ private:
     void oscilloBgDrawVerticalLine(int16_t x1, int16_t y1, int16_t y2, uint16_t color);
     void oscilloBgDrawEnvStep(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color, int8_t curve);
 
-    bool oscilloIsClean;
-    WaveFormExt waveForm[TFT_NUMBER_OF_WAVEFORM_EXT];
-    float oscilParams1[6];
-    float oscilParams2[6];
-    uint8_t envCurve[4];
+    bool oscilloIsClean_;
+    WaveFormExt waveForm_[TFT_NUMBER_OF_WAVEFORM_EXT];
+    float oscilParams1_[6];
+    float oscilParams2_[6];
+    uint8_t envCurve_[4];
 
-    int envInQueue;
-    int lfoInQueue;
-    int operatorInQueue;
+    int envInQueue_;
+    int lfoInQueue_;
+    int operatorInQueue_;
 };
 
 #endif /* HARDWARE_FIRMWARETFTDISPLAY_H_KO_ */

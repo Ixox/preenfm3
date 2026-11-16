@@ -42,7 +42,7 @@ public:
     const struct FirmwarePFM3File* getFile(uint32_t fileNumber);
     uint32_t getNumberOfFiles();
     const char* getFullName(const char* fileName);
-    void reset() { isInitialized = false; }
+    void reset() { isInitialized_ = false; }
 
 protected:
     int initFiles();
@@ -54,11 +54,11 @@ protected:
 	void sortFiles(struct FirmwarePFM3File* bankFiles, int numberOfFiles);
 
 private:
-    uint32_t numberOfFiles;
-	uint32_t numberOfFilesMax;
-    struct FirmwarePFM3File *myFiles;
-    char fullName[64];
-    bool isInitialized;
+    uint32_t numberOfFiles_;
+	uint32_t numberOfFilesMax_;
+    struct FirmwarePFM3File *myFiles_;
+    char fullName_[64];
+    bool isInitialized_;
 };
 
 #endif /* FIRMWAREFILE_H_ */

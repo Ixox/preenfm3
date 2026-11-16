@@ -34,7 +34,7 @@ extern struct WaveTable waveTables[];
 
 UserWaveform::UserWaveform() {
     for (int k=0; k<6; k++) {
-        userWaveFormNames[k][4] = 0;
+        userWaveFormNames_[k][4] = 0;
     }
 }
 
@@ -71,24 +71,24 @@ void UserWaveform::loadUserWaveforms() {
                     userWaveform[f][s] = 0.0f;
                 }
             } else {
-                numberOfSample = -1;
-                userWaveFormNames[f][0] = 0;
+                numberOfSample_ = -1;
+                userWaveFormNames_[f][0] = 0;
                 loadUserWaveformFromTxt(f, fileName, sizeTxt);
 
-                if (numberOfSample > 0) {
-                    if (numberOfSample > 512 && numberOfSample < 1024) {
-                        interpolate(userWaveform[f], numberOfSample, 1024);
-                    } else if (numberOfSample > 256 && numberOfSample < 512) {
-                        interpolate(userWaveform[f], numberOfSample, 512);
-                    } else if (numberOfSample > 128 && numberOfSample < 256) {
-                        interpolate(userWaveform[f], numberOfSample, 256);
-                    } else if (numberOfSample > 64 && numberOfSample < 128) {
-                        interpolate(userWaveform[f], numberOfSample, 128);
-                    } else if (numberOfSample > 32 && numberOfSample < 64) {
-                        interpolate(userWaveform[f], numberOfSample, 64);
+                if (numberOfSample_ > 0) {
+                    if (numberOfSample_ > 512 && numberOfSample_ < 1024) {
+                        interpolate(userWaveform[f], numberOfSample_, 1024);
+                    } else if (numberOfSample_ > 256 && numberOfSample_ < 512) {
+                        interpolate(userWaveform[f], numberOfSample_, 512);
+                    } else if (numberOfSample_ > 128 && numberOfSample_ < 256) {
+                        interpolate(userWaveform[f], numberOfSample_, 256);
+                    } else if (numberOfSample_ > 64 && numberOfSample_ < 128) {
+                        interpolate(userWaveform[f], numberOfSample_, 128);
+                    } else if (numberOfSample_ > 32 && numberOfSample_ < 64) {
+                        interpolate(userWaveform[f], numberOfSample_, 64);
                     }
 
-                    normalize(userWaveform[f], numberOfSample);
+                    normalize(userWaveform[f], numberOfSample_);
 
                     fsu_->copy_string(fileName, USERWAVEFORM_FILENAME_BIN);
                     fileName[20] = (char)('1' + f);
@@ -103,10 +103,10 @@ void UserWaveform::loadUserWaveforms() {
 
 void UserWaveform::loadUserWaveformFromTxt(int f, const char* fileName, int size) {
     int readIndex = 0;
-    floatRead = 0;
+    floatRead_ = 0;
 
 
-    while (floatRead != numberOfSample) {
+    while (floatRead_ != numberOfSample_) {
         int toRead = (size - readIndex > LINE_BUFFER_SIZE) ? LINE_BUFFER_SIZE : size - readIndex;
         load(fileName, readIndex,  (void*)&lineBuffer, toRead);
 
@@ -126,60 +126,60 @@ int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool 
         int floatSize = 0;
 
         // Init name
-        if (userWaveFormNames[f][0] == 0) {
+        if (userWaveFormNames_[f][0] == 0) {
 
             while (fsu_->isSeparator(buffer[index])) {
                 index++;
             }
             int b = 0;
             while (b<4 && !fsu_->isSeparator(buffer[index])) {
-                userWaveFormNames[f][b++] = buffer[index++];
+                userWaveFormNames_[f][b++] = buffer[index++];
             }
             // complete with space
             while (b<4) {
-                userWaveFormNames[f][b++] = ' ';
+                userWaveFormNames_[f][b++] = ' ';
             }
         }
         // init number of sample
-        if (numberOfSample <= 0) {
+        if (numberOfSample_ <= 0) {
             while (fsu_->isSeparator(buffer[index])) {
                 index++;
             }
-            numberOfSample = (int)(fsu_->stof(&buffer[index], floatSize) + .5f);
+            numberOfSample_ = (int)(fsu_->stof(&buffer[index], floatSize) + .5f);
 
-            if (numberOfSample < 32 || numberOfSample > 1024) {
+            if (numberOfSample_ < 32 || numberOfSample_ > 1024) {
                 return numberOfSampleError(f);
             }
-            waveTables[f + 8].max = (numberOfSample  -1);
+            waveTables[f + 8].max = (numberOfSample_  -1);
             index += floatSize;
         }
 
-        userWaveform[f][floatRead++] = fsu_->stof(&buffer[index], floatSize);
+        userWaveform[f][floatRead_++] = fsu_->stof(&buffer[index], floatSize);
         index += floatSize;
 
         // Stop if index > (filled - 30) Or if last && floatRead == 1024
-        bStop = (!last && index > (filled - 40)) || floatRead == numberOfSample;
+        bStop = (!last && index > (filled - 40)) || floatRead_ == numberOfSample_;
     }
     return index;
 }
 
 int UserWaveform::numberOfSampleError(int f) {
-    numberOfSample = 0;
-    userWaveFormNames[f][0] = '#';
-    oscShapeNames[8 + f] = userWaveFormNames[f];
+    numberOfSample_ = 0;
+    userWaveFormNames_[f][0] = '#';
+    oscShapeNames[8 + f] = userWaveFormNames_[f];
     return -1;
 }
 
 
 void UserWaveform::loadUserWaveformFromBin(int f, const char* fileName) {
-    load(fileName, 0, userWaveFormNames[f], 4);
-    oscShapeNames[8 + f] = userWaveFormNames[f];
+    load(fileName, 0, userWaveFormNames_[f], 4);
+    oscShapeNames[8 + f] = userWaveFormNames_[f];
 
-    load(fileName, 4, &numberOfSample, 4);
-    waveTables[f + 8].max = (numberOfSample  -1);
+    load(fileName, 4, &numberOfSample_, 4);
+    waveTables[f + 8].max = (numberOfSample_  -1);
     waveTables[f + 8].precomputedValue = (waveTables[f + 8].max + 1) * waveTables[f + 8].useFreq * PREENFM_FREQUENCY_INVERSED;
 
-    int sampleSize = numberOfSample * 4;
+    int sampleSize = numberOfSample_ * 4;
     if (sampleSize <= 512) {
         load(fileName, 8, userWaveform[f], sampleSize);
     } else {
@@ -194,9 +194,9 @@ void UserWaveform::loadUserWaveformFromBin(int f, const char* fileName) {
 }
 
 void UserWaveform::saveUserWaveformToBin(int f, const char* fileName) {
-    save(fileName, 0, userWaveFormNames[f], 4);
-    save(fileName, 4, &numberOfSample, 4);
-    int sampleSize = numberOfSample * 4;
+    save(fileName, 0, userWaveFormNames_[f], 4);
+    save(fileName, 4, &numberOfSample_, 4);
+    int sampleSize = numberOfSample_ * 4;
     if (sampleSize <= 512) {
         save(fileName, 8, userWaveform[f], sampleSize);
     } else {
@@ -242,6 +242,6 @@ void UserWaveform::interpolate(float* buffer, int sourceNumberOfSamples, int tar
         float decimal = pos - iPos;
         buffer[i] = buffer[iPos] * (1-decimal) + buffer[iPos+1] * decimal;
     }
-    numberOfSample = targetNumberOfSamples;
+    numberOfSample_ = targetNumberOfSamples;
 }
 

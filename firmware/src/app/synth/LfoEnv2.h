@@ -46,38 +46,38 @@ public:
 	void valueChanged(int encoder) {
         switch (encoder) {
         case 0:
-            stateInc[ENV2_STATE_ON_S] = 0.0008f / (envParams->silence + 0.0001);
+            stateInc_[ENV2_STATE_ON_S] = 0.0008f / (envParams_->silence + 0.0001);
             break;
         case 1:
-            stateInc[ENV2_STATE_ON_A] = 0.0008f / (envParams->attack + 0.0001);
+            stateInc_[ENV2_STATE_ON_A] = 0.0008f / (envParams_->attack + 0.0001);
             break;
         case 2:
-            stateInc[ENV2_STATE_ON_D] = 0.0008f / (envParams->decay + 0.0001);
+            stateInc_[ENV2_STATE_ON_D] = 0.0008f / (envParams_->decay + 0.0001);
             break;
         }
 	}
 
     void newState() {
-        if (env.envState == ENV2_STATE_DEAD) {
-            env.currentValue = 0;
-            if (envParams->loop > 1) {
-                env.envState = ENV2_STATE_ON_A;
-            } else if (envParams->loop > 0) {
-                env.envState = ENV2_STATE_ON_S;
+        if (env_.envState == ENV2_STATE_DEAD) {
+            env_.currentValue = 0;
+            if (envParams_->loop > 1) {
+                env_.envState = ENV2_STATE_ON_A;
+            } else if (envParams_->loop > 0) {
+                env_.envState = ENV2_STATE_ON_S;
             }
         }
-        env.previousStateValue = env.currentValue;
-        env.nextStateValue = stateTarget[env.envState];
-        env.currentPhase = 0;
-        if (env.envState == ENV2_STATE_ON_S) {
-            if (this->matrix->getDestination((enum DestinationEnum)this->destination) != 0) {
-                float silencePlusMatrix = envParams->silence + this->matrix->getDestination((enum DestinationEnum)this->destination);
+        env_.previousStateValue = env_.currentValue;
+        env_.nextStateValue = stateTarget_[env_.envState];
+        env_.currentPhase = 0;
+        if (env_.envState == ENV2_STATE_ON_S) {
+            if (this->matrix_->getDestination((enum DestinationEnum)this->destination_) != 0) {
+                float silencePlusMatrix = envParams_->silence + this->matrix_->getDestination((enum DestinationEnum)this->destination_);
                 if (silencePlusMatrix <= 0) {
-                    stateInc[ENV2_STATE_ON_S] = 1.0;
+                    stateInc_[ENV2_STATE_ON_S] = 1.0;
                 } else if (silencePlusMatrix > 8) {
-                    stateInc[ENV2_STATE_ON_S] = 0.0001f ;
+                    stateInc_[ENV2_STATE_ON_S] = 0.0001f ;
                 } else {
-                    stateInc[ENV2_STATE_ON_S] = 0.0008f / silencePlusMatrix;
+                    stateInc_[ENV2_STATE_ON_S] = 0.0008f / silencePlusMatrix;
                 }
             }
         }
@@ -86,23 +86,23 @@ public:
 
 
     void nextValueInMatrix() {
-        env.currentPhase += stateInc[env.envState];
+        env_.currentPhase += stateInc_[env_.envState];
 
-        if (unlikely(env.currentPhase  >= 1.0f)) {
-            env.currentValue = env.nextStateValue;
-            env.envState++;
+        if (unlikely(env_.currentPhase  >= 1.0f)) {
+            env_.currentValue = env_.nextStateValue;
+            env_.envState++;
             newState();
-        } else if (likely(stateInc[env.envState] > 0)) {
-            env.currentValue = env.previousStateValue * (1- env.currentPhase) + env.nextStateValue * env.currentPhase;
+        } else if (likely(stateInc_[env_.envState] > 0)) {
+            env_.currentValue = env_.previousStateValue * (1- env_.currentPhase) + env_.nextStateValue * env_.currentPhase;
         }
 
-		matrix->setSource((enum SourceEnum)source, env.currentValue);
+		matrix_->setSource((enum SourceEnum)source_, env_.currentValue);
 	}
 
 	void noteOn() {
         // index is decremented in the first call...
-        env.currentValue = 0;
-        env.envState = ENV2_STATE_ON_S;
+        env_.currentValue = 0;
+        env_.envState = ENV2_STATE_ON_S;
         newState();
 	}
 
@@ -114,12 +114,12 @@ public:
 
 private:
     // target values of ADSR
-    float stateTarget[ENV2_NUMBER_OF_STATES];
+    float stateTarget_[ENV2_NUMBER_OF_STATES];
     // float
-    float stateInc[ENV2_NUMBER_OF_STATES];
+    float stateInc_[ENV2_NUMBER_OF_STATES];
 
-    Envelope2LfoParams* envParams;
-	EnvData env;
+    Envelope2LfoParams* envParams_;
+	EnvData env_;
 };
 
 #endif /* LfoEnv2_H_ */

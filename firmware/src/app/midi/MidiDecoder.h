@@ -78,7 +78,7 @@ public:
     MidiDecoder();
     virtual ~MidiDecoder();
     void setStorage(Storage* storage) {
-        this->storage = storage;
+        this->storage_ = storage;
     }
 
     void newByte(unsigned char byte);
@@ -119,7 +119,7 @@ public:
     void stopNote(int timbre, char note) {
     }
     void newTimbre(int timbre) {
-        currentTimbre = timbre;
+        currentTimbre_ = timbre;
     }
     void sendCurrentPatchAsNrpns(int timbre);
 
@@ -129,26 +129,26 @@ private:
     void sendMidiParamFeedback(int timbre, const struct MidiParamMessage &message);
     uint8_t analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size);
 
-    struct MidiEventState currentEventState;
-    struct MidiEvent currentEvent;
-    Synth* synth;
-    VisualInfo *visualInfo;
-    Storage* storage;
-    int currentTimbre;
-    struct MidiEvent toSend;
-    struct MidiEvent lastSentCC;
-    struct Nrpn currentNrpn[NUMBER_OF_TIMBRES];
-    bool omniOn[NUMBER_OF_TIMBRES];
-    unsigned char runningStatus;
+    struct MidiEventState currentEventState_;
+    struct MidiEvent currentEvent_;
+    Synth* synth_;
+    VisualInfo *visualInfo_;
+    Storage* storage_;
+    int currentTimbre_;
+    struct MidiEvent toSend_;
+    struct MidiEvent lastSentCC_;
+    struct Nrpn currentNrpn_[NUMBER_OF_TIMBRES];
+    bool omniOn_[NUMBER_OF_TIMBRES];
+    unsigned char runningStatus_;
 
     // Midi Clock
-    bool isExternalMidiClockStarted;
-    int midiClockCpt;
-    int songPosition;
+    bool isExternalMidiClockStarted_;
+    int midiClockCpt_;
+    int songPosition_;
 
     // int bank number
-    char bankNumber[NUMBER_OF_TIMBRES];
-    char bankNumberLSB[NUMBER_OF_TIMBRES];
+    char bankNumber_[NUMBER_OF_TIMBRES];
+    char bankNumberLSB_[NUMBER_OF_TIMBRES];
 
 };
 

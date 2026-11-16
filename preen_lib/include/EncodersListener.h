@@ -27,7 +27,7 @@ public:
 	virtual void buttonPressed(int button) = 0;
 	virtual void buttonLongPressed(int button) = 0;
 	virtual void twoButtonsPressed(int button1, int button2) = 0;
-	EncodersListener* nextListener;
+	EncodersListener* nextListener_;
 
 };
 

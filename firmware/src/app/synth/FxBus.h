@@ -82,117 +82,117 @@ public:
     }
 
     // Reverb params
-    float masterfxConfig[GLOBALFX_PARAMS_SIZE];
+    float masterfxConfig_[GLOBALFX_PARAMS_SIZE];
 
-    bool somethingChanged = false;
-    int waitCountBeforeChange = 0;
-    int nextPresetNum = 0;
+    bool somethingChanged_ = false;
+    int waitCountBeforeChange_ = 0;
+    int nextPresetNum_ = 0;
 
 protected:
 
     #define _dattorroSampleRateMod PREENFM_FREQUENCY / 29761.0f
 
-    int currentPresetNum = 0;
+    int currentPresetNum_ = 0;
 
-    float headRoomMultiplier = 1;
-    float sampleMultipler;
+    float headRoomMultiplier_ = 1;
+    float sampleMultipler_;
 
-    float totalSent = 0;
+    float totalSent_ = 0;
 
     //lfo
-    float lfo1 = 0;
-    float lfo1tri;
-    float lfo1Inc = 0.00037f;
+    float lfo1_ = 0;
+    float lfo1tri_;
+    float lfo1Inc_ = 0.00037f;
 
-    float lfo2 = 0;
-    float lfo2tri;
-    float lfo2Inc = lfo1Inc * 1.07f;
+    float lfo2_ = 0;
+    float lfo2tri_;
+    float lfo2Inc_ = lfo1Inc_ * 1.07f;
 
-    float lfo3 = 1;
-    float lfo3tri;
-    float lfo3Inc = lfo1Inc;
+    float lfo3_ = 1;
+    float lfo3tri_;
+    float lfo3Inc_ = lfo1Inc_;
 
-    float lfo4 = 1;
-    float lfo4tri;
-    float lfo4Inc = lfo2Inc;
+    float lfo4_ = 1;
+    float lfo4tri_;
+    float lfo4Inc_ = lfo2Inc_;
 
 
     float sampleBlock_[BLOCK_SIZE * 2];
-    float *sample;
+    float *sample_;
 
-    float fxTime = 0.98, prevTime = -1, fxTimeLinear, prevFxTimeLinear = -1;
-    float prevdecayVal = 0;
-    float decayVal = 0.5, prevDecayVal = -1, decayFdbck = 0;
-    const float decayMaxVal = 0.96f;
-    float sizeParam, prevSizeParam;
-    float inputDiffusion, prevInputDiffusion;
-    float diffusion, prevDiffusion;
-    float damping, prevDamping = -1;
-    float predelayMixLevel = 0.5f;
-    float predelayMixAttn = predelayMixLevel * 0.75f;
-    float lfoDepth =  0;
-    float lfoSpeed = 0, lfoSpeedLinear = 0, prevLfoSpeedLinear = -1;
-    float loopLpf, loopLpf2, prevFilterBase = -1;
-    float damp_a, damp_b;
-    float inputWidth = 0.5f, prevInputWidth = -1;
-    float prevLoopHp = -1;
-    float lfoLpCoef1 = 3999, lfoLpCoef2 = 0.00025f;
-    float timeCvControl1 = 0, timeCvControl2 = 0, timeCvControl3 = 0, timeCvControl4 = 0;
-    float timeCv = 0, prevTimeCv = 0, timeCvSpeed = 0, prevtimeCvSpeed = 0, cvDelta;
+    float fxTime_ = 0.98, prevTime_ = -1, fxTimeLinear_, prevFxTimeLinear_ = -1;
+    float prevdecayVal_ = 0;
+    float decayVal_ = 0.5, prevDecayVal_ = -1, decayFdbck_ = 0;
+    const float decayMaxVal_ = 0.96f;
+    float sizeParam_, prevSizeParam_;
+    float inputDiffusion_, prevInputDiffusion_;
+    float diffusion_, prevDiffusion_;
+    float damping_, prevDamping_ = -1;
+    float predelayMixLevel_ = 0.5f;
+    float predelayMixAttn_ = predelayMixLevel_ * 0.75f;
+    float lfoDepth_ =  0;
+    float lfoSpeed_ = 0, lfoSpeedLinear_ = 0, prevLfoSpeedLinear_ = -1;
+    float loopLpf_, loopLpf2_, prevFilterBase_ = -1;
+    float damp_a_, damp_b_;
+    float inputWidth_ = 0.5f, prevInputWidth_ = -1;
+    float prevLoopHp_ = -1;
+    float lfoLpCoef1_ = 3999, lfoLpCoef2_ = 0.00025f;
+    float timeCvControl1_ = 0, timeCvControl2_ = 0, timeCvControl3_ = 0, timeCvControl4_ = 0;
+    float timeCv_ = 0, prevTimeCv_ = 0, timeCvSpeed_ = 0, prevtimeCvSpeed_ = 0, cvDelta_;
 
-    float loopHpf = 0.14f;
-    float inHpf = 0.1f;
+    float loopHpf_ = 0.14f;
+    float inHpf_ = 0.1f;
 
-    float inR, inL;
+    float inR_, inL_;
 
-    float outL, outR;
+    float outL_, outR_;
 
-    float int1 = 0, int2 = 0, int3 = 0, int4 = 0;
+    float int1_ = 0, int2_ = 0, int3_ = 0, int4_ = 0;
 
     static const int delay1BufferSize     = 4453 * _dattorroSampleRateMod;
     static const int delay1BufferSizeM1    = delay1BufferSize - 1;
     static float delay1Buffer[delay1BufferSize];
-    int delay1WritePos     = 0;
-    int delay1ReadPos     = 0;
-    float delay1DelayLen     = 0, delay1ReadLen;
-    float delay1FxTarget     = 0;
+    int delay1WritePos_     = 0;
+    int delay1ReadPos_     = 0;
+    float delay1DelayLen_     = 0, delay1ReadLen_;
+    float delay1FxTarget_     = 0;
 
     static const int delay2BufferSize     = 3720 * _dattorroSampleRateMod;
     static const int delay2BufferSizeM1    = delay2BufferSize - 1;
     static float delay2Buffer[delay2BufferSize];
-    int delay2WritePos     = 0;
-    int delay2ReadPos;
-    float delay2DelayLen     = 0, delay2ReadLen;
-    float delay2FxTarget     = 0;
+    int delay2WritePos_     = 0;
+    int delay2ReadPos_;
+    float delay2DelayLen_     = 0, delay2ReadLen_;
+    float delay2FxTarget_     = 0;
 
     static const int delay3BufferSize     = 4217 * _dattorroSampleRateMod;
     static const int delay3BufferSizeM1    = delay3BufferSize - 1;
     static float delay3Buffer[delay3BufferSize];
-    int delay3WritePos     = 0;
-    int delay3ReadPos     = 0;
-    float delay3DelayLen     = 0, delay3ReadLen;
-    float delay3FxTarget     = 0;
+    int delay3WritePos_     = 0;
+    int delay3ReadPos_     = 0;
+    float delay3DelayLen_     = 0, delay3ReadLen_;
+    float delay3FxTarget_     = 0;
 
     static const int delay4BufferSize     = 3163 * _dattorroSampleRateMod;
     static const int delay4BufferSizeM1    = delay4BufferSize - 1;
     static float delay4Buffer[delay4BufferSize];
-    int delay4WritePos     = 0;
-    int delay4ReadPos;
-    float delay4DelayLen     = 0, delay4ReadLen;
-    float delay4FxTarget     = 0;
+    int delay4WritePos_     = 0;
+    int delay4ReadPos_;
+    float delay4DelayLen_     = 0, delay4ReadLen_;
+    float delay4FxTarget_     = 0;
 
-    const float dcBlockerCoef1 = 0.9973854301f;//~20 hz
+    const float dcBlockerCoef1_ = 0.9973854301f;//~20 hz
 
     //pre delay
 
     static const int predelayBufferSize     = 8000;
     static const int predelayBufferSizeM1     = predelayBufferSize - 1;
     static float predelayBuffer[predelayBufferSize];
-    int predelaySize             = predelayBufferSize;
-    int predelayWritePos         = 0;
-    float predelayReadPos         = 0;
-    const int inputRateDivider = 2;
-    int inputIncCount = 0;
+    int predelaySize_             = predelayBufferSize;
+    int predelayWritePos_         = 0;
+    float predelayReadPos_         = 0;
+    const int inputRateDivider_ = 2;
+    int inputIncCount_ = 0;
 
     // input diffuser
 
@@ -204,22 +204,22 @@ protected:
     static float inputBuffer2[inputBufferLen2];
     static float inputBuffer3[inputBufferLen3];
     static float inputBuffer4[inputBufferLen4];
-    float inputBuffer1ReadLen = inputBufferLen1;
-    float inputBuffer2ReadLen = inputBufferLen2;
-    float inputBuffer3ReadLen = inputBufferLen3;
-    float inputBuffer4ReadLen = inputBufferLen4;
-    int inputWritePos1     = 0;
-    int inputWritePos2     = 0;
-    int inputWritePos3     = 0;
-    int inputWritePos4     = 0;
+    float inputBuffer1ReadLen_ = inputBufferLen1;
+    float inputBuffer2ReadLen_ = inputBufferLen2;
+    float inputBuffer3ReadLen_ = inputBufferLen3;
+    float inputBuffer4ReadLen_ = inputBufferLen4;
+    int inputWritePos1_     = 0;
+    int inputWritePos2_     = 0;
+    int inputWritePos3_     = 0;
+    int inputWritePos4_     = 0;
 
-    int inputReadPos1;
-    int inputReadPos2;
-    int inputReadPos3;
-    int inputReadPos4;
+    int inputReadPos1_;
+    int inputReadPos2_;
+    int inputReadPos3_;
+    int inputReadPos4_;
 
-    float inputCoef1 = 0.75f;
-    float inputCoef2 = 0.625f;
+    float inputCoef1_ = 0.75f;
+    float inputCoef2_ = 0.625f;
 
     // diffuser decay
 
@@ -231,102 +231,102 @@ protected:
     static const int diffuserBufferLen2M1 = diffuserBufferLen2 - 1;
     static const int diffuserBufferLen3M1 = diffuserBufferLen3 - 1;
     static const int diffuserBufferLen4M1 = diffuserBufferLen4 - 1;
-    float diffuserBuffer1ReadLen = diffuserBufferLen1M1;
-    float diffuserBuffer2ReadLen = diffuserBufferLen2M1;
-    float diffuserBuffer3ReadLen = diffuserBufferLen3M1;
-    float diffuserBuffer4ReadLen = diffuserBufferLen4M1;
+    float diffuserBuffer1ReadLen_ = diffuserBufferLen1M1;
+    float diffuserBuffer2ReadLen_ = diffuserBufferLen2M1;
+    float diffuserBuffer3ReadLen_ = diffuserBufferLen3M1;
+    float diffuserBuffer4ReadLen_ = diffuserBufferLen4M1;
 
-    float diffuserBuffer1ReadLen_b = diffuserBuffer1ReadLen * 0.1333f;//0.5f;
-    float diffuserBuffer2ReadLen_b = diffuserBuffer2ReadLen * 0.3237f;//0.6180339887f;
-    float diffuserBuffer3ReadLen_b = diffuserBuffer3ReadLen * 0.17f;//0.5f;
-    float diffuserBuffer4ReadLen_b = diffuserBuffer4ReadLen * 0.5237f;//0.6180339887f;
+    float diffuserBuffer1ReadLen_b_ = diffuserBuffer1ReadLen_ * 0.1333f;//0.5f;
+    float diffuserBuffer2ReadLen_b_ = diffuserBuffer2ReadLen_ * 0.3237f;//0.6180339887f;
+    float diffuserBuffer3ReadLen_b_ = diffuserBuffer3ReadLen_ * 0.17f;//0.5f;
+    float diffuserBuffer4ReadLen_b_ = diffuserBuffer4ReadLen_ * 0.5237f;//0.6180339887f;
 
     static float diffuserBuffer1[diffuserBufferLen1];
     static float diffuserBuffer2[diffuserBufferLen2];
     static float diffuserBuffer3[diffuserBufferLen3];
     static float diffuserBuffer4[diffuserBufferLen4];
-    int diffuserWritePos1     = 0;
-    int diffuserWritePos2     = 0;
-    int diffuserWritePos3     = 0;
-    int diffuserWritePos4     = 0;
+    int diffuserWritePos1_     = 0;
+    int diffuserWritePos2_     = 0;
+    int diffuserWritePos3_     = 0;
+    int diffuserWritePos4_     = 0;
 
-    float diffuserReadPos1;
-    float diffuserReadPos2;
-    float diffuserReadPos3;
-    float diffuserReadPos4;
+    float diffuserReadPos1_;
+    float diffuserReadPos2_;
+    float diffuserReadPos3_;
+    float diffuserReadPos4_;
 
-    float diffuserCoef1 = 0.7f;
-    float diffuserCoef2 = 0.5f;
+    float diffuserCoef1_ = 0.7f;
+    float diffuserCoef2_ = 0.5f;
 
-    float monoIn, preDelayOut = 0, diff1Out, diff2Out, diff3Out, diff4Out;
-    float ap1In, ap2In, ap3In, ap4In;
-    float ap1Out, ap2Out, ap3Out, ap4Out;
-    float feedbackInL = 0, feedbackInR = 0;
+    float monoIn_, preDelayOut_ = 0, diff1Out_, diff2Out_, diff3Out_, diff4Out_;
+    float ap1In_, ap2In_, ap3In_, ap4In_;
+    float ap1Out_, ap2Out_, ap3Out_, ap4Out_;
+    float feedbackInL_ = 0, feedbackInR_ = 0;
 
     // Filter
-    float notchBase, prevNotchBase = -1;
-    float notchSpread = 0.37f , prevNotchSpread = -1;
+    float notchBase_, prevNotchBase_ = -1;
+    float notchSpread_ = 0.37f , prevNotchSpread_ = -1;
 
-    float dcBlock1a, dcBlock1b, dcBlock2a, dcBlock2b;
+    float dcBlock1a_, dcBlock1b_, dcBlock2a_, dcBlock2b_;
 
-    float lowL = 0, highL = 0, bandL = 0;
-    float lowL2 = 0, highL2 = 0, bandL2 = 0;
-    float lowL3 = 0, highL3 = 0, bandL3 = 0;
-    float lowL4 = 0, highL4 = 0, bandL4 = 0;
+    float lowL_ = 0, highL_ = 0, bandL_ = 0;
+    float lowL2_ = 0, highL2_ = 0, bandL2_ = 0;
+    float lowL3_ = 0, highL3_ = 0, bandL3_ = 0;
+    float lowL4_ = 0, highL4_ = 0, bandL4_ = 0;
 
-    const float windowMin = 0.005f, windowMax = 0.99f;
+    const float windowMin_ = 0.005f, windowMax_ = 0.99f;
 
-    float f1L;
-    float f2L;
-    float f3L;
-    float f4L;
+    float f1L_;
+    float f2L_;
+    float f3L_;
+    float f4L_;
 
-    float coef1L;
-    float coef2L;
-    float coef3L;
-    float coef4L;
+    float coef1L_;
+    float coef2L_;
+    float coef3L_;
+    float coef4L_;
 
-    float tankLp1a = 0, tankLp1b = 0;
-    float tankLp2a = 0, tankLp2b = 0;
-    float inLpF;
+    float tankLp1a_ = 0, tankLp1b_ = 0;
+    float tankLp2a_ = 0, tankLp2b_ = 0;
+    float inLpF_;
 
-    float hp1_x0 = 0;
-    float hp1_y0 = 0;
-    float hp1_y1 = 0;
-    float hp1_x1 = 0;
+    float hp1_x0_ = 0;
+    float hp1_y0_ = 0;
+    float hp1_y1_ = 0;
+    float hp1_x1_ = 0;
 
-    float hp2_x0 = 0;
-    float hp2_y0 = 0;
-    float hp2_y1 = 0;
-    float hp2_x1 = 0;
+    float hp2_x0_ = 0;
+    float hp2_y0_ = 0;
+    float hp2_y1_ = 0;
+    float hp2_x1_ = 0;
 
-    float _b1, _a0, _a1;
+    float _b1_, _a0_, _a1_;
 
-    float hp_in_x0 = 0;
-    float hp_in_y0 = 0;
-    float hp_in_y1 = 0;
-    float hp_in_x1 = 0;
+    float hp_in_x0_ = 0;
+    float hp_in_y0_ = 0;
+    float hp_in_y1_ = 0;
+    float hp_in_x1_ = 0;
 
-    float _in_lp_a, _in_lp_b;
-    float _in_b1, _in_a0, _in_a1;
+    float _in_lp_a_, _in_lp_b_;
+    float _in_b1_, _in_a0_, _in_a1_;
 
-    const int kl1 = 266     * _dattorroSampleRateMod;
-    const int kl2 = 2974     * _dattorroSampleRateMod;
-    const int kl3 = 1713     * _dattorroSampleRateMod;
-    const int kl4 = 1996     * _dattorroSampleRateMod;
-    const int kl5 = 1990     * _dattorroSampleRateMod;
-    const int kl6 = 187     * _dattorroSampleRateMod;
-    const int kl7 = 1066     * _dattorroSampleRateMod;
-    const int _kLeftTaps[7] = {kl1 , kl2, kl3, kl4, kl5, kl6, kl7};
+    const int kl1_ = 266     * _dattorroSampleRateMod;
+    const int kl2_ = 2974     * _dattorroSampleRateMod;
+    const int kl3_ = 1713     * _dattorroSampleRateMod;
+    const int kl4_ = 1996     * _dattorroSampleRateMod;
+    const int kl5_ = 1990     * _dattorroSampleRateMod;
+    const int kl6_ = 187     * _dattorroSampleRateMod;
+    const int kl7_ = 1066     * _dattorroSampleRateMod;
+    const int _kLeftTaps_[7] = {kl1_ , kl2_, kl3_, kl4_, kl5_, kl6_, kl7_};
 
-    const int kr1 = 353     * _dattorroSampleRateMod;
-    const int kr2 = 3627     * _dattorroSampleRateMod;
-    const int kr3 = 1228     * _dattorroSampleRateMod;
-    const int kr4 = 2673     * _dattorroSampleRateMod;
-    const int kr5 = 2111     * _dattorroSampleRateMod;
-    const int kr6 = 335     * _dattorroSampleRateMod;
-    const int kr7 = 121     * _dattorroSampleRateMod;
-    const int _kRightTaps[7] = {kr1, kr2, kr3, kr4, kr5, kr6, kr7};
+    const int kr1_ = 353     * _dattorroSampleRateMod;
+    const int kr2_ = 3627     * _dattorroSampleRateMod;
+    const int kr3_ = 1228     * _dattorroSampleRateMod;
+    const int kr4_ = 2673     * _dattorroSampleRateMod;
+    const int kr5_ = 2111     * _dattorroSampleRateMod;
+    const int kr6_ = 335     * _dattorroSampleRateMod;
+    const int kr7_ = 121     * _dattorroSampleRateMod;
+    const int _kRightTaps_[7] = {kr1_, kr2_, kr3_, kr4_, kr5_, kr6_, kr7_};
 
 };
 

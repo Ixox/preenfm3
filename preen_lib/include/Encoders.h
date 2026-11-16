@@ -74,40 +74,40 @@ public:
     void processActions();
 
     void insertListener(EncodersListener *listener) {
-        if (firstListener != 0) {
-            listener->nextListener = firstListener;
+        if (firstListener_ != 0) {
+            listener->nextListener_ = firstListener_;
         }
-        firstListener = listener;
+        firstListener_ = listener;
     }
 
     void clearState();
 
     void encoderTurned(int encoder, int ticks) {
-		for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+		for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
 			listener->encoderTurned(encoder, ticks);
 		}
     }
 
     void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
-		for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+		for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
 			listener->encoderTurnedWhileButtonPressed(encoder, ticks, button);
 		}
     }
 
     void buttonPressed(int button) {
-        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+        for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
             listener->buttonPressed(button);
         }
     }
 
     void buttonLongPressed(int button) {
-        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+        for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
             listener->buttonLongPressed(button);
         }
     }
 
     void twoButtonsPressed(int button1, int button2) {
-        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+        for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
             listener->twoButtonsPressed(button1, button2);
         }
     }
@@ -132,7 +132,7 @@ public:
     // execute action can be async
     RingBuffer<EncoderAction, 16> actions_;
 
-    EncodersListener *firstListener;
+    EncodersListener *firstListener_;
 };
 
 #endif /* ENCODERS_H_ */

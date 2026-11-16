@@ -27,7 +27,7 @@ extern char *envCurveNames[];
 
 UserEnvCurve::UserEnvCurve() {
     for (int k=0; k<4; k++) {
-        userEnvCurveNames[k][4] = 0;
+        userEnvCurveNames_[k][4] = 0;
     }
 }
 
@@ -63,16 +63,16 @@ void UserEnvCurve::loadUserEnvCurves() {
                     userEnvCurves[f][(int) s] = s / 64;
                 }
             } else {
-                numberOfSample = -1;
-                userEnvCurveNames[f][0] = 0;
+                numberOfSample_ = -1;
+                userEnvCurveNames_[f][0] = 0;
                 loadUserEnvCurveFromTxt(f, fileName, sizeTxt);
 
-                if (numberOfSample > 0) {
-                    if (numberOfSample > 3 && numberOfSample < 64) {
-                        interpolate(userEnvCurves[f], numberOfSample, 64);
+                if (numberOfSample_ > 0) {
+                    if (numberOfSample_ > 3 && numberOfSample_ < 64) {
+                        interpolate(userEnvCurves[f], numberOfSample_, 64);
                     }
 
-                    normalize(userEnvCurves[f], numberOfSample);
+                    normalize(userEnvCurves[f], numberOfSample_);
 
                     fsu_->copy_string(fileName, USERCURVE_FILENAME_BIN);
                     fileName[20] = (char)('1' + f);
@@ -86,27 +86,27 @@ void UserEnvCurve::loadUserEnvCurves() {
 }
 
 void UserEnvCurve::loadUserEnvCurveFromBin(int f, const char* fileName) {
-    load(fileName, 0, userEnvCurveNames[f], 4);
-    envCurveNames[3 + f] = userEnvCurveNames[f];
+    load(fileName, 0, userEnvCurveNames_[f], 4);
+    envCurveNames[3 + f] = userEnvCurveNames_[f];
 
-    load(fileName, 4, &numberOfSample, 2);
+    load(fileName, 4, &numberOfSample_, 2);
 
-    int sampleSize = numberOfSample * 4;
+    int sampleSize = numberOfSample_ * 4;
     load(fileName, 6, userEnvCurves[f], sampleSize);
 }
 
 void UserEnvCurve::saveUserEnvCurveToBin(int f, const char* fileName) {
-    save(fileName, 0, userEnvCurveNames[f], 4);
-    save(fileName, 4, &numberOfSample, 2);
-    int sampleSize = numberOfSample * 4;
+    save(fileName, 0, userEnvCurveNames_[f], 4);
+    save(fileName, 4, &numberOfSample_, 2);
+    int sampleSize = numberOfSample_ * 4;
     save(fileName, 6, userEnvCurves[f], sampleSize);
 }
 
 void UserEnvCurve::loadUserEnvCurveFromTxt(int f, const char* fileName, int size) {
     int readIndex = 0;
-    floatRead = 0;
+    floatRead_ = 0;
 
-    while (floatRead != numberOfSample) {
+    while (floatRead_ != numberOfSample_) {
         int toRead = (size - readIndex > LINE_BUFFER_SIZE) ? LINE_BUFFER_SIZE : size - readIndex;
         load(fileName, readIndex,  (void*)&lineBuffer, toRead);
 
@@ -125,39 +125,39 @@ int UserEnvCurve::fillUserEnvCurveFromTxt(int f, char* buffer, int filled, bool 
         int floatSize = 0;
 
         // Init name
-        if (userEnvCurveNames[f][0] == 0) {
+        if (userEnvCurveNames_[f][0] == 0) {
 
             while (fsu_->isSeparator(buffer[index])) {
                 index++;
             }
             int b = 0;
             while (b<4 && !fsu_->isSeparator(buffer[index])) {
-                userEnvCurveNames[f][b++] = buffer[index++];
+                userEnvCurveNames_[f][b++] = buffer[index++];
             }
             // complete with space
             while (b<4) {
-                userEnvCurveNames[f][b++] = ' ';
+                userEnvCurveNames_[f][b++] = ' ';
             }
         }
         // init number of sample
-        if (numberOfSample <= 0) {
+        if (numberOfSample_ <= 0) {
             while (fsu_->isSeparator(buffer[index])) {
                 index++;
             }
-            numberOfSample = (int)(fsu_->stof(&buffer[index], floatSize) + .5f);
+            numberOfSample_ = (int)(fsu_->stof(&buffer[index], floatSize) + .5f);
 
-            if (numberOfSample != 64) {
+            if (numberOfSample_ != 64) {
                 return numberOfSampleError(f);
             }
 
             index += floatSize;
         }
 
-        userEnvCurves[f][floatRead++] = fsu_->stof(&buffer[index], floatSize);
+        userEnvCurves[f][floatRead_++] = fsu_->stof(&buffer[index], floatSize);
         index += floatSize;
 
         // Stop if index > (filled - 30) Or if last && floatRead == 1024
-        bStop = (!last && index > (filled - 40)) || floatRead == numberOfSample;
+        bStop = (!last && index > (filled - 40)) || floatRead_ == numberOfSample_;
     }
     return index;
 }
@@ -191,8 +191,8 @@ void UserEnvCurve::normalize(float* buffer, int numberOfSamples) {
 }
 
 int UserEnvCurve::numberOfSampleError(int f) {
-    numberOfSample = 0;
-    userEnvCurveNames[f][0] = '#';
+    numberOfSample_ = 0;
+    userEnvCurveNames_[f][0] = '#';
     return -1;
 }
 
@@ -203,5 +203,5 @@ void UserEnvCurve::interpolate(float* buffer, int sourceNumberOfSamples, int tar
         float decimal = pos - iPos;
         buffer[i] = buffer[iPos] * (1 - decimal) + buffer[iPos + 1] * decimal;
     }
-    numberOfSample = targetNumberOfSamples;
+    numberOfSample_ = targetNumberOfSamples;
 }

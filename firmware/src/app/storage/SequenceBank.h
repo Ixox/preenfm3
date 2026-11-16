@@ -52,8 +52,8 @@ private:
     void loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber);
     const char* getFolderName();
     bool isCorrectFile(char *name, int size) ;
-    char sequenceName[13];
-    Sequencer* sequencer;
+    char sequenceName_[13];
+    Sequencer* sequencer_;
 };
 
 

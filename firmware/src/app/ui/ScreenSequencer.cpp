@@ -436,7 +436,7 @@ void ScreenSequencer::noteOn(int instrument, bool show) {
 }
 
 void ScreenSequencer::displayBeat() {
-    if (unlikely(synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER)) {
+    if (unlikely(synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER)) {
         float precount = sequencer_->getPrecount();
         uint8_t measure;
         uint8_t beat;
@@ -729,10 +729,10 @@ void ScreenSequencer::tempoClick() {
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];
 
-    if (seqMode_ != SEQ_MODE_STEP && synthState_->mixerState.levelMeterWhere_ == 2) {
+    if (seqMode_ != SEQ_MODE_STEP && synthState_->mixerState_.levelMeterWhere_ == 2) {
         for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
 
-            if (synthState_->mixerState.instrumentState_[timbre].numberOfVoices > 0) {
+            if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices > 0) {
                 float volume = getCompInstrumentVolume(timbre);
                 float gr = getCompInstrumentGainReduction(timbre);
                 // gr tend to slower reach 0
@@ -745,7 +745,7 @@ void ScreenSequencer::tempoClick() {
                     lastVolume[timbre] = volume;
                     lastGainReduction[timbre] = gr;
 
-                    bool isCompressed = synthState_->mixerState.instrumentState_[timbre].compressorType > 0;
+                    bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
                     tft_->drawLevelMetter(26, Y_START_SEQ + 7 + timbre * 27 + 20, 212, 3, 5, volume, isCompressed, gr);
                 }
             }
@@ -781,7 +781,7 @@ void ScreenSequencer::cleanCurrentState() {
 
 
 void ScreenSequencer::sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
-    if (this->synthState_->fullState.synthMode != SYNTH_MODE_SEQUENCER) {
+    if (this->synthState_->fullState_.synthMode != SYNTH_MODE_SEQUENCER) {
         return;
     }
 

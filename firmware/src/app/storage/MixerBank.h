@@ -49,15 +49,15 @@ public:
 protected:
     const char* getFolderName();
 	bool isCorrectFile(char *name, int size);
-    Timbre* timbre[NUMBER_OF_TIMBRES];
+    Timbre* timbre_[NUMBER_OF_TIMBRES];
     bool saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerStateToSave);
     bool loadMixerData(FIL* file, uint8_t mixerNumber);
 
 private:
-    char presetName[13];
-    MixerState* mixerState;
-    ScalaFile* scalaFile;
-    Sequencer* sequencer;
+    char presetName_[13];
+    MixerState* mixerState_;
+    ScalaFile* scalaFile_;
+    Sequencer* sequencer_;
 };
 
 #endif /* MIXERBANK_H */
