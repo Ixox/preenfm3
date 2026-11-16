@@ -17,6 +17,15 @@
 struct MsfaVoiceState;
 struct MsfaTimbreState;
 
+/*
+ * Approximated operator envelope for the oscilloscope background.
+ * time[] is in seconds, level[] is normalised to the highest stage (0..1).
+ */
+struct MsfaEnvelopeDisplay {
+    float time[4];
+    float level[4];
+};
+
 extern MsfaVoiceState *msfaVoiceStates;
 extern MsfaTimbreState *msfaTimbreStates;
 
@@ -38,5 +47,7 @@ bool msfaVoiceIsActive(MsfaVoiceState *state);
 bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out);
 void msfaVoiceUpdateProgram(MsfaVoiceState *state, const uint8_t *program);
 void msfaVoiceReset(MsfaVoiceState *state);
+
+void msfaGetEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env);
 
 #endif

@@ -364,8 +364,17 @@ void FirmwareTftDisplay::oscilloBgDrawVerticalLine(int16_t x1, int16_t y1, int16
 
 void FirmwareTftDisplay::oscilloBgDrawEnvelope() {
     float div;
+    bool displayScale = true;
 
-    if (oscilParams1[3] < 1.0f) {
+    if (oscilParams1[3] < 0.2f) {
+        // Very short envelope: keep it visible at about 1/5 of the width.
+        // The scale label is hidden in this case.
+        div = oscilParams1[3] * 5.0f;
+        if (div < 0.0001f) {
+            div = 0.0001f;
+        }
+        displayScale = false;
+    } else if (oscilParams1[3] < 1.0f) {
         div = 1.0f;
     } else if (oscilParams1[3] < 2.0f) {
         div = 2.0f;
@@ -388,21 +397,23 @@ void FirmwareTftDisplay::oscilloBgDrawEnvelope() {
     oscilloBgDrawEnvStep((int)(oscilParams1[1] * scale), (int)(oscilParams2[1] * 97.0f), (int)(oscilParams1[2] * scale), (int)(oscilParams2[2] * 97.0f), color, envCurve[2]);
     oscilloBgDrawEnvStep((int)(oscilParams1[2] * scale), (int)(oscilParams2[2] * 97.0f), (int)(oscilParams1[3] * scale), (int)(oscilParams2[3] * 97.0f), color, envCurve[3]);
 
-    uint8_t digits[] = { (uint8_t)(((int)div) / 10),  (uint8_t)(((int)div) % 10) };
-    for (int d = 0; d < 2; d++) {
-        if ((d == 1) || (digits[d] != 0)) {
-            int x = 136 + d * 11;
-            int y = 2;
-            const uint8_t* digitBits = tftAlgo->getDigitBits(digits[d]);
+    if (displayScale) {
+        uint8_t digits[] = { (uint8_t)(((int)div) / 10),  (uint8_t)(((int)div) % 10) };
+        for (int d = 0; d < 2; d++) {
+            if ((d == 1) || (digits[d] != 0)) {
+                int x = 136 + d * 11;
+                int y = 2;
+                const uint8_t* digitBits = tftAlgo->getDigitBits(digits[d]);
 
-            for (int j = 0; j < 5; j++) {
-                const uint8_t line = digitBits[j] >> 3;
-                for (int i = 0; i < 5; i++) {
-                    if (((line >> (4 - i)) & 1) == 1) {
-                        bgOscillo[(x + i * 2)     + (y + j * 2) * 160] = color;
-                        bgOscillo[(x + i * 2 + 1) + (y + j * 2) * 160] = color;
-                        bgOscillo[(x + i * 2)     + (y + j * 2 + 1) * 160] = color;
-                        bgOscillo[(x + i * 2 + 1) + (y + j * 2 + 1) * 160] = color;
+                for (int j = 0; j < 5; j++) {
+                    const uint8_t line = digitBits[j] >> 3;
+                    for (int i = 0; i < 5; i++) {
+                        if (((line >> (4 - i)) & 1) == 1) {
+                            bgOscillo[(x + i * 2)     + (y + j * 2) * 160] = color;
+                            bgOscillo[(x + i * 2 + 1) + (y + j * 2) * 160] = color;
+                            bgOscillo[(x + i * 2)     + (y + j * 2 + 1) * 160] = color;
+                            bgOscillo[(x + i * 2 + 1) + (y + j * 2 + 1) * 160] = color;
+                        }
                     }
                 }
             }

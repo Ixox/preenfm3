@@ -765,8 +765,36 @@ For MSFA:
 
 - Draw the DX7 algorithm from MSFA’s `FmAlgorithm`/`FmCore` tables instead of
   PFM3’s `algoInformation` (`Common.h:739-773`, `FMDisplayEditor.cpp:4351-4365`).
+  Implemented with the `dx7algo1..32` tables and `drawDx7Algo()` in
+  `TftAlgo`/`TftDisplay`.
 - Draw the DX7 rate/level envelope (four rates, four levels) rather than the
-  PFM3 ADSR curves.
+  PFM3 ADSR curves. Implemented as follows:
+  - `msfaGetEnvelopeDisplay()` (`MsfaEngine.cpp`) converts one operator’s
+    R1..R4 / L1..L4 into an approximate `MsfaEnvelopeDisplay`:
+    - Levels are mapped linearly (`L / 99`) so each level only moves its own
+      point, matching the DX7’s own envelope display. No normalisation across
+      the four stages, so editing one level never rescales the others.
+    - Each stage duration depends only on its rate, never on the levels:
+      `qrate = (rate * 41) >> 6`, `inc = (4 + (qrate & 3)) << (2 + LG_N + (qrate >> 2))`,
+      `samples = fullRange * 2^24 / inc`, `time = samples / 44100`, where
+      `fullRange = Env::scaleoutlevel(99) >> 1` in doublings (the DX7 rate is
+      defined as the time to sweep the full level range). `inc` is normalised
+      to 44.1 kHz, so the result is independent of the real sample rate.
+      Rate scaling is ignored (nominal key).
+  - `FMDisplayEditor::refreshOscillatorOperatorEnvelope()` calls the helper
+    and passes the four times/levels to `oscilloBgSetEnvelope()`. All four
+    stages use `CURVE_TYPE_LIN`, since MSFA envelopes are linear.
+  - `FMDisplay3::refreshOscilloBG()` shows the envelope whenever an MSFA
+    timbre is on the `Oper` page (`mainPage == 1`, any sub-page); other pages
+    clear the background.
+  - `oscilloBgDrawEnvelope()` (`FirmwareTftDisplay.cpp`) auto-scales the graph
+    to the total envelope time. If the total is shorter than 0.2 s the scale
+    becomes `total * 5`, so the envelope always occupies about 1/5 of the
+    width and stays visible; in that case the scale label is not drawn. The
+    other scale steps (1 s, 2 s, then 5 s increments) are unchanged.
+  - The approximation ignores operator output level, velocity and keyboard
+    level scaling, matching PFM3’s envelope display which is also independent
+    of oscillator output level.
 - Add new display types if needed in `ParameterDisplayType`
   (`firmware/src/app/ui/FMDisplay.h:51-64`), for example
   `DISPLAY_TYPE_DX7_RATE`, `DISPLAY_TYPE_DX7_LEVEL`,
@@ -893,17 +921,402 @@ Existing PFM3 banks are unchanged. MSFA mixers/presets saved with the earlier
 intermediate layout (program at offset 4) are not compatible and must be
 re-saved.
 
-### 7.3 MIDI NRPN
+### 7.3 MIDI
 
-`MidiDecoder::decodeNrpn()` (`MidiDecoder.cpp:914-936`) maps NRPN indexes to
-PFM3 `allParameterRows`. For MSFA timbres, **ignore PFM3 NRPN edits** while
-the timbre uses the MSFA engine. Do not reuse PFM3 row indexes for MSFA
-parameters; the meaning would be ambiguous. A dedicated MSFA NRPN map can be
-added later if required.
+See [MIDI](#8-midi) for the engine split between PFM3 and MSFA.
 
 ---
 
-## 8. Implementation phases
+## 8. MIDI
+
+`MidiDecoder` is engine-agnostic: it decodes MIDI and forwards events to
+`Synth`/`Timbre`, which dispatch to the selected engine. The engine split
+therefore happens in the `Timbre`/`Voice` layer, except for the PFM3-specific
+CC/NRPN parameter maps and the DX7 sysex handling, which are described below.
+
+### 8.1 Shared MIDI path (both engines)
+
+These features work for PFM3 and MSFA timbres:
+
+- **Notes and velocity** — `MidiDecoder::midiEventReceived()`
+  (`MidiDecoder.cpp:284-301`) → `Synth::noteOn/noteOff` → `Timbre::noteOn/noteOff`
+  (`Timbre.cpp:361-375`) → `Timbre::engineNoteOn/engineNoteOff`
+  (`Timbre.h:107-121`) → `msfaNoteOn/msfaNoteOff` for MSFA.
+- **Hold pedal, all-notes-off, all-sound-off** — `Timbre::setHoldPedal()`
+  (`Timbre.cpp:616-632`) releases voices through `Voice::noteOff()`, which
+  detects an active MSFA voice and calls `msfaNoteOff()` (`Voice.cpp:581-586`).
+- **MIDI clock, start, continue, stop, song position** — `MidiDecoder.cpp:76-120`.
+  The arpeggiator is host-level (`Timbre::noteOn()` → `arpeggiatorNoteOn`) and
+  works with MSFA.
+- **Program change and bank select** — `MidiDecoder.cpp:328-341` enqueues a
+  `LOAD_PRESET` action; `processAsyncActions()` (`MidiDecoder.cpp:1364-1380`)
+  calls `SynthState::loadPresetFromMidi()` (`SynthState.cpp:432-465`):
+  - bank 0 → PFM3 preset bank (`loadPreset`, `SynthState.cpp:376-395`); the
+    engine comes from the preset;
+  - bank 1 → mixer bank (`loadMixer`);
+  - banks 2/3/4 → DX7 sysex bank (`loadDx7Patch`, `SynthState.cpp:403-421`),
+    which forces the timbre to `SYNTH_ENGINE_MSFA`.
+- **MPE notes** — `MidiDecoder.cpp:350-418` → `Timbre::noteOnMPE/noteOffMPE`
+  (`Timbre.cpp:377-404`), which branch to MSFA. MPE *per-note modulation*
+  (pitch bend, aftertouch, slide) is PFM3-only; see 8.3.
+- **Mixer and global CCs** (volume, pan, send, master FX) — engine-independent
+  (`MidiDecoder::controlChange()`, `MidiDecoder.cpp:422-524`).
+- **Custom `0x7d` mixer-volume sysex** — `analyseSysexBuffer()`
+  (`MidiDecoder.cpp:1344-1358`).
+
+### 8.2 MSFA MIDI
+
+MSFA controllers are fed through `Timbre::setMatrixSource()`
+(`Timbre.cpp:3272-3276`) → `msfaTimbreSetController()`
+(`MsfaEngine.cpp:124-144`).
+
+Currently supported:
+
+| MIDI source | MSFA `Controllers` field |
+|---|---|
+| Pitch bend | `pitch_cc` |
+| Mod wheel | `modwheel_cc` |
+| Channel aftertouch | `aftertouch_cc` |
+| Breath | `breath_cc` |
+
+All other `SourceEnum` values fall through to `default: return` and are
+ignored by the MSFA engine. `Controllers` also has `foot_cc`, portamento,
+master tune and MPE fields, but nothing in the current `MidiDecoder` path
+fills them; `msfaTimbreInit()` resets them (`MsfaEngine.cpp:80-106`).
+`controllers.refresh()` is called after every accepted update.
+
+The MSFA LFO and pitch envelope are driven by the DX7 program
+(`msfaTimbreLoadProgram()` → `Lfo::reset(program + 137)`,
+`MsfaEngine.cpp:120-122`), not by the PFM3 matrix/LFO.
+
+The MSFA editor writes directly to the DX7 program
+(`FMDisplayMsfaEditor::setParamValue()`), so MSFA parameter changes do not go
+through `SynthState::setNewValue()` and therefore emit no CC/NRPN.
+
+### 8.3 PFM3-specific MIDI
+
+These paths exist for the PFM3 parameter model and must not be interpreted as
+MSFA parameters. On an MSFA timbre they currently edit the inactive PFM3
+`OneSynthParams` block, so they have no audible effect.
+
+- **CC parameter map** (`receives & 0x01`) —
+  `MidiDecoder::controlChange()` (`MidiDecoder.cpp:527-759`) maps CCs to
+  `Synth::setNewValueFromMidi(timbre, ROW_*, ENCODER_*, ...)`: algorithm, IM,
+  mix/pan, oscillator frequency, matrix, LFO, FX1/FX2, envelopes, arpeggiator,
+  mixer volume, unison, step sequencer. There is no MSFA CC map.
+- **NRPN** (`receives & 0x02`) — `MidiDecoder::decodeNrpn()`
+  (`MidiDecoder.cpp:914-950`) maps NRPN indexes to PFM3 `allParameterRows`.
+  `sendCurrentPatchAsNrpns()` (`MidiDecoder.cpp:808-912`) dumps the PFM3
+  parameter block, not the DX7 program.
+- **Outgoing CC/NRPN** — `MidiDecoder::newParamValue()`
+  (`MidiDecoder.cpp:961-1218`) only runs for parameters changed through
+  `SynthState::setNewValue()`. MSFA editor changes bypass it, so no MSFA
+  CC/NRPN is emitted.
+- **MPE per-note modulation and poly aftertouch** —
+  `Timbre::setMatrixSourceMPE()` and `Timbre::setMatrixPolyAfterTouch()`
+  return early for MSFA (`Timbre.cpp:3283-3310`). MPE notes still play, but
+  per-note pitch bend/aftertouch/slide and poly aftertouch do not reach MSFA.
+- **DX7 sysex input** — `analyseSysexBuffer()` only handles the custom `0x7d`
+  mixer-volume message. `SYSEX_BUFFER_SIZE` is 32 (`MidiDecoder.cpp:42`), so a
+  full DX7 sysex dump cannot be received. DX7 patches are loaded from files
+  (`DX7SysexFile`) via bank/program change, not from MIDI sysex input.
+- **Shared `Arp/Fx` page** — still uses PFM3 parameters, so its CC/NRPN edits
+  remain valid for MSFA timbres.
+
+### 8.4 Split summary
+
+| Feature | PFM3 timbre | MSFA timbre |
+|---|---|---|
+| Notes / velocity / hold / all-notes-off | yes | yes |
+| MIDI clock / arpeggiator | yes | yes |
+| Program change / bank select | yes (bank 0) | yes (bank 0 MSFA preset, banks 2-4 DX7) |
+| Pitch bend / mod wheel / channel AT / breath | PFM3 matrix | MSFA `Controllers` |
+| Poly aftertouch / MPE per-note modulation | yes | ignored |
+| PFM3 CC parameter map | yes | no effect |
+| PFM3 NRPN map | yes | no effect |
+| Outgoing CC/NRPN | yes | no (editor bypasses it) |
+| Custom `0x7d` mixer-volume sysex | yes | yes |
+| DX7 sysex input | not supported | not supported |
+
+### 8.5 Intended enforcement
+
+The split above is the intended behavior. The current `MidiDecoder` does not
+yet guard the PFM3 CC/NRPN paths by engine, so an MSFA timbre still receives
+PFM3 CC/NRPN edits (harmlessly, into the inactive PFM3 parameter block). To
+enforce the split in code:
+
+- skip the `receives & 0x01` PFM3 CC map in `controlChange()` when
+  `mixerState.instrumentState_[timbre].engine == SYNTH_ENGINE_MSFA`;
+- return early from `decodeNrpn()` for MSFA timbres;
+- skip `sendCurrentPatchAsNrpns()` for MSFA timbres;
+- optionally add a dedicated MSFA CC/NRPN map later.
+
+Do not reuse PFM3 row indexes for MSFA parameters; the meaning would be
+ambiguous.
+
+### 8.6 DX7 sysex (MSFA)
+
+#### Parameter change
+
+A real DX7 accepts single-parameter changes over sysex. This is the intended
+path for editing an MSFA timbre from an external sequencer/editor without
+sending a whole voice dump.
+
+#### Message format
+
+```
+F0 43 1n pp vv F7
+```
+
+- `43` — Yamaha manufacturer ID.
+- `1n` — voice parameter change, `n` = MIDI channel 0..15.
+- `pp` — DX7 voice parameter number, 0..155.
+- `vv` — value, 0..127 (the valid range depends on the parameter).
+
+`MidiDecoder::newByte()` strips the leading `F0`, so
+`analyseSysexBuffer()` receives `43 1n pp vv F7` (5 bytes). The current
+`SYSEX_BUFFER_SIZE` is 32 (`MidiDecoder.cpp:42`), so a parameter change fits
+comfortably.
+
+A full DX7 voice dump (`F0 43 0n 00 01 1B … F7`, 163 bytes) does **not** fit
+and is out of scope for this section. Supporting it would require increasing
+`SYSEX_BUFFER_SIZE` and adding checksum validation.
+
+#### Parameter mapping
+
+The 156-byte `msfaProgram` buffer (`MSFA_PROGRAM_SIZE`) is already in the DX7
+unpacked voice layout:
+
+| Range | Content |
+|---|---|
+| 0..20 | OP6 parameters |
+| 21..41 | OP5 |
+| 42..62 | OP4 |
+| 63..83 | OP3 |
+| 84..104 | OP2 |
+| 105..125 | OP1 |
+| 126..129 | pitch EG rates |
+| 130..133 | pitch EG levels |
+| 134 | algorithm |
+| 135 | feedback |
+| 136 | oscillator key sync |
+| 137..143 | LFO |
+| 144..154 | name |
+| 155 | operator on/off bitmask (Dexed extension) |
+
+Therefore the parameter change is a direct write:
+
+```cpp
+if (pp <= 155) {
+    program[pp] = vv;
+}
+```
+
+No conversion is needed. `MsfaParamId`/`msfaParams` are display-oriented and
+must not be used as the sysex parameter number.
+
+#### Channel routing
+
+Reuse the same rules as `MidiDecoder::midiEventReceived()`
+(`MidiDecoder.cpp:213-269`):
+
+- global channel → all timbres;
+- current channel → `currentTimbre`;
+- otherwise each timbre whose `omniOn[t]` is true, whose
+  `midiChannel == 0`, or whose `midiChannel - 1 == n`.
+
+Build a 6-bit timbre mask and apply the change only to timbres with
+`Timbre::getEngine() == SYNTH_ENGINE_MSFA`. Add a small helper, for example
+`uint8_t MidiDecoder::getTimbresForChannel(uint8_t channel)`, so the routing
+is not duplicated.
+
+#### Deferred apply
+
+`analyseSysexBuffer()` runs in the MIDI receive path.
+`Timbre::msfaAfterNewParamsLoad()` (`Timbre.cpp:925-935`) loops over all
+voices and resets the MSFA LFO, so do not run it inline in the sysex handler.
+
+Recommended flow:
+
+1. In `analyseSysexBuffer()`, validate the message and enqueue an async
+   action instead of applying it immediately:
+   ```cpp
+   AsyncAction action;
+   action.fullBytes = 0;
+   action.action.actionType = MSFA_PARAM_CHANGE;
+   action.action.timbre = timbreMask;
+   action.action.param1 = pp;
+   action.action.param2 = vv;
+   asyncActions.insert(action);
+   ```
+2. Add `MSFA_PARAM_CHANGE` to `enum ActionType`
+   (`MidiDecoder.h:156-159`). `AsyncActionDetail`
+   (`MidiDecoder.h:161-170`) already has `timbre` and `param1..param6`.
+3. Handle it in `MidiDecoder::processAsyncActions()`
+   (`MidiDecoder.cpp:1364-1380`):
+   ```cpp
+   case MSFA_PARAM_CHANGE:
+       for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+           if ((asyncAction.action.timbre & (1 << t)) == 0) {
+               continue;
+           }
+           Timbre *timb = synth->getTimbre(t);
+           if (timb->getEngine() != SYNTH_ENGINE_MSFA) {
+               continue;
+           }
+           uint8_t *program = timb->getMsfaProgramMutable();
+           uint8_t param = asyncAction.action.param1;
+           uint8_t value = asyncAction.action.param2;
+           if (param > 155 || program[param] == value) {
+               continue;
+           }
+           program[param] = value;
+           timb->msfaAfterNewParamsLoad();
+           // mark the preset modified and refresh the editor (see below)
+       }
+       break;
+   ```
+
+#### Preset modified and editor refresh
+
+`FMDisplayEditor::markPresetModified()` (`FMDisplayEditor.cpp:3053`) is a
+UI-side method, so `MidiDecoder` cannot call it directly. Add a small
+`SynthState` notification (for example a `presetModified` listener callback,
+or a `SynthState::markPresetModified(timbre)` helper) and call it from
+`processAsyncActions()`.
+
+For the editor display, add a method such as
+`FMDisplayMsfaEditor::refreshParam(uint8_t dx7Param)` that:
+
+- scans the current page's `rowEncoder[]`;
+- finds the encoder showing the changed parameter;
+- calls `displayParamValue(encoder, COLOR_YELLOW)` and sets
+  `valueChangedCounter_[encoder] = 4`, matching the encoder-turn highlight.
+
+Route the notification through `SynthState`/`FMDisplay3` rather than calling
+the editor from `MidiDecoder`. A full page refresh through `refreshStatus` is
+also possible but heavier and may reset page state.
+
+#### Highlighting
+
+The changed DX7 parameter can reuse the existing MSFA highlight logic in
+`FMDisplayMsfaEditor::newParamValue()`:
+
+- `pp` 0..125 → operator parameter; the operator is
+  `6 - (pp / 21)` (OP6 for 0..20, …, OP1 for 105..125), so highlight that
+  operator box;
+- `pp` 126..133 → pitch EG (global, no operator highlight);
+- `pp` 134 → algorithm; redraw the DX7 algorithm;
+- `pp` 135 → feedback; highlight the feedback loop;
+- `pp` 136..143 → global/LFO (no diagram highlight);
+- `pp` 144..154 → name;
+- `pp` 155 → operator on/off; highlight the operator corresponding to the
+  changed bit.
+
+A `dx7ParamToMsfaParam(pp)` helper (or a reverse lookup from byte offset to
+`MsfaParamId`) keeps this mapping in one place.
+
+#### Limits
+
+- DX7 **function parameters** (master tune, poly/mono, pitch bend range,
+  etc.) are not part of the 156-byte voice program and are not handled by
+  this path.
+- **Voice bulk dumps** are handled separately in 8.7.
+- Parameter-change messages carry no checksum, so none is validated.
+- Changes write the same `msfaProgram` buffer used by preset/mixer save, so
+  they are persisted without extra work.
+
+### 8.7 Full DX7 voice dump (MSFA)
+
+A DX7 can also send a complete voice over sysex, either as a single voice or
+as a 32-voice bank. This is the sysex equivalent of loading a patch from a
+file; it writes the whole 156-byte MSFA program instead of one parameter.
+
+#### Message formats
+
+Single voice:
+
+```
+F0 43 0n 00 01 1B <155 bytes> <checksum> F7
+```
+
+32 voices:
+
+```
+F0 43 0n 09 20 00 <4096 bytes> <checksum> F7
+```
+
+- `0n` — voice dump, `n` = MIDI channel 0..15.
+- The 155-byte payload is the **unpacked** DX7 voice: exactly bytes 0..154
+  of `msfaProgram` (OP6..OP1, pitch EG, algorithm, feedback, LFO, name).
+- `<checksum>` — 7-bit checksum over the data: `(-sum(data)) & 0x7F`.
+- The single-voice message is 163 bytes total; the 32-voice bank is 4104
+  bytes total.
+
+#### Why the current handler cannot receive it
+
+`SYSEX_BUFFER_SIZE` is 32 (`MidiDecoder.cpp:42`), so the single-voice dump
+(163 bytes) and the bank dump (4104 bytes) are both truncated. The existing
+`analyseSysexBuffer()` also only understands the custom `0x7d` mixer sysex.
+
+#### Single-voice dump
+
+This is the recommended first step.
+
+1. **Buffer.** Increase `SYSEX_BUFFER_SIZE` to at least 163 (for example 192),
+   or add a dedicated `msfaSysexBuffer[163]` and route Yamaha `0n` messages
+   there. Keep the 32-byte buffer for the `0x7d` mixer sysex if RAM matters.
+   RAM impact is small (about 163 bytes).
+2. **Validate.** In `analyseSysexBuffer()`:
+   - `sysexBuffer[0] == 0x43` and `(sysexBuffer[1] & 0xF0) == 0x00`;
+   - `size == 162` after `F0` was stripped (`newByte()` stores `F7` too);
+   - the checksum at `sysexBuffer[160]` equals
+     `(-sum(sysexBuffer[5..159])) & 0x7F`;
+   - reject the message if any check fails, without touching the program.
+3. **Payload.** The 155 data bytes start at `sysexBuffer[5]`. They are
+   already unpacked, so no `Hexter::patchUnpack()` is needed (unlike the
+   packed 128-byte patches read by `DX7SysexFile`). Copy them into a static
+   `msfaSysexProgram[156]` and set `msfaSysexProgram[155] = 0x3F` (all
+   operators on); the plain DX7 dump does not carry the Dexed operator
+   switch byte.
+4. **Deferred apply.** The `AsyncAction` union is 64 bits and cannot carry
+   156 bytes. Enqueue an `MSFA_VOICE_DUMP` action carrying only the timbre
+   mask, and use the static `msfaSysexProgram` as the payload. If back-to-back
+   dumps must be supported, use a small ring of program buffers or apply the
+   dump synchronously.
+5. **Apply.** In `processAsyncActions()`, for each MSFA timbre in the mask:
+   - `memcpy(timbre->getMsfaProgramMutable(), msfaSysexProgram, 156)`;
+   - `timbre->msfaAfterNewParamsLoad()` (`Timbre.cpp:925-935`);
+   - mark the preset modified and refresh the editor (same plumbing as 8.6).
+6. **Routing.** Use the same channel rules as the parameter change (8.6).
+
+#### 32-voice bank dump
+
+The bank dump is 4104 bytes and contains 32 packed 128-byte voices. It is
+optional: the firmware already loads DX7 banks from files via
+`DX7SysexFile::dx7LoadPatch()` / `Hexter::patchUnpack()`, so the usual way to
+load a bank is `Preset > DX7`, not sysex.
+
+If sysex bank loading is required:
+
+- increase the buffer to 4104 bytes (or stream the data instead of buffering
+  it); this is a noticeable RAM cost;
+- validate the 4096-byte payload and its checksum;
+- unpack each 128-byte voice with the existing `Hexter::patchUnpack()` and
+  store the selected voice, or add a 32-voice in-memory cartridge;
+- decide whether a bank dump replaces all 32 slots or only the current one.
+
+#### Limits
+
+- Function parameters (master tune, poly/mono, pitch bend range, etc.) are not
+  part of a voice dump.
+- A malformed size or checksum must be rejected without modifying the current
+  program.
+- The plain DX7 dump has no Dexed operator on/off byte; default it to `0x3F`.
+
+---
+
+## 9. Implementation phases
 
 1. **Vendor MSFA and build it.**
    - Add `third_party/msfa` and the CMake target.
@@ -949,7 +1362,7 @@ added later if required.
 
 ---
 
-## 9. Test plan
+## 10. Test plan
 
 - Build both engines and confirm the default PFM3 firmware still builds and
   boots unchanged.
@@ -966,7 +1379,7 @@ added later if required.
 
 ---
 
-## 10. Decisions
+## 11. Decisions
 
 1. **Engine persistence:** the engine is stored in both the mixer bank and
    each preset. Loading a PFM3 preset into an MSFA timbre switches it to PFM3;
@@ -992,3 +1405,10 @@ added later if required.
    patch/Cartridge code is GPL-3.0. Apache-2.0 is compatible with this
    project's GPL-3.0; keep the upstream headers and notices, and distribute
    the combined firmware binary under GPL-3.0.
+9. **MIDI split:** notes, clock, hold pedal, MPE notes, program/bank change,
+   mixer/global CCs and the custom `0x7d` sysex are shared by both engines.
+   PFM3-specific CC/NRPN parameter maps, MPE per-note modulation, poly
+   aftertouch and DX7 sysex input are not applied to MSFA timbres. MSFA
+   receives pitch bend, mod wheel, channel aftertouch and breath through
+   `msfaTimbreSetController()`; a dedicated MSFA CC/NRPN map can be added
+   later. See [MIDI](#8-midi).

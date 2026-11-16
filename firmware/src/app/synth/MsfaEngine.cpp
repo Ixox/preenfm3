@@ -237,6 +237,29 @@ void msfaVoiceReset(MsfaVoiceState *state) {
     }
 }
 
+void msfaGetEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env) {
+    const uint8_t *op = program + (5 - operatorNumber) * 21;
+
+    // A DX7 rate is the time needed to sweep the full level range. Using that
+    // fixed range for every stage keeps the segment widths independent of the
+    // levels, so editing a level only moves its own point.
+    const float fullRange = (float)(Env::scaleoutlevel(99) >> 1) * (64.0f / 256.0f);
+
+    for (int i = 0; i < 4; i++) {
+        int qrate = (op[i] * 41) >> 6;
+        if (qrate > 63) {
+            qrate = 63;
+        }
+        int64_t inc = (int64_t)(4 + (qrate & 3)) << (2 + LG_N + (qrate >> 2));
+
+        // inc is normalised to 44.1 kHz, so the sample count divided by
+        // 44100 is the real duration at any sample rate.
+        int64_t samples = (int64_t)(fullRange * 16777216.0f) / inc;
+        env->time[i] = (float)samples / 44100.0f;
+        env->level[i] = (float)op[4 + i] / 99.0f;
+    }
+}
+
 void msfaEngineInit() {
     msfaDebugInit();
     msfaTuning = createStandardTuning();

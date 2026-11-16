@@ -347,6 +347,14 @@ void FMDisplay3::newPfm3Page(FullState *fullState) {
 
 void FMDisplay3::refreshOscilloBG() {
     FullState *fullState = &this->synthState_->fullState;
+    if (displayEditor_->isMsfaTimbre()) {
+        if (fullState->mainPage == 1) {
+            displayEditor_->refreshOscillatorOperatorEnvelope();
+        } else {
+            tft_->oscilloBgActionClear();
+        }
+        return;
+    }
     if (fullState->mainPage == 1) {
         if (fullState->editPage == 0) {
             displayEditor_->refreshOscillatorOperatorShape();

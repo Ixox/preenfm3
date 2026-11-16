@@ -147,7 +147,7 @@ static const struct MsfaParamDesc msfaParams[MSFA_PARAM_COUNT] = {
     // MSFA_LFO_DELAY - LFO delay
     { "Delay", MSFA_KIND_GLOBAL,      138, 0,  99, MSFA_DISPLAY_INT,     nullptr },
     // MSFA_LFO_PITCH_MOD_DEPTH - LFO pitch modulation depth
-    { "P Mod",   MSFA_KIND_GLOBAL,      139, 0,  99, MSFA_DISPLAY_INT,     nullptr },
+    { "Pitch",   MSFA_KIND_GLOBAL,      139, 0,  99, MSFA_DISPLAY_INT,     nullptr },
     // MSFA_LFO_AMP_MOD_DEPTH - LFO amplitude modulation depth
     { "Amp",   MSFA_KIND_GLOBAL,      140, 0,  99, MSFA_DISPLAY_INT,     nullptr },
     // MSFA_LFO_KEY_SYNC - LFO key sync
@@ -155,7 +155,7 @@ static const struct MsfaParamDesc msfaParams[MSFA_PARAM_COUNT] = {
     // MSFA_LFO_WAVEFORM - LFO waveform
     { "Wave",    MSFA_KIND_GLOBAL,      142, 0,  5,  MSFA_DISPLAY_STRINGS, msfaLfoWave },
     // MSFA_LFO_PITCH_MOD_SENSITIVITY - LFO pitch modulation sensitivity
-    { "P M S",   MSFA_KIND_GLOBAL,      143, 0,  7,  MSFA_DISPLAY_INT,     nullptr },
+    { "PitchM",   MSFA_KIND_GLOBAL,      143, 0,  7,  MSFA_DISPLAY_INT,     nullptr },
     // MSFA_EG_RATE_1 - Envelope generator rate 1
     { "Rate 1",      MSFA_KIND_OPERATOR,    0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
     // MSFA_EG_RATE_2 - Envelope generator rate 2
@@ -185,9 +185,9 @@ static const struct MsfaParamDesc msfaParams[MSFA_PARAM_COUNT] = {
     // MSFA_RATE_SCALING - Rate scaling
     { "Rt Sc", MSFA_KIND_OPERATOR,    13,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
     // MSFA_AMPLITUDE_MOD_SENSITIVITY - Amplitude modulation sensitivity
-    { "A M S",     MSFA_KIND_OPERATOR,    14,  0,  3,  MSFA_DISPLAY_INT,     nullptr },
+    { "A Mod",     MSFA_KIND_OPERATOR,    14,  0,  3,  MSFA_DISPLAY_INT,     nullptr },
     // MSFA_KEY_VELOCITY_SENSITIVITY - Key velocity sensitivity
-    { "K V S",     MSFA_KIND_OPERATOR,    15,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
+    { "K Velo",     MSFA_KIND_OPERATOR,    15,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
     // MSFA_OPERATOR_OUTPUT_LEVEL - Operator output level
     { "Out Lvl", MSFA_KIND_OPERATOR,    16,  0,  99, MSFA_DISPLAY_INT,     nullptr },
     // MSFA_OSCILLATOR_MODE - Oscillator mode (ratio or fixed)
@@ -359,39 +359,25 @@ static const struct Pfm3OneButton msfaButtonPitchEnv = {
     { &msfaPitchRateState, &msfaPitchLevelState }
 };
 
-static const struct Pfm3OneButton msfaButtonAmp = {
-    "Amp",
+static const struct Pfm3OneButton msfaButtonLevel = {
+    "Level",
     BUTTONID_MSFA_AMP,
-    1,
-    { &msfaAmpState }
+    2,
+    { &msfaAmpState, &msfaScalState }
 };
 
-static const struct Pfm3OneButton msfaButtonScal = {
-    "Scal",
-    BUTTONID_MSFA_SCAL,
-    1,
-    { &msfaScalState }
-};
-
-static const struct Pfm3OneButton msfaButtonFreq = {
-    "Freq",
+static const struct Pfm3OneButton msfaButtonOsc = {
+    "Osc",
     BUTTONID_MSFA_FREQ,
     1,
     { &msfaFreqState }
 };
 
-static const struct Pfm3OneButton msfaButtonEgRate = {
-    "Rate",
+static const struct Pfm3OneButton msfaButtonEnv = {
+    "Env",
     BUTTONID_MSFA_EG_RATE,
-    1,
-    { &msfaEgRateState }
-};
-
-static const struct Pfm3OneButton msfaButtonEgLevel = {
-    "Level",
-    BUTTONID_MSFA_EG_LEVEL,
-    1,
-    { &msfaEgLevelState }
+    2,
+    { &msfaEgRateState, &msfaEgLevelState }
 };
 
 static const struct Pfm3EditMenu msfaGlobalMenu = {
@@ -400,29 +386,15 @@ static const struct Pfm3EditMenu msfaGlobalMenu = {
     { &msfaButtonEngine, &msfaButtonLfo, &msfaButtonPitchEnv }
 };
 
-static const struct Pfm3EditMenu msfaLevelMenu = {
-    "Level",
-    2,
-    { &msfaButtonAmp, &msfaButtonScal }
+static const struct Pfm3EditMenu msfaOperMenu = {
+    "Oper",
+    3,
+    { &msfaButtonLevel, &msfaButtonOsc, &msfaButtonEnv }
 };
 
-static const struct Pfm3EditMenu msfaOscMenu = {
-    "Osc",
-    1,
-    { &msfaButtonFreq }
-};
-
-static const struct Pfm3EditMenu msfaEgMenu = {
-    "EG",
-    2,
-    { &msfaButtonEgRate, &msfaButtonEgLevel }
-};
-
-static const struct Pfm3EditMenu *msfaEditMenus[4] = {
+static const struct Pfm3EditMenu *msfaEditMenus[2] = {
     &msfaGlobalMenu,
-    &msfaLevelMenu,
-    &msfaOscMenu,
-    &msfaEgMenu
+    &msfaOperMenu
 };
 
 FMDisplayMsfaEditor::FMDisplayMsfaEditor() {
@@ -447,7 +419,7 @@ void FMDisplayMsfaEditor::init(FMDisplayEditor *parent, SynthState *synthState, 
 }
 
 const struct Pfm3EditMenu* FMDisplayMsfaEditor::getEditMenu(int page) const {
-    if (page >= 0 && page < 4) {
+    if (page >= 0 && page < 2) {
         return msfaEditMenus[page];
     }
     return nullptr;
@@ -576,7 +548,7 @@ void FMDisplayMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefres
         tft_->setCursor(0, 2);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(COLOR_CYAN);
-        if (fullState->mainPage >= 1) {
+        if (fullState->mainPage == 1) {
             tft_->print("Op ");
             tft_->print(fullState->operatorNumber + 1);
             tft_->print(" ");
@@ -592,7 +564,7 @@ void FMDisplayMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefres
     case 13: {
         int button = 18 - refreshStatus;
 
-        if (fullState->mainPage >= 1 && button >= 3 && button <= 5) {
+        if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
             tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5,
                 fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
         } else if (button < editMenu->numberOfButtons) {
@@ -718,6 +690,10 @@ void FMDisplayMsfaEditor::newParamValue(int &refreshStatus, int timbre, int curr
         operatorChangedCounter_[encoder] = 4;
         highlightedOperator_[encoder] = op;
     }
+
+    if (currentRow >= MSFA_EG_RATE_1 && currentRow <= MSFA_EG_LEVEL_4) {
+        parent_->refreshOscillatorOperatorEnvelope();
+    }
 }
 
 void FMDisplayMsfaEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
@@ -741,7 +717,7 @@ void FMDisplayMsfaEditor::buttonPressed(int button) {
     case BUTTON_PFM3_4:
     case BUTTON_PFM3_5:
     case BUTTON_PFM3_6:
-        if (mainPage >= 1 && button >= BUTTON_PFM3_4) {
+        if (mainPage == 1 && button >= BUTTON_PFM3_4) {
             // Operator pages: buttons 4..6 select OP1/2, OP3/4, OP5/6.
             uint8_t buttonSelected = button - BUTTON_PFM3_4;
             uint8_t currentButton = fullState->operatorNumber >> 1;
@@ -772,7 +748,7 @@ void FMDisplayMsfaEditor::buttonPressed(int button) {
 void FMDisplayMsfaEditor::buttonLongPressed(int instrument, int button) {
     int mainPage = synthState_->fullState.mainPage;
 
-    if (mainPage < 1 || mainPage > 3) {
+    if (mainPage != 1) {
         return;
     }
 
