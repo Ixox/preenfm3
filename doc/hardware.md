@@ -33,7 +33,7 @@ This document describes key hardware subsystems in the preenFM3 open-source synt
   - [Oscilloscope & Algorithm Visualizer](#oscilloscope--algorithm-visualizer)
   - [Flush Pipeline](#flush-pipeline)
   - [UI Loop Architecture](#ui-loop-architecture)
-- [FMDisplay3 — Screen Management & Action Queue](#fmdisplay3--screen-management--action-queue)
+- [ScreenCoordinator — Screen Management & Action Queue](#fmdisplay3--screen-management--action-queue)
   - [Screen Classes](#screen-classes)
   - [refreshAllScreenByStep() State Machine](#refreshallscreenbystep-state-machine)
   - [Per-Screen Step Breakdown](#per-screen-step-breakdown)
@@ -378,9 +378,9 @@ Design principles:
 
 ---
 
-## FMDisplay3 — Screen Management & Action Queue
+## ScreenCoordinator — Screen Management & Action Queue
 
-The `FMDisplay3` class coordinates four top-level screens (Mixer, Editor, Menu, Sequencer) and manages incremental screen rendering via a step-based state machine that pushes drawing actions into the `TftDisplay` action queue. It holds a `FirmwareTftDisplay *tft_`, not a plain `TftDisplay`; `FirmwareTftDisplay` extends the base class with oscilloscope background actions handled in `additionalActions()`. This section covers how screens are structured, how `refreshAllScreenByStep()` works, and how the action buffer is constructed.
+The `ScreenCoordinator` class coordinates four top-level screens (Mixer, Editor, Menu, Sequencer) and manages incremental screen rendering via a step-based state machine that pushes drawing actions into the `TftDisplay` action queue. It holds a `FirmwareTftDisplay *tft_`, not a plain `TftDisplay`; `FirmwareTftDisplay` extends the base class with oscilloscope background actions handled in `additionalActions()`. This section covers how screens are structured, how `refreshAllScreenByStep()` works, and how the action buffer is constructed.
 
 ### Screen Classes
 
@@ -388,21 +388,21 @@ Four screen classes, each responsible for one top-level display mode:
 
 | Class | File | Purpose |
 |-------|------|---------|
-| `FMDisplayMixer` | `firmware/Src/hardware/FMDisplayMixer.h` | Mixer screen — instrument levels, pan, FX sends |
-| `FMDisplayEditor` | `firmware/Src/hardware/FMDisplayEditor.h` | Editor screen — operator params, matrix, LFO, modulators |
-| `FMDisplayMenu` | `firmware/Src/hardware/FMDisplayMenu.h` | Menu screen — file browser, presets, settings |
-| `FMDisplaySequencer` | `firmware/Src/hardware/FMDisplaySequencer.h` | Sequencer screen — step sequencer and pattern playback |
+| `ScreenMixer` | `firmware/Src/hardware/ScreenMixer.h` | Mixer screen — instrument levels, pan, FX sends |
+| `ScreenEditor` | `firmware/Src/hardware/ScreenEditor.h` | Editor screen — operator params, matrix, LFO, modulators |
+| `ScreenMenu` | `firmware/Src/hardware/ScreenMenu.h` | Menu screen — file browser, presets, settings |
+| `ScreenSequencer` | `firmware/Src/hardware/ScreenSequencer.h` | Sequencer screen — step sequencer and pattern playback |
 
 These are owned by the central coordinator:
 
 ```cpp
-// firmware/Src/hardware/FMDisplay3.h:32
-class FMDisplay3 : public SynthParamListener, public SynthMenuListener,
+// firmware/Src/hardware/ScreenCoordinator.h:32
+class ScreenCoordinator : public SynthParamListener, public SynthMenuListener,
                    public SynthStateAware, public VisualInfo {
-    FMDisplayMixer *displayMixer_;       // line 100
-    FMDisplayMenu *displayMenu_;         // line 101
-    FMDisplayEditor *displayEditor_;     // line 102
-    FMDisplaySequencer *displaySequencer_; // line 103
+    ScreenMixer *displayMixer_;       // line 100
+    ScreenMenu *displayMenu_;         // line 101
+    ScreenEditor *displayEditor_;     // line 102
+    ScreenSequencer *displaySequencer_; // line 103
 };
 ```
 
@@ -412,14 +412,14 @@ The active screen is determined by `synthMode` in the full state:
 - `SYNTH_MODE_MENU` → Menu
 - `SYNTH_MODE_SEQUENCER` → Sequencer
 
-`FMDisplay3` also implements `VisualInfo`. `tempoClick()` decrements the per-timbre note-on counters and forwards to the active screen's `tempoClick()` for level-meter decay. `midiClock()` and `noteOn()` update small status indicators.
+`ScreenCoordinator` also implements `VisualInfo`. `tempoClick()` decrements the per-timbre note-on counters and forwards to the active screen's `tempoClick()` for level-meter decay. `midiClock()` and `noteOn()` update small status indicators.
 
 ### refreshAllScreenByStep() State Machine
 
-**File**: `firmware/Src/hardware/FMDisplay3.cpp`, lines 76–98
+**File**: `firmware/Src/hardware/ScreenCoordinator.cpp`, lines 76–98
 
 ```cpp
-void FMDisplay3::refreshAllScreenByStep() {
+void ScreenCoordinator::refreshAllScreenByStep() {
     switch (this->synthState_->fullState.synthMode) {
         case SYNTH_MODE_MIXER:
             displayMixer_->refreshMixerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
@@ -444,7 +444,7 @@ void FMDisplay3::refreshAllScreenByStep() {
 }
 ```
 
-**State fields** (`FMDisplay3.h`, lines 91–92):
+**State fields** (`ScreenCoordinator.h`, lines 91–92):
 ```cpp
 int refreshStatus_;    // Current countdown value (acts as the step number)
 int endRefreshStatus_; // Optional lower step at which to stop a partial refresh
@@ -479,7 +479,7 @@ The action buffer throttle (`getNumberOfPendingActions() < 100`) prevents queue 
 
 Each screen divides its redraw into numbered steps (cases), pushing actions into the queue per step. A full refresh is usually started at 21, so step 21 is often a no-op; drawing starts at 20. Steps not listed below have no case and are no-ops.
 
-#### Mixer (`FMDisplayMixer::refreshMixerByStep`, lines 546–645): Steps 20→1
+#### Mixer (`ScreenMixer::refreshMixerByStep`, lines 546–645): Steps 20→1
 
 | Step(s) | Content Drawn |
 |---------|---------------|
@@ -489,7 +489,7 @@ Each screen divides its redraw into numbered steps (cases), pushing actions into
 | 6 | Selected parameter title |
 | 5–1 | Bottom row buttons |
 
-#### Editor (`FMDisplayEditor::refreshEditorByStep`, lines 3269–3491): Steps 21→1
+#### Editor (`ScreenEditor::refreshEditorByStep`, lines 3269–3491): Steps 21→1
 
 | Step(s) | Content Drawn |
 |---------|---------------|
@@ -502,14 +502,14 @@ Each screen divides its redraw into numbered steps (cases), pushing actions into
 | 12–7 | Parameter names |
 | 6–1 | Parameter values |
 
-#### Menu (`FMDisplayMenu::refreshMenuByStep`, lines 35–160): Steps 20, 6→1
+#### Menu (`ScreenMenu::refreshMenuByStep`, lines 35–160): Steps 20, 6→1
 
 | Step(s) | Content Drawn |
 |---------|---------------|
 | 20 | Header bar ("M E N U") |
 | 6–1 | Button labels based on current menu type |
 
-#### Sequencer (`FMDisplaySequencer::refreshSequencerByStep`, lines 55–229): Steps 20→1
+#### Sequencer (`ScreenSequencer::refreshSequencerByStep`, lines 55–229): Steps 20→1
 
 | Step(s) | Content Drawn |
 |---------|---------------|
@@ -639,10 +639,10 @@ Every screen class calls these methods through its `tft_` pointer:
 
 | Screen | Methods Called |
 |--------|---------------|
-| `FMDisplayMixer` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawLevelMetter()`, `tft_->clear()`, `tft_->pauseRefresh()`, `tft_->restartRefreshTft()` |
-| `FMDisplayEditor` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawButtonBiState()`, `tft_->drawAlgo()`, `tft_->clearAlgoFG()`, `tft_->highlightOperator()`, `tft_->eraseHighlightOperator()`, `tft_->highlightIM()`, `tft_->eraseHighlightIM()`, `tft_->oscilloForceNextDisplay()`, plus oscillo background methods |
-| `FMDisplaySequencer` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawSimpleButton()`, `tft_->clear()` |
-| `FMDisplayMenu` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawSimpleButton()`, `tft_->drawSimpleBorderButton()`, `tft_->clear()` |
+| `ScreenMixer` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawLevelMetter()`, `tft_->clear()`, `tft_->pauseRefresh()`, `tft_->restartRefreshTft()` |
+| `ScreenEditor` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawButtonBiState()`, `tft_->drawAlgo()`, `tft_->clearAlgoFG()`, `tft_->highlightOperator()`, `tft_->eraseHighlightOperator()`, `tft_->highlightIM()`, `tft_->eraseHighlightIM()`, `tft_->oscilloForceNextDisplay()`, plus oscillo background methods |
+| `ScreenSequencer` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawSimpleButton()`, `tft_->clear()` |
+| `ScreenMenu` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawSimpleButton()`, `tft_->drawSimpleBorderButton()`, `tft_->clear()` |
 
 ### Action Buffer Construction Pattern
 
@@ -680,7 +680,7 @@ The editor screen can overlay reference waveforms behind the live oscilloscope t
 | `oscilloBgActionEnvelope()` | 184 | Same action with `param1 = TFT_DRAW_ENVELOPPE` (15) |
 | `oscilloBgActionClear()` | 138 | Same action with `param1 = 255`, which clears the background layer |
 
-These are invoked from the editor screen (e.g., `FMDisplayEditor::refreshOscillatorOperatorShape()`, `firmware/Src/hardware/FMDisplayEditor.cpp:4293`) when the user switches to pages that benefit from visual reference shapes. The background is drawn into `bgOscillo` and composited beneath the live waveform during `oscilloRrefresh()`.
+These are invoked from the editor screen (e.g., `ScreenEditor::refreshOscillatorOperatorShape()`, `firmware/Src/hardware/ScreenEditor.cpp:4293`) when the user switches to pages that benefit from visual reference shapes. The background is drawn into `bgOscillo` and composited beneath the live waveform during `oscilloRrefresh()`.
 
 `FirmwareTftDisplay::clearActions()` also resets the `envInQueue`, `lfoInQueue`, and `operatorInQueue` counters so stale background requests do not survive a screen clear.
 

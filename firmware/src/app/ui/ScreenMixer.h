@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY_MIXER
-#define FMDISPLAY_MIXER
+#ifndef SCREEN_MIXER
+#define SCREEN_MIXER
 
 #include "Common.h"
-#include "FMDisplay.h"
+#include "ScreenTypes.h"
 
 class SynthState;
 class TftDisplay;
@@ -51,9 +51,9 @@ struct PfmMixerMenu {
     const Pfm3MixerButton *mixerButton[6];
 };
 
-class FMDisplayMixer {
+class ScreenMixer {
 public:
-    FMDisplayMixer();
+    ScreenMixer();
 
     void init(SynthState *synthState, TftDisplay *tft) {
         synthState_ = synthState;

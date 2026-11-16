@@ -17,36 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY_MSFA_EDITOR
-#define FMDISPLAY_MSFA_EDITOR
+#ifndef SCREEN_MSFA_EDITOR
+#define SCREEN_MSFA_EDITOR
 
 #include "Common.h"
-#include "FMDisplayEditor.h"
+#include "ScreenEditor.h"
 
 class Timbre;
 
 /*
- * MSFA (DX7) editor pages. FMDisplayEditor owns one instance and delegates
+ * MSFA (DX7) editor pages. ScreenEditor owns one instance and delegates
  * pages 0..3 (MSFA, Oper, EG, Scale) to it. Pages 4 and 5 (Arp/Fx, Perf)
  * stay on the PFM3 parameter path because they are shared with OneSynthParams.
  */
-class FMDisplayMsfaEditor {
+class ScreenMsfaEditor : public EngineEditor {
 public:
-    FMDisplayMsfaEditor();
+    ScreenMsfaEditor();
 
-    void init(FMDisplayEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft);
+    void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) override;
 
-    const struct Pfm3EditMenu* getEditMenu(int page) const;
+    const struct EditorEditMenu* getEditMenu(int page) const override;
 
-    void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
-    void displayParamValue(int encoder, TFT_COLOR color);
+    void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) override;
+    void displayParamValue(int encoder, TFT_COLOR color) override;
     void encoderTurned(int encoder6, int ticks);
     void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-        ParameterDisplay *param, float oldValue, float newValue);
+        ParameterDisplay *param, float oldValue, float newValue) override;
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void buttonPressed(int button);
     void buttonLongPressed(int instrument, int button);
-    void tempoClick();
+    void refreshOscillatorOperatorShape() override;
+    void refreshLfoOscillator() override;
+    void refreshLfoEnv() override;
+    void tempoClick() override;
 
 private:
     uint8_t getX(int encoder);
@@ -58,7 +61,7 @@ private:
     void displayValue(uint8_t paramId, uint8_t value);
     void applyProgramChange();
 
-    FMDisplayEditor *parent_;
+    ScreenEditor *parent_;
     SynthState *synthState_;
     FirmwareTftDisplay *tft_;
     uint8_t valueChangedCounter_[6];

@@ -21,11 +21,11 @@
 #include "SynthState.h"
 #include "MsfaEngine.h"
 #include "MidiDecoder.h"
-#include "FMDisplay3.h"
-#include "FMDisplayMixer.h"
-#include "FMDisplayEditor.h"
-#include "FMDisplayMenu.h"
-#include "FMDisplaySequencer.h"
+#include "ScreenCoordinator.h"
+#include "ScreenMixer.h"
+#include "ScreenEditor.h"
+#include "ScreenMenu.h"
+#include "ScreenSequencer.h"
 #include "FirmwareTftDisplay.h"
 #include "ili9341.h"
 #include "Storage.h"
@@ -48,11 +48,11 @@ extern TIM_HandleTypeDef htim1;
 #define RAM_D3_SECTION __attribute__((section(".ram_d3")))
 
 SynthState synthState;
-FMDisplay3 fmDisplay3;
-FMDisplayEditor displayEditor;
-FMDisplayMenu displayMenu;
-FMDisplayMixer displayMixer;
-FMDisplaySequencer displaySequencer;
+ScreenCoordinator fmDisplay3;
+ScreenEditor displayEditor;
+ScreenMenu displayMenu;
+ScreenMixer displayMixer;
+ScreenSequencer displaySequencer;
 MidiDecoder midiDecoder;
 Encoders encoders;
 FirmwareTftDisplay tft;
@@ -216,7 +216,7 @@ void preenfm3Loop() {
         }
     }
 
-    if (synthState.fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
+    if (synthState.fullState.synthMode == SYNTH_MODE_EDITOR) {
         // Oscillo refreqh : 8 Hz = 125 ms
         if (unlikely((currentMillis - oscilloMillis) >= 125)) {
             oscilloMillis = currentMillis;

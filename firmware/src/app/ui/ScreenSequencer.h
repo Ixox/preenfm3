@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY_SEQUENCER
-#define FMDISPLAY_SEQUENCER
+#ifndef SCREEN_SEQUENCER
+#define SCREEN_SEQUENCER
 
 #include "Common.h"
-#include "FMDisplay.h"
+#include "ScreenTypes.h"
 
 class SynthState;
 class TftDisplay;
@@ -34,9 +34,9 @@ enum SequencerButtonMode {
     SEQ_MOD_LAST // 5
 };
 
-class FMDisplaySequencer {
+class ScreenSequencer {
 public:
-    FMDisplaySequencer();
+    ScreenSequencer();
 
     void init(SynthState *synthState, TftDisplay *tft) {
         synthState_ = synthState;

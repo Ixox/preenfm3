@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FMDisplaySequencer.h"
+#include "ScreenSequencer.h"
 #include "SynthState.h"
 #include "TftDisplay.h"
 #include "TftAlgo.h"
@@ -32,16 +32,16 @@ const char *buttonLabel[SEQ_MOD_LAST] = { "Seq", "Rec", "Play", "Clear", "Step" 
 const char* noteNames[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
 
-FMDisplaySequencer::FMDisplaySequencer() {
+ScreenSequencer::ScreenSequencer() {
     seqMode_ = SEQ_MODE_NORMAL;
     stepSize_ = 16;
 }
 
-void FMDisplaySequencer::setSequencer(Sequencer *sequencer) {
+void ScreenSequencer::setSequencer(Sequencer *sequencer) {
     sequencer_ = sequencer;
 }
 
-void FMDisplaySequencer::newTimbre(int instrument, int &refreshStatus, int &endRefreshStatus) {
+void ScreenSequencer::newTimbre(int instrument, int &refreshStatus, int &endRefreshStatus) {
     if (seqMode_ == SEQ_MODE_STEP) {
         refreshStatus = 16;
         endRefreshStatus = 13;
@@ -52,7 +52,7 @@ void FMDisplaySequencer::newTimbre(int instrument, int &refreshStatus, int &endR
 
 }
 
-void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus) {
+void ScreenSequencer::refreshSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus) {
 
     if (refreshStatus <= 16 && seqMode_ == SEQ_MODE_STEP) {
         refreshStepSequencerByStep(instrument, refreshStatus, endRefreshStatus);
@@ -228,7 +228,7 @@ void FMDisplaySequencer::refreshSequencerByStep(int instrument, int &refreshStat
     }
 }
 
-void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus) {
+void ScreenSequencer::refreshStepSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus) {
     switch (refreshStatus) {
         case 16: {
             tft_->pauseRefresh();
@@ -354,13 +354,13 @@ void FMDisplaySequencer::refreshStepSequencerByStep(int instrument, int &refresh
     }
 }
 
-void FMDisplaySequencer::refreshPlayButton() {
+void ScreenSequencer::refreshPlayButton() {
     tft_->drawSimpleButton("\x93", 270, 29, 5, sequencer_->isRunning() ? COLOR_BLACK : COLOR_LIGHT_GRAY,
         sequencer_->isRunning() ? COLOR_YELLOW : COLOR_DARK_YELLOW);
 }
 
 // stepRedrawSequenceIndex must have been initialized before the first call
-bool FMDisplaySequencer::refreshSequence(int instrument) {
+bool ScreenSequencer::refreshSequence(int instrument) {
     StepSeqValue *sequence = sequencer_->stepGetSequence(instrument);
     int numberOfBlocks = 0;
     int numberOfBars = sequencer_->getNumberOfBars(instrument);
@@ -398,7 +398,7 @@ bool FMDisplaySequencer::refreshSequence(int instrument) {
     }
 }
 
-void FMDisplaySequencer::newNoteInSequence(int instrument, int start, int end, bool moreThanOneNote) {
+void ScreenSequencer::newNoteInSequence(int instrument, int start, int end, bool moreThanOneNote) {
     int x = X_START_STEP + (start % 64) * 3 + 1;
     int y = Y_START_STEP + (start / 64) * Y_HEIGHT;
     int size = (end - start) * 3 - 2;
@@ -414,7 +414,7 @@ void FMDisplaySequencer::newNoteInSequence(int instrument, int start, int end, b
     tft_->fillArea(x - 2, y - 10, 2, 10, COLOR_BLACK);
 }
 
-void FMDisplaySequencer::clearSequence(int start, int end) {
+void ScreenSequencer::clearSequence(int start, int end) {
     int x = X_START_STEP + (start % 64) * 3;
     int y = Y_START_STEP + (start / 64) * Y_HEIGHT;
     int size = (end - start) * 3;
@@ -422,7 +422,7 @@ void FMDisplaySequencer::clearSequence(int start, int end) {
     tft_->fillArea(x, y - 10, size, 10, COLOR_BLACK);
 }
 
-void FMDisplaySequencer::noteOn(int instrument, bool show) {
+void ScreenSequencer::noteOn(int instrument, bool show) {
     if (likely(seqMode_ != SEQ_MODE_STEP)) {
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCursorInPixel(160, Y_START_SEQ + 7 + instrument * 27);
@@ -435,7 +435,7 @@ void FMDisplaySequencer::noteOn(int instrument, bool show) {
     }
 }
 
-void FMDisplaySequencer::displayBeat() {
+void ScreenSequencer::displayBeat() {
     if (unlikely(synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER)) {
         float precount = sequencer_->getPrecount();
         uint8_t measure;
@@ -469,7 +469,7 @@ void FMDisplaySequencer::displayBeat() {
     }
 }
 
-void FMDisplaySequencer::encoderTurned(int instrument, int encoder, int ticks) {
+void ScreenSequencer::encoderTurned(int instrument, int encoder, int ticks) {
     switch (encoder) {
         case 0: {
             bool isExternalClockEnabled = sequencer_->isExternalClockEnabled();
@@ -582,7 +582,7 @@ void FMDisplaySequencer::encoderTurned(int instrument, int encoder, int ticks) {
     }
 }
 
-void FMDisplaySequencer::buttonLongPressed(int instrument, int button) {
+void ScreenSequencer::buttonLongPressed(int instrument, int button) {
     // Action for all modes
     switch (button) {
         case BUTTON_PFM3_6:
@@ -616,7 +616,7 @@ void FMDisplaySequencer::buttonLongPressed(int instrument, int button) {
 }
 
 
-void FMDisplaySequencer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void ScreenSequencer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
     if (seqMode_ == SEQ_MODE_STEP) {
         if (button == BUTTON_PFM3_2) {
             sequencer_->changeCurrentNote(stepCurrentInstrument_, stepCursor_, stepSize_, ticks);
@@ -626,7 +626,7 @@ void FMDisplaySequencer::encoderTurnedWhileButtonPressed(int encoder6, int ticks
     }
 }
 
-void FMDisplaySequencer::buttonPressed(int instrument, int button) {
+void ScreenSequencer::buttonPressed(int instrument, int button) {
     // Action for SEQ and STEP mode
     if (seqMode_ == SEQ_MODE_NORMAL || seqMode_ == SEQ_MODE_STEP) {
         switch (button) {
@@ -709,7 +709,7 @@ void FMDisplaySequencer::buttonPressed(int instrument, int button) {
 
 }
 
-void FMDisplaySequencer::newNoteEntered(int instrumentNO) {
+void ScreenSequencer::newNoteEntered(int instrumentNO) {
     // We use current instrument and not the one we receive
     bool moreThanOneNote = sequencer_->stepRecordNotes(stepCurrentInstrument_, stepCursor_, stepSize_);
     newNoteInSequence(stepCurrentInstrument_, stepCursor_, stepCursor_ + stepSize_, moreThanOneNote);
@@ -720,11 +720,11 @@ void FMDisplaySequencer::newNoteEntered(int instrumentNO) {
     refreshStepCursor();
 }
 
-const char* FMDisplaySequencer::getSequenceName() {
+const char* ScreenSequencer::getSequenceName() {
     return sequencer_->getSequenceName();
 }
 
-void FMDisplaySequencer::tempoClick() {
+void ScreenSequencer::tempoClick() {
 
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];
@@ -775,12 +775,12 @@ void FMDisplaySequencer::tempoClick() {
 }
 
 
-void FMDisplaySequencer::cleanCurrentState() {
+void ScreenSequencer::cleanCurrentState() {
     sequencer_->cleanCurrentState();
 }
 
 
-void FMDisplaySequencer::sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
+void ScreenSequencer::sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
     if (this->synthState_->fullState.synthMode != SYNTH_MODE_SEQUENCER) {
         return;
     }
@@ -809,12 +809,12 @@ void FMDisplaySequencer::sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, u
     };
 }
 
-void FMDisplaySequencer::refreshStepCursor() {
+void ScreenSequencer::refreshStepCursor() {
     stepCurrentData_ = sequencer_->getStepData(stepCurrentInstrument_, stepCursor_);
     refresh(13, 11);
 }
 
-void FMDisplaySequencer::updateCurrentData() {
+void ScreenSequencer::updateCurrentData() {
     stepCurrentData_ = sequencer_->getStepData(stepCurrentInstrument_, stepCursor_);
 }
 

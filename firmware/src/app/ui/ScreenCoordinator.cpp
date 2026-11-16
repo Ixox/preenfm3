@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FMDisplay3.h"
-#include "FMDisplay.h"
-#include "FMDisplayMixer.h"
-#include "FMDisplayMenu.h"
-#include "FMDisplayEditor.h"
-#include "FMDisplaySequencer.h"
+#include "ScreenCoordinator.h"
+#include "ScreenTypes.h"
+#include "ScreenMixer.h"
+#include "ScreenMenu.h"
+#include "ScreenEditor.h"
+#include "ScreenSequencer.h"
 #include "ili9341.h"
 
 extern struct WaveTable waveTables[NUMBER_OF_WAVETABLES];
@@ -34,13 +34,13 @@ int getLength(const char *str) {
     return length;
 }
 
-FMDisplay3::FMDisplay3() {
+ScreenCoordinator::ScreenCoordinator() {
 }
 
-FMDisplay3::~FMDisplay3() {
+ScreenCoordinator::~ScreenCoordinator() {
 }
 
-void FMDisplay3::init(FirmwareTftDisplay *tft) {
+void ScreenCoordinator::init(FirmwareTftDisplay *tft) {
 
     for (int w = 0; w < NUMBER_OF_WAVETABLES; w++) {
         tft->initWaveFormExt(w, waveTables[w].table, waveTables[w].max);
@@ -58,34 +58,34 @@ void FMDisplay3::init(FirmwareTftDisplay *tft) {
     tft->clear();
 }
 
-void FMDisplay3::setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *displayEditor, FMDisplayMenu *displayMenu, FMDisplaySequencer *displaySequencer) {
-    this->displayMixer_ = displayMixer;
-    this->displayEditor_ = displayEditor;
-    this->displayMenu_ = displayMenu;
-    this->displaySequencer_ = displaySequencer;
-    this->displaySequencer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
-    this->displayMixer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
+void ScreenCoordinator::setDisplays(ScreenMixer *mixer, ScreenEditor *editor, ScreenMenu *menu, ScreenSequencer *sequencer) {
+    this->mixer_ = mixer;
+    this->editor_ = editor;
+    this->menu_ = menu;
+    this->sequencer_ = sequencer;
+    this->sequencer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
+    this->mixer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
 }
 
 
-void FMDisplay3::afterNewMixerLoad() {
-    displayEditor_->resetAllPresetModified();
+void ScreenCoordinator::afterNewMixerLoad() {
+    editor_->resetAllPresetModified();
     this->refreshOscilloBG();
 }
 
-void FMDisplay3::refreshAllScreenByStep() {
+void ScreenCoordinator::refreshAllScreenByStep() {
     switch (this->synthState_->fullState.synthMode) {
         case SYNTH_MODE_MIXER:
-            displayMixer_->refreshMixerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
+            mixer_->refreshMixerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
             break;
-        case SYNTH_MODE_EDIT_PFM3:
-            displayEditor_->refreshEditorByStep(refreshStatus_, endRefreshStatus_);
+        case SYNTH_MODE_EDITOR:
+            editor_->refreshEditorByStep(refreshStatus_, endRefreshStatus_);
             break;
         case SYNTH_MODE_MENU:
-            displayMenu_->refreshMenuByStep(currentTimbre_, refreshStatus_);
+            menu_->refreshMenuByStep(currentTimbre_, refreshStatus_);
             break;
         case SYNTH_MODE_SEQUENCER:
-            displaySequencer_->refreshSequencerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
+            sequencer_->refreshSequencerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
             break;
     }
 
@@ -97,38 +97,38 @@ void FMDisplay3::refreshAllScreenByStep() {
     }
 }
 
-void FMDisplay3::newPresetName(int timbre) {
+void ScreenCoordinator::newPresetName(int timbre) {
 	if (this->synthState_->getSynthMode() == SYNTH_MODE_MIXER) {
-		displayMixer_->refreshInstrument(timbre);
+		mixer_->refreshInstrument(timbre);
 	} else if (this->synthState_->getSynthMode() == SYNTH_MODE_SEQUENCER) {
-		displaySequencer_->refreshInstrument(timbre);
-	} else if (currentTimbre_ == timbre && this->synthState_->getSynthMode() == SYNTH_MODE_EDIT_PFM3) {
-    	displayEditor_->displayPreset();
+		sequencer_->refreshInstrument(timbre);
+	} else if (currentTimbre_ == timbre && this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR) {
+    	editor_->displayPreset();
     }
 }
 
-void FMDisplay3::newTimbre(int timbre) {
+void ScreenCoordinator::newTimbre(int timbre) {
     currentTimbre_ = timbre;
-    displayEditor_->newTimbre(timbre);
+    editor_->newTimbre(timbre);
 
-    if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
+    if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR) {
         tft_->clearActions();
         tft_->pauseRefresh();
         tft_->clear();
         this->refreshOscilloBG();
         tft_->drawAlgo(this->synthState_->params->engine1.algo);
-        displayEditor_->displayPreset();
+        editor_->displayPreset();
         refreshStatus_ = 20;
         endRefreshStatus_ = 0;
     } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
         refreshStatus_ = 19;
         endRefreshStatus_ = 14;
     } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
-        displaySequencer_->newTimbre(timbre, refreshStatus_, endRefreshStatus_);
+        sequencer_->newTimbre(timbre, refreshStatus_, endRefreshStatus_);
     }
 }
 
-void FMDisplay3::newMixerEdit(int oldButton, int newButton) {
+void ScreenCoordinator::newMixerEdit(int oldButton, int newButton) {
     tft_->pauseRefresh();
 
     if (((oldButton == BUTTONID_MIXER_GLOBAL || newButton == BUTTONID_MIXER_GLOBAL) && (oldButton != newButton))
@@ -142,28 +142,28 @@ void FMDisplay3::newMixerEdit(int oldButton, int newButton) {
     tft_->clearMixerValues();
 }
 
-void FMDisplay3::newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
+void ScreenCoordinator::newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
     checkPresetModified(timbre);
 
-    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDIT_PFM3) {
-        displayEditor_->newParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
+    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR) {
+        editor_->newParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
     }
 }
 
-void FMDisplay3::newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
+void ScreenCoordinator::newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
     checkPresetModified(timbre);
 
     // If Operator we must send
-    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDIT_PFM3 && this->synthState_->fullState.mainPage != -1 && timbre == currentTimbre_) {
+    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR && this->synthState_->fullState.mainPage != -1 && timbre == currentTimbre_) {
 
-        displayEditor_->newParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
+        editor_->newParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
     }
 }
 
-void FMDisplay3::newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
+void ScreenCoordinator::newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
     // Filter MIXER mode here and filter page in displayMixer
     if (this->synthState_->getSynthMode() == SYNTH_MODE_MIXER) {
-        displayMixer_->newMixerValueFromExternal(mixerValueType, timbre, oldValue, newValue);
+        mixer_->newMixerValueFromExternal(mixerValueType, timbre, oldValue, newValue);
     }
 }
 
@@ -171,7 +171,7 @@ void FMDisplay3::newMixerValueFromExternal(int timbre, int mixerValueType, float
  * Menu Listener
  */
 
-void FMDisplay3::newSynthMode(FullState *fullState) {
+void ScreenCoordinator::newSynthMode(FullState *fullState) {
 
     endRefreshStatus_ = 0;
 
@@ -179,21 +179,21 @@ void FMDisplay3::newSynthMode(FullState *fullState) {
         case SYNTH_MODE_MIXER:
             refreshStatus_ = 21;
             break;
-        case SYNTH_MODE_EDIT_PFM3:
+        case SYNTH_MODE_EDITOR:
             refreshStatus_ = 21;
             break;
         case SYNTH_MODE_MENU:
-            displayMenu_->setPreviousSynthMode(fullState->synthModeBeforeMenu);
+            menu_->setPreviousSynthMode(fullState->synthModeBeforeMenu);
             refreshStatus_ = 21;
             break;
         case SYNTH_MODE_SEQUENCER:
             refreshStatus_ = 21;
-            displaySequencer_->cleanCurrentState();
+            sequencer_->cleanCurrentState();
             break;
     }
 }
 
-int FMDisplay3::rowInc(MenuState menuState) {
+int ScreenCoordinator::rowInc(MenuState menuState) {
     switch (menuState) {
         case MENU_MIXER_SAVE_ENTER_NAME:
         case MENU_SEQUENCER_SAVE_ENTER_NAME:
@@ -209,23 +209,23 @@ int FMDisplay3::rowInc(MenuState menuState) {
     return 1;
 }
 
-void FMDisplay3::newMenuState(FullState *fullState) {
-    displayMenu_->newMenuState(fullState);
+void ScreenCoordinator::newMenuState(FullState *fullState) {
+    menu_->newMenuState(fullState);
     refreshStatus_ = 6;
 }
 
-void FMDisplay3::newMenuSelect(FullState *fullState) {
-    displayMenu_->newMenuSelect(fullState);
+void ScreenCoordinator::newMenuSelect(FullState *fullState) {
+    menu_->newMenuSelect(fullState);
 }
 
-void FMDisplay3::menuBack(const MenuItem *oldMenuItem, FullState *fullState) {
-    displayMenu_->menuBack(oldMenuItem, fullState);
+void ScreenCoordinator::menuBack(const MenuItem *oldMenuItem, FullState *fullState) {
+    menu_->menuBack(oldMenuItem, fullState);
     refreshStatus_ = 6;
 }
 
 // VisualInfo
 
-void FMDisplay3::midiClock(bool show) {
+void ScreenCoordinator::midiClock(bool show) {
     if (midiControllerMode != 0) {
         return;
     }
@@ -240,7 +240,7 @@ void FMDisplay3::midiClock(bool show) {
         case SYNTH_MODE_MENU:
             tft_->setCharBackgroundColor(COLOR_DARK_RED);
             break;
-        case SYNTH_MODE_EDIT_PFM3:
+        case SYNTH_MODE_EDITOR:
             tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
             break;
         case SYNTH_MODE_SEQUENCER:
@@ -259,7 +259,7 @@ void FMDisplay3::midiClock(bool show) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
 }
 
-void FMDisplay3::noteOn(int timbre, bool show) {
+void ScreenCoordinator::noteOn(int timbre, bool show) {
     if (midiControllerMode != 0) {
         return;
     }
@@ -273,7 +273,7 @@ void FMDisplay3::noteOn(int timbre, bool show) {
         case SYNTH_MODE_MENU:
             tft_->setCharBackgroundColor(COLOR_DARK_RED);
             break;
-        case SYNTH_MODE_EDIT_PFM3:
+        case SYNTH_MODE_EDITOR:
             tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
             break;
         case SYNTH_MODE_SEQUENCER:
@@ -294,16 +294,16 @@ void FMDisplay3::noteOn(int timbre, bool show) {
         // special case for SEQUENCER
         if (show) {
             if (noteOnCounter_[timbre] == 0) {
-                displaySequencer_->noteOn(timbre, show);
+                sequencer_->noteOn(timbre, show);
             }
             noteOnCounter_[timbre] = 2;
         } else {
-            displaySequencer_->noteOn(timbre, show);
+            sequencer_->noteOn(timbre, show);
         }
     }
 }
 
-void FMDisplay3::tempoClick() {
+void ScreenCoordinator::tempoClick() {
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         if (noteOnCounter_[timbre] > 0) {
             noteOnCounter_[timbre]--;
@@ -314,18 +314,18 @@ void FMDisplay3::tempoClick() {
     }
 
     if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
-        displayMixer_->tempoClick();
-    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
-        displayEditor_->tempoClick();
+        mixer_->tempoClick();
+    } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR) {
+        editor_->tempoClick();
     } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_SEQUENCER) {
-        displaySequencer_->tempoClick();
+        sequencer_->tempoClick();
     }
 }
 
-void FMDisplay3::afterNewParamsLoad(int timbre) {
-    displayEditor_->setPresetModified(timbre, false);
+void ScreenCoordinator::afterNewParamsLoad(int timbre) {
+    editor_->setPresetModified(timbre, false);
 
-    if (currentTimbre_ == timbre && this->synthState_->fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
+    if (currentTimbre_ == timbre && this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR) {
         refreshStatus_ = 20;
     } else if (this->synthState_->fullState.synthMode == SYNTH_MODE_MIXER) {
         tft_->clearMixerLabels();
@@ -334,11 +334,11 @@ void FMDisplay3::afterNewParamsLoad(int timbre) {
     }
 }
 
-void FMDisplay3::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
-    displayMixer_->newMixerValue(valueType, timbre, oldValue, newValue, refreshStatus_);
+void ScreenCoordinator::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
+    mixer_->newMixerValue(valueType, timbre, oldValue, newValue, refreshStatus_);
 }
 
-void FMDisplay3::newPfm3Page(FullState *fullState) {
+void ScreenCoordinator::newPfm3Page(FullState *fullState) {
     if (unlikely(fullState->synthMode == SYNTH_MODE_REINIT_TFT)) {
         tft_->reset();
     } else {
@@ -347,11 +347,11 @@ void FMDisplay3::newPfm3Page(FullState *fullState) {
     }
 }
 
-void FMDisplay3::refreshOscilloBG() {
+void ScreenCoordinator::refreshOscilloBG() {
     FullState *fullState = &this->synthState_->fullState;
-    if (displayEditor_->isMsfaTimbre()) {
+    if (editor_->isMsfaTimbre()) {
         if (fullState->mainPage == 1) {
-            displayEditor_->refreshOscillatorOperatorEnvelope();
+            editor_->refreshOscillatorOperatorEnvelope();
         } else {
             tft_->oscilloBgActionClear();
         }
@@ -359,15 +359,15 @@ void FMDisplay3::refreshOscilloBG() {
     }
     if (fullState->mainPage == 1) {
         if (fullState->editPage == 0) {
-            displayEditor_->refreshOscillatorOperatorShape();
+            editor_->refreshOscillatorOperatorShape();
         } else {
-            displayEditor_->refreshOscillatorOperatorEnvelope();
+            editor_->refreshOscillatorOperatorEnvelope();
         }
     } else if (fullState->mainPage == 3) {
         if (fullState->editPage == 0) {
-            displayEditor_->refreshLfoOscillator();
+            editor_->refreshLfoOscillator();
         } else if (fullState->editPage == 1) {
-            displayEditor_->refreshLfoEnv();
+            editor_->refreshLfoEnv();
         } else {
             tft_->oscilloBgActionClear();
         }
@@ -377,23 +377,23 @@ void FMDisplay3::refreshOscilloBG() {
 }
 
 // Overide SynthParamListener
-void FMDisplay3::playNote(int timbre, char note, char velocity) {
+void ScreenCoordinator::playNote(int timbre, char note, char velocity) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_YELLOW);
     tft_->setCursorInPixel(227, 22);
     tft_->print((char) 143);
 }
 
-void FMDisplay3::stopNote(int timbre, char note) {
+void ScreenCoordinator::stopNote(int timbre, char note) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCursorInPixel(227, 22);
     tft_->print(' ');
 }
 
-void FMDisplay3::checkPresetModified(int timbre) {
-    if (!displayEditor_->isPresetModifed(timbre)) {
-        displayEditor_->setPresetModified(timbre, true);
-        if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDIT_PFM3 && timbre == currentTimbre_) {
+void ScreenCoordinator::checkPresetModified(int timbre) {
+    if (!editor_->isPresetModifed(timbre)) {
+        editor_->setPresetModified(timbre, true);
+        if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR && timbre == currentTimbre_) {
             int length = getLength(this->synthState_->params->presetName);
             tft_->setCursor(3 + length, 0);
             tft_->setCharBackgroundColor(COLOR_DARK_BLUE);

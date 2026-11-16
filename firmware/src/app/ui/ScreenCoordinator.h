@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY3_H_
-#define FMDISPLAY3_H_
+#ifndef SCREEN_COORDINATOR_H_
+#define SCREEN_COORDINATOR_H_
 
 #include "SynthStateAware.h"
 #include "FirmwareTftDisplay.h"
@@ -24,17 +24,17 @@
 #include "VisualInfo.h"
 #include "Storage.h"
 
-class FMDisplayEditor;
-class FMDisplayMixer;
-class FMDisplayMenu;
-class FMDisplaySequencer;
+class ScreenEditor;
+class ScreenMixer;
+class ScreenMenu;
+class ScreenSequencer;
 
-class FMDisplay3: public SynthParamListener, public SynthMenuListener, public SynthStateAware, public VisualInfo {
+class ScreenCoordinator: public SynthParamListener, public SynthMenuListener, public SynthStateAware, public VisualInfo {
 public:
-    FMDisplay3();
-    ~FMDisplay3();
+    ScreenCoordinator();
+    ~ScreenCoordinator();
     void init(FirmwareTftDisplay *tft);
-    void setDisplays(FMDisplayMixer *displayMixer, FMDisplayEditor *dDisplayEditor, FMDisplayMenu *displayMenu, FMDisplaySequencer *displaySequencer);
+    void setDisplays(ScreenMixer *mixer, ScreenEditor *editor, ScreenMenu *menu, ScreenSequencer *sequencer);
     void customCharsInit();
 
     void updateEncoderValue(int refreshStatus);
@@ -98,10 +98,10 @@ private:
     int noteOnCounter_[NUMBER_OF_TIMBRES];
 
     // One Display class per main page
-    FMDisplayMixer *displayMixer_;
-    FMDisplayMenu *displayMenu_;
-    FMDisplayEditor *displayEditor_;
-    FMDisplaySequencer *displaySequencer_;
+    ScreenMixer *mixer_;
+    ScreenMenu *menu_;
+    ScreenEditor *editor_;
+    ScreenSequencer *sequencer_;
 };
 
-#endif /* FMDISPLAY3_H_ */
+#endif /* SCREEN_COORDINATOR_H_ */

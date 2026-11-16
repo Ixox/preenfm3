@@ -19,7 +19,7 @@
 #ifndef SYNTHPARAMLISTENER_H_
 #define SYNTHPARAMLISTENER_H_
 
-#include "FMDisplay.h"
+#include "ScreenTypes.h"
 
 class SynthParamListener {
 

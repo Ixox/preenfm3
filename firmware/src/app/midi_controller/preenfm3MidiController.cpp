@@ -18,7 +18,7 @@
 #include "stm32h7xx_hal.h"
 #include "SynthState.h"
 #include "TftDisplay.h"
-#include "FMDisplayMidiController.h"
+#include "ScreenMidiController.h"
 #include "MidiControllerState.h"
 #include "MidiControllerFile.h"
 #include "TftDisplay.h"
@@ -49,7 +49,7 @@ extern uint32_t ledCpt;
 
 void preenfm3MidiControllerDI();
 
-FMDisplayMidiController display;
+ScreenMidiController display;
 MidiControllerState midiControllerState;
 MidiControllerFile midiControllerFile;
 

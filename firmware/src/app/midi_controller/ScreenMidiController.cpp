@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FMDisplayMidiController.h"
+#include "ScreenMidiController.h"
 #include "MidiControllerState.h"
 #include "MidiControllerFile.h"
 #include "TftDisplay.h"
@@ -25,7 +25,7 @@
 #define X_OFFSET 16
 #define Y_START_EDIT 5
 
-FMDisplayMidiController::FMDisplayMidiController() {
+ScreenMidiController::ScreenMidiController() {
     editPressed_ = false;
     displayMode_ = DISPLAY_MIDI_CONTROLLER_MAIN;
     editLetterPosition_ = 0;
@@ -33,7 +33,7 @@ FMDisplayMidiController::FMDisplayMidiController() {
     pageNumber_ = 0;
 }
 
-void FMDisplayMidiController::init(TftDisplay *tft, MidiControllerState *midiControllerState, MidiControllerFile *midiControllerFile) {
+void ScreenMidiController::init(TftDisplay *tft, MidiControllerState *midiControllerState, MidiControllerFile *midiControllerFile) {
     tft_ = tft;
     midiControllerState_ = midiControllerState;
     midiControllerFile_ = midiControllerFile;
@@ -42,7 +42,7 @@ void FMDisplayMidiController::init(TftDisplay *tft, MidiControllerState *midiCon
 }
 
 
-void FMDisplayMidiController::refreshAllScreenByStep() {
+void ScreenMidiController::refreshAllScreenByStep() {
 
     if (likely(refreshStatus_ != 21)) {
         if (unlikely(displayMode_ == DISPLAY_MIDI_CONTROLLER_EDIT_ENCODER)) {
@@ -152,7 +152,7 @@ void FMDisplayMidiController::refreshAllScreenByStep() {
 }
 
 
-void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
+void ScreenMidiController::refreshAllScreenByStepEditEncoder() {
     switch (refreshStatus_) {
         case 20:
             tft_->fillArea(0, 22, 240, 298, COLOR_BLACK);
@@ -243,7 +243,7 @@ void FMDisplayMidiController::refreshAllScreenByStepEditEncoder() {
 
 
 
-void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
+void ScreenMidiController::refreshAllScreenByStepEditButton() {
     switch (refreshStatus_) {
         case 20:
             tft_->fillArea(0, 22, 240, 298, COLOR_BLACK);
@@ -343,7 +343,7 @@ void FMDisplayMidiController::refreshAllScreenByStepEditButton() {
     }
 }
 
-void FMDisplayMidiController::refreshAllScreenByStepSave() {
+void ScreenMidiController::refreshAllScreenByStepSave() {
     switch (refreshStatus_) {
         case 20:
             tft_->fillArea(30, 50, 190, 240, COLOR_RED);
@@ -395,7 +395,7 @@ void FMDisplayMidiController::refreshAllScreenByStepSave() {
 }
 
 
-void FMDisplayMidiController::displayEncoderValue(int encoderNumber) {
+void ScreenMidiController::displayEncoderValue(int encoderNumber) {
     MidiEncoder *encoder = midiControllerState_->getEncoder(pageNumber_, encoderNumber);
     uint8_t x = (encoderNumber > 2 ? (encoderNumber - 3) * 7 : encoderNumber * 7) * TFT_BIG_CHAR_WIDTH + X_OFFSET;
     uint8_t y = (encoderNumber > 2 ? 6 : 3) * TFT_BIG_CHAR_HEIGHT;
@@ -410,7 +410,7 @@ void FMDisplayMidiController::displayEncoderValue(int encoderNumber) {
     tft_->print(encoder->value);
 }
 
-void FMDisplayMidiController::displayButtonValue(int buttonNumber) {
+void ScreenMidiController::displayButtonValue(int buttonNumber) {
     MidiButton *button = midiControllerState_->getButton(pageNumber_, buttonNumber);
     uint8_t x = (buttonNumber > 2 ? (buttonNumber - 3) * 7 : buttonNumber * 7) * TFT_BIG_CHAR_WIDTH + X_OFFSET;
     uint16_t y = (buttonNumber > 2 ? 13 : 10) * TFT_BIG_CHAR_HEIGHT  + TFT_BIG_CHAR_HEIGHT + TFT_SMALL_CHAR_HEIGHT ;
@@ -441,7 +441,7 @@ void FMDisplayMidiController::displayButtonValue(int buttonNumber) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
 }
 
-void FMDisplayMidiController::encoderTurned(int encoderNumber, int ticks) {
+void ScreenMidiController::encoderTurned(int encoderNumber, int ticks) {
     switch (displayMode_) {
         case DISPLAY_MIDI_CONTROLLER_MAIN: {
             if (!editPressed_) {
@@ -595,7 +595,7 @@ void FMDisplayMidiController::encoderTurned(int encoderNumber, int ticks) {
 }
 
 
-void FMDisplayMidiController::displayMidiChannel() {
+void ScreenMidiController::displayMidiChannel() {
     tft_->setCharColor(COLOR_DARK_GRAY);
     tft_->setCursorInPixel(10, 28);
     tft_->printSmallChars("Midi Channel ");
@@ -613,7 +613,7 @@ void FMDisplayMidiController::displayMidiChannel() {
 }
 
 
-void FMDisplayMidiController::displayEncoderParam(int encoderNumber, EncoderParamType paramType) {
+void ScreenMidiController::displayEncoderParam(int encoderNumber, EncoderParamType paramType) {
     MidiEncoder* encoder = midiControllerState_->getEncoder(pageNumber_, encoderNumber);
 
     switch (paramType) {
@@ -679,7 +679,7 @@ void FMDisplayMidiController::displayEncoderParam(int encoderNumber, EncoderPara
 }
 
 
-void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamType paramType) {
+void ScreenMidiController::displayButtonParam(int buttonNumber, ButtonParamType paramType) {
     MidiButton* button = midiControllerState_->getButton(pageNumber_, buttonNumber);
 
     switch (paramType) {
@@ -755,7 +755,7 @@ void FMDisplayMidiController::displayButtonParam(int buttonNumber, ButtonParamTy
 
 
 
-void FMDisplayMidiController::buttonUp(int buttonNumber) {
+void ScreenMidiController::buttonUp(int buttonNumber) {
     if (buttonNumber == BUTTON_PFM3_EDIT) {
         editPressed_ = false;
     }
@@ -771,7 +771,7 @@ void FMDisplayMidiController::buttonUp(int buttonNumber) {
     }
 }
 
-void FMDisplayMidiController::buttonDown(int buttonNumber) {
+void ScreenMidiController::buttonDown(int buttonNumber) {
     if (displayMode_ == DISPLAY_MIDI_CONTROLLER_SAVE) {
         if (buttonNumber == BUTTON_PFM3_MENU) {
             tft_->fillArea(30, 50, 190, 240, COLOR_RED);
@@ -892,14 +892,14 @@ void FMDisplayMidiController::buttonDown(int buttonNumber) {
 
 
 // USELESS
-void FMDisplayMidiController::encoderTurnedWhileButtonPressed(int encoder, int ticks, int buttonNumber) {
+void ScreenMidiController::encoderTurnedWhileButtonPressed(int encoder, int ticks, int buttonNumber) {
 }
 
-void FMDisplayMidiController::buttonPressed(int buttonNumber) {
+void ScreenMidiController::buttonPressed(int buttonNumber) {
 }
 
-void FMDisplayMidiController::buttonLongPressed(int button) {
+void ScreenMidiController::buttonLongPressed(int button) {
 }
 
-void FMDisplayMidiController::twoButtonsPressed(int button1, int button2) {
+void ScreenMidiController::twoButtonsPressed(int button1, int button2) {
 }

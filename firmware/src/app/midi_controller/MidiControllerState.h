@@ -66,7 +66,7 @@ struct MidiPage {
     MidiButton button_[6];
 };
 
-class FMDisplayMidiController;
+class ScreenMidiController;
 class MidiControllerFile;
 
 class MidiControllerState  {

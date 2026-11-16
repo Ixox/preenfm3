@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FMDisplayMixer.h"
+#include "ScreenMixer.h"
 #include "SynthState.h"
 #include "TftDisplay.h"
 #include "TftAlgo.h"
@@ -267,13 +267,13 @@ const struct PfmMixerMenu mixerMenu = {
  * Class methods
  */
 
-FMDisplayMixer::FMDisplayMixer() {
+ScreenMixer::ScreenMixer() {
     for (int k = 0; k < NUMBER_OF_TIMBRES; k++) {
         valueChangedCounter_[k] = 0;
     }
 }
 
-void FMDisplayMixer::setReverbParamVisible(bool visible) {
+void ScreenMixer::setReverbParamVisible(bool visible) {
     reverbParamVisible_ = visible;
     globalButton.numberOfStates = visible ? 5 : 3;
     numberOfGlobalSettings[2] = visible ? 6 : 3;
@@ -281,7 +281,7 @@ void FMDisplayMixer::setReverbParamVisible(bool visible) {
     numberOfGlobalSettings[4] = visible ? 4 : 0;
 }
 
-void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
+void* ScreenMixer::getValuePointer(int valueType, int encoder) {
     void *valueP = 0;
     switch (valueType) {
         case MIXER_VALUE_OUT:
@@ -427,7 +427,7 @@ void* FMDisplayMixer::getValuePointer(int valueType, int encoder) {
     return valueP;
 }
 
-void FMDisplayMixer::displayMixerValueInteger(int timbre, int x, int value) {
+void ScreenMixer::displayMixerValueInteger(int timbre, int x, int value) {
     tft_->setCursorInPixel(18 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
     if (value >= 0 && value < 100 && timbre < 18) {
         tft_->print(' ');
@@ -438,7 +438,7 @@ void FMDisplayMixer::displayMixerValueInteger(int timbre, int x, int value) {
     tft_->print(value);
 }
 
-void FMDisplayMixer::displayMixerValue(int timbre) {
+void ScreenMixer::displayMixerValue(int timbre) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
 
     const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
@@ -552,7 +552,7 @@ void FMDisplayMixer::displayMixerValue(int timbre) {
 
 }
 
-void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus) {
+void ScreenMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus) {
     const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
     bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
 
@@ -653,7 +653,7 @@ void FMDisplayMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, i
     }
 }
 
-void FMDisplayMixer::refreshMixerRowGlobalOptions(int page, int row) {
+void ScreenMixer::refreshMixerRowGlobalOptions(int page, int row) {
     tft_->setCharColor(COLOR_LIGHT_GRAY);
 
     switch (page) {
@@ -767,7 +767,7 @@ void FMDisplayMixer::refreshMixerRowGlobalOptions(int page, int row) {
 
 
 
-void FMDisplayMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue, int &refreshStatus) {
+void ScreenMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue, int &refreshStatus) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
     if (oldValue != newValue) {
         tft_->setCharColor(COLOR_YELLOW);
@@ -788,7 +788,7 @@ void FMDisplayMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float old
 
 }
 
-void FMDisplayMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
+void ScreenMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
     int buttonState = synthState_->fullState.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState.mixerCurrentEdit];
 
@@ -798,7 +798,7 @@ void FMDisplayMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre
     }
 }
 
-void FMDisplayMixer::tempoClick() {
+void ScreenMixer::tempoClick() {
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];
 
@@ -837,7 +837,7 @@ void FMDisplayMixer::tempoClick() {
     }
 }
 
-void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
+void ScreenMixer::encoderTurned(int encoder, int ticks) {
 
     const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState.mixerCurrentEdit];
     bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
@@ -945,7 +945,7 @@ void FMDisplayMixer::encoderTurned(int encoder, int ticks) {
 /**
  * Mixer volume : ENCODER + MENU => modify volumes of all instruments on same DAC
  */
-void FMDisplayMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void ScreenMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
 
     switch (button) {
     case BUTTON_PFM3_MENU: {
@@ -968,7 +968,7 @@ void FMDisplayMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, in
 }
 
 
-void FMDisplayMixer::buttonPressed(int button) {
+void ScreenMixer::buttonPressed(int button) {
     struct FullState *fullState = &synthState_->fullState;
 
     if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {

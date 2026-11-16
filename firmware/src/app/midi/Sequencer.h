@@ -22,7 +22,7 @@
 #include "Common.h"
 
 class Synth;
-class FMDisplaySequencer;
+class ScreenSequencer;
 
 #define SEQ_ACTION_SIZE 2048
 #define NUMBER_OF_STEP_SEQUENCES 12
@@ -75,7 +75,7 @@ public:
     Sequencer();
     virtual ~Sequencer();
     void setSynth(Synth* synth);
-    void setDisplaySequencer(FMDisplaySequencer* displaySequencer);
+    void setDisplaySequencer(ScreenSequencer* displaySequencer);
 
     void getFullState(uint8_t* buffer, uint32_t *size);
     void getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seqNumber);
@@ -203,7 +203,7 @@ private:
     char sequenceName_[13];
     uint16_t lastFreeAction_;
     Synth * synth_;
-    FMDisplaySequencer* displaySequencer_;
+    ScreenSequencer* displaySequencer_;
 
     bool externalClock_;
     float tempo_;

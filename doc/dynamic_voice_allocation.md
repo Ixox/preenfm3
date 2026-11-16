@@ -90,7 +90,7 @@ timbre and returns the first unused global index.
 `16 - sum(numberOfVoices of all other timbres)`.
 
 The mixer UI uses the same calculation to cap the value:
-`FMDisplayMixer.cpp:850-885` starts from `MAX_NUMBER_OF_VOICES` and subtracts
+`ScreenMixer.cpp:850-885` starts from `MAX_NUMBER_OF_VOICES` and subtracts
 the other timbres' counts. The sum of all per-timbre counts therefore cannot
 exceed 16.
 
@@ -141,11 +141,11 @@ MPE:
 - This assumes a fixed channel-to-voice mapping: channel 0 is the MPE master
   channel and member channels map to voice slots.
 - In Mixer > MIDI, the timbre-1 channel is displayed as `1-X` where
-  `X = 1 + numberOfVoices` (`FMDisplayMixer.cpp:448-456`), and the encoder is
+  `X = 1 + numberOfVoices` (`ScreenMixer.cpp:448-456`), and the encoder is
   currently ignored for timbre 0 while MPE is active
-  (`FMDisplayMixer.cpp:846-849`).
+  (`ScreenMixer.cpp:846-849`).
 - Outside MPE, the channel is editable from All/1..16
-  (`midiButtonState`, `FMDisplayMixer.cpp:120-127`).
+  (`midiButtonState`, `ScreenMixer.cpp:120-127`).
 
 Unison:
 
@@ -560,7 +560,7 @@ use the pending target, not only `currentTimbre`.
 Current behavior:
 
 - MPE applies to instrument 1 only. `MPE_inst1_` is configured from
-  Mixer > Global (`FMDisplayMixer.cpp:181`).
+  Mixer > Global (`ScreenMixer.cpp:181`).
 - In MPE mode, the timbre-0 MIDI channel value is not used for note routing.
   `MidiDecoder::midiEventForInstrument1MPE()` (`MidiDecoder.cpp:350-418`)
   treats channel 0 as the master channel and sends member-channel note events
@@ -569,10 +569,10 @@ Current behavior:
   `voiceNumber_[channel - 1]` (`Timbre.cpp:329-355`). Channel 0 is the master;
   member channel 1 uses voice slot 0, channel 2 uses slot 1, and so on.
 - Mixer > MIDI displays the timbre-1 channel as `1-X`, where
-  `X = 1 + numberOfVoices` (`FMDisplayMixer.cpp:448-456`), and the encoder is
-  ignored for timbre 0 in MPE mode (`FMDisplayMixer.cpp:846-849`).
+  `X = 1 + numberOfVoices` (`ScreenMixer.cpp:448-456`), and the encoder is
+  ignored for timbre 0 in MPE mode (`ScreenMixer.cpp:846-849`).
 - Outside MPE, the channel is editable from All/1..16
-  (`midiButtonState`, `FMDisplayMixer.cpp:120-127`).
+  (`midiButtonState`, `ScreenMixer.cpp:120-127`).
 
 Decision: the editable Mixer > MIDI value is the **last member channel
 range limit** `[1..X]`.
@@ -760,14 +760,14 @@ note and owner should make this safe, but it needs testing with latch/hold.
 - `MixerState::getFullState()` / `restoreFullStateVersion*()` —
   `MixerState.cpp:46-520`: keep the field. Bump the version only if a migration
   needs to distinguish old reserved-count semantics.
-- `FMDisplayMixer` “Voices” button/state — `FMDisplayMixer.cpp:106-115`: keep
+- `ScreenMixer` “Voices” button/state — `ScreenMixer.cpp:106-115`: keep
   it; it now edits the maximum polyphony.
-- `FMDisplayMixer::encoderTurned()` — `FMDisplayMixer.cpp:850-885`: allow every
+- `ScreenMixer::encoderTurned()` — `ScreenMixer.cpp:850-885`: allow every
   timbre 0..16 independently. Remove the `16 - sum(other timbres)` cap; the sum
   of maxima may exceed 16.
 - No `PLAY_MODE_*` enum expansion, no `polyMonoNames` change and no
   `engine1ParameterRow` change: unison width comes from `maxVoices_`.
-- `FMDisplayEditor` display filtering — `FMDisplayEditor.cpp:3446-3454`: keep
+- `ScreenEditor` display filtering — `ScreenEditor.cpp:3446-3454`: keep
   using `playMode == PLAY_MODE_UNISON` to show spread/detune.
 
 ### MPE
@@ -779,9 +779,9 @@ note and owner should make this safe, but it needs testing with latch/hold.
   member channels above X.
 - `Timbre::setMatrixSourceMPE()` — `Timbre.cpp:3084`: keep the per-channel
   pitch bend/aftertouch/slide routing, but ignore channels above X.
-- `FMDisplayMixer::displayMixerValue()` — `FMDisplayMixer.cpp:448-456`: the
+- `ScreenMixer::displayMixerValue()` — `ScreenMixer.cpp:448-456`: the
   `1-X` MPE display must use the stored `mpeLastChannel`.
-- `FMDisplayMixer::encoderTurned()` — `FMDisplayMixer.cpp:846-849`: remove the
+- `ScreenMixer::encoderTurned()` — `ScreenMixer.cpp:846-849`: remove the
   early return so X is editable; clamp it to
   `[1, min(16, 1 + maxVoices_)]`.
 - Add `MixerInstrumentState::mpeLastChannel` (or a timbre-0-only

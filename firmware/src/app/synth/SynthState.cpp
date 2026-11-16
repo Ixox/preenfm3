@@ -16,10 +16,10 @@
  */
 
 #include "stm32h7xx_hal.h"
-#include "FMDisplayMixer.h"
-#include "FMDisplayMenu.h"
-#include "FMDisplayEditor.h"
-#include "FMDisplaySequencer.h"
+#include "ScreenMixer.h"
+#include "ScreenMenu.h"
+#include "ScreenEditor.h"
+#include "ScreenSequencer.h"
 #include "SynthState.h"
 #include "Hexter.h"
 #include "Timbre.h"
@@ -107,7 +107,7 @@ SynthState::SynthState() {
     fullState.operatorNumber = 0;
 }
 
-void SynthState::init(FMDisplayMixer* displayMixer, FMDisplayEditor* displayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer) {
+void SynthState::init(ScreenMixer* displayMixer, ScreenEditor* displayEditor, ScreenMenu* displayMenu, ScreenSequencer* displaySequencer) {
     this->displayMixer = displayMixer;
     this->displayEditor = displayEditor;
     this->displayMenu = displayMenu;
@@ -291,7 +291,7 @@ void SynthState::encoderTurnedWhileButtonPressed(int encoder, int ticks, int but
         return;
     }
 
-    if (fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
+    if (fullState.synthMode == SYNTH_MODE_EDITOR) {
         displayEditor->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     } else if (fullState.synthMode == SYNTH_MODE_MIXER) {
         displayMixer->encoderTurnedWhileButtonPressed(encoder, ticks, button);
@@ -341,8 +341,8 @@ bool SynthState::newRandomizerValue(int encoder, int ticks) {
 
 void SynthState::encoderTurned(int encoder, int ticks) {
     switch (fullState.synthMode) {
-    case SYNTH_MODE_EDIT_PFM3:
-        displayEditor->encoderTurnedPfm3(encoder, ticks);
+    case SYNTH_MODE_EDITOR:
+        displayEditor->encoderTurned(encoder, ticks);
         break;
     case SYNTH_MODE_MENU:
         displayMenu->encoderTurned(currentTimbre, encoder, ticks);
@@ -487,7 +487,7 @@ void SynthState::buttonLongPressed(int button) {
         case SYNTH_MODE_SEQUENCER:
             displaySequencer->buttonLongPressed(currentTimbre, button);
             break;
-        case SYNTH_MODE_EDIT_PFM3:
+        case SYNTH_MODE_EDITOR:
             displayEditor->buttonLongPressed(currentTimbre, button);
             break;
     }
@@ -498,7 +498,7 @@ void SynthState::buttonPressed(int button) {
 
     bool swithToMenuIfBackButtonPressed = true;
 
-    if (fullState.synthMode == SYNTH_MODE_EDIT_PFM3) {
+    if (fullState.synthMode == SYNTH_MODE_EDITOR) {
         if (fullState.mainPage != -1) {
             // Back must not go to MENU mode if not in the main page
             swithToMenuIfBackButtonPressed = false;
@@ -520,7 +520,7 @@ void SynthState::buttonPressed(int button) {
     // Anywhere these are main functions !!!!
     switch (button) {
     case BUTTON_PFM3_EDIT:
-        fullState.synthMode = SYNTH_MODE_EDIT_PFM3;
+        fullState.synthMode = SYNTH_MODE_EDITOR;
         break;
     case BUTTON_PFM3_SEQUENCER:
         fullState.synthMode = SYNTH_MODE_SEQUENCER;
@@ -534,7 +534,7 @@ void SynthState::buttonPressed(int button) {
                 fullState.synthModeBeforeMenu = fullState.synthMode;
             }
             // Make sure to propagate synth mode
-            oldSynthMode = SYNTH_MODE_EDIT_PFM3;
+            oldSynthMode = SYNTH_MODE_EDITOR;
             fullState.synthMode = SYNTH_MODE_MENU;
             fullState.previousChoice = fullState.previousMenuChoice.main;
             fullState.currentMenuItem = MenuItemUtil::getMenuItem(MAIN_MENU);

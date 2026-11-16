@@ -17,7 +17,7 @@ current tree and are intended as integration anchors, not as stable API.
   third state, without removing the existing “number of voices” and
   “compressor” states.
 - Load `Preset > DX7` sysex patches into the MSFA engine automatically.
-- Provide an MSFA-specific editor in `FMDisplayEditor`, with navigation that
+- Provide an MSFA-specific editor in `ScreenEditor`, with navigation that
   follows the existing six-button / six-encoder model.
 
 ## Non-goals (for the first iteration)
@@ -83,8 +83,8 @@ The main coupling points are:
 - `Synth::newParamValue()` — `Synth.cpp:589-682`: PFM3 `ROW_*` dispatch.
 - The editor and MIDI NRPN path write directly into the flat
   `OneSynthParams` array:
-  - `FMDisplayEditor::encoderTurnedPfm2()` — `FMDisplayEditor.cpp:3843-3998`
-  - `FMDisplayEditor::displayParamValue()` — `FMDisplayEditor.cpp:3227-3267`
+  - `ScreenEditor::encoderTurnedPfm2()` — `ScreenEditor.cpp:3843-3998`
+  - `ScreenEditor::displayParamValue()` — `ScreenEditor.cpp:3227-3267`
   - `MidiDecoder::decodeNrpn()` — `MidiDecoder.cpp:914-936`
 
 The PFM3 parameter model is row-oriented: `row * NUMBER_OF_ENCODERS_PFM2 +
@@ -462,10 +462,10 @@ The user-facing entry point is the existing **Voices** mixer button.
 
 Current state definitions:
 
-- `voiceButtonState` — `firmware/src/app/ui/FMDisplayMixer.cpp:106-109`
-- `compButtonState` — `FMDisplayMixer.cpp:88-91`
-- `voiceButton` with `numberOfStates = 2` — `FMDisplayMixer.cpp:111-115`
-- `mixerMenu` — `FMDisplayMixer.cpp:255-257`
+- `voiceButtonState` — `firmware/src/app/ui/ScreenMixer.cpp:106-109`
+- `compButtonState` — `ScreenMixer.cpp:88-91`
+- `voiceButton` with `numberOfStates = 2` — `ScreenMixer.cpp:111-115`
+- `mixerMenu` — `ScreenMixer.cpp:255-257`
 
 Add a third state:
 
@@ -487,10 +487,10 @@ Required changes:
 
 1. Add `MIXER_VALUE_ENGINE` to `enum MixerValueType` in `Common.h:710-729`.
 2. Add `engineDisplay[]` (`"PFM3"`, `"MSFA"`) near the other display arrays
-   in `FMDisplayMixer.cpp:31-62`.
+   in `ScreenMixer.cpp:31-62`.
 3. Add the per-timbre field to `MixerInstrumentState`
    (`MixerState.h:42-58`).
-4. Map it in `FMDisplayMixer::getValuePointer()` — `FMDisplayMixer.cpp:278-419`:
+4. Map it in `ScreenMixer::getValuePointer()` — `ScreenMixer.cpp:278-419`:
 
    ```cpp
    case MIXER_VALUE_ENGINE:
@@ -498,11 +498,11 @@ Required changes:
        break;
    ```
 
-5. Add display handling in `FMDisplayMixer::displayMixerValue()` —
-   `FMDisplayMixer.cpp:432-544`. The existing `DISPLAY_TYPE_STRINGS` path is at
-   `FMDisplayMixer.cpp:526-533`.
-6. Add edit handling in `FMDisplayMixer::encoderTurned()` —
-   `FMDisplayMixer.cpp:831-933`. The generic string/int branch already writes
+5. Add display handling in `ScreenMixer::displayMixerValue()` —
+   `ScreenMixer.cpp:432-544`. The existing `DISPLAY_TYPE_STRINGS` path is at
+   `ScreenMixer.cpp:526-533`.
+6. Add edit handling in `ScreenMixer::encoderTurned()` —
+   `ScreenMixer.cpp:831-933`. The generic string/int branch already writes
    to the pointer and calls `propagateNewMixerValue()` at line 904.
 7. Handle `MIXER_VALUE_ENGINE` in `Synth::newMixerValue()` —
    `Synth.cpp:689-775`, calling `timbres_[timbre].setEngine(...)` and
@@ -533,35 +533,35 @@ Then update mode dispatch:
 
 - `SynthState::encoderTurned()` — `SynthState.cpp:342-365`
 - `SynthState::buttonPressed()` — `SynthState.cpp:467-542`
-- `FMDisplay3::refreshAllScreenByStep()` — `FMDisplay3.cpp:76-98`
-- `FMDisplay3::newSynthMode()` — `FMDisplay3.cpp:174-192`
+- `ScreenCoordinator::refreshAllScreenByStep()` — `ScreenCoordinator.cpp:76-98`
+- `ScreenCoordinator::newSynthMode()` — `ScreenCoordinator.cpp:174-192`
 - `preenfm3.cpp` oscilloscope branch — `preenfm3.cpp:211-225`
 
-Minimal alternative: keep `SYNTH_MODE_EDIT_PFM3` and have `FMDisplayEditor`
+Minimal alternative: keep `SYNTH_MODE_EDIT_PFM3` and have `ScreenEditor`
 choose `msfaMainMenu` when the current timbre’s engine is MSFA. The separate
 mode is cleaner because many editor helpers hard-code PFM3 page indices
 (`isInOperatorPage`, `isInMatrixPage`, `isInModulatorPage` —
-`FMDisplayEditor.cpp:4281-4291`, and `checkOperatorNumber` —
-`FMDisplayEditor.cpp:4351-4365`).
+`ScreenEditor.cpp:4281-4291`, and `checkOperatorNumber` —
+`ScreenEditor.cpp:4351-4365`).
 
 ### 5.2 Editor menu structure
 
 The editor is data-driven:
 
-- `Pfm3OneButtonState` — `FMDisplayEditor.h:28-31`
-- `Pfm3OneButton` — `FMDisplayEditor.h:33-39`
-- `Pfm3EditMenu` — `FMDisplayEditor.h:41-45`
-- `PfmMainMenu` — `FMDisplayEditor.h:47-49`
-- `mainMenu` — `FMDisplayEditor.cpp:2988-2995`
-- page/state navigation — `FMDisplayEditor::buttonPressed()` —
-  `FMDisplayEditor.cpp:4104-4164`
-- parameter display — `FMDisplayEditor::refreshEditorByStep()` —
-  `FMDisplayEditor.cpp:3269-3491`
+- `EditorOneButtonState` — `ScreenEditor.h:28-31`
+- `EditorOneButton` — `ScreenEditor.h:33-39`
+- `EditorEditMenu` — `ScreenEditor.h:41-45`
+- `EditorMainMenu` — `ScreenEditor.h:47-49`
+- `mainMenu` — `ScreenEditor.cpp:2988-2995`
+- page/state navigation — `ScreenEditor::buttonPressed()` —
+  `ScreenEditor.cpp:4104-4164`
+- parameter display — `ScreenEditor::refreshEditorByStep()` —
+  `ScreenEditor.cpp:3269-3491`
 
 Add a second menu tree, for example `msfaMainMenu`, and select it by engine:
 
 ```cpp
-const PfmMainMenu *FMDisplayEditor::currentMainMenu() const {
+const EditorMainMenu *ScreenEditor::currentMainMenu() const {
     if (synthState_->mixerState.instrumentState_[currentTimbre_].engine
             == SYNTH_ENGINE_MSFA) {
         return &msfaMainMenu;
@@ -570,7 +570,7 @@ const PfmMainMenu *FMDisplayEditor::currentMainMenu() const {
 }
 ```
 
-Replace direct `mainMenu.editMenu[...]` uses (see `FMDisplayEditor.cpp:3036`,
+Replace direct `mainMenu.editMenu[...]` uses (see `ScreenEditor.cpp:3036`,
 `3228`, `3303`, `3808`, `3828`, `4006`, `4036`, `4122`, `4187`, `4229`,
 `4312`, `4329`) with `currentMainMenu()->editMenu[...]`.
 
@@ -682,9 +682,9 @@ the patch already provides the Dexed extension.
 
 ### 5.5 MSFA editor navigation
 
-The MSFA editor is implemented in `FMDisplayMsfaEditor`
-(`firmware/src/app/ui/FMDisplayMsfaEditor.{h,cpp}`) and owned by
-`FMDisplayEditor`. It uses the same six-button / six-encoder model as the PFM3
+The MSFA editor is implemented in `ScreenMsfaEditor`
+(`firmware/src/app/ui/ScreenMsfaEditor.{h,cpp}`) and owned by
+`ScreenEditor`. It uses the same six-button / six-encoder model as the PFM3
 editor. The six buttons are drawn as a 2×3 grid. Pages 1–4 (`Global`, `Level`,
 `Osc`, `EG`) are MSFA-specific; pages 5–6 reuse the PFM3 `Arp/Fx` and `Perf`
 menus.
@@ -750,21 +750,21 @@ Operator selection uses buttons 4–6 (`OP1/2`, `OP3/4`, `OP5/6`) and
 `fullState.operatorNumber`, the same mechanism as the PFM3 operator page.
 Pages with more than six parameters use additional page states; pressing the
 sub-page button cycles through them. Empty encoder slots use `MSFA_NONE`.
-`Pfm3OneButtonState` still drives the state labels and the encoder-to-parameter
-mapping (`FMDisplayEditor.h:28-31`).
+`EditorOneButtonState` still drives the state labels and the encoder-to-parameter
+mapping (`ScreenEditor.h:28-31`).
 
 ### 5.6 Display and visual helpers
 
 The PFM3 editor draws operator waveforms and envelopes:
 
-- `refreshOscillatorOperatorShape()` — `FMDisplayEditor.cpp:4293-4310`
-- `refreshOscillatorOperatorEnvelope()` — `FMDisplayEditor.cpp:4312-4329`
-- `refreshLfoOscillator()` / `refreshLfoEnv()` — `FMDisplayEditor.cpp:4331-4349`
+- `refreshOscillatorOperatorShape()` — `ScreenEditor.cpp:4293-4310`
+- `refreshOscillatorOperatorEnvelope()` — `ScreenEditor.cpp:4312-4329`
+- `refreshLfoOscillator()` / `refreshLfoEnv()` — `ScreenEditor.cpp:4331-4349`
 
 For MSFA:
 
 - Draw the DX7 algorithm from MSFA’s `FmAlgorithm`/`FmCore` tables instead of
-  PFM3’s `algoInformation` (`Common.h:739-773`, `FMDisplayEditor.cpp:4351-4365`).
+  PFM3’s `algoInformation` (`Common.h:739-773`, `ScreenEditor.cpp:4351-4365`).
   Implemented with the `dx7algo1..32` tables and `drawDx7Algo()` in
   `TftAlgo`/`TftDisplay`.
 - Draw the DX7 rate/level envelope (four rates, four levels) rather than the
@@ -781,10 +781,10 @@ For MSFA:
       defined as the time to sweep the full level range). `inc` is normalised
       to 44.1 kHz, so the result is independent of the real sample rate.
       Rate scaling is ignored (nominal key).
-  - `FMDisplayEditor::refreshOscillatorOperatorEnvelope()` calls the helper
+  - `ScreenEditor::refreshOscillatorOperatorEnvelope()` calls the helper
     and passes the four times/levels to `oscilloBgSetEnvelope()`. All four
     stages use `CURVE_TYPE_LIN`, since MSFA envelopes are linear.
-  - `FMDisplay3::refreshOscilloBG()` shows the envelope whenever an MSFA
+  - `ScreenCoordinator::refreshOscilloBG()` shows the envelope whenever an MSFA
     timbre is on the `Oper` page (`mainPage == 1`, any sub-page); other pages
     clear the background.
   - `oscilloBgDrawEnvelope()` (`FirmwareTftDisplay.cpp`) auto-scales the graph
@@ -796,7 +796,7 @@ For MSFA:
     level scaling, matching PFM3’s envelope display which is also independent
     of oscillator output level.
 - Add new display types if needed in `ParameterDisplayType`
-  (`firmware/src/app/ui/FMDisplay.h:51-64`), for example
+  (`firmware/src/app/ui/ScreenTypes.h:51-64`), for example
   `DISPLAY_TYPE_DX7_RATE`, `DISPLAY_TYPE_DX7_LEVEL`,
   `DISPLAY_TYPE_DX7_CURVE`, `DISPLAY_TYPE_DX7_ALGORITHM`.
 
@@ -806,10 +806,10 @@ For MSFA:
 
 Current path:
 
-1. `FMDisplayMenu::buttonPressed()` enters `MENU_PRESET_LOAD_SELECT_DX7_BANK`
-   and calls `loadDx7Patch()` — `firmware/src/app/ui/FMDisplayMenu.cpp:647-651`.
-2. `FMDisplayMenu::encoderTurned()` also loads banks/presets while scrolling —
-   `FMDisplayMenu.cpp:193-206`.
+1. `ScreenMenu::buttonPressed()` enters `MENU_PRESET_LOAD_SELECT_DX7_BANK`
+   and calls `loadDx7Patch()` — `firmware/src/app/ui/ScreenMenu.cpp:647-651`.
+2. `ScreenMenu::encoderTurned()` also loads banks/presets while scrolling —
+   `ScreenMenu.cpp:193-206`.
 3. `SynthState::loadDx7Patch()` — `SynthState.cpp:385-392`:
    - `propagateBeforeNewParamsLoad(timbre)`
    - `hexter->loadHexterPatch(...)`
@@ -855,8 +855,8 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank,
 - reset MSFA LFO / pitch envelope state.
 
 The menu/UI must refresh after the engine changes:
-`Synth::newMixerValue()` and `FMDisplay3::newMixerEdit()` are the existing
-refresh paths (`FMDisplay3.cpp:131-143`). Add an explicit
+`Synth::newMixerValue()` and `ScreenCoordinator::newMixerEdit()` are the existing
+refresh paths (`ScreenCoordinator.cpp:131-143`). Add an explicit
 `propagateNewTimbre()` or `propagateNewMixerEdit()` after the engine switch.
 
 Loading a DX7 patch always switches the target timbre to MSFA, even if the
@@ -990,7 +990,7 @@ The MSFA LFO and pitch envelope are driven by the DX7 program
 `MsfaEngine.cpp:120-122`), not by the PFM3 matrix/LFO.
 
 The MSFA editor writes directly to the DX7 program
-(`FMDisplayMsfaEditor::setParamValue()`), so MSFA parameter changes do not go
+(`ScreenMsfaEditor::setParamValue()`), so MSFA parameter changes do not go
 through `SynthState::setNewValue()` and therefore emit no CC/NRPN.
 
 ### 8.3 PFM3-specific MIDI
@@ -1179,28 +1179,28 @@ Recommended flow:
 
 #### Preset modified and editor refresh
 
-`FMDisplayEditor::markPresetModified()` (`FMDisplayEditor.cpp:3053`) is a
+`ScreenEditor::markPresetModified()` (`ScreenEditor.cpp:3053`) is a
 UI-side method, so `MidiDecoder` cannot call it directly. Add a small
 `SynthState` notification (for example a `presetModified` listener callback,
 or a `SynthState::markPresetModified(timbre)` helper) and call it from
 `processAsyncActions()`.
 
 For the editor display, add a method such as
-`FMDisplayMsfaEditor::refreshParam(uint8_t dx7Param)` that:
+`ScreenMsfaEditor::refreshParam(uint8_t dx7Param)` that:
 
 - scans the current page's `rowEncoder[]`;
 - finds the encoder showing the changed parameter;
 - calls `displayParamValue(encoder, COLOR_YELLOW)` and sets
   `valueChangedCounter_[encoder] = 4`, matching the encoder-turn highlight.
 
-Route the notification through `SynthState`/`FMDisplay3` rather than calling
+Route the notification through `SynthState`/`ScreenCoordinator` rather than calling
 the editor from `MidiDecoder`. A full page refresh through `refreshStatus` is
 also possible but heavier and may reset page state.
 
 #### Highlighting
 
 The changed DX7 parameter can reuse the existing MSFA highlight logic in
-`FMDisplayMsfaEditor::newParamValue()`:
+`ScreenMsfaEditor::newParamValue()`:
 
 - `pp` 0..125 → operator parameter; the operator is
   `6 - (pp / 21)` (OP6 for 0..20, …, OP1 for 105..125), so highlight that
@@ -1346,7 +1346,7 @@ If sysex bank loading is required:
 
 6. **Add MSFA editor.**
    - `msfaMainMenu`, `msfaParameterRows`, `MsfaParameterId`.
-   - Engine-aware menu selection in `FMDisplayEditor`.
+   - Engine-aware menu selection in `ScreenEditor`.
    - DX7 algorithm/envelope drawing.
 
 7. **Add MSFA preset persistence.** *(done)*

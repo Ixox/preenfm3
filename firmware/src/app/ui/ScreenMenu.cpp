@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FMDisplayMenu.h"
+#include "ScreenMenu.h"
 #include "SynthState.h"
 #include "TftDisplay.h"
 #include "version.h"
@@ -24,7 +24,7 @@ extern int getLength(const char *str);
 const char *enveloppeRandomizer[] = { " -- ", "perc", "pad ", "rand" };
 const char *otherRandomizer[] = { " -- ", "soft", "medi", "high" };
 
-void FMDisplayMenu::init(SynthState *synthState, TftDisplay *tft, Storage *storage) {
+void ScreenMenu::init(SynthState *synthState, TftDisplay *tft, Storage *storage) {
     synthState_ = synthState;
     tft_ = tft;
     storage_ = storage;
@@ -32,7 +32,7 @@ void FMDisplayMenu::init(SynthState *synthState, TftDisplay *tft, Storage *stora
     menuStateRow_ = 3;
 }
 
-void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
+void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
 
     // We just pressed the menu button, pre select the first menu
     // Because of "return" in this method we must have the test here
@@ -159,7 +159,7 @@ void FMDisplayMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
     }
 }
 
-void FMDisplayMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
+void ScreenMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
     struct FullState *fullState = &synthState_->fullState;
 
     switch (fullState->currentMenuItem->menuState) {
@@ -278,7 +278,7 @@ void FMDisplayMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
     synthState_->propagateNewMenuSelect();
 }
 
-bool FMDisplayMenu::changeCharSelect(char *valueToChange, int ticks) {
+bool ScreenMenu::changeCharSelect(char *valueToChange, int ticks) {
     int oldPresetSelect = *valueToChange;
     int newPresetSelect = oldPresetSelect + ticks;
     if (newPresetSelect > 127) {
@@ -290,7 +290,7 @@ bool FMDisplayMenu::changeCharSelect(char *valueToChange, int ticks) {
     return oldPresetSelect != newPresetSelect;
 }
 
-bool FMDisplayMenu::changePresetSelect(uint8_t *valueToChange, int ticks, int max) {
+bool ScreenMenu::changePresetSelect(uint8_t *valueToChange, int ticks, int max) {
     int oldPresetSelect = *valueToChange;
     int newPresetSelect = oldPresetSelect + ticks;
     if (newPresetSelect > max) {
@@ -302,7 +302,7 @@ bool FMDisplayMenu::changePresetSelect(uint8_t *valueToChange, int ticks, int ma
     return oldPresetSelect != newPresetSelect;
 }
 
-bool FMDisplayMenu::changePresetSelect(char *valueToChange, int ticks, int max) {
+bool ScreenMenu::changePresetSelect(char *valueToChange, int ticks, int max) {
     int oldPresetSelect = *valueToChange;
     int newPresetSelect = oldPresetSelect + ticks;
     if (newPresetSelect > max) {
@@ -314,7 +314,7 @@ bool FMDisplayMenu::changePresetSelect(char *valueToChange, int ticks, int max) 
     return oldPresetSelect != newPresetSelect;
 }
 
-bool FMDisplayMenu::changePresetSelect(uint16_t *valueToChange, int ticks, int max) {
+bool ScreenMenu::changePresetSelect(uint16_t *valueToChange, int ticks, int max) {
     int oldPresetSelect = *valueToChange;
     int newPresetSelect = oldPresetSelect + ticks;
     if (newPresetSelect > max) {
@@ -326,7 +326,7 @@ bool FMDisplayMenu::changePresetSelect(uint16_t *valueToChange, int ticks, int m
     return oldPresetSelect != newPresetSelect;
 }
 
-bool FMDisplayMenu::changePresetSelect(uint32_t *valueToChange, int ticks, int max) {
+bool ScreenMenu::changePresetSelect(uint32_t *valueToChange, int ticks, int max) {
     int oldPresetSelect = *valueToChange;
     int newPresetSelect = oldPresetSelect + ticks;
     if (newPresetSelect > max) {
@@ -338,7 +338,7 @@ bool FMDisplayMenu::changePresetSelect(uint32_t *valueToChange, int ticks, int m
     return oldPresetSelect != newPresetSelect;
 }
 
-void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
+void ScreenMenu::buttonPressed(int currentTimbre, int button) {
     struct FullState *fullState = &synthState_->fullState;
     int32_t length;
 
@@ -719,7 +719,7 @@ void FMDisplayMenu::buttonPressed(int currentTimbre, int button) {
 
 }
 
-void FMDisplayMenu::updatePreviousChoice(uint8_t menuState) {
+void ScreenMenu::updatePreviousChoice(uint8_t menuState) {
     struct FullState *fullState = &synthState_->fullState;
 
     switch (menuState) {
@@ -746,7 +746,7 @@ void FMDisplayMenu::updatePreviousChoice(uint8_t menuState) {
     }
 }
 
-const MenuItem* FMDisplayMenu::getMenuBack(int currentTimbre) {
+const MenuItem* ScreenMenu::getMenuBack(int currentTimbre) {
     struct FullState *fullState = &synthState_->fullState;
 
     const MenuItem *rMenuItem = 0;
@@ -777,7 +777,7 @@ const MenuItem* FMDisplayMenu::getMenuBack(int currentTimbre) {
     return rMenuItem;
 }
 
-void FMDisplayMenu::moveExtensionAtTheEnd(char *fileName) {
+void ScreenMenu::moveExtensionAtTheEnd(char *fileName) {
     int length = getLength(fileName);
     int extSize = 0;
     char extension[8];
@@ -799,7 +799,7 @@ void FMDisplayMenu::moveExtensionAtTheEnd(char *fileName) {
     }
 }
 
-void FMDisplayMenu::copyAndTransformString(char *dest, const char *source) {
+void ScreenMenu::copyAndTransformString(char *dest, const char *source) {
     for (int k = 0; k < 12; k++) {
         dest[k] = ' ';
     }
@@ -808,7 +808,7 @@ void FMDisplayMenu::copyAndTransformString(char *dest, const char *source) {
     }
 }
 
-int FMDisplayMenu::copyStringAt(char *dest, int offset, const char *source) {
+int ScreenMenu::copyStringAt(char *dest, int offset, const char *source) {
     int o = 0;
     while (source[o] != '\0') {
         dest[offset + o] = source[o];
@@ -817,13 +817,13 @@ int FMDisplayMenu::copyStringAt(char *dest, int offset, const char *source) {
     return o;
 }
 
-void FMDisplayMenu::copySynthParams(char *source, char *dest) {
+void ScreenMenu::copySynthParams(char *source, char *dest) {
     for (uint32_t k = 0; k < sizeof(struct OneSynthParams); k++) {
         dest[k] = source[k];
     }
 }
 
-void FMDisplayMenu::newMenuState(FullState *fullState) {
+void ScreenMenu::newMenuState(FullState *fullState) {
     tft_->pauseRefresh();
 
     if (MenuItemUtil::getParentMenuItem(synthState_->fullState.currentMenuItem->menuState)->menuState == MAIN_MENU) {
@@ -889,7 +889,7 @@ void FMDisplayMenu::newMenuState(FullState *fullState) {
     displayMenuState(fullState);
 }
 
-void FMDisplayMenu::displayMenuState(FullState *fullState) {
+void ScreenMenu::displayMenuState(FullState *fullState) {
 
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_GRAY);
@@ -994,7 +994,7 @@ void FMDisplayMenu::displayMenuState(FullState *fullState) {
     }
 }
 
-void FMDisplayMenu::newMenuSelect(FullState *fullState) {
+void ScreenMenu::newMenuSelect(FullState *fullState) {
 
     int length;
 
@@ -1154,7 +1154,7 @@ displayChars: tft_->setCharBackgroundColor(COLOR_BLACK);
     }
 }
 
-void FMDisplayMenu::menuBack(const MenuItem *oldMenuItem, FullState *fullState) {
+void ScreenMenu::menuBack(const MenuItem *oldMenuItem, FullState *fullState) {
 
     int y = menuStateRow_ * TFT_BIG_CHAR_HEIGHT;
     tft_->fillArea(0, y, 240, 260 - y, COLOR_BLACK);
@@ -1165,7 +1165,7 @@ void FMDisplayMenu::menuBack(const MenuItem *oldMenuItem, FullState *fullState) 
     newMenuSelect(fullState);
 }
 
-void FMDisplayMenu::displayBankSelect(int bankNumber, bool usable, const char *name) {
+void ScreenMenu::displayBankSelect(int bankNumber, bool usable, const char *name) {
 
     bankNumber++;
 
@@ -1184,7 +1184,7 @@ void FMDisplayMenu::displayBankSelect(int bankNumber, bool usable, const char *n
     tft_->printSpaceTillEndOfLine();
 }
 
-void FMDisplayMenu::displayPatchSelect(int presetNumber, const char *name) {
+void ScreenMenu::displayPatchSelect(int presetNumber, const char *name) {
     presetNumber++;
 
     if (name != 0) {
@@ -1206,7 +1206,7 @@ void FMDisplayMenu::displayPatchSelect(int presetNumber, const char *name) {
     }
 }
 
-void FMDisplayMenu::printScalaFrequency(float value) {
+void ScreenMenu::printScalaFrequency(float value) {
     int integer = (int) (value + .0005f);
     tft_->print(integer);
     tft_->print('.');
@@ -1214,6 +1214,6 @@ void FMDisplayMenu::printScalaFrequency(float value) {
     tft_->print((int) (value * 10 + .0005f));
 }
 
-void FMDisplayMenu::setPreviousSynthMode(int synthModeBeforeMenu) {
+void ScreenMenu::setPreviousSynthMode(int synthModeBeforeMenu) {
     previousSynthMode_ = synthModeBeforeMenu;
 }

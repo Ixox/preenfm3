@@ -16,8 +16,8 @@
  */
 
 
-#ifndef FMDISPLAY_H
-#define FMDISPLAY_H
+#ifndef SCREEN_TYPES_H
+#define SCREEN_TYPES_H
 
 
 #include "Common.h"

@@ -18,7 +18,7 @@
 #include <Sequencer.h>
 #include <RingBuffer.h>
 #include "Synth.h"
-#include "FMDisplaySequencer.h"
+#include "ScreenSequencer.h"
 
 __attribute__((section(".ram_d3"))) SeqMidiAction actions[SEQ_ACTION_SIZE];
 __attribute__((section(".ram_d3"))) StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];
@@ -53,7 +53,7 @@ void Sequencer::setSynth(Synth* synth) {
     synth_ = synth;
 }
 
-void Sequencer::setDisplaySequencer(FMDisplaySequencer* displaySequencer) {
+void Sequencer::setDisplaySequencer(ScreenSequencer* displaySequencer) {
     displaySequencer_ = displaySequencer;
 }
 

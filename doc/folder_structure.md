@@ -68,14 +68,14 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 
 | File(s) | Contents |
 |---------|----------|
-| `FMDisplay3.*` | Screen coordinator and refresh state machine |
-| `FMDisplayMixer.*` | Mixer screen |
-| `FMDisplayEditor.*` | PFM3 editor screen |
-| `FMDisplayMsfaEditor.*` | MSFA editor screen |
-| `FMDisplayMenu.*` | Menu/file browser |
-| `FMDisplaySequencer.*` | Sequencer screen |
+| `ScreenCoordinator.*` | Screen coordinator and refresh state machine |
+| `ScreenMixer.*` | Mixer screen |
+| `ScreenEditor.*` | PFM3 editor screen |
+| `ScreenMsfaEditor.*` | MSFA editor screen |
+| `ScreenMenu.*` | Menu/file browser |
+| `ScreenSequencer.*` | Sequencer screen |
 | `FirmwareTftDisplay.*` | Oscilloscope background / firmware-specific TFT actions |
-| `FMDisplay.h`, `Menu.*`, `VisualInfo.h` | Shared UI types |
+| `ScreenTypes.h`, `Menu.*`, `VisualInfo.h` | Shared UI types |
 
 ### `firmware/src/app/midi/` and `midi_controller/`
 
@@ -181,10 +181,10 @@ bootloader links the USB MSC class.
 ## Where to add code
 
 - **New PFM3 parameter**: `Common.h` / `SynthState.h`, then the editor UI in
-  `FMDisplayEditor.cpp`, and the DSP use in `Voice.cpp` / `Timbre.cpp`.
-- **New MSFA parameter**: `FMDisplayMsfaEditor.*` and the MSFA program layout
+  `ScreenEditor.cpp`, and the DSP use in `Voice.cpp` / `Timbre.cpp`.
+- **New MSFA parameter**: `ScreenMsfaEditor.*` and the MSFA program layout
   (see `doc/msfa_engine.md`).
-- **New screen/page**: add a `FMDisplay*` class and wire it in `FMDisplay3`.
+- **New screen/page**: add a `Screen*` class and wire it in `ScreenCoordinator`.
 - **New file type**: add a class under `firmware/src/app/storage/` and register
   it in `Storage`.
 - **New TFT drawing action**: `preen_lib/include/TftDisplay.h`,

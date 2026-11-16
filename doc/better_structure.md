@@ -33,7 +33,7 @@ shape of the refactoring first.
   checks and resets.
 - `Timbre` keeps MSFA program/packed-patch arrays as static members.
 - UI and persistence know about PFM3 vs MSFA (`isMsfaTimbre()`,
-  `FMDisplayMsfaEditor`, preset layout).
+  `ScreenMsfaEditor`, preset layout).
 - `OneSynthParams` is PFM3-specific but is also the shared timbre parameter
   block.
 
@@ -91,8 +91,8 @@ Shared, stays in `Synth`/`Timbre`:
 - Engine-specific parameters live with the engine, not in `OneSynthParams`.
 - Keep the existing PFM3 preset layout compatible; MSFA keeps its own program
   blob.
-- Define a generic engine-editor interface. `FMDisplayEditor` delegates to the
-  active engine editor; `FMDisplayMsfaEditor` becomes one implementation.
+- Define a generic engine-editor interface. `ScreenEditor` delegates to the
+  active engine editor; `ScreenMsfaEditor` becomes one implementation.
 - MIDI/NRPN paths that are currently PFM3-only should be routed by engine or
   explicitly documented as PFM3-only.
 

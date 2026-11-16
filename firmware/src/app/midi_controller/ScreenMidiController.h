@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY_MIDI_CONTROLLER
-#define FMDISPLAY_MIDI_CONTROLLER
+#ifndef SCREEN_MIDI_CONTROLLER
+#define SCREEN_MIDI_CONTROLLER
 
 #include "Common.h"
 #include "EncodersListener.h"
@@ -50,9 +50,9 @@ enum ButtonParamType {
     BUTTON_PARAM_LOW
 };
 
-class FMDisplayMidiController : public EncodersListener {
+class ScreenMidiController : public EncodersListener {
 public:
-    FMDisplayMidiController();
+    ScreenMidiController();
 
     void init(TftDisplay *tft, MidiControllerState *midiControllerState, MidiControllerFile *midiControllerFile);
     void refreshAllScreenByStep();

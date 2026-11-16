@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY_MENU
-#define FMDISPLAY_MENU
+#ifndef SCREEN_MENU
+#define SCREEN_MENU
 
 #include "Common.h"
 #include "Menu.h"
@@ -24,7 +24,7 @@
 class SynthState;
 class TftDisplay;
 
-class FMDisplayMenu {
+class ScreenMenu {
 public:
     void init(SynthState *synthState, TftDisplay *tft, Storage *storage);
     void refreshMenuByStep(int currentTimbre, int refreshStatus);

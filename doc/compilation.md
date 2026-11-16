@@ -280,7 +280,7 @@ firmware/
       main.c
       synth/
       midi/
-      ui/                 # FMDisplay*, Menu
+      ui/                 # Screen*, Menu
       storage/            # filesystem/
       midi_controller/    # alternate controller UI
     platform/

@@ -58,7 +58,7 @@ enum MASTERFXPARAMS {
 extern float panTable[];
 
 class FxBus {
-	friend class FMDisplayMixer;
+	friend class ScreenMixer;
     friend class MixerState;
 public:
     FxBus();

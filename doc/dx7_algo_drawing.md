@@ -9,7 +9,7 @@ The algorithm diagram is not drawn directly to the TFT. It is rendered into an
 80×100 off-screen buffer and then copied by DMA2D.
 
 ```
-FMDisplayEditor::refreshEditorByStep()
+ScreenEditor::refreshEditorByStep()
         -> tft_->drawAlgo(algo)
              TftDisplay::drawAlgo()                preen_lib/src/display/TftDisplay.cpp:1044
              inserts TFT_DRAW_ALGO action
@@ -185,9 +185,9 @@ does **not** give is screen positions, which is the missing piece.
      through the action queue.
 
 4. **Call sites**:
-   - `FMDisplayMsfaEditor::refreshEditorByStep()` (Engine page) should draw
+   - `ScreenMsfaEditor::refreshEditorByStep()` (Engine page) should draw
      the DX7 algorithm instead of clearing, using `program[134]` (0..31).
-   - `FMDisplayEditor::refreshEditorByStep()` currently skips `drawAlgo` for
+   - `ScreenEditor::refreshEditorByStep()` currently skips `drawAlgo` for
      MSFA (`case 10` and `case 21`); those should call the DX7 variant on the
      main edit screen.
 

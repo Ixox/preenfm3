@@ -13,7 +13,7 @@ STM32H7 cache/MPU correctness, the display pipeline and audio performance.
   - [Problem 4 — Display path has no barrier between DMA2D and SPI DMA](#problem-4--display-path-has-no-barrier-between-dma2d-and-spi-dma)
   - [Problem 5 — `S=1` is not a substitute for cache maintenance](#problem-5--s1-is-not-a-substitute-for-cache-maintenance)
   - [Problem 6 — `RAM_D2C` has no MPU region](#problem-6--ram_d2c-has-no-mpu-region)
-- [Display and FMDisplay3](#display-and-fmdisplay3)
+- [Display and ScreenCoordinator](#display-and-fmdisplay3)
   - [Problem 1 — `TFT_WAITCYCLE` and oscilloscope background share action type 14](#problem-1--tft_waitcycle-and-oscilloscope-background-share-action-type-14)
   - [Problem 2 — action ring buffer can overflow silently](#problem-2--action-ring-buffer-can-overflow-silently)
   - [Problem 3 — `endRefreshStatus_` can survive a mode change](#problem-3--endrefreshstatus_-can-survive-a-mode-change)
@@ -252,7 +252,7 @@ Either remove `RAM_D2C` from the linker script or add an explicit MPU region and
 
 ---
 
-## Display and FMDisplay3
+## Display and ScreenCoordinator
 
 Status: problems 1, 3, 4 and 5 below are fixed. Problem 2 (ring buffer
 overflow protection) was reverted: the current behaviour works and the
@@ -302,7 +302,7 @@ The action queue is `RingBuffer<TFTAction, 128>`. `RingBuffer::insert()` (`lib/I
 
 **Severity: medium**
 
-`FMDisplay3::newSynthMode()` sets `refreshStatus_ = 21` but does not reset `endRefreshStatus_` (`firmware/Src/hardware/FMDisplay3.cpp:174-192`). `setRefreshStatus()` also only writes `refreshStatus_` (`FMDisplay3.h:89-91`).
+`ScreenCoordinator::newSynthMode()` sets `refreshStatus_ = 21` but does not reset `endRefreshStatus_` (`firmware/Src/hardware/ScreenCoordinator.cpp:174-192`). `setRefreshStatus()` also only writes `refreshStatus_` (`ScreenCoordinator.h:89-91`).
 
 Partial refreshes use `endRefreshStatus_` as a stop step. For example, `newTimbre()` sets `refreshStatus_ = 19`, `endRefreshStatus_ = 14` for the mixer. If the user changes mode before that partial refresh completes, the new full refresh can stop at the stale `endRefreshStatus_` value.
 
@@ -353,7 +353,7 @@ If a transfer fails after the bit is cleared, that screen part may never be refr
 
 **Severity: low**
 
-`refreshStatus_` uses values such as 21, 20, 19–14, 12–7 and 6–1, with a `switch` in each screen class and an implicit contract with `endRefreshStatus_`. Missing numbers are silent no-ops, and the same numeric ranges are repeated across `FMDisplayMixer`, `FMDisplayEditor`, `FMDisplayMenu` and `FMDisplaySequencer`.
+`refreshStatus_` uses values such as 21, 20, 19–14, 12–7 and 6–1, with a `switch` in each screen class and an implicit contract with `endRefreshStatus_`. Missing numbers are silent no-ops, and the same numeric ranges are repeated across `ScreenMixer`, `ScreenEditor`, `ScreenMenu` and `ScreenSequencer`.
 
 This makes it easy to add a drawing step without updating the countdown start, the partial-refresh range, or the stop condition.
 

@@ -15,48 +15,72 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FMDISPLAY_EDITOR
-#define FMDISPLAY_EDITOR
+#ifndef SCREEN_EDITOR
+#define SCREEN_EDITOR
 
 #include "FirmwareTftDisplay.h"
 #include "SynthParamListener.h"
-#include "FMDisplay.h"
+#include "ScreenTypes.h"
 
-class SynthState;
-class TftDisplay;
-class FMDisplayMsfaEditor;
+class SynthState; class TftDisplay; class ScreenMsfaEditor; class ScreenEditor; class ScreenPfm3Editor;
 
-struct Pfm3OneButtonState {
+struct EditorOneButtonState {
     const char *stateLabel;
     const RowEncoder rowEncoder[6];
 };
 
-struct Pfm3OneButton {
+struct EditorOneButton {
     const char *buttonLabel;
     const uint8_t buttonId;
     const int numberOfStates;
-    const Pfm3OneButtonState *states[];
+    const EditorOneButtonState *states[];
 
 };
 
-struct Pfm3EditMenu {
+struct EditorEditMenu {
     const char *mainMenuName;
     const int numberOfButtons;
-    const Pfm3OneButton *pages[];
+    const EditorOneButton *pages[];
 };
 
-struct PfmMainMenu {
-    const Pfm3EditMenu *editMenu[6];
+struct EditorMainMenu {
+    const EditorEditMenu *editMenu[6];
 };
 
-class FMDisplayEditor {
+/*
+ * Common interface for engine-specific editor pages.
+ * ScreenEditor owns one implementation per engine and dispatches to the
+ * active one. Calls are per page/note/block, never per sample.
+ */
+class EngineEditor {
 public:
-    FMDisplayEditor();
+    virtual ~EngineEditor() {}
+
+    virtual void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) = 0;
+    virtual const struct EditorEditMenu* getEditMenu(int page) const = 0;
+    virtual void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) = 0;
+    virtual void displayParamValue(int encoder, TFT_COLOR color) = 0;
+    virtual void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+        ParameterDisplay *param, float oldValue, float newValue) = 0;
+    virtual void tempoClick() = 0;
+    virtual void encoderTurned(int encoder, int ticks) = 0;
+    virtual void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) = 0;
+    virtual void buttonPressed(int button) = 0;
+    virtual void buttonLongPressed(int instrument, int button) = 0;
+    virtual void refreshOscillatorOperatorShape() {}
+    virtual void refreshLfoOscillator() {}
+    virtual void refreshLfoEnv() {}
+    virtual void checkOperatorNumber() {}
+};
+
+class ScreenEditor {
+public:
+    ScreenEditor();
 
     void init(SynthState *synthState, FirmwareTftDisplay *tft);
 
     bool isMsfaTimbre() const;
-    const struct Pfm3EditMenu* currentEditMenu() const;
+    const struct EditorEditMenu* currentEditMenu() const;
     const char* mainMenuName(int button) const;
     void markPresetModified(int timbre);
 
@@ -64,22 +88,21 @@ public:
     void displayParamValue(int encoder, TFT_COLOR color);
     void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
     void tempoClick();
+
     bool isPresetModifed(int timbre) {
         return presetModifed_[timbre];
     }
     void setPresetModified(int timbre, bool state);
     void resetAllPresetModified();
-    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param,  float oldValue, float newFloatValue);
-
+    void setEditPageSelected(int mainPage, int editPage) {
+        editPageSelected_[mainPage] = editPage;
+    }
     void updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue);
     void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
     void displayPreset();
     void displayPopup(TFT_COLOR color, char* text, uint8_t length);
 
-    int getEditPageMultiplier();
-
-    void encoderTurnedPfm3(int encoder, int ticks);
-    void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
+    void encoderTurned(int encoder, int ticks);
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void buttonPressed(int button);
     void buttonLongPressed(int instrument, int button);
@@ -91,36 +114,18 @@ public:
     void refreshLfoEnv();
 
 private:
-    friend class FMDisplayMsfaEditor;
-
-    void checkOperatorNumber();
-    bool isInOperatorPage(uint8_t pageNumber);
-    bool isInMatrixPage(uint8_t pageNumber);
-    bool isInModulatorPage(uint8_t pageNumber);
-    void resetHideParams();
-    uint8_t getX(int encoder);
+    void buttonPressedMenuPage(int button);
+    void displayLevelMeter();
     FirmwareTftDisplay *tft_;
     SynthState *synthState_;
-    FMDisplayMsfaEditor *msfaEditor_;
+    ScreenMsfaEditor *msfaEditor_;
+    ScreenPfm3Editor *pfm3Editor_;
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
-    bool hideParam_[NUMBER_OF_ENCODERS];
-    // Value Changed info
-    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
-    uint8_t imChangedCounter_[NUMBER_OF_ENCODERS];
-    uint8_t mixChangedCounter_[NUMBER_OF_ENCODERS];
-    uint8_t mixChangeOperatorNumber_[NUMBER_OF_ENCODERS];
     int currentTimbre_;
-    bool multipleEdition_;
 
     // Remember curent editPage in mainPage
     uint8_t editPageSelected_[6];
-    // Remember previous lfo freq value
-    float lfoFreqPreviousValue[5];
-    // Buffer to copy and past
-    int8_t bufferPageNumber;
-    uint8_t bufferEditNumber;
-    float bufferParam[6];
 };
 
 #endif

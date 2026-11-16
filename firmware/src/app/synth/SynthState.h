@@ -380,10 +380,10 @@ enum EventState {
 class Hexter;
 class Timbre;
 class MixerState;
-class FMDisplayEditor;
-class FMDisplayMixer;
-class FMDisplayMenu;
-class FMDisplaySequencer;
+class ScreenEditor;
+class ScreenMixer;
+class ScreenMenu;
+class ScreenSequencer;
 
 
 class SynthState: public EncodersListener {
@@ -403,7 +403,7 @@ public:
 
     Timbre* getTimbre(int timbre);
 
-    void init(FMDisplayMixer* displayMixer, FMDisplayEditor* dDisplayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer);
+    void init(ScreenMixer* displayMixer, ScreenEditor* dDisplayEditor, ScreenMenu* displayMenu, ScreenSequencer* displaySequencer);
 
     void encoderTurned(int encoder, int ticks);
 
@@ -637,10 +637,10 @@ private:
     Timbre* timbres;
 
     // One Display class per main page
-    FMDisplayMixer* displayMixer;
-    FMDisplayMenu* displayMenu;
-    FMDisplayEditor* displayEditor;
-    FMDisplaySequencer* displaySequencer;
+    ScreenMixer* displayMixer;
+    ScreenMenu* displayMenu;
+    ScreenEditor* displayEditor;
+    ScreenSequencer* displaySequencer;
 };
 
 // Global structure used all over the code
