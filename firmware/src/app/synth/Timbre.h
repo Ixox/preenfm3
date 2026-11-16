@@ -83,6 +83,11 @@ public:
         return engine_;
     }
 
+    void loadMsfaPackedPatch(const uint8_t *packedPatch);
+    const uint8_t* getMsfaProgram() const {
+        return msfaProgram_[timbreNumber_];
+    }
+
     void noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity);
     void noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff);
 
@@ -305,6 +310,8 @@ private:
 
     int8_t timbreNumber_;
     SynthEngineType engine_;
+    static uint8_t msfaPackedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE];
+    static uint8_t msfaProgram_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE];
     struct OneSynthParams params_;
     struct MixerState *mixerState_;
     float sampleBlock_[BLOCK_SIZE * 2];
