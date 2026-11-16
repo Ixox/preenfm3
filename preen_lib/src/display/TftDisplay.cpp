@@ -693,6 +693,7 @@ bool TftDisplay::pushToTft() {
                 __DSB();
 
                 if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
+                    tftDirtyBits &= ~(1UL << part);
                     pushingPart = part;
                     pushToTftInProgress = true;
                 }
@@ -708,9 +709,6 @@ bool TftDisplay::pushToTft() {
 }
 
 void TftDisplay::pushToTftFinished() {
-    if (pushToTftInProgress) {
-        tftDirtyBits &= ~(1UL << pushingPart);
-    }
     ILI9341_Unselect();
     pushToTftInProgress = false;
 }
