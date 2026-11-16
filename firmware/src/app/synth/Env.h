@@ -155,7 +155,7 @@ public:
     }
 
 
-    // Large block-rate routine inlined at ~170 call sites in Voice::nextBlock().
+    // Large block-rate routine inlined at ~170 call sites in Preenfm3Engine::renderVoice().
     // Keep it out of line to limit code size / I-cache pressure; the call
     // overhead is negligible because it runs once per block per operator.
     __attribute__((noinline))

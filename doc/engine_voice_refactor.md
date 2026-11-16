@@ -559,11 +559,11 @@ The two refactorings are interleaved so `Voice` binding is written once.
    The flat mirror is kept during step 6 to avoid rewriting all flat accesses;
    it is a UI/serialization cache, not the DSP owner.
 
-7. **Decide where the PFM3 per-voice DSP lives.** `Voice::nextBlock()` still
-   holds the PFM3 sample calculation. Decide whether to move it behind
-   `Preenfm3Engine` (e.g. `renderVoice(Voice&)`) or keep it in `Voice`; only the
-   PFM3 matrix/LFO parts and the PFM3 part of `fxAfterBlock()` are
-   engine-specific, the shared FX DSP stays in `Voice`.
+7. **Move the per-voice DSP behind the engine.** `Preenfm3Engine::renderVoice()`
+   owns the PFM3 sample calculation (formerly `Voice::nextBlock()`) and
+   `updateAllMixOscsAndPans()`; `MsfaSynthEngine::renderVoice()` owns the MSFA
+   path (formerly `Voice::msfaNextBlock()`). `Voice::fxAfterBlock()` stays
+   shared: FX1 is per voice but common to both engines.
 
 8. **Add a third engine to validate the structure.**
 

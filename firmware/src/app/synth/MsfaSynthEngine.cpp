@@ -46,15 +46,61 @@ void MsfaSynthEngine::afterNewParamsLoad() {
 
     for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
         Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
-        // Reset the matrix used by the FX2/gate path; MSFA does not fill it.
-        voice->resetMatrix();
-        voice->msfaUpdateProgram(program);
+        updateVoiceProgram(voice, program);
     }
     msfaTimbreLoadProgram(msfaState_, program);
 }
 
+void MsfaSynthEngine::killVoice(Voice *voice) {
+    voice->resetVoiceState();
+    msfaVoiceReset(msfaGetVoiceState(voice->slot()));
+}
+
+void MsfaSynthEngine::noteOffVoice(Voice *voice) {
+    keyUp(voice);
+}
+
+void MsfaSynthEngine::noteOffVoiceQuick(Voice *voice) {
+    killVoice(voice);
+}
+
+void MsfaSynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index) {
+    voice->resetVoiceState();
+    MsfaVoiceState *state = msfaGetVoiceState(voice->slot());
+    msfaVoiceReset(state);
+
+    voice->note = note;
+    voice->midiVelocity = velocity;
+    voice->index = index;
+    voice->playing = true;
+    voice->released = false;
+    voice->isFullOfZero = false;
+    voice->newNotePending = false;
+    voice->holdedByPedal = false;
+
+    msfaVoiceStart(state, program, note, velocity, 1, msfaState_);
+
+    msfaDebugLog("V note=%d state=%08x active=%d\n", note, (unsigned) state,
+        msfaVoiceIsActive(state));
+}
+
+void MsfaSynthEngine::updateVoiceProgram(Voice *voice, const uint8_t *program) {
+    msfaVoiceUpdateProgram(msfaGetVoiceState(voice->slot()), program);
+}
+
+void MsfaSynthEngine::keyUp(Voice *voice) {
+    MsfaVoiceState *state = msfaGetVoiceState(voice->slot());
+    if (!msfaVoiceIsActive(state)) {
+        return;
+    }
+    msfaVoiceKeyUp(state);
+    voice->released = true;
+    voice->holdedByPedal = false;
+    msfaDebugLog("O note=%d state=%08x\n", voice->note, (unsigned) state);
+}
+
 void MsfaSynthEngine::bindVoice(Voice *voice) {
-    voice->bindMsfaTimbre(timbre_);
+    voice->bindTimbre(timbre_);
 }
 
 void MsfaSynthEngine::noteOn(char note, char velocity) {
@@ -74,7 +120,7 @@ void MsfaSynthEngine::noteOn(char note, char velocity) {
     }
     timbre_->clearMpeMapping(voiceToUse);
 
-    timbre_->voices_[voiceToUse]->msfaNoteOn(program_[timbreNumber_], note, velocity, timbre_->voiceIndex_++, msfaState_);
+    startVoice(timbre_->voices_[voiceToUse], program_[timbreNumber_], note, velocity, timbre_->voiceIndex_++);
 
     timbre_->lastPlayedNote_ = voiceToUse;
     if (note <= timbre_->lowerNote_ || timbre_->lowerNoteReleased_) {
@@ -100,7 +146,7 @@ void MsfaSynthEngine::noteOff(char note) {
             if (unlikely(timbre_->holdPedal_)) {
                 timbre_->voices_[n]->setHoldedByPedal(true);
             } else {
-                timbre_->voices_[n]->msfaNoteOff();
+                keyUp(timbre_->voices_[n]);
                 msfaDebugLog("N note=%d v=%d\n", note, n);
             }
         }
@@ -114,15 +160,34 @@ uint8_t MsfaSynthEngine::voicesNextBlock() {
     for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
         Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         bool wasPlaying = voice->isPlaying();
-        voice->msfaNextBlock(msfaState_);
+        renderVoice(voice);
         if (wasPlaying) {
-            voice->fxAfterBlock();
+            voice->fxAfterBlock(0.0f, 0.0f, 0.0f);
         }
         if (voice->isPlaying()) {
             playing++;
         }
     }
     return playing;
+}
+
+void MsfaSynthEngine::renderVoice(Voice *voice) {
+    if (!msfaVoiceIsActive(msfaGetVoiceState(voice->slot()))) {
+        if (voice->playing) {
+            msfaDebugLog("Z note=%d state=%08x\n", voice->note, (unsigned) msfaGetVoiceState(voice->slot()));
+        }
+        voice->emptyBuffer();
+        return;
+    }
+
+    bool stillPlaying = msfaVoiceRender(msfaGetVoiceState(voice->slot()), msfaState_, voice->sampleBlock);
+    voice->isFullOfZero = false;
+
+    if (!stillPlaying) {
+        voice->playing = false;
+        voice->released = false;
+        msfaDebugLog("E note=%d state=%08x\n", voice->note, (unsigned) msfaGetVoiceState(voice->slot()));
+    }
 }
 
 void MsfaSynthEngine::loadMsfaPackedPatch(const uint8_t *packedPatch) {

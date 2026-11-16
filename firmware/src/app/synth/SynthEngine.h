@@ -29,6 +29,13 @@ class SynthState;
  *
  * All calls are per note or per block, never per sample. MIDI decoding, voice
  * pool arbitration, UI and storage stay in Synth/Timbre.
+ *
+ * The interface is wider than a clean engine API would be: it had to fit the
+ * PFM3 engine, which was originally tightly coupled to Timbre and Voice (matrix
+ * sources, note curves, LFO usage, unison, deferred voice steal, ...). Most of
+ * these methods only mirror that coupling; a new engine can leave the default
+ * no-op implementations and override only the core note/render/persistence
+ * methods.
  */
 class SynthEngine {
 public:
@@ -49,6 +56,14 @@ public:
     // reuses voices, applies mono/unison/glide and updates the matrix.
     virtual void noteOn(char note, char velocity) = 0;
     virtual void noteOff(char note) = 0;
+
+    // External voice lifecycle, dispatched to the engine that owns the voice.
+    virtual void killVoice(Voice *voice) {}
+    virtual void noteOffVoice(Voice *voice) {}
+    virtual void noteOffVoiceQuick(Voice *voice) {}
+
+    // Restart a voice after a deferred cross-timbre transfer.
+    virtual void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, bool alreadyOff) {}
 
     // Render one block for all voices of the timbre.
     // Returns the number of voices that were playing.
@@ -87,6 +102,15 @@ public:
     // Write a flat parameter value into the engine's owner storage.
     // `index` is the flat index used by the editor/MIDI path (row * 4 + encoder).
     virtual void setParamValue(int index, float value) {}
+
+    // Engine-specific helpers used by the shared timbre code.
+    virtual bool isUnisonMode() const { return false; }
+    virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) {}
+
+    // Flat OneSynthParams mirror (PFM3 UI/storage layout). Engines that do not
+    // use the flat mirror keep the default no-op implementations.
+    virtual void serializeFlatParams(struct OneSynthParams &out) const {}
+    virtual void deserializeFlatParams(const struct OneSynthParams &in) {}
 
     // Prepare a voice's FX matrix before rendering (once per block).
     virtual void prepareFxMatrix(Voice *voice) {}

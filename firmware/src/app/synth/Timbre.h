@@ -230,7 +230,7 @@ public:
     }
 
     bool isUnisonMode() {
-    	return params_.engine1.playMode == PLAY_MODE_UNISON;
+    	return engineImpl_->isUnisonMode();
     }
 
     void stopPlayingNow();

@@ -59,8 +59,8 @@ void Synth::init(SynthState *synthState) {
 
     newTimbre(0);
     for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
-        voices_[k].init();
-        voices_[k].setMsfaState(msfaGetVoiceState(k));
+        voices_[k].init(k);
+        Preenfm3Engine::initVoiceState(k);
     }
     // Here synthState is already initialized
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
@@ -164,7 +164,7 @@ void Synth::allNoteOffQuick(int timbre) {
         // voice number k of timbre
         int n = timbres_[timbre].voiceNumber_[k];
         if (voices_[n].isPlaying()) {
-            voices_[n].noteOffQuick();
+            timbres_[timbre].engineImpl_->noteOffVoiceQuick(&voices_[n]);
         }
     }
 }
@@ -179,7 +179,7 @@ void Synth::allNoteOff(int timbre) {
         // voice number k of timbre
         int n = timbres_[timbre].voiceNumber_[k];
         if (voices_[n].isPlaying() && !voices_[n].isReleased()) {
-            voices_[n].noteOff();
+            timbres_[timbre].engineImpl_->noteOffVoice(&voices_[n]);
         }
     }
 }
@@ -188,13 +188,18 @@ void Synth::allSoundOff(int timbre) {
     for (int k = 0; k < (int) timbres_[timbre].numberOfVoices_; k++) {
         // voice number k of timbre
         int n = timbres_[timbre].voiceNumber_[k];
-        voices_[n].killNow();
+        timbres_[timbre].engineImpl_->killVoice(&voices_[n]);
     }
 }
 
 void Synth::allSoundOff() {
     for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
-        voices_[k].killNow();
+        Timbre *timbre = voices_[k].getCurrentTimbre();
+        if (timbre != nullptr) {
+            timbre->engineImpl_->killVoice(&voices_[k]);
+        } else {
+            voices_[k].resetVoiceState();
+        }
     }
 }
 
@@ -764,6 +769,13 @@ void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patc
 }
 
 void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
+    if (this->timbres_[timbre].getEngine() == SYNTH_ENGINE_MSFA) {
+        bool sharedRow = row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ARPEGGIATOR3
+            || row == ROW_EFFECT1 || row == ROW_EFFECT2;
+        if (!sharedRow) {
+            return;
+        }
+    }
     struct ParameterDisplay *param = &(allParameterRows.row[row]->params[encoder]);
     int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
     float oldValue = ((float*) this->timbres_[timbre].getParamRaw())[index];
@@ -830,6 +842,10 @@ void Synth::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t new
 }
 
 void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int newValue) {
+
+    if (this->timbres_[timbre].getEngine() == SYNTH_ENGINE_MSFA) {
+        return;
+    }
 
     if (whichStepSeq < 0 || whichStepSeq > 1 || step < 0 || step > 15 || newValue < 0 || newValue > 15) {
         return;

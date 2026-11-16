@@ -12,6 +12,7 @@
 
 #include "Common.h"
 #include "TimbreParams.h"
+#include "Pfm3VoiceState.h"
 #include "Lfo.h"
 #include "Osc.h"
 #include "Env.h"
@@ -35,6 +36,7 @@ struct Pfm3TimbreContext {
     float panLeft[6];
     float panRight[6];
     float mixerGain;
+    Pfm3TimbreParams *params;
 };
 
 /*
@@ -51,6 +53,10 @@ public:
     void bindVoice(Voice *voice) override;
     void noteOn(char note, char velocity) override;
     void noteOff(char note) override;
+    void killVoice(Voice *voice) override;
+    void noteOffVoice(Voice *voice) override;
+    void noteOffVoiceQuick(Voice *voice) override;
+    void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, bool alreadyOff) override;
     uint8_t voicesNextBlock() override;
     void prepareBlock() override;
     void glide() override;
@@ -64,6 +70,10 @@ public:
     void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
     void newParamValue(int row, int encoder) override;
     void setParamValue(int index, float value) override;
+    bool isUnisonMode() const override;
+    void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) override;
+    void serializeFlatParams(struct OneSynthParams &out) const override;
+    void deserializeFlatParams(const struct OneSynthParams &in) override;
     void prepareFxMatrix(Voice *voice) override;
     void updateVoiceMatrix(Voice *voice, int note, int velocity) override;
 
@@ -98,17 +108,44 @@ public:
         return pfm3Params_[timbreNumber_];
     }
 
+    static Pfm3VoiceState& voiceState(int slot);
+    static void initVoiceState(int slot);
+
     void refreshContext();
 
 private:
     void initContext();
     void initOscEnv(SynthState *synthState);
     void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
+    void updateAllModulationIndexes(Voice *voice);
+    void prepareMatrixForNewBlock(Voice *voice);
+    void updateAllMixOscsAndPans(Voice *voice);
+    Pfm3VoiceState& pfm3State(Voice *voice);
+    void bindVoiceState(Voice *voice);
+    void glideToNote(Voice *voice, short newNote, float newNoteFrequency);
+    void glideFirstNoteOff(Voice *voice);
+    void glideVoice(Voice *voice);
+    float getNoteRealFrequencyEstimation(Voice *voice, float newNoteFrequency);
+    void noteOnVoice(Voice *voice, short note, float newNoteFrequency, short velocity, uint32_t index, float phase = 0.25f);
+    void noteOnVoiceWithoutPop(Voice *voice, short note, float newNoteFrequency, short velocity, uint32_t index, float phase = 0.25f);
+    void endNoteOrBeginNextOne(Voice *voice);
+    void lfoNoteOn(Voice *voice);
+    void lfoNoteOff(Voice *voice);
+    void afterParamsLoadVoice(Voice *voice);
+    void resetMatrix(Voice *voice);
+    void lfoValueChangeOnVoice(Voice *voice, int currentRow, int encoder, float newValue);
+    void midiClockSongPositionStepOnVoice(Voice *voice, int songPosition, bool recomputeNext);
+    void midiClockContinueOnVoice(Voice *voice, int songPosition);
+    void midiClockStartOnVoice(Voice *voice);
+    void renderVoice(Voice *voice);
 
     Timbre *timbre_;
     Pfm3TimbreContext *context_;
     int timbreNumber_;
     static Pfm3TimbreParams pfm3Params_[NUMBER_OF_TIMBRES];
+    static Pfm3VoiceState pfm3VoiceStates_[MAX_NUMBER_OF_VOICES];
+    static float glidePhaseInc[13];
+    static float mpeBitchBend[6];
     Osc osc_[6];
     Env env_[6];
     int lfoUSed_[NUMBER_OF_LFO];

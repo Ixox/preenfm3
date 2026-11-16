@@ -109,11 +109,11 @@ arp_pattern_t lut_res_arpeggiator_patterns[ ARPEGGIATOR_PRESET_PATTERN_COUNT ]  
 
 uint16_t Timbre::getArpeggiatorPattern() const
 {
-  const int pattern = (int)params_.engineArp2.pattern;
+  const int pattern = (int)sharedParams().engineArp2.pattern;
   if ( pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT )
     return ARP_PATTERN_GETMASK(lut_res_arpeggiator_patterns[ pattern ]);
   else
-    return ARP_PATTERN_GETMASK( params_.engineArpUserPatterns.patterns[ pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT ] );
+    return ARP_PATTERN_GETMASK( sharedParams().engineArpUserPatterns.patterns[ pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT ] );
 }
 
 const uint8_t midi_clock_tick_per_step[17]  = {
@@ -317,7 +317,7 @@ void Timbre::setEngine(SynthEngineType engine) {
 }
 
 void Timbre::noteOn(char note, char velocity) {
-    if (params_.engineArp1.clock) {
+    if (sharedParams().engineArp1.clock) {
         arpeggiatorNoteOn(note, velocity);
     } else {
         engineNoteOn(note, velocity);
@@ -325,7 +325,7 @@ void Timbre::noteOn(char note, char velocity) {
 }
 
 void Timbre::noteOff(char note) {
-    if (params_.engineArp1.clock) {
+    if (sharedParams().engineArp1.clock) {
         arpeggiatorNoteOff(note);
     } else {
         engineNoteOff(note);
@@ -359,7 +359,7 @@ void Timbre::numberOfVoicesChanged(uint8_t newNumberOfVoices) {
 void Timbre::trimActiveVoices(int count) {
     while ((int) numberOfVoices_ > count) {
         int n = voiceNumber_[(int) numberOfVoices_ - 1];
-        voices_[n]->killNow();
+        engineImpl_->killVoice(voices_[n]);
         clearMpeMapping(n);
         if (voicePool_ != nullptr) {
             voicePool_->release(n);
@@ -383,7 +383,7 @@ void Timbre::removeActiveVoice(int voiceIndex) {
 void Timbre::clearActiveVoices() {
     for (int k = 0; k < (int) numberOfVoices_; k++) {
         int n = voiceNumber_[k];
-        voices_[n]->killNow();
+        engineImpl_->killVoice(voices_[n]);
         if (voicePool_ != nullptr) {
             voicePool_->release(n);
         }
@@ -492,6 +492,7 @@ int Timbre::reuseVoice(int voiceIndex) {
 
     if (!voice->isPlaying() || !bothPfm3) {
         if (oldTimbre != nullptr) {
+            oldTimbre->engineImpl_->killVoice(voice);
             oldTimbre->removeActiveVoice(voiceIndex);
         }
         voicePool_->claim(voiceIndex, timbreNumber_);
@@ -546,7 +547,7 @@ void Timbre::stopPlayingNow() {
     for (int k = 0; k < (int) numberOfVoices_; k++) {
         int n = voiceNumber_[k];
         if (n != -1) {
-            voices_[n]->killNow();
+            engineImpl_->killVoice(voices_[n]);
             if (voicePool_ != nullptr) {
                 voicePool_->release(n);
             }
@@ -566,7 +567,7 @@ void Timbre::setHoldPedal(int value) {
             // voice number k of timbre
             int n = voiceNumber_[k];
             if (voices_[n]->isHoldedByPedal()) {
-                voices_[n]->noteOff();
+                engineImpl_->noteOffVoice(voices_[n]);
             }
         }
         arpeggiatorSetHoldPedal(0);
@@ -588,7 +589,7 @@ void Timbre::setArpeggiatorClock(float clockValue) {
         note_stack_.Clear();
     }
     if (clockValue == CLOCK_INTERNAL) {
-        setNewBPMValue(params_.engineArp1.BPM);
+        setNewBPMValue(sharedParams().engineArp1.BPM);
     }
     if (clockValue == CLOCK_EXTERNAL) {
         // Let's consider we're running
@@ -599,7 +600,7 @@ void Timbre::setArpeggiatorClock(float clockValue) {
 void Timbre::updateArpegiatorInternalClock() {
 
     // Apeggiator clock : internal
-    if (params_.engineArp1.clock == CLOCK_INTERNAL) {
+    if (sharedParams().engineArp1.clock == CLOCK_INTERNAL) {
         arpegiatorStep_ += 1.0f;
         if (unlikely((arpegiatorStep_) > ticksEveryNCalls_)) {
             arpegiatorStep_ -= ticksEveyNCallsInteger_;
@@ -640,8 +641,9 @@ uint8_t Timbre::voicesNextBlock() {
 }
 
 void Timbre::fxAfterBlock() {
+    TimbreSharedParams &shared = sharedParams();
 
-	int fx2Type = params_.effect2.type;
+	int fx2Type = shared.effect2.type;
 
     float matrixFilterFrequency = 0.0f;
     float matrixFilterParam2 = 0.0f;
@@ -659,7 +661,7 @@ void Timbre::fxAfterBlock() {
         matrixFilterAmp       = engineImpl_->getMatrixDestination(FILTER2_AMP);
         matrixFilterPan       = clamp( engineImpl_->getMatrixDestination(ALL_PAN), -1, 1);
     }
-    float gainTmp               = clamp(this->params_.effect2.param3 + matrixFilterAmp, 0, 16);
+    float gainTmp               = clamp(shared.effect2.param3 + matrixFilterAmp, 0, 16);
 
     if(prevFx2Type != fx2Type) {
         //anti click on fx change
@@ -682,7 +684,7 @@ void Timbre::fxAfterBlock() {
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
-            param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
+            param1S = 0.02f * shared.effect2.param1 + .98f * param1S;
             float speed = clamp(param1S * param1S * param1S, 0, 1);
 
             float lfo1Inc = clamp(hb8_y1 * speed  * 0.015f, -1, 1);
@@ -704,7 +706,7 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * INV_BLOCK_SIZE;
 
             float currentFeedback = feedback;
-            feedback = clamp( sqrt3(fabsf(this->params_.effect2.param2 + matrixFilterParam2)), -1, 1) * 0.95f;
+            feedback = clamp( sqrt3(fabsf(shared.effect2.param2 + matrixFilterParam2)), -1, 1) * 0.95f;
             float feedbackInc = (feedback - currentFeedback) * INV_BLOCK_SIZE;
 
             float *sp  = sampleBlock_;
@@ -809,11 +811,11 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.02f * this->params_.effect2.param1 + .98f * param1S;
+            param1S = 0.02f * shared.effect2.param1 + .98f * param1S;
             float speed = clamp(param1S * param1S + matrixFilterFrequency, 0, 1);
             float speedMod = speed * 4;
             
-            param2S = 0.01f * (this->params_.effect2.param2) + .99f * param2S;
+            param2S = 0.01f * (shared.effect2.param2) + .99f * param2S;
             float width = param2S * 0.6f;
 
             float lfo1Inc = clamp(hb8_y1 * 0.0007f * speedMod, -1.f, 1.f);
@@ -938,7 +940,7 @@ void Timbre::fxAfterBlock() {
             float extraAmp = clamp(mixerGain_ - 1, 0, 1);
             wet += extraAmp;
 
-            float param1 = this->params_.effect2.param1;
+            float param1 = shared.effect2.param1;
             float speed = clamp(param1 * param1 * 0.5f, 0, 1);
 
             float lfo1Inc = clamp(hb8_y1 * speed  * 0.01f, -1, 1);
@@ -970,7 +972,7 @@ void Timbre::fxAfterBlock() {
             float delaySizeInc1 = (delaySize1 - currentDelaySize1) * INV_BLOCK_SIZE;
             float delaySizeInc2 = (delaySize2 - currentDelaySize2) * INV_BLOCK_SIZE;
 
-            param2S = 0.1f * (this->params_.effect2.param2 + matrixFilterParam2) + .9f * param2S;
+            param2S = 0.1f * (shared.effect2.param2 + matrixFilterParam2) + .9f * param2S;
                         
             const float f = 0.82f;
             const float f2 = 0.2f;
@@ -1057,8 +1059,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.1f * this->params_.effect2.param1 + .9f * param1S;
-            param2S = 0.1f * (this->params_.effect2.param2 + matrixFilterParam2) + .9f * param2S;
+            param1S = 0.1f * shared.effect2.param1 + .9f * param1S;
+            param2S = 0.1f * (shared.effect2.param2 + matrixFilterParam2) + .9f * param2S;
 
             float currentShift = shift;
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
@@ -1174,8 +1176,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * this->params_.effect2.param1 + .995f * param1S;
-            param2S = 0.005f * this->params_.effect2.param2 + .995f * param2S;
+            param1S = 0.005f * shared.effect2.param1 + .995f * param1S;
+            param2S = 0.005f * shared.effect2.param2 + .995f * param2S;
 
             float currentShift = shift;
             shift = clamp(fabsf(param1S * 2 + matrixFilterFrequency * 0.5f), 0, 16);
@@ -1271,7 +1273,7 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            float param1 = this->params_.effect2.param1;
+            float param1 = shared.effect2.param1;
     
             // mix between freq shift + and - :
             int param255 = 0;
@@ -1301,7 +1303,7 @@ void Timbre::fxAfterBlock() {
             // feedback
             float feedbackZeroZone = clamp(0.6f + (quadrant * 6), 0, 1);
 
-            float feedbackParam = clamp(this->params_.effect2.param2 + matrixFilterParam2, 0, 1) * 0.8f;
+            float feedbackParam = clamp(shared.effect2.param2 + matrixFilterParam2, 0, 1) * 0.8f;
 
             feedback = clamp(feedback, 0, 1);
 
@@ -1452,8 +1454,8 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.02f * fabsf(this->params_.effect2.param1 + matrixFilterFrequency) + .98f * param1S;
-            param2S = 0.02f * clamp(this->params_.effect2.param2 + matrixFilterParam2, 0.f, 1.f) + .98f * param2S;
+            param1S = 0.02f * fabsf(shared.effect2.param1 + matrixFilterFrequency) + .98f * param1S;
+            param2S = 0.02f * clamp(shared.effect2.param2 + matrixFilterParam2, 0.f, 1.f) + .98f * param2S;
 
             float detune = param1S * param1S * 0.03125f;
 
@@ -1576,9 +1578,9 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * (this->params_.effect2.param1) + .995f * param1S;
+            param1S = 0.005f * (shared.effect2.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.02f * (matrixFilterFrequency * matrixFilterFrequency) + .98f * matrixFilterFrequencyS;
-            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
+            param2S = 0.05f * (shared.effect2.param2 + matrixFilterParam2) + .95f * param2S;
 
             param2S = clamp(param2S, 0, 1.f);
             float param2Square = param2S * param2S;
@@ -1698,9 +1700,9 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * (this->params_.effect2.param1) + .995f * param1S;
+            param1S = 0.005f * (shared.effect2.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.02f * (matrixFilterFrequency * matrixFilterFrequency) + .98f * matrixFilterFrequencyS;
-            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
+            param2S = 0.05f * (shared.effect2.param2 + matrixFilterParam2) + .95f * param2S;
             
             param2S = clamp(param2S, 0, 1.f);
             float param2Square = param2S * param2S;
@@ -1845,9 +1847,9 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            param1S = 0.005f * (this->params_.effect2.param1) + .995f * param1S;
+            param1S = 0.005f * (shared.effect2.param1) + .995f * param1S;
             matrixFilterFrequencyS = 0.01f * (matrixFilterFrequency) + .99f * matrixFilterFrequencyS;
-            param2S = 0.05f * (this->params_.effect2.param2 + matrixFilterParam2) + .95f * param2S;
+            param2S = 0.05f * (shared.effect2.param2 + matrixFilterParam2) + .95f * param2S;
 
             param1S = clamp(param1S, 0, 1);
             param2S = clamp(param2S, 0, 1);
@@ -2027,7 +2029,7 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
+            float param2 = clamp( fabsf(shared.effect2.param2 + matrixFilterParam2), 0, 1);
             param2 *= param2;
 
             float lock = ((param2 > 0.99f) ? 0.f : 1.f);
@@ -2036,7 +2038,7 @@ void Timbre::fxAfterBlock() {
 
             matrixFilterFrequency *= matrixFilterFrequency;
             matrixFilterFrequency *= 0.125f;
-            param1S = 0.05f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
+            param1S = 0.05f * fabs(shared.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
 
             if(lockA >= 0.9999f) {
                 param2S = 0.05f * param2 + 0.95f * param2S;
@@ -2206,20 +2208,20 @@ void Timbre::fxAfterBlock() {
             float wetL = wet * (1 + matrixFilterPan);
             float wetR = wet * (1 - matrixFilterPan);
 
-            float param2 = clamp( fabsf(this->params_.effect2.param2 + matrixFilterParam2), 0, 1);
+            float param2 = clamp( fabsf(shared.effect2.param2 + matrixFilterParam2), 0, 1);
             param2 *= param2;
             matrixFilterFrequency *= 0.125f;
-            param1S = 0.05f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
+            param1S = 0.05f * fabs(shared.effect2.param1 + matrixFilterFrequency) + .95f * param1S;
             
             float lock = ((param2 > 0.99f)? 0.f : 1.f);
             lockA = lockA * 0.98f + lock * 0.02f;
             lockB = (1 - lockA);
 
             if(lockA >= 0.9999f) {
-                param1S = 0.0005f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
+                param1S = 0.0005f * fabs(shared.effect2.param1 + matrixFilterFrequency) + .9995f * param1S;
                 param2S = 0.05f * param2 + 0.95f * param2S;
             } else {
-                param1S = 0.005f * fabs(this->params_.effect2.param1 + matrixFilterFrequency) + .995f * param1S;
+                param1S = 0.005f * fabs(shared.effect2.param1 + matrixFilterFrequency) + .995f * param1S;
             }
 
             const float sampleRateDivide = 4;
@@ -2413,7 +2415,7 @@ void Timbre::voicesToTimbre(float volumeGain) {
     int numberOfVoicesToCopy = numberOfVoices_;
 
     // If unison : all voices have already been added to the first one
-    if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
+    if (unlikely(isUnisonMode())) {
         numberOfVoicesToCopy = 1;
     }
 
@@ -2471,8 +2473,8 @@ void Timbre::resetArpeggiator() {
     // Reset Arpeggiator
     FlushQueue();
     note_stack_.Clear();
-    setArpeggiatorClock(params_.engineArp1.clock);
-    setLatchMode(params_.engineArp2.latche);
+    setArpeggiatorClock(sharedParams().engineArp1.clock);
+    setLatchMode(sharedParams().engineArp2.latche);
 }
 
 void Timbre::setParamValue(int index, float value) {
@@ -2495,9 +2497,9 @@ void Timbre::syncArpUserPatterns() {
 
 void Timbre::syncLfoSteps(int whichStepSeq) {
     if (whichStepSeq == 0) {
-        pfm3Engine_.pfm3Params().lfoSteps1 = params_.lfoSteps1;
+        engineImpl_->setStepSequencerSteps(0, params_.lfoSteps1);
     } else {
-        pfm3Engine_.pfm3Params().lfoSteps2 = params_.lfoSteps2;
+        engineImpl_->setStepSequencerSteps(1, params_.lfoSteps2);
     }
 }
 
@@ -2560,65 +2562,7 @@ void Timbre::setSharedParams(const TimbreSharedParams &shared) {
 }
 
 void Timbre::serializeParams(struct OneSynthParams &out) const {
-    const Pfm3TimbreParams &pfm3 = pfm3Engine_.pfm3Params();
-
-    out.engine1 = pfm3.engine1;
-    out.engineIm1 = pfm3.engineIm1;
-    out.engineIm2 = pfm3.engineIm2;
-    out.engineIm3 = pfm3.engineIm3;
-    out.engineMix1 = pfm3.engineMix1;
-    out.engineMix2 = pfm3.engineMix2;
-    out.engineMix3 = pfm3.engineMix3;
-    out.osc1 = pfm3.osc1;
-    out.osc2 = pfm3.osc2;
-    out.osc3 = pfm3.osc3;
-    out.osc4 = pfm3.osc4;
-    out.osc5 = pfm3.osc5;
-    out.osc6 = pfm3.osc6;
-    out.env1Time = pfm3.env1Time;
-    out.env2Time = pfm3.env2Time;
-    out.env3Time = pfm3.env3Time;
-    out.env4Time = pfm3.env4Time;
-    out.env5Time = pfm3.env5Time;
-    out.env6Time = pfm3.env6Time;
-    out.env1Level = pfm3.env1Level;
-    out.env2Level = pfm3.env2Level;
-    out.env3Level = pfm3.env3Level;
-    out.env4Level = pfm3.env4Level;
-    out.env5Level = pfm3.env5Level;
-    out.env6Level = pfm3.env6Level;
-    out.matrixRowState1 = pfm3.matrixRowState1;
-    out.matrixRowState2 = pfm3.matrixRowState2;
-    out.matrixRowState3 = pfm3.matrixRowState3;
-    out.matrixRowState4 = pfm3.matrixRowState4;
-    out.matrixRowState5 = pfm3.matrixRowState5;
-    out.matrixRowState6 = pfm3.matrixRowState6;
-    out.matrixRowState7 = pfm3.matrixRowState7;
-    out.matrixRowState8 = pfm3.matrixRowState8;
-    out.matrixRowState9 = pfm3.matrixRowState9;
-    out.matrixRowState10 = pfm3.matrixRowState10;
-    out.matrixRowState11 = pfm3.matrixRowState11;
-    out.matrixRowState12 = pfm3.matrixRowState12;
-    out.performance1 = pfm3.performance1;
-    out.lfoOsc1 = pfm3.lfoOsc1;
-    out.lfoOsc2 = pfm3.lfoOsc2;
-    out.lfoOsc3 = pfm3.lfoOsc3;
-    out.lfoPhases = pfm3.lfoPhases;
-    out.lfoEnv1 = pfm3.lfoEnv1;
-    out.lfoEnv2 = pfm3.lfoEnv2;
-    out.lfoSeq1 = pfm3.lfoSeq1;
-    out.lfoSeq2 = pfm3.lfoSeq2;
-    out.midiNote1Curve = pfm3.midiNote1Curve;
-    out.midiNote2Curve = pfm3.midiNote2Curve;
-    out.lfoSteps1 = pfm3.lfoSteps1;
-    out.lfoSteps2 = pfm3.lfoSteps2;
-    out.engine2 = pfm3.engine2;
-    out.env1Curve = pfm3.env1Curve;
-    out.env2Curve = pfm3.env2Curve;
-    out.env3Curve = pfm3.env3Curve;
-    out.env4Curve = pfm3.env4Curve;
-    out.env5Curve = pfm3.env5Curve;
-    out.env6Curve = pfm3.env6Curve;
+    engineImpl_->serializeFlatParams(out);
 
     out.engineArp1 = sharedParams().engineArp1;
     out.engineArp2 = sharedParams().engineArp2;
@@ -2629,65 +2573,7 @@ void Timbre::serializeParams(struct OneSynthParams &out) const {
 }
 
 void Timbre::deserializeParams(const struct OneSynthParams &in) {
-    Pfm3TimbreParams &pfm3 = pfm3Engine_.pfm3Params();
-
-    pfm3.engine1 = in.engine1;
-    pfm3.engineIm1 = in.engineIm1;
-    pfm3.engineIm2 = in.engineIm2;
-    pfm3.engineIm3 = in.engineIm3;
-    pfm3.engineMix1 = in.engineMix1;
-    pfm3.engineMix2 = in.engineMix2;
-    pfm3.engineMix3 = in.engineMix3;
-    pfm3.osc1 = in.osc1;
-    pfm3.osc2 = in.osc2;
-    pfm3.osc3 = in.osc3;
-    pfm3.osc4 = in.osc4;
-    pfm3.osc5 = in.osc5;
-    pfm3.osc6 = in.osc6;
-    pfm3.env1Time = in.env1Time;
-    pfm3.env2Time = in.env2Time;
-    pfm3.env3Time = in.env3Time;
-    pfm3.env4Time = in.env4Time;
-    pfm3.env5Time = in.env5Time;
-    pfm3.env6Time = in.env6Time;
-    pfm3.env1Level = in.env1Level;
-    pfm3.env2Level = in.env2Level;
-    pfm3.env3Level = in.env3Level;
-    pfm3.env4Level = in.env4Level;
-    pfm3.env5Level = in.env5Level;
-    pfm3.env6Level = in.env6Level;
-    pfm3.matrixRowState1 = in.matrixRowState1;
-    pfm3.matrixRowState2 = in.matrixRowState2;
-    pfm3.matrixRowState3 = in.matrixRowState3;
-    pfm3.matrixRowState4 = in.matrixRowState4;
-    pfm3.matrixRowState5 = in.matrixRowState5;
-    pfm3.matrixRowState6 = in.matrixRowState6;
-    pfm3.matrixRowState7 = in.matrixRowState7;
-    pfm3.matrixRowState8 = in.matrixRowState8;
-    pfm3.matrixRowState9 = in.matrixRowState9;
-    pfm3.matrixRowState10 = in.matrixRowState10;
-    pfm3.matrixRowState11 = in.matrixRowState11;
-    pfm3.matrixRowState12 = in.matrixRowState12;
-    pfm3.performance1 = in.performance1;
-    pfm3.lfoOsc1 = in.lfoOsc1;
-    pfm3.lfoOsc2 = in.lfoOsc2;
-    pfm3.lfoOsc3 = in.lfoOsc3;
-    pfm3.lfoPhases = in.lfoPhases;
-    pfm3.lfoEnv1 = in.lfoEnv1;
-    pfm3.lfoEnv2 = in.lfoEnv2;
-    pfm3.lfoSeq1 = in.lfoSeq1;
-    pfm3.lfoSeq2 = in.lfoSeq2;
-    pfm3.midiNote1Curve = in.midiNote1Curve;
-    pfm3.midiNote2Curve = in.midiNote2Curve;
-    pfm3.lfoSteps1 = in.lfoSteps1;
-    pfm3.lfoSteps2 = in.lfoSteps2;
-    pfm3.engine2 = in.engine2;
-    pfm3.env1Curve = in.env1Curve;
-    pfm3.env2Curve = in.env2Curve;
-    pfm3.env3Curve = in.env3Curve;
-    pfm3.env4Curve = in.env4Curve;
-    pfm3.env5Curve = in.env5Curve;
-    pfm3.env6Curve = in.env6Curve;
+    engineImpl_->deserializeFlatParams(in);
 
     sharedParams().engineArp1 = in.engineArp1;
     sharedParams().engineArp2 = in.engineArp2;
@@ -2748,7 +2634,7 @@ void Timbre::setNewEffectParam(int encoder) {
 
 void Timbre::arpeggiatorNoteOn(char note, char velocity) {
     // CLOCK_MODE_INTERNAL
-    if (params_.engineArp1.clock == CLOCK_INTERNAL) {
+    if (sharedParams().engineArp1.clock == CLOCK_INTERNAL) {
         if (idle_ticks_ >= 96 || !running_) {
             Start();
         }
@@ -2776,26 +2662,26 @@ void Timbre::arpeggiatorNoteOff(char note) {
 }
 
 void Timbre::OnMidiContinue() {
-    if (params_.engineArp1.clock == CLOCK_EXTERNAL) {
+    if (sharedParams().engineArp1.clock == CLOCK_EXTERNAL) {
         running_ = 1;
     }
 }
 
 void Timbre::OnMidiStart() {
-    if (params_.engineArp1.clock == CLOCK_EXTERNAL) {
+    if (sharedParams().engineArp1.clock == CLOCK_EXTERNAL) {
         Start();
     }
 }
 
 void Timbre::OnMidiStop() {
-    if (params_.engineArp1.clock == CLOCK_EXTERNAL) {
+    if (sharedParams().engineArp1.clock == CLOCK_EXTERNAL) {
         running_ = 0;
         FlushQueue();
     }
 }
 
 void Timbre::OnMidiClock() {
-    if (params_.engineArp1.clock == CLOCK_EXTERNAL && running_) {
+    if (sharedParams().engineArp1.clock == CLOCK_EXTERNAL && running_) {
         Tick();
     }
 }
@@ -2810,7 +2696,7 @@ void Timbre::SendNote(uint8_t note, uint8_t velocity) {
 
     // Send a note on and schedule a note off later.
     engineNoteOn(note, velocity);
-    event_scheduler_.Schedule(note, 0, midi_clock_tick_per_step[(int) params_.engineArp2.duration] - 1, 0);
+    event_scheduler_.Schedule(note, 0, midi_clock_tick_per_step[(int) sharedParams().engineArp2.duration] - 1, 0);
 }
 
 void Timbre::SendLater(uint8_t note, uint8_t velocity, uint8_t when, uint8_t tag) {
@@ -2851,7 +2737,7 @@ void Timbre::Tick() {
     ++idle_ticks_;
     if (idle_ticks_ >= 96) {
         idle_ticks_ = 96;
-        if (params_.engineArp1.clock == CLOCK_INTERNAL) {
+        if (sharedParams().engineArp1.clock == CLOCK_INTERNAL) {
             running_ = 0;
             FlushQueue();
         }
@@ -2859,12 +2745,12 @@ void Timbre::Tick() {
 
     SendScheduledNotes();
 
-    if (tick_ >= midi_clock_tick_per_step[(int) params_.engineArp2.division]) {
+    if (tick_ >= midi_clock_tick_per_step[(int) sharedParams().engineArp2.division]) {
         tick_ = 0;
         uint16_t pattern = getArpeggiatorPattern();
         uint8_t has_arpeggiator_note = (bitmask_ & pattern) ? 255 : 0;
         const int num_notes = note_stack_.size();
-        const int direction = params_.engineArp1.direction;
+        const int direction = sharedParams().engineArp1.direction;
 
         if (num_notes && has_arpeggiator_note) {
             if (ARPEGGIO_DIRECTION_CHORD != direction) {
@@ -2917,14 +2803,14 @@ void Timbre::StepArpeggio() {
         return;
     }
 
-    int direction = params_.engineArp1.direction;
+    int direction = sharedParams().engineArp1.direction;
     uint8_t num_notes = note_stack_.size();
     if (direction == ARPEGGIO_DIRECTION_RANDOM) {
         uint8_t random_byte = *(uint8_t*) noise;
         current_octave_ = random_byte & 0xf;
         current_step_ = (random_byte & 0xf0) >> 4;
-        while (current_octave_ >= params_.engineArp1.octave) {
-            current_octave_ -= params_.engineArp1.octave;
+        while (current_octave_ >= sharedParams().engineArp1.octave) {
+            current_octave_ -= sharedParams().engineArp1.octave;
         }
         while (current_step_ >= num_notes) {
             current_step_ -= num_notes;
@@ -2948,11 +2834,11 @@ void Timbre::StepArpeggio() {
 
         if (trigger_change) {
             current_octave_ += current_direction_;
-            if (current_octave_ >= params_.engineArp1.octave || current_octave_ < 0) {
+            if (current_octave_ >= sharedParams().engineArp1.octave || current_octave_ < 0) {
                 if (__canChangeDir(direction)) {
                     current_direction_ = -current_direction_;
                     StartArpeggio();
-                    if (num_notes > 1 || params_.engineArp1.octave > 1) {
+                    if (num_notes > 1 || sharedParams().engineArp1.octave > 1) {
                         StepArpeggio();
                     }
                 } else {
@@ -2970,7 +2856,7 @@ void Timbre::StartArpeggio() {
     if (current_direction_ == 1) {
         current_octave_ = 0;
     } else {
-        current_octave_ = params_.engineArp1.octave - 1;
+        current_octave_ = sharedParams().engineArp1.octave - 1;
     }
 }
 
@@ -2978,9 +2864,9 @@ void Timbre::Start() {
     bitmask_ = 1;
     recording_ = 0;
     running_ = 1;
-    tick_ = midi_clock_tick_per_step[(int) params_.engineArp2.division] - 1;
+    tick_ = midi_clock_tick_per_step[(int) sharedParams().engineArp2.division] - 1;
     current_octave_ = 127;
-    current_direction_ = __getDirection(params_.engineArp1.direction);
+    current_direction_ = __getDirection(sharedParams().engineArp1.direction);
 }
 
 void Timbre::arpeggiatorSetHoldPedal(uint8_t value) {

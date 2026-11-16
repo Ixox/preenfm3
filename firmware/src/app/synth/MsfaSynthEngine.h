@@ -30,8 +30,12 @@ public:
     void init(Timbre *timbre, SynthState *synthState) override;
     void afterNewParamsLoad() override;
     void bindVoice(Voice *voice) override;
+    static void keyUp(Voice *voice);
     void noteOn(char note, char velocity) override;
     void noteOff(char note) override;
+    void killVoice(Voice *voice) override;
+    void noteOffVoice(Voice *voice) override;
+    void noteOffVoiceQuick(Voice *voice) override;
     uint8_t voicesNextBlock() override;
     void prepareBlock() override {}
     void glide() override {}
@@ -65,6 +69,10 @@ public:
     bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) override;
 
 private:
+    void startVoice(Voice *voice, const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index);
+    void updateVoiceProgram(Voice *voice, const uint8_t *program);
+    void renderVoice(Voice *voice);
+
     Timbre *timbre_;
     MsfaTimbreState *msfaState_;
     int timbreNumber_;

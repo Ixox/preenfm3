@@ -22,7 +22,7 @@
 
 /*
  * Per-voice state owned by the PFM3 engine.
- * Stored inline in Voice (DTCMRAM), as the PFM3 DSP state always was.
+ * One instance per global voice slot, owned by Preenfm3Engine (DTCMRAM).
  */
 struct Pfm3VoiceState {
     Matrix matrix;
