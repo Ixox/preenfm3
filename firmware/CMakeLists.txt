@@ -23,7 +23,8 @@ target_include_directories(preenfm3_firmware PRIVATE
     ${FIRMWARE_DIR}/src/app/midi
     ${FIRMWARE_DIR}/src/app/storage
     ${FIRMWARE_DIR}/src/app/synth
-    ${FIRMWARE_DIR}/src/app/synth/SimpleEffect
+    ${FIRMWARE_DIR}/src/app/synth/compressor
+    ${FIRMWARE_DIR}/src/app/engine/pfm3
     ${FIRMWARE_DIR}/src/app/ui
     ${FIRMWARE_DIR}/src/platform/clock
     ${FIRMWARE_DIR}/src/platform/cubemx

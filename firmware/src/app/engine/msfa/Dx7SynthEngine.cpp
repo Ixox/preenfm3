@@ -18,7 +18,6 @@
 #include "Timbre.h"
 #include "Voice.h"
 #include "msfa_init.h"
-#include "waves.h"
 
 uint8_t Dx7SynthEngine::packedPatch_[NUMBER_OF_TIMBRES][DX7_PACKED_PATCH_SIZE] __attribute__((section(".ram_d1")));
 uint8_t Dx7SynthEngine::program_[NUMBER_OF_TIMBRES][DX7_PROGRAM_SIZE] __attribute__((section(".ram_d1")));

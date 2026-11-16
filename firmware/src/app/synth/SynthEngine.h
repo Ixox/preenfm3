@@ -14,7 +14,7 @@
 
 #include "Common.h"
 #include "PersistenceMagic.h"
-#include "Pfm3Preset.h"
+#include "engine/pfm3/Pfm3Preset.h"
 #include "TimbreParams.h"
 
 class Timbre;

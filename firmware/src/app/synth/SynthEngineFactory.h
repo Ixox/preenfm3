@@ -11,9 +11,9 @@
 #define SYNTH_ENGINE_FACTORY_H_
 
 #include "Common.h"
-#include "Dx7SynthEngine.h"
-#include "Preenfm3Engine.h"
-#include "byos/ByosEngine.h"
+#include "engine/msfa/Dx7SynthEngine.h"
+#include "engine/pfm3/Preenfm3Engine.h"
+#include "engine/byos/ByosEngine.h"
 
 class Timbre;
 class SynthState;

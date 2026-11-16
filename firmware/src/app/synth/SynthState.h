@@ -22,7 +22,7 @@
 #include "EncodersListener.h"
 #include "Menu.h"
 #include "MixerState.h"
-#include "Pfm3Preset.h"
+#include "engine/pfm3/Pfm3Preset.h"
 #include "Storage.h"
 #include "SynthMenuListener.h"
 #include "SynthParamListener.h"

@@ -20,8 +20,8 @@
 
 #include "Common.h"
 #include "FileSystemUtils.h"
-#include "Pfm3FlashFormat.h"
-#include "Pfm3Preset.h"
+#include "engine/pfm3/Pfm3FlashFormat.h"
+#include "engine/pfm3/Pfm3Preset.h"
 #include "fatfs.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))

@@ -17,6 +17,7 @@
 
 #include "ScalaFile.h"
 #include "MixerState.h"
+#include "Common.h"
 #include <math.h>
 
 // store scalaScaleFrequencies in ITCMRAM
@@ -24,7 +25,6 @@ __attribute__((section(".instruction_ram"))) float scalaFrequency[6][128];
 __attribute__((section(".ram_d2b"))) struct PFM3File scalaScaleFileAlloc[NUMBEROFSCALASCALEFILES];
 
 extern char lineBuffer[512];
-extern float diatonicScaleFrequency[];
 
 ScalaFile::ScalaFile() {
     this->numberOfFilesMax_ = NUMBEROFSCALASCALEFILES;

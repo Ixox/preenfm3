@@ -35,7 +35,8 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | Path | Contents |
 |------|----------|
 | `include/` | `preenfm3.h`, `version.h` (firmware version string) |
-| `src/app/synth/` | Sound engine and per-voice DSP |
+| `src/app/engine/` | PFM3, DX7/MSFA and BYOS engines and their editors |
+| `src/app/synth/` | Shared synth host, voice/timbre, FX bus and compressor |
 | `src/app/ui/` | Display screens and the firmware TFT extensions |
 | `src/app/midi/` | MIDI decoder and sequencer |
 | `src/app/storage/` | Presets, mixer banks, sequences, config, DX7 sysex, user waves |
@@ -46,27 +47,28 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `preenfm3.ioc` | CubeMX project file (reference) |
 | `CMakeLists.txt` | Firmware target, include paths and optimisation flags |
 
+### `firmware/src/app/engine/`
+
+| File(s) | Contents |
+|---------|----------|
+| `pfm3/` | PFM3 engine: `Preenfm3Engine`, `Pfm3*`, `Osc`, `Env`, `Lfo*`, `Matrix`, `Presets`, `EditorPfm3` |
+| `msfa/` | DX7 (Dexed/MSFA) engine: `Dx7Engine`, `Dx7SynthEngine`, `Dx7Params`, `Dx7ControlChange`, `EditorDx7` |
+| `byos/` | Example third engine: `ByosEngine`, `EditorByos`, params and README |
+
 ### `firmware/src/app/synth/`
 
 | File(s) | Contents |
 |---------|----------|
 | `Synth.*` | Top-level render: `buildNewSampleBlock()`, timbre mix, output dispatch |
-| `Timbre.*` | Per-timbre voice allocation, arpeggiator, FX2, DX7 glue |
-| `Voice.*` | Per-voice render for all PFM3 algorithms, FX1 |
-| `Osc.*` | Wavetable oscillator, wave tables, per-note state |
-| `Env.*` | PFM3 ADSR envelopes |
-| `Lfo*.{h,cpp}` | LFO oscillator, envelope, step sequencer |
-| `Matrix.*` | Modulation matrix |
-| `MixerState.*`, `SynthState.*`, `Presets.*`, `Common.*` | Shared state, presets, DX7/algorithm constants |
-| `Pfm3Params.h`, `Pfm3Preset.h` | PFM3 parameter structs and on-flash preset layout |
-| `MidiControlChange.h`, `Pfm3ControlChange.h`, `Dx7ControlChange.h` | Shared MIDI CC numbers and engine-specific CC numbers |
-| `SharedParams.h` | Timbre-wide Arp/FX parameter ids used by MIDI |
-| `Pfm3Midi.*` | Legacy PFM3 NRPN index ↔ flat parameter index translation |
-| `Pfm3ParameterRows.*` | PFM3 parameter display metadata indexed by row |
+| `Timbre.*` | Per-timbre voice allocation, arpeggiator, FX2, engine glue |
+| `Voice.*` | Per-voice host and voice state |
+| `VoicePool.*` | Voice pool and allocation |
+| `MixerState.*`, `SynthState.*`, `Common.*` | Shared state, presets and common constants |
+| `waves.*` | Wavetable data used by the oscillators |
 | `FxBus.*` | Reverb / FX bus |
-| `SimpleEffect/` | Compressor, simple envelope/gain helpers |
-| `Dx7Engine.*` | Bridge to the DX7 (Dexed) engine |
-| `byos/` | Example third engine: `ByosEngine`, `EditorByos`, params and README |
+| `compressor/` | Compressor, simple envelope/gain helpers |
+| `SynthEngine.*`, `SynthEngineFactory.*`, `TimbreParams.h` | Engine interface, factory and shared storage contract |
+| `MidiControlChange.h`, `SharedParams.h`, `PersistenceMagic.h` | Shared MIDI/param/persistence helpers |
 | `SynthParamListener.*`, `SynthMenuListener.*`, `SynthStateAware.*` | Listener interfaces |
 
 ### `firmware/src/app/ui/`
@@ -78,8 +80,6 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `ScreenEditor.*` | Common editor entry point, page routing and dispatch |
 | `EditorEngine.*` | Editor interface and shared page/menu helpers |
 | `EditorParamPage.*` | Generic menu/encoder page mechanics over `Pfm3Preset` |
-| `EditorPfm3.*` | PFM3 engine pages |
-| `EditorDx7.*` | DX7 engine pages |
 | `EditorCommon.*` | Shared Arp/Fx page |
 | `ScreenMenu.*` | Menu/file browser |
 | `ScreenSequencer.*` | Sequencer screen |

@@ -17,11 +17,11 @@
 
 #include "ScreenEditor.h"
 #include "EditorCommon.h"
-#include "EditorDx7.h"
-#include "EditorPfm3.h"
+#include "engine/msfa/EditorDx7.h"
+#include "engine/pfm3/EditorPfm3.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
-#include "byos/EditorByos.h"
+#include "engine/byos/EditorByos.h"
 #include "preenfm3.h"
 #include <FirmwareTftDisplay.h>
 #include <string.h>

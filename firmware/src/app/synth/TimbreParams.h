@@ -13,8 +13,8 @@
 #include <stddef.h>
 
 #include "Common.h"
-#include "Pfm3Params.h"
-#include "Pfm3Preset.h"
+#include "engine/pfm3/Pfm3Params.h"
+#include "engine/pfm3/Pfm3Preset.h"
 
 /*
  * Runtime parameter split (migration step 6).

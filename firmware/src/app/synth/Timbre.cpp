@@ -17,7 +17,7 @@
 
 #include "Timbre.h"
 #include "MidiControlChange.h"
-#include "Pfm3ParameterRows.h"
+#include "engine/pfm3/Pfm3ParameterRows.h"
 #include "SynthEngineFactory.h"
 #include "SynthState.h"
 #include "Voice.h"

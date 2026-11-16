@@ -18,7 +18,7 @@
  */
 
 #include "EditorParamPage.h"
-#include "Pfm3ParameterRows.h"
+#include "engine/pfm3/Pfm3ParameterRows.h"
 #include "ScreenEditor.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"

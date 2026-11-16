@@ -267,6 +267,8 @@ enum {
 extern struct AlgoInformation algoInformation[];
 extern const uint8_t* allAlgos[];
 
+extern float diatonicScaleFrequency[];
+
 #define OPERATOR_CARRIER   1
 #define OPERATOR_MODULATOR 2
 extern int algoOpInformation[][NUMBER_OF_OPERATORS];

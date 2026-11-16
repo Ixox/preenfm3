@@ -20,7 +20,7 @@
 
 #include "Common.h"
 #include "MixerState.h"
-#include "Pfm3Preset.h"
+#include "engine/pfm3/Pfm3Preset.h"
 #include "SharedParams.h"
 #include "SynthEngine.h"
 #include "TimbreParams.h"

@@ -2,7 +2,7 @@
 
 This is the short checklist for adding an engine beside PFM3 and DX7.
 The examples use **NewEngine**. A complete working third engine lives in
-`firmware/src/app/synth/byos/` (see its `README.md`).
+`firmware/src/app/engine/byos/` (see its `README.md`).
 
 An engine has two sides:
 
@@ -13,8 +13,8 @@ An engine has two sides:
 
 | File | Purpose |
 |------|---------|
-| `firmware/src/app/synth/NewEngine.h/.cpp` | `NewEngine : public SynthEngine` |
-| `firmware/src/app/ui/EditorNewEngine.h/.cpp` | `EditorNewEngine : public EditorEngine` (or `EditorParamPage`) |
+| `firmware/src/app/engine/newengine/NewEngine.h/.cpp` | `NewEngine : public SynthEngine` |
+| `firmware/src/app/engine/newengine/EditorNewEngine.h/.cpp` | `EditorNewEngine : public EditorEngine` (or `EditorParamPage`) |
 | optional `NewEngineParams.h` / `NewEngineVoiceState.h` | Engine params and per-voice state |
 
 ## Sound engine

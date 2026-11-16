@@ -1,4 +1,3 @@
-extern float diatonicScaleFrequency[];
 extern float sinTable[];
 extern float squareTable[];
 extern float sawTable[];

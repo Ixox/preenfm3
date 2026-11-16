@@ -17,7 +17,7 @@
 
 #include "SynthState.h"
 #include "Hexter.h"
-#include "Pfm3ParameterRows.h"
+#include "engine/pfm3/Pfm3ParameterRows.h"
 #include "ScreenEditor.h"
 #include "ScreenMenu.h"
 #include "ScreenMixer.h"
@@ -28,7 +28,6 @@
 
 extern Synth synth;
 extern RNG_HandleTypeDef hrng;
-extern float diatonicScaleFrequency[];
 
 SynthState::SynthState() {
     operatorNumber_ = 0;

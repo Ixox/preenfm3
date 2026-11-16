@@ -15,7 +15,7 @@
  */
 
 #include "ScreenMenu.h"
-#include "Pfm3Preset.h"
+#include "engine/pfm3/Pfm3Preset.h"
 #include "SynthState.h"
 #include "TftDisplay.h"
 #include "version.h"

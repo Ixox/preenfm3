@@ -12,8 +12,8 @@
 
 #include "ByosParams.h"
 #include "Common.h"
-#include "Osc.h"
-#include "Pfm3Params.h"
+#include "engine/pfm3/Osc.h"
+#include "engine/pfm3/Pfm3Params.h"
 #include "SynthEngine.h"
 
 enum ByosEnvStage { BYOS_ENV_IDLE = 0, BYOS_ENV_ATTACK, BYOS_ENV_SUSTAIN, BYOS_ENV_RELEASE };

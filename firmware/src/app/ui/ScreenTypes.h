@@ -19,7 +19,7 @@
 #define SCREEN_TYPES_H
 
 #include "Common.h"
-#include "Pfm3Params.h"
+#include "engine/pfm3/Pfm3Params.h"
 
 extern const char* lfoSeqMidiClock[];
 extern const char* lfoOscMidiClock[];
