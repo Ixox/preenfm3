@@ -35,11 +35,13 @@
 
 
 
+class Timbre;
+
 class Storage {
 public:
     virtual ~Storage() {}
-    void init(struct OneSynthParams*timbre1, struct OneSynthParams*timbre2, struct OneSynthParams*timbre3,
-        struct OneSynthParams*timbre4, struct OneSynthParams*timbre5, struct OneSynthParams*timbre6);
+    void init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3,
+        Timbre *timbre4, Timbre *timbre5, Timbre *timbre6);
 
 #ifdef DEBUG
     void testMemoryPreset();

@@ -19,6 +19,7 @@
 
 #include <MixerBank.h>
 #include "PatchBank.h"
+#include "Timbre.h"
 #include <string.h>
 #include <ScalaFile.h>
 #include "Sequencer.h"
@@ -40,17 +41,14 @@ MixerBank::~MixerBank() {
     // TODO Auto-generated destructor stub
 }
 
-void MixerBank::init(struct OneSynthParams*timbre1, struct OneSynthParams*timbre2, struct OneSynthParams*timbre3,
-        struct OneSynthParams*timbre4, struct OneSynthParams*timbre5, struct OneSynthParams*timbre6) {
+void MixerBank::init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3,
+        Timbre *timbre4, Timbre *timbre5, Timbre *timbre6) {
     this->timbre[0] = timbre1;
     this->timbre[1] = timbre2;
     this->timbre[2] = timbre3;
     this->timbre[3] = timbre4;
     this->timbre[4] = timbre5;
     this->timbre[5] = timbre6;
-    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        msfaProgram[t] = nullptr;
-    }
 }
 
 void MixerBank::setMixerState(struct MixerState* mixerState) {
@@ -129,19 +127,11 @@ bool MixerBank::saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerS
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         uint8_t *slot = (uint8_t*) (storageBuffer + ALIGNED_PATCH_SIZE * t + ALIGNED_MIXER_SIZE);
-        if (mixerStateToSave->instrumentState_[t].engine == SYNTH_ENGINE_MSFA && msfaProgram[t] != nullptr) {
-            for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
-                slot[p] = 0;
-            }
-            memcpy(&slot[0], msfaProgram[t], MSFA_PROGRAM_SIZE);
-            for (int n = 0; n < 12; n++) {
-                slot[160 + n] = this->timbre[t]->presetName[n];
-            }
-            *(uint32_t*) (&slot[ALIGNED_PATCH_SIZE - 5]) = PRESET_MSFA;
-        } else {
-            FlashSynthParams *toSave = (FlashSynthParams *) slot;
-            convertParamsToFlash(this->timbre[t], toSave, true);
+        for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
+            slot[p] = 0;
         }
+        this->timbre[t]->getStorageBlob(slot, ALIGNED_PATCH_SIZE - 5);
+        *(uint32_t*) (&slot[ALIGNED_PATCH_SIZE - 5]) = this->timbre[t]->getStorageMagic();
     }
     f_lseek(file, mixerNumber * FULL_MIXER_SIZE);
     f_write(file, (void*) storageBuffer, ALIGNED_MIXER_SIZE + ALIGNED_PATCH_SIZE * NUMBER_OF_TIMBRES, &byteWritten) ;
@@ -167,23 +157,8 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
         result = f_read(file, storageBuffer, ALIGNED_PATCH_SIZE, &byteRead);
         if (result == FR_OK && byteRead == ALIGNED_PATCH_SIZE) {
             uint32_t version = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
-
-            if (version == PRESET_MSFA) {
-                if (msfaProgram[t] != nullptr) {
-                    memcpy(msfaProgram[t], &storageBuffer[0], MSFA_PROGRAM_SIZE);
-                }
-                for (int n = 0; n < 12; n++) {
-                    this->timbre[t]->presetName[n] = storageBuffer[160 + n];
-                }
-                this->timbre[t]->presetName[12] = 0;
-                if (this->timbre[t]->presetName[0] == 0) {
-                    const char *fallback = "MSFA";
-                    for (int n = 0; n < 5; n++) {
-                        this->timbre[t]->presetName[n] = fallback[n];
-                    }
-                }
-            } else {
-                convertFlashToParams((struct FlashSynthParams *) storageBuffer, this->timbre[t], true);
+            if (this->timbre[t]->loadStorageBlob((const uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5, version)) {
+                mixerState->instrumentState_[t].engine = this->timbre[t]->getEngine();
 
                 // Init scala scale if enabled
                 if (mixerState->instrumentState_[t].scalaEnable == 1) {
@@ -196,11 +171,15 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
                         mixerState->instrumentState_[t].scaleScaleNumber = 0;
                     }
                 }
+            } else {
+                this->timbre[t]->sharedParams().presetName[0] = '#';
+                this->timbre[t]->sharedParams().presetName[1] = '#';
+                this->timbre[t]->sharedParams().presetName[2] = 0;
             }
         } else {
-            this->timbre[t]->presetName[0] = '#';
-            this->timbre[t]->presetName[1] = '#';
-            this->timbre[t]->presetName[2] = 0;
+            this->timbre[t]->sharedParams().presetName[0] = '#';
+            this->timbre[t]->sharedParams().presetName[1] = '#';
+            this->timbre[t]->sharedParams().presetName[2] = 0;
         }
     }
     return true;

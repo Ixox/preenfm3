@@ -378,16 +378,10 @@ void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, s
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
 
-    SynthEngineType engine = SYNTH_ENGINE_PFM3;
-    uint8_t msfaProgram[MSFA_PROGRAM_SIZE];
-    bool loaded = storage->getPatchBank()->loadPatch(bank, patchNumber, params, &engine, msfaProgram);
+    bool loaded = storage->getPatchBank()->loadPatch(bank, patchNumber, &timbres[timbre]);
 
     if (loaded) {
-        mixerState.instrumentState_[timbre].engine = engine;
-        timbres[timbre].setEngine(engine);
-        if (engine == SYNTH_ENGINE_MSFA) {
-            timbres[timbre].loadMsfaProgram(msfaProgram);
-        }
+        mixerState.instrumentState_[timbre].engine = timbres[timbre].getEngine();
     }
 
     propagateAfterNewParamsLoad(timbre);
@@ -395,9 +389,7 @@ void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, s
 }
 
 void SynthState::savePreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params) {
-    SynthEngineType engine = (SynthEngineType) mixerState.instrumentState_[timbre].engine;
-    const uint8_t *program = engine == SYNTH_ENGINE_MSFA ? timbres[timbre].getMsfaProgram() : nullptr;
-    storage->getPatchBank()->savePatch(bank, patchNumber, params, engine, program);
+    storage->getPatchBank()->savePatch(bank, patchNumber, &timbres[timbre]);
 }
 
 void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params) {

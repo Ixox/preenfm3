@@ -565,6 +565,18 @@ void Synth::afterNewMixerLoad() {
 
 void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
     float newValue) {
+    if (param == NULL) {
+        if (currentRow == ROW_ARPEGGIATOR3) {
+            timbres_[timbre].syncArpUserPatterns();
+        } else if (currentRow == ROW_LFOSEQ1 || currentRow == ROW_LFOSEQ2) {
+            timbres_[timbre].syncLfoSteps(currentRow - ROW_LFOSEQ1);
+        }
+    } else {
+        int index = currentRow * NUMBER_OF_ENCODERS_PFM2 + encoder;
+        if (index < TimbreParamLayout::presetNameStart) {
+            timbres_[timbre].setParamValue(index, newValue);
+        }
+    }
     switch (currentRow) {
         case ROW_ARPEGGIATOR1:
             switch (encoder) {
@@ -756,10 +768,26 @@ void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue
     int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
     float oldValue = ((float*) this->timbres_[timbre].getParamRaw())[index];
 
-    this->timbres_[timbre].setNewValue(index, param, newValue);
-    float newNewValue = ((float*) this->timbres_[timbre].getParamRaw())[index];
-    if (oldValue != newNewValue) {
-        this->synthState_->propagateNewParamValueFromExternal(timbre, row, encoder, param, oldValue, newNewValue);
+    if (newValue > param->maxValue) {
+        // in v2, matrix target were removed so some values are > to max value but we need to accept it
+        bool mustConstraint = true;
+        if (param->valueNameOrder != NULL) {
+            for (int v = 0; v < param->numberOfValues; v++) {
+                if ((int) param->valueNameOrder[v] == (int) (newValue + .01)) {
+                    mustConstraint = false;
+                }
+            }
+        }
+        if (mustConstraint) {
+            newValue = param->maxValue;
+        }
+    } else if (newValue < param->minValue) {
+        newValue = param->minValue;
+    }
+    ((float*) this->timbres_[timbre].getParamRaw())[index] = newValue;
+
+    if (oldValue != newValue) {
+        this->synthState_->propagateNewParamValueFromExternal(timbre, row, encoder, param, oldValue, newValue);
     }
 }
 

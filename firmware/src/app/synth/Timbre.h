@@ -19,6 +19,7 @@
 #define TIMBRE_H_
 
 #include "Common.h"
+#include "TimbreParams.h"
 
 #include "Osc.h"
 #include "Env.h"
@@ -66,7 +67,18 @@ public:
 
     // PFM3 implementations called by Preenfm3Engine.
     void afterNewParamsLoad();
-    void setNewValue(int index, struct ParameterDisplay *param, float newValue);
+    void setParamValue(int index, float value);
+    void syncArpUserPatterns();
+    void syncLfoSteps(int whichStepSeq);
+    void serializeParams(struct OneSynthParams &out) const;
+    void deserializeParams(const struct OneSynthParams &in);
+    uint32_t getStorageMagic() const;
+    uint32_t getStorageBlob(uint8_t *out, uint32_t maxSize);
+    bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic);
+    int getStorageNameOffset(uint32_t magic) const;
+    const char* getStorageDefaultName(uint32_t magic) const;
+    void applyFlatParams(const struct OneSynthParams &flat);
+    void setSharedParams(const TimbreSharedParams &shared);
     void setNewEffectParam(int encoder);
     int getSeqStepValue(int whichStepSeq, int step);
     void setSeqStepValue(int whichStepSeq, int step, int value);
@@ -165,6 +177,13 @@ public:
         return &params_;
     }
 
+    TimbreSharedParams& sharedParams() {
+        return sharedParams_[timbreNumber_];
+    }
+    const TimbreSharedParams& sharedParams() const {
+        return sharedParams_[timbreNumber_];
+    }
+
     Osc& getOsc(int index) {
         return pfm3Engine_.osc(index);
     }
@@ -227,6 +246,7 @@ public:
 
 private:
 
+    SynthEngineType engineTypeForStorageMagic(uint32_t magic) const;
     int allocateVoice(int note);
     int reuseVoice(int voiceIndex);
     bool adoptVoice(Voice *voice, int voiceIndex);
@@ -347,6 +367,7 @@ private:
     Preenfm3Engine pfm3Engine_;
     MsfaSynthEngine msfaEngine_;
     struct OneSynthParams params_;
+    static TimbreSharedParams sharedParams_[NUMBER_OF_TIMBRES];
     struct MixerState *mixerState_;
     float sampleBlock_[BLOCK_SIZE * 2];
     float *sbMax_;

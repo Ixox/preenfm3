@@ -8,10 +8,13 @@
  */
 
 #include "Preenfm3Engine.h"
+#include "Pfm3FlashFormat.h"
 #include "Timbre.h"
 #include "Voice.h"
 
 static Pfm3TimbreContext pfm3Contexts[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
+Pfm3TimbreParams Preenfm3Engine::pfm3Params_[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
+OneSynthParams oneSynthParamsTmp __attribute__((section(".ram_d1")));
 
 const float Preenfm3Engine::unisonPhase[MAX_UNISON_VOICES] = {
     .37f, .11f, .495f, .53f, .03f, .19f, .89f
@@ -25,7 +28,8 @@ extern float noise[32];
 
 void Preenfm3Engine::init(Timbre *timbre, SynthState *synthState) {
     timbre_ = timbre;
-    context_ = &pfm3Contexts[timbre->getTimbreNumber()];
+    timbreNumber_ = timbre->getTimbreNumber();
+    context_ = &pfm3Contexts[timbreNumber_];
     for (int lfo = 0; lfo < NUMBER_OF_LFO; lfo++) {
         lfoUSed_[lfo] = 0;
     }
@@ -487,6 +491,14 @@ void Preenfm3Engine::newParamValue(int row, int encoder) {
     }
 }
 
+void Preenfm3Engine::setParamValue(int index, float value) {
+    if (index < TimbreParamLayout::sharedBlockStart) {
+        ((float*) &pfm3Params())[index] = value;
+    } else if (index >= TimbreParamLayout::pfm3BlockBStart && index < TimbreParamLayout::effect2Start) {
+        ((float*) &pfm3Params())[index - TimbreParamLayout::sharedGap] = value;
+    }
+}
+
 void Preenfm3Engine::prepareFxMatrix(Voice *voice) {
     if (!voice->isPlaying()) {
         voice->pfm3State_.matrix.computeAllDestinations();
@@ -677,4 +689,35 @@ void Preenfm3Engine::verifyLfoUsed(int encoder, float oldValue, float newValue) 
             }
         }
     }
+}
+
+uint32_t Preenfm3Engine::getStorageMagic() const {
+    return PRESET_VERSION1;
+}
+
+int Preenfm3Engine::getStorageNameOffset(uint32_t magic) const {
+    if (magic == PRESET_VERSION2) {
+        return offsetof(OneSynthParams, presetName);
+    }
+    return offsetof(FlashSynthParams, presetName);
+}
+
+const char* Preenfm3Engine::getStorageDefaultName() const {
+    return "";
+}
+
+uint32_t Preenfm3Engine::getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) {
+    timbre_->serializeParams(oneSynthParamsTmp);
+    pfm3ParamsToFlash(&oneSynthParamsTmp, (FlashSynthParams*) out, true);
+    return sizeof(FlashSynthParams);
+}
+
+bool Preenfm3Engine::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
+    if (magic == PRESET_VERSION2) {
+        memcpy(&oneSynthParamsTmp, in, sizeof(OneSynthParams));
+    } else {
+        pfm3FlashToParams((const FlashSynthParams*) in, &oneSynthParamsTmp, true);
+    }
+    timbre_->applyFlatParams(oneSynthParamsTmp);
+    return true;
 }

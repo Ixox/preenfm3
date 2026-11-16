@@ -147,3 +147,31 @@ void MsfaSynthEngine::setController(SourceEnum source, float value) {
 void MsfaSynthEngine::setMatrixSource(SourceEnum source, float value) {
     msfaTimbreSetController(msfaState_, source, value);
 }
+
+uint32_t MsfaSynthEngine::getStorageMagic() const {
+    return PRESET_MSFA;
+}
+
+int MsfaSynthEngine::getStorageNameOffset(uint32_t magic) const {
+    return 160;
+}
+
+const char* MsfaSynthEngine::getStorageDefaultName() const {
+    return "MSFA";
+}
+
+uint32_t MsfaSynthEngine::getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) {
+    memcpy(out, program_[timbreNumber_], MSFA_PROGRAM_SIZE);
+    memcpy(out + 160, shared.presetName, 13);
+    memcpy(out + 176, &shared, sizeof(TimbreSharedParams));
+    return 176 + sizeof(TimbreSharedParams);
+}
+
+bool MsfaSynthEngine::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
+    memcpy(program_[timbreNumber_], in, MSFA_PROGRAM_SIZE);
+
+    TimbreSharedParams shared;
+    memcpy(&shared, in + 176, sizeof(TimbreSharedParams));
+    timbre_->setSharedParams(shared);
+    return true;
+}

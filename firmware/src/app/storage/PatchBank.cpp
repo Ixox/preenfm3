@@ -16,6 +16,7 @@
  */
 
 #include "PatchBank.h"
+#include "Timbre.h"
 #include <string.h>
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
@@ -23,6 +24,7 @@ __attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPR
 PatchBank::PatchBank() {
     numberOfFilesMax_ = NUMBEROFPREENFMBANKS;
     myFiles_ = preenFMBankAlloc;
+    timbre_ = nullptr;
 }
 
 PatchBank::~PatchBank() {
@@ -84,47 +86,14 @@ void PatchBank::createPatchBank(const char *name) {
     closeFile(bankFile);
 }
 
-bool PatchBank::loadPatch(const struct PFM3File *bank, int patchNumber, struct OneSynthParams *params,
-                          SynthEngineType *engine, uint8_t *msfaProgram) {
+bool PatchBank::loadPatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre) {
     const char *fullBankName = getFullName(bank->name);
 
     int result = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, (void*) storageBuffer, ALIGNED_PATCH_SIZE);
 
     if (result == ALIGNED_PATCH_SIZE) {
-        uint32_t version = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
-
-        if (version == PRESET_MSFA) {
-            if (msfaProgram != nullptr) {
-                memcpy(msfaProgram, &storageBuffer[0], MSFA_PROGRAM_SIZE);
-            }
-            if (params != nullptr) {
-                for (int i = 0; i < 12; i++) {
-                    params->presetName[i] = storageBuffer[160 + i];
-                }
-                params->presetName[12] = 0;
-            }
-            if (engine != nullptr) {
-                *engine = SYNTH_ENGINE_MSFA;
-            }
-            return true;
-        }
-
-        switch (version) {
-            case PRESET_VERSION2:
-                // Direct copy
-                for (uint32_t p = 0; p < PFM3_PATCH_FLASH_SIZE; p++) {
-                    ((char*) params)[p] = storageBuffer[p];
-                }
-                break;
-            default:
-                // VERSION1 Needs a conversion
-                convertFlashToParams((const struct FlashSynthParams*) storageBuffer, params, *arpeggiatorPartOfThePreset_ > 0);
-                break;
-        }
-        if (engine != nullptr) {
-            *engine = SYNTH_ENGINE_PFM3;
-        }
-        return true;
+        uint32_t magic = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
+        return timbre->loadStorageBlob((const uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5, magic);
     }
     return false;
 }
@@ -135,59 +104,34 @@ const char* PatchBank::loadPatchName(const struct PFM3File *bank, int patchNumbe
     uint32_t version;
     load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE + ALIGNED_PATCH_SIZE - 5, (void*) &version, 4);
 
-    if (version == PRESET_MSFA) {
-        load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + 160, (void*) presetName_, 12);
-        presetName_[12] = 0;
-        if (presetName_[0] == 0) {
-            presetName_[0] = 'M';
-            presetName_[1] = 'S';
-            presetName_[2] = 'F';
-            presetName_[3] = 'A';
-            presetName_[4] = 0;
-        }
+    int namePosition = timbre_ != nullptr ? timbre_->getStorageNameOffset(version) : -1;
+    if (namePosition < 0) {
+        presetName_[0] = 0;
         return presetName_;
-    }
-
-    int namePosition;
-
-    switch (version) {
-        case PRESET_VERSION2: {
-            OneSynthParams *version2Params = (OneSynthParams*) storageBuffer;
-            namePosition = (int) (((unsigned int) version2Params->presetName) - (unsigned int) version2Params);
-            break;
-        }
-        default: {
-            // VERSION 1
-            FlashSynthParams *flashSynthParams = (FlashSynthParams*) storageBuffer;
-            namePosition = (int) (((unsigned int) flashSynthParams->presetName) - (unsigned int) flashSynthParams);
-            break;
-        }
     }
 
     load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + namePosition, (void*) presetName_, 12);
     presetName_[12] = 0;
+    if (presetName_[0] == 0) {
+        const char *fallback = timbre_->getStorageDefaultName(version);
+        for (int n = 0; n < 12 && fallback[n] != 0; n++) {
+            presetName_[n] = fallback[n];
+        }
+        presetName_[12] = 0;
+    }
     return presetName_;
 
 }
 
-void PatchBank::savePatch(const struct PFM3File *bank, int patchNumber, const struct OneSynthParams *params,
-                          SynthEngineType engine, const uint8_t *msfaProgram) {
+void PatchBank::savePatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre) {
     const char *fullBankName = getFullName(bank->name);
 
     for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
         storageBuffer[p] = 0;
     }
 
-    if (engine == SYNTH_ENGINE_MSFA && msfaProgram != nullptr) {
-        memcpy(&storageBuffer[0], msfaProgram, MSFA_PROGRAM_SIZE);
-        for (int i = 0; i < 12; i++) {
-            storageBuffer[160 + i] = params->presetName[i];
-        }
-        *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_MSFA;
-    } else {
-        convertParamsToFlash(params, (struct FlashSynthParams*) storageBuffer, *arpeggiatorPartOfThePreset_ > 0);
-        *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
-    }
+    timbre->getStorageBlob((uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5);
+    *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = timbre->getStorageMagic();
 
     // Save patch
     save(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);

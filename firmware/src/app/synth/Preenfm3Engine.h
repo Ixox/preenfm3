@@ -11,6 +11,7 @@
 #define PREENFM3_ENGINE_H_
 
 #include "Common.h"
+#include "TimbreParams.h"
 #include "Lfo.h"
 #include "Osc.h"
 #include "Env.h"
@@ -62,6 +63,7 @@ public:
     void noteOnMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
     void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
     void newParamValue(int row, int encoder) override;
+    void setParamValue(int index, float value) override;
     void prepareFxMatrix(Voice *voice) override;
     void updateVoiceMatrix(Voice *voice, int note, int velocity) override;
 
@@ -73,6 +75,11 @@ public:
     void midiClockStart() override;
     void midiClockSongPositionStep(int songPosition) override;
     float getMatrixDestination(int destination) override;
+    uint32_t getStorageMagic() const override;
+    int getStorageNameOffset(uint32_t magic) const override;
+    const char* getStorageDefaultName() const override;
+    uint32_t getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) override;
+    bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) override;
     bool supportsDeferredSteal() const override {
         return true;
     }
@@ -84,6 +91,13 @@ public:
         return env_[index];
     }
 
+    Pfm3TimbreParams& pfm3Params() {
+        return pfm3Params_[timbreNumber_];
+    }
+    const Pfm3TimbreParams& pfm3Params() const {
+        return pfm3Params_[timbreNumber_];
+    }
+
     void refreshContext();
 
 private:
@@ -93,6 +107,8 @@ private:
 
     Timbre *timbre_;
     Pfm3TimbreContext *context_;
+    int timbreNumber_;
+    static Pfm3TimbreParams pfm3Params_[NUMBER_OF_TIMBRES];
     Osc osc_[6];
     Env env_[6];
     int lfoUSed_[NUMBER_OF_LFO];

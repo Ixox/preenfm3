@@ -24,12 +24,13 @@
 
 __attribute__((section(".ram_d2b")))  char lineBuffer[1024];
 
-void Storage::init(struct OneSynthParams*timbre1, struct OneSynthParams*timbre2, struct OneSynthParams*timbre3, struct OneSynthParams*timbre4, struct OneSynthParams*timbre5, struct OneSynthParams*timbre6) {
+void Storage::init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3, Timbre *timbre4, Timbre *timbre5, Timbre *timbre6) {
     mixerBank.setFileSystemUtils(&fsu);
     mixerBank.init(timbre1, timbre2, timbre3, timbre4, timbre5, timbre6);
     scalaFile.setFileSystemUtils(&fsu);
     configurationFile.setFileSystemUtils(&fsu);
     patchBank.setFileSystemUtils(&fsu);
+    patchBank.setTimbre(timbre1);
     dx7SysexFile.setFileSystemUtils(&fsu);
     userWaveForm.setFileSystemUtils(&fsu);
 }

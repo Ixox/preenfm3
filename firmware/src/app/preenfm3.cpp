@@ -470,17 +470,13 @@ void dependencyInjection() {
     // pfm3 : synthState needs to know all timbre params names
     synthState.setTimbres(synth.getTimbres());
 
-    sdCard.init(synth.getTimbre(0)->getParamRaw(), synth.getTimbre(1)->getParamRaw(), synth.getTimbre(2)->getParamRaw(),
-            synth.getTimbre(3)->getParamRaw(), synth.getTimbre(4)->getParamRaw(), synth.getTimbre(5)->getParamRaw());
+    sdCard.init(synth.getTimbre(0), synth.getTimbre(1), synth.getTimbre(2),
+            synth.getTimbre(3), synth.getTimbre(4), synth.getTimbre(5));
 
     sdCard.getMixerBank()->setMixerState(&synthState.mixerState);
     sdCard.getMixerBank()->setScalaFile(sdCard.getScalaFile());
     sdCard.getMixerBank()->setSequencer(&sequencer);
     sdCard.getSequenceBank()->setSequencer(&sequencer);
-
-    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        sdCard.getMixerBank()->setMsfaProgram(t, synth.getTimbre(t)->getMsfaProgramMutable());
-    }
 
     // Load preferences
     sdCard.getConfigurationFile()->loadConfig(synthState.fullState.midiConfigValue);

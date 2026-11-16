@@ -58,6 +58,12 @@ public:
     }
     void setController(SourceEnum source, float value);
 
+    uint32_t getStorageMagic() const override;
+    int getStorageNameOffset(uint32_t magic) const override;
+    const char* getStorageDefaultName() const override;
+    uint32_t getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) override;
+    bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) override;
+
 private:
     Timbre *timbre_;
     MsfaTimbreState *msfaState_;

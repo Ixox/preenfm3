@@ -25,19 +25,17 @@
 class ScalaFile;
 class Sequencer;
 class MixerState;
+class Timbre;
 
 class MixerBank : public PreenFMFileType {
 public:
 	MixerBank();
 	virtual ~MixerBank();
-    void init(struct OneSynthParams*timbre1, struct OneSynthParams*timbre2, struct OneSynthParams*timbre3,
-            struct OneSynthParams*timbre4, struct OneSynthParams*timbre5, struct OneSynthParams*timbre6);
+    void init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3,
+            Timbre *timbre4, Timbre *timbre5, Timbre *timbre6);
     void setMixerState(MixerState* mixerState);
     void setSequencer(Sequencer* sequencer);
     void setScalaFile(ScalaFile* scalaFile);
-    void setMsfaProgram(int timbre, uint8_t* program) {
-        msfaProgram[timbre] = program;
-    }
 
     bool saveDefaultMixer();
     bool loadDefaultMixer();
@@ -51,8 +49,7 @@ public:
 protected:
     const char* getFolderName();
 	bool isCorrectFile(char *name, int size);
-    struct OneSynthParams* timbre[NUMBER_OF_TIMBRES];
-    uint8_t* msfaProgram[NUMBER_OF_TIMBRES];
+    Timbre* timbre[NUMBER_OF_TIMBRES];
     bool saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerStateToSave);
     bool loadMixerData(FIL* file, uint8_t mixerNumber);
 
