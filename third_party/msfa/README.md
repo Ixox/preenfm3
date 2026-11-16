@@ -34,6 +34,11 @@ Library. Standard 12-TET tuning is provided by `platform_stubs.cc` instead.
   in the `.ram_d2c` section. They are filled by `msfaInit()` before use, so
   they do not need to be in `.bss`/DTCMRAM. This uses the otherwise-unused
   `RAM_D2C` bank and keeps DTCMRAM within budget.
+- `env.h`, `dx7note.h`, `dx7note.cc`: added `Env::isFinished()` and
+  `Dx7Note::isFinished()` so the firmware can detect that a released voice's
+  envelope stages are complete even when the DX7 release level (L4) is
+  non-zero. Without it, `Dx7Note::isPlaying()` keeps such voices "active"
+  forever and the voice counter never decreases.
 
 Everything else is unmodified upstream code.
 

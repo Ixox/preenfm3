@@ -377,6 +377,11 @@ void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, s
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
+
+    // PFM3 presets always switch the target timbre back to PFM3.
+    mixerState.instrumentState_[timbre].engine = SYNTH_ENGINE_PFM3;
+    timbres[timbre].setEngine(SYNTH_ENGINE_PFM3);
+
     storage->getPatchBank()->loadPatch(bank, patchNumber, params);
     propagateAfterNewParamsLoad(timbre);
     restoreTestNote();
@@ -386,11 +391,18 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber,
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
+
     uint8_t *packed = storage->getDX7SysexFile()->dx7LoadPatch(bank, patchNumber);
     if (packed != nullptr) {
+        // DX7 sysex patches always switch the target timbre to MSFA.
+        mixerState.instrumentState_[timbre].engine = SYNTH_ENGINE_MSFA;
+        timbres[timbre].setEngine(SYNTH_ENGINE_MSFA);
+
         timbres[timbre].loadMsfaPackedPatch(packed);
+        // Keep PFM3 params in sync for display/backward compatibility.
         hexter->loadHexterPatch(packed, params);
     }
+
     propagateAfterNewParamsLoad(timbre);
     restoreTestNote();
 }

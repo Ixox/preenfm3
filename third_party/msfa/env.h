@@ -52,6 +52,11 @@ class Env {
   static void init_sr(double sample_rate);
   void transfer(Env &src);
   bool isActive();
+  bool isFinished() const { return ix_ >= 4; }
+  int getLevel() const { return level_; }
+  int getOutLevel() const { return outlevel_; }
+  int getStage() const { return ix_; }
+  bool isDown() const { return down_; }
 
  private:
   bool initialised_;

@@ -455,3 +455,13 @@ bool Dx7Note::isPlaying() {
     }
     return false;
 }
+
+bool Dx7Note::isFinished() {
+    if ( !initialised_ ) return true;
+    for (int i=0; i<6; i++) {
+        if ( FmCore::isCarrier(algorithm_, i) && !env_[i].isFinished() ) {
+            return false;
+        }
+    }
+    return true;
+}
