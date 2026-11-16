@@ -43,10 +43,13 @@ class StandardTuning : public TuningState {
   int current_logfreq_table_[128];
 };
 
+// Static: the firmware has no dynamic allocation in the synth path.
+StandardTuning standardTuning __attribute__((section(".ram_d1")));
+
 }  // namespace
 
-std::shared_ptr<TuningState> createStandardTuning() {
-  return std::make_shared<StandardTuning>();
+TuningState *createStandardTuning() {
+  return &standardTuning;
 }
 
 extern "C" {

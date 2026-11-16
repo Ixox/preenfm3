@@ -162,7 +162,7 @@ Vendored dependencies. Keep upstream headers/licences; see `third_party/NOTICE`.
 | `improvements.md` | Known issues and planned work |
 | `msfa_engine.md` | MSFA engine integration |
 | `dx7_algo_drawing.md` | DX7 algorithm diagram drawing |
-| `dynamic_voice_allocation.md` | Voice allocation design |
+| `engine_voice_refactor.md` | Engine separation and dynamic voice allocation plan |
 | `stlink.md` | ST-LINK setup and troubleshooting |
 | `pfm3_qs.pdf` | Quick-start guide |
 | `README.md` | Short user-oriented intro |

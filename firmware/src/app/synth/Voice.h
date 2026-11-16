@@ -36,6 +36,7 @@
  })
 
 class Timbre;
+class VoicePool;
 struct MsfaVoiceState;
 struct MsfaTimbreState;
 
@@ -96,7 +97,23 @@ public:
     void setHoldedByPedal(bool holded) {
         this->holdedByPedal = holded;
     }
-    void setCurrentTimbre(Timbre *timbre);
+    void bindTimbre(const Pfm3TimbreContext *context, Timbre *timbre);
+    void bindMsfaTimbre(Timbre *timbre) {
+        currentTimbre = timbre;
+    }
+    void setPendingTimbre(Timbre *timbre) {
+        pendingTimbre_ = timbre;
+    }
+    Timbre* getPendingTimbre() {
+        return pendingTimbre_;
+    }
+    bool isTransferPending() {
+        return pendingTimbre_ != nullptr;
+    }
+    bool isTransferReady() {
+        return transferReady_;
+    }
+    void completePendingTransfer(int poolIndex, VoicePool *pool);
 
     void setMsfaState(MsfaVoiceState *state) {
         msfaState_ = state;
@@ -464,6 +481,8 @@ private:
     float env6ValueMem;
 
     Timbre *currentTimbre;
+    Timbre *pendingTimbre_;
+    bool transferReady_;
     MsfaVoiceState *msfaState_;
 
     // glide phase increment

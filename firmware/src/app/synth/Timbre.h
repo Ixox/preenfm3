@@ -28,11 +28,14 @@
 #include "LfoEnv2.h"
 #include "LfoStepSeq.h"
 #include "Matrix.h"
+#include "Preenfm3Engine.h"
+#include "MsfaSynthEngine.h"
 #include "note_stack.h"
 #include "event_scheduler.h"
 
 extern float panTable[];
 class Voice;
+class VoicePool;
 
 enum {
     CLOCK_OFF,
@@ -58,6 +61,11 @@ public:
     void glide();
     void voicesToTimbre(float volumeGain);
     void gateFx();
+
+    // PFM3 implementations called by Preenfm3Engine.
+    void pfm3PrepareMatrixForNewBlock();
+    void pfm3Glide();
+    void pfm3GateFx();
     void afterNewParamsLoad();
     void setNewValue(int index, struct ParameterDisplay *param, float newValue);
     void setNewEffecParam(int encoder);
@@ -85,6 +93,10 @@ public:
         return engine_;
     }
 
+    int8_t getTimbreNumber() const {
+        return timbreNumber_;
+    }
+
     void loadMsfaPackedPatch(const uint8_t *packedPatch);
     void loadMsfaProgram(const uint8_t *program);
     const uint8_t* getMsfaProgram() const {
@@ -101,23 +113,15 @@ public:
     void noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff);
 
     void preenNoteOn(char note, char velocity);
-    inline void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
+    void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
     void preenNoteOff(char note);
 
     inline void engineNoteOn(char note, char velocity) {
-        if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-            msfaNoteOn(note, velocity);
-        } else {
-            preenNoteOn(note, velocity);
-        }
+        engineImpl_->noteOn(note, velocity);
     }
 
     inline void engineNoteOff(char note) {
-        if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-            msfaNoteOff(note);
-        } else {
-            preenNoteOff(note);
-        }
+        engineImpl_->noteOff(note);
     }
 
     uint8_t pfm3VoicesNextBlock();
@@ -127,14 +131,18 @@ public:
     void pfm3AfterNewParamsLoad();
     void msfaAfterNewParamsLoad();
 
-    void numberOfVoicesChanged(uint8_t newNumberOfVoices) {
-        if (likely(newNumberOfVoices > 0)) {
-            numberOfVoiceInverse_ = 1.0f / (float) newNumberOfVoices;
-        } else {
-            numberOfVoiceInverse_ = 1.0f;
-        }
-        numberOfVoices_ = newNumberOfVoices;
+    void initVoicePool(VoicePool *pool) {
+        voicePool_ = pool;
     }
+
+    void numberOfVoicesChanged(uint8_t newNumberOfVoices);
+
+    int getMaxVoices() const {
+        return maxVoices_;
+    }
+
+    void removeActiveVoice(int voiceIndex);
+    void clearActiveVoices();
 
     void lfoValueChange(int currentRow, int encoder, float newValue);
 
@@ -210,6 +218,14 @@ public:
     }
 
 private:
+
+    int allocateVoice(int note);
+    int reuseVoice(int voiceIndex);
+    bool adoptVoice(Voice *voice, int voiceIndex);
+    void dropVoice(int voiceIndex);
+    int countPendingVoices() const;
+    bool ensureActiveVoices(int count);
+    void clearMpeMapping(int voiceIndex);
 
     // MiniPal Arpegiator
     void SendLater(uint8_t note, uint8_t velocity, uint8_t when, uint8_t tag);
@@ -319,6 +335,9 @@ private:
 
     int8_t timbreNumber_;
     SynthEngineType engine_;
+    SynthEngine *engineImpl_;
+    Preenfm3Engine pfm3Engine_;
+    MsfaSynthEngine msfaEngine_;
     MsfaTimbreState *msfaState_;
     static uint8_t msfaPackedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE];
     static uint8_t msfaProgram_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE];
@@ -327,13 +346,15 @@ private:
     float sampleBlock_[BLOCK_SIZE * 2];
     float *sbMax_;
     float numberOfVoiceInverse_;
-    // numberOfVoices is to be used instead of params.engine1.numberOfVoice
-    // Because numberOfVoices can be just incremented, and we're not sure the voice is ready.
-    // numberOfVoices is incremented after the new voices are initialized and ready to use.
+    // numberOfVoices_ is the number of voices currently owned by this timbre.
+    // maxVoices_ is the configured polyphony limit from the mixer.
     float numberOfVoices_;
+    int maxVoices_;
+    VoicePool *voicePool_;
 
     float mixerGain_;
     Voice *voices_[MAX_NUMBER_OF_VOICES];
+    int8_t mpeChannelVoice_[16];
     bool holdPedal_;
     int8_t lastPlayedNote_;
 

@@ -19,6 +19,7 @@
 
 #include "Voice.h"
 #include "Timbre.h"
+#include "VoicePool.h"
 #include "MsfaEngine.h"
 #include "MsfaDebug.h"
 
@@ -391,6 +392,8 @@ Voice::~Voice(void) {
 
 void Voice::init() {
     this->currentTimbre = 0;
+    this->pendingTimbre_ = nullptr;
+    this->transferReady_ = false;
     this->msfaState_ = nullptr;
     this->playing = false;
     this->isFullOfZero = false;
@@ -427,7 +430,7 @@ void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short veloci
     // Update index : so that few chance to be chosen again during the quick dying
     this->index = index;
     // We can glide in mono and unison
-    if (!this->released &&  currentTimbre->params_.engine1.playMode != PLAY_MODE_POLY && currentTimbre->params_.engine2.glideType != GLIDE_TYPE_OFF) {
+    if (pendingTimbre_ == nullptr && !this->released &&  currentTimbre->params_.engine1.playMode != PLAY_MODE_POLY && currentTimbre->params_.engine2.glideType != GLIDE_TYPE_OFF) {
         glideToNote(newNote, newNoteFrequency);
         this->holdedByPedal = false;
         newGlide=false;
@@ -554,8 +557,11 @@ void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32
 
 void Voice::endNoteOrBeginNextOne() {
     if (this->newNotePending) {
-        // pendingNote can be 255 : see Voice:noteOff
-        if (pendingNote <= 127) {
+        if (pendingTimbre_ != nullptr) {
+            this->newNotePending = false;
+            this->transferReady_ = true;
+        } else if (pendingNote <= 127) {
+            // pendingNote can be 255 : see Voice:noteOff
             noteOn(pendingNote, pendingNoteFrequency, pendingNoteVelocity, index, phase_);
         } else {
             noteOn(pendingNote - 128, pendingNoteFrequency, pendingNoteVelocity, index, phase_);
@@ -569,6 +575,34 @@ void Voice::endNoteOrBeginNextOne() {
     this->freqAo = 0.0f;
     this->freqBi = 0.0f;
     this->freqBo = 0.0f;
+}
+
+void Voice::completePendingTransfer(int poolIndex, VoicePool *pool) {
+    Timbre *target = pendingTimbre_;
+    if (target == nullptr) {
+        return;
+    }
+
+    int note = pendingNote & 0x7f;
+    bool alreadyOff = pendingNote > 127;
+    uint8_t velocity = (uint8_t) pendingNoteVelocity;
+
+    currentTimbre->dropVoice(poolIndex);
+    if (!target->adoptVoice(this, poolIndex)) {
+        pool->release(poolIndex);
+        killNow();
+        return;
+    }
+
+    target->preenNoteOnUpdateMatrix(poolIndex, note, velocity);
+
+    pendingTimbre_ = nullptr;
+    transferReady_ = false;
+
+    noteOn(note, pendingNoteFrequency, velocity, index, phase_);
+    if (alreadyOff) {
+        this->noteAlreadyFinished = 1;
+    }
 }
 
 void Voice::glideFirstNoteOff() {
@@ -646,6 +680,8 @@ void Voice::noteOffQuick() {
 
 void Voice::killNow() {
     msfaVoiceReset(msfaState_);
+    this->pendingTimbre_ = nullptr;
+    this->transferReady_ = false;
     this->newNotePlayed = false;
     this->playing = false;
     this->newNotePending = false;
@@ -4119,78 +4155,48 @@ void Voice::nextBlock() {
 
 }
 
-void Voice::setCurrentTimbre(Timbre *timbre) {
+void Voice::bindTimbre(const Pfm3TimbreContext *context, Timbre *timbre) {
     if (timbre == 0) {
         this->currentTimbre = 0;
         return;
     }
 
-    struct LfoParams *lfoParams[] = { &timbre->getParamRaw()->lfoOsc1, &timbre->getParamRaw()->lfoOsc2, &timbre->getParamRaw()->lfoOsc3 };
-    struct StepSequencerParams *stepseqparams[] = { &timbre->getParamRaw()->lfoSeq1, &timbre->getParamRaw()->lfoSeq2 };
-    struct StepSequencerSteps *stepseqs[] = { &timbre->getParamRaw()->lfoSteps1, &timbre->getParamRaw()->lfoSteps2 };
-
     this->currentTimbre = timbre;
 
-    matrix.init(&timbre->getParamRaw()->matrixRowState1);
+    matrix.init(context->matrixRows);
 
     // OSC
     for (int k = 0; k < NUMBER_OF_LFO_OSC; k++) {
-        float *phase = &((float*) &timbre->getParamRaw()->lfoPhases.phaseLfo1)[k];
-        lfoOsc[k].init(lfoParams[k], phase, &this->matrix, (SourceEnum) (MATRIX_SOURCE_LFO1 + k), (DestinationEnum) (LFO1_FREQ + k));
+        lfoOsc[k].init(context->lfoOscParams[k], context->lfoPhases[k], &this->matrix,
+            (SourceEnum) (MATRIX_SOURCE_LFO1 + k), (DestinationEnum) (LFO1_FREQ + k));
     }
 
     // ENV
-    lfoEnv[0].init(&timbre->getParamRaw()->lfoEnv1, &this->matrix, MATRIX_SOURCE_LFOENV1, (DestinationEnum) 0);
-    lfoEnv2[0].init(&timbre->getParamRaw()->lfoEnv2, &this->matrix, MATRIX_SOURCE_LFOENV2, (DestinationEnum) LFOENV2_SILENCE);
+    lfoEnv[0].init(context->lfoEnv, &this->matrix, MATRIX_SOURCE_LFOENV1, (DestinationEnum) 0);
+    lfoEnv2[0].init(context->lfoEnv2, &this->matrix, MATRIX_SOURCE_LFOENV2, (DestinationEnum) LFOENV2_SILENCE);
 
     // Step sequencer
     for (int k = 0; k < NUMBER_OF_LFO_STEP; k++) {
-        lfoStepSeq[k].init(stepseqparams[k], stepseqs[k], &matrix, (SourceEnum) (MATRIX_SOURCE_LFOSEQ1 + k), (DestinationEnum) (LFOSEQ1_GATE + k));
+        lfoStepSeq[k].init(context->lfoStepSeqParams[k], context->lfoStepSeqSteps[k], &matrix,
+            (SourceEnum) (MATRIX_SOURCE_LFOSEQ1 + k), (DestinationEnum) (LFOSEQ1_GATE + k));
     }
 
     setNewEffectParam(0);
 
-    // init pan
-    int *opInfo = algoOpInformation[(int) timbre->getParamRaw()->engine1.algo];
-    if (likely(opInfo[0] == 1)) {
-        float pan1 = timbre->getParamRaw()->engineMix1.panOsc1 + 1.0f;
-        int pan = __USAT((int )(pan1 * 128), 8);
-        pan1Left = panTable[pan];
-        pan1Right = panTable[256 - pan];
-    }
-    if (likely(opInfo[1] == 1)) {
-        float pan1 = timbre->getParamRaw()->engineMix1.panOsc2 + 1.0f;
-        int pan = __USAT((int )(pan1 * 128), 8);
-        pan2Left = panTable[pan];
-        pan2Right = panTable[256 - pan];
-    }
-    if (likely(opInfo[2] == 1)) {
-        float pan1 = timbre->getParamRaw()->engineMix2.panOsc3 + 1.0f;
-        int pan = __USAT((int )(pan1 * 128), 8);
-        pan3Left = panTable[pan];
-        pan3Right = panTable[256 - pan];
-    }
-    if (likely(opInfo[3] == 1)) {
-        float pan1 = timbre->getParamRaw()->engineMix2.panOsc4 + 1.0f;
-        int pan = __USAT((int )(pan1 * 128), 8);
-        pan4Left = panTable[pan];
-        pan4Right = panTable[256 - pan];
-    }
-    if (likely(opInfo[4] == 1)) {
-        float pan1 = timbre->getParamRaw()->engineMix3.panOsc5 + 1.0f;
-        int pan = __USAT((int )(pan1 * 128), 8);
-        pan5Left = panTable[pan];
-        pan5Right = panTable[256 - pan];
-    }
-    if (likely(opInfo[5] == 1)) {
-        float pan1 = timbre->getParamRaw()->engineMix3.panOsc6 + 1.0f;
-        int pan = __USAT((int )(pan1 * 128), 8);
-        pan6Left = panTable[pan];
-        pan6Right = panTable[256 - pan];
-    }
+    pan1Left = context->panLeft[0];
+    pan1Right = context->panRight[0];
+    pan2Left = context->panLeft[1];
+    pan2Right = context->panRight[1];
+    pan3Left = context->panLeft[2];
+    pan3Right = context->panRight[2];
+    pan4Left = context->panLeft[3];
+    pan4Right = context->panRight[3];
+    pan5Left = context->panLeft[4];
+    pan5Right = context->panRight[4];
+    pan6Left = context->panLeft[5];
+    pan6Right = context->panRight[5];
 
-    // init mixer gain
-    mixerGain = currentTimbre->params_.effect1.param3;
+    mixerGain = context->mixerGain;
 }
 
 void Voice::fxAfterBlock() {

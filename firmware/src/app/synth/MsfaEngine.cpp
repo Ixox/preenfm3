@@ -25,7 +25,7 @@
 
 FmCore msfaCore;
 
-static std::shared_ptr<TuningState> msfaTuning;
+static TuningState *msfaTuning;
 
 struct MsfaTimbreState {
     Controllers controllers;

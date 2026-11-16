@@ -153,7 +153,7 @@ static const uint32_t ampmodsenstab[] = {
 
 const int32_t Dx7Note::mtsLogFreqToNoteLogFreq = (1 << 24) / log(2.);
 
-Dx7Note::Dx7Note(std::shared_ptr<TuningState> ts, MTSClient *mtsc)
+Dx7Note::Dx7Note(TuningState *ts, MTSClient *mtsc)
 : tuning_state_(ts), mtsClient(mtsc) {
     initialised_ = false;
     for(int op=0;op<6;op++) {

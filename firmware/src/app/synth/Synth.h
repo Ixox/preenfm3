@@ -20,6 +20,7 @@
 
 #include "Timbre.h"
 #include "Voice.h"
+#include "VoicePool.h"
 #include "LfoOsc.h"
 #include "LfoEnv.h"
 #include "LfoStepSeq.h"
@@ -83,11 +84,6 @@ public:
     void newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton) {
     }
-
-    int getFreeVoice();
-    void rebuidVoiceAllTimbre();
-
-    int getNumberOfFreeVoicesForThisTimbre(int timbre);
 
     void newTimbre(int timbre);
 
@@ -154,8 +150,10 @@ private:
     // Called by setSynthState
     void init(SynthState *synthState);
     void mixAndPan(int32_t *dest, float *source, float &pan, float sampleMultipler);
+    void processPendingTransfers();
 
     Voice voices_[MAX_NUMBER_OF_VOICES];
+    VoicePool voicePool_;
     Timbre timbres_[NUMBER_OF_TIMBRES];
 
     // Cpu usage

@@ -19,6 +19,7 @@
 #include <math.h>
 #include <string.h>
 #include "Timbre.h"
+#include "VoicePool.h"
 #include "Voice.h"
 #include "Hexter.h"
 #include "MsfaEngine.h"
@@ -242,6 +243,14 @@ const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
 Timbre::Timbre() {
 
     engine_ = SYNTH_ENGINE_PFM3;
+    engineImpl_ = &pfm3Engine_;
+    maxVoices_ = 0;
+    numberOfVoices_ = 0.0f;
+    numberOfVoiceInverse_ = 1.0f;
+    voicePool_ = nullptr;
+    for (int c = 0; c < 16; c++) {
+        mpeChannelVoice_[c] = -1;
+    }
     recomputeNext_ = true;
     currentGate_ = 0;
     sbMax_ = &sampleBlock_[64];
@@ -283,6 +292,8 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
     osc6_.init(synthState, &params_.osc6, OSC6_FREQ);
 
     timbreNumber_ = timbreNumber;
+    pfm3Engine_.init(this);
+    msfaEngine_.init(this);
 
     for (int i = 0; i < MSFA_PACKED_PATCH_SIZE; i++) {
         msfaPackedPatch_[timbreNumber_][i] = 0;
@@ -316,13 +327,12 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
     for (int s = 0; s < delayBufferSize; s++) {
         delayBuffer_[s] = 0;
     }
-   
 }
 
 void Timbre::setVoiceNumber(int v, int n) {
     voiceNumber_[v] = n;
     if (n >= 0) {
-        voices_[n]->setCurrentTimbre(this);
+        engineImpl_->bindVoice(voices_[n]);
     }
 }
 
@@ -351,11 +361,10 @@ void Timbre::setEngine(SynthEngineType engine) {
     }
     stopPlayingNow();
     engine_ = engine;
-    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-        msfaAfterNewParamsLoad();
-    } else {
-        pfm3AfterNewParamsLoad();
-    }
+    engineImpl_ = (engine_ == SYNTH_ENGINE_MSFA)
+        ? static_cast<SynthEngine *>(&msfaEngine_)
+        : static_cast<SynthEngine *>(&pfm3Engine_);
+    engineImpl_->afterNewParamsLoad();
 }
 
 void Timbre::noteOn(char note, char velocity) {
@@ -380,20 +389,33 @@ void Timbre::noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity)  {
         return;
     }
 
-	int voiceToUse = voiceNumber_[channel -1];
-
-    if (unlikely(voiceToUse == -1)) {
+    int channelIndex = channel - 1;
+    if (unlikely(channelIndex < 0 || channelIndex >= 16)) {
         return;
     }
 
-    preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
+    int voiceToUse = mpeChannelVoice_[channelIndex];
+    if (voiceToUse == -1
+        || (voices_[voiceToUse]->getCurrentTimbre() != this && voices_[voiceToUse]->getPendingTimbre() != this)) {
+        voiceToUse = allocateVoice(note);
+        if (unlikely(voiceToUse == -1)) {
+            return;
+        }
+        clearMpeMapping(voiceToUse);
+        mpeChannelVoice_[channelIndex] = voiceToUse;
+    }
+
+    bool transferPending = voices_[voiceToUse]->isTransferPending();
+    if (!transferPending) {
+        preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
+    }
     float noteFrequency = mixerState_->instrumentState_[0].scaleFrequencies[(int) note];
 
-	if (voices_[voiceToUse]->isPlaying()) {
+    if (voices_[voiceToUse]->isPlaying()) {
         voices_[voiceToUse]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
-	} else {
+    } else {
         voices_[voiceToUse]->noteOn(note, noteFrequency, velocity, voiceIndex_++);
-	}
+    }
 }
 
 
@@ -403,139 +425,277 @@ void Timbre::noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff) {
         return;
     }
 
-    int voiceToUse = voiceNumber_[channel -1];
+    int channelIndex = channel - 1;
+    if (unlikely(channelIndex < 0 || channelIndex >= 16)) {
+        return;
+    }
 
+    int voiceToUse = mpeChannelVoice_[channelIndex];
     if (unlikely(voiceToUse == -1)) {
-		return;
-	}
+        return;
+    }
 
-	if (voices_[voiceToUse]->isPlaying()) {
-		voices_[voiceToUse]->noteOff();
-	}
+    if (voices_[voiceToUse]->isPlaying()) {
+        voices_[voiceToUse]->noteOff();
+    }
 }
 
 
+void Timbre::clearMpeMapping(int voiceIndex) {
+    for (int c = 0; c < 16; c++) {
+        if (mpeChannelVoice_[c] == voiceIndex) {
+            mpeChannelVoice_[c] = -1;
+        }
+    }
+}
+
+void Timbre::numberOfVoicesChanged(uint8_t newNumberOfVoices) {
+    maxVoices_ = newNumberOfVoices;
+    numberOfVoiceInverse_ = newNumberOfVoices > 0 ? 1.0f / (float) newNumberOfVoices : 1.0f;
+    while ((int) numberOfVoices_ > maxVoices_) {
+        int n = voiceNumber_[(int) numberOfVoices_ - 1];
+        voices_[n]->killNow();
+        clearMpeMapping(n);
+        if (voicePool_ != nullptr) {
+            voicePool_->release(n);
+        }
+        numberOfVoices_ -= 1.0f;
+    }
+}
+
+void Timbre::removeActiveVoice(int voiceIndex) {
+    int count = (int) numberOfVoices_;
+    for (int k = 0; k < count; k++) {
+        if (voiceNumber_[k] == voiceIndex) {
+            voiceNumber_[k] = voiceNumber_[count - 1];
+            numberOfVoices_ = (float) (count - 1);
+            clearMpeMapping(voiceIndex);
+            return;
+        }
+    }
+}
+
+void Timbre::clearActiveVoices() {
+    for (int k = 0; k < (int) numberOfVoices_; k++) {
+        int n = voiceNumber_[k];
+        voices_[n]->killNow();
+        if (voicePool_ != nullptr) {
+            voicePool_->release(n);
+        }
+    }
+    numberOfVoices_ = 0.0f;
+    for (int c = 0; c < 16; c++) {
+        mpeChannelVoice_[c] = -1;
+    }
+}
+
+bool Timbre::ensureActiveVoices(int count) {
+    while ((int) numberOfVoices_ < count) {
+        int n = voicePool_->findFree(voices_);
+        if (n == -1 || voicePool_->owner(n) != -1) {
+            return false;
+        }
+        voicePool_->claim(n, timbreNumber_);
+        engineImpl_->bindVoice(voices_[n]);
+        voiceNumber_[(int) numberOfVoices_] = n;
+        numberOfVoices_ += 1.0f;
+    }
+    return true;
+}
+
+int Timbre::allocateVoice(int note) {
+    int count = (int) numberOfVoices_;
+
+    int freeVoice = -1;
+    int oldestReleasedVoice = -1;
+    int oldestPlayingVoice = -1;
+    uint32_t oldestReleasedIndex = UINT32_MAX;
+    uint32_t oldestPlayingIndex = UINT32_MAX;
+
+    for (int k = 0; k < count; k++) {
+        int n = voiceNumber_[k];
+        if (likely(voices_[n]->isPlaying())) {
+            if (unlikely(voices_[n]->getNote() == note)) {
+                return n;
+            }
+            uint32_t index = voices_[n]->getIndex();
+            if (voices_[n]->isReleased()) {
+                if (index < oldestReleasedIndex) {
+                    oldestReleasedIndex = index;
+                    oldestReleasedVoice = n;
+                }
+            } else if (index < oldestPlayingIndex) {
+                oldestPlayingIndex = index;
+                oldestPlayingVoice = n;
+            }
+        } else if (freeVoice == -1) {
+            freeVoice = n;
+        }
+    }
+
+    if (freeVoice != -1) {
+        return freeVoice;
+    }
+
+    if (count + countPendingVoices() < maxVoices_) {
+        int n = voicePool_->findFree(voices_);
+        if (n != -1) {
+            if (voicePool_->owner(n) == -1) {
+                voicePool_->claim(n, timbreNumber_);
+                engineImpl_->bindVoice(voices_[n]);
+                voiceNumber_[count] = n;
+                numberOfVoices_ = (float) (count + 1);
+                return n;
+            }
+            return reuseVoice(n);
+        }
+
+        n = voicePool_->findOldestReleased(voices_);
+        if (n == -1) {
+            n = voicePool_->findOldestPlaying(voices_, timbreNumber_);
+        }
+        if (n != -1) {
+            return reuseVoice(n);
+        }
+    }
+
+    if (oldestReleasedVoice != -1) {
+        return oldestReleasedVoice;
+    }
+
+    if (oldestPlayingVoice != -1) {
+        return oldestPlayingVoice;
+    }
+
+    int n = voicePool_->findOldestPlaying(voices_, -1);
+    if (n != -1) {
+        return reuseVoice(n);
+    }
+
+    return -1;
+}
+
+int Timbre::reuseVoice(int voiceIndex) {
+    Voice *voice = voices_[voiceIndex];
+    if (voice->getCurrentTimbre() == this) {
+        return voiceIndex;
+    }
+
+    Timbre *oldTimbre = voice->getCurrentTimbre();
+    bool bothPfm3 = engine_ == SYNTH_ENGINE_PFM3
+        && oldTimbre != nullptr && oldTimbre->getEngine() == SYNTH_ENGINE_PFM3;
+
+    if (!voice->isPlaying() || !bothPfm3) {
+        if (oldTimbre != nullptr) {
+            oldTimbre->removeActiveVoice(voiceIndex);
+        }
+        voicePool_->claim(voiceIndex, timbreNumber_);
+        engineImpl_->bindVoice(voice);
+        voiceNumber_[(int) numberOfVoices_] = voiceIndex;
+        numberOfVoices_ += 1.0f;
+        return voiceIndex;
+    }
+
+    voice->setPendingTimbre(this);
+    return voiceIndex;
+}
+
+bool Timbre::adoptVoice(Voice *voice, int voiceIndex) {
+    if ((int) numberOfVoices_ >= maxVoices_) {
+        return false;
+    }
+    voicePool_->claim(voiceIndex, timbreNumber_);
+    engineImpl_->bindVoice(voice);
+    voiceNumber_[(int) numberOfVoices_] = voiceIndex;
+    numberOfVoices_ += 1.0f;
+    lastPlayedNote_ = (int8_t) voiceIndex;
+    return true;
+}
+
+void Timbre::dropVoice(int voiceIndex) {
+    int count = (int) numberOfVoices_;
+    for (int k = 0; k < count; k++) {
+        if (voiceNumber_[k] == voiceIndex) {
+            voiceNumber_[k] = voiceNumber_[count - 1];
+            numberOfVoices_ = (float) (count - 1);
+            clearMpeMapping(voiceIndex);
+            if (lastPlayedNote_ == voiceIndex) {
+                lastPlayedNote_ = (count > 1) ? voiceNumber_[0] : 0;
+            }
+            return;
+        }
+    }
+}
+
+int Timbre::countPendingVoices() const {
+    int count = 0;
+    for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
+        if (voices_[v]->getPendingTimbre() == this) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void Timbre::preenNoteOn(char note, char velocity) {
-    // NumberOfVoice = 0 or no mapping in scala frequencies
-    if (unlikely(numberOfVoices_ == 0 || mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note] == 0.0f)) {
+    if (unlikely(maxVoices_ == 0 || mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note] == 0.0f)) {
         return;
     }
 
     note &= 0x7f;
 
-    int iNov = params_.engine1.playMode == PLAY_MODE_POLY ? (int) numberOfVoices_ : 1;
-
-    // Frequency depends on the current instrument scale
     float noteFrequency = mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note];
+    bool unison = params_.engine1.playMode == PLAY_MODE_UNISON;
+    bool mono = params_.engine1.playMode == PLAY_MODE_MONO;
 
-    uint32_t indexMin = UINT32_MAX;
-    int voiceToUse = -1;
-
-    int newNoteType = NEW_NOTE_NONE;
-
-    for (int k = 0; k < iNov; k++) {
-        // voice number k of timbre
-        int n = voiceNumber_[k];
-
-        if (unlikely(voices_[n]->isNewNotePending())) {
-            continue;
-        }
-
-        // same note = priority 1 : take the voice immediatly
-        if (unlikely(voices_[n]->isPlaying() && voices_[n]->getNote() == note)) {
-            if (likely(params_.engine1.playMode != PLAY_MODE_UNISON)) {
-                preenNoteOnUpdateMatrix(n, note, velocity);
-                voices_[n]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
-            } else {
-                // Unison !!
-                float noteFrequencyUnison = noteFrequency  + noteFrequency * params_.engine2.unisonDetune * .05f;
-                float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * numberOfVoiceInverse_ * .1f;
-                for (int k = 0; k < numberOfVoices_; k++) {
-                    int n = voiceNumber_[k];
-                    preenNoteOnUpdateMatrix(n, note, velocity);
-                    voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
-                    noteFrequencyUnison += noteFrequencyUnisonInc;
-                }
-            }
-            lastPlayedNote_ = n;
-            // Just in case we tune Osc Freq/Ftune while playing the same note
-            lowerNoteFrequency = voices_[n]->getNoteRealFrequencyEstimation(noteFrequency);
+    if (unison) {
+        if (!ensureActiveVoices(maxVoices_)) {
             return;
         }
-
-        // unlikely because if it true, CPU is not full
-        if (unlikely(newNoteType > NEW_NOTE_FREE)) {
-            if (!voices_[n]->isPlaying()) {
-                voiceToUse = n;
-                newNoteType = NEW_NOTE_FREE;
-            } else if (voices_[n]->isReleased()) {
-                uint32_t indexVoice = voices_[n]->getIndex();
-                if (indexVoice < indexMin) {
-                    indexMin = indexVoice;
-                    voiceToUse = n;
-                    newNoteType = NEW_NOTE_RELEASE;
-                }
-            }
-        }
-    }
-
-    if (voiceToUse == -1) {
-        for (int k = 0; k < iNov; k++) {
-            // voice number k of timbre
+        float noteFrequencyUnison = noteFrequency + noteFrequency * params_.engine2.unisonDetune * .05f;
+        float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * numberOfVoiceInverse_ * .1f;
+        for (int k = 0; k < maxVoices_; k++) {
             int n = voiceNumber_[k];
-            unsigned int indexVoice = voices_[n]->getIndex();
-            if (indexVoice < indexMin && !voices_[n]->isNewNotePending()) {
-                newNoteType = NEW_NOTE_OLD;
-                indexMin = indexVoice;
-                voiceToUse = n;
+            preenNoteOnUpdateMatrix(n, note, velocity);
+            if (voices_[n]->isPlaying()) {
+                voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
+            } else {
+                voices_[n]->noteOn(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
             }
+            noteFrequencyUnison += noteFrequencyUnisonInc;
         }
+        lastPlayedNote_ = voiceNumber_[0];
+        lowerNote_ = note;
+        lowerNoteReleased_ = false;
+        lowerNoteFrequency = voices_[voiceNumber_[0]]->getNoteRealFrequencyEstimation(noteFrequency);
+        return;
     }
-    // All voices in newnotepending state ?
-    if (voiceToUse != -1) {
 
-        if (likely(params_.engine1.playMode != PLAY_MODE_UNISON)) {
-            preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
+    int voiceToUse = allocateVoice(note);
+    if (voiceToUse == -1) {
+        return;
+    }
+    clearMpeMapping(voiceToUse);
 
-            switch (newNoteType) {
-                case NEW_NOTE_FREE:
-                    voices_[voiceToUse]->noteOn(note, noteFrequency, velocity, voiceIndex_++);
-                    break;
-                case NEW_NOTE_OLD:
-                case NEW_NOTE_RELEASE:
-                    voices_[voiceToUse]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
-                    break;
-            }
-        } else {
-            // Unisons : we start all voices with different frequency
-            float noteFrequencyUnison = noteFrequency  + noteFrequency * params_.engine2.unisonDetune * .05f;
-            float noteFrequencyUnisonInc = noteFrequency * params_.engine2.unisonDetune * numberOfVoiceInverse_ * .1f;
+    bool transferPending = voices_[voiceToUse]->isTransferPending();
+    if (!transferPending) {
+        preenNoteOnUpdateMatrix(voiceToUse, note, velocity);
+    }
+    if (voices_[voiceToUse]->isPlaying()) {
+        voices_[voiceToUse]->noteOnWithoutPop(note, noteFrequency, velocity, voiceIndex_++);
+    } else {
+        voices_[voiceToUse]->noteOn(note, noteFrequency, velocity, voiceIndex_++);
+    }
 
-            for (int k = 0; k < numberOfVoices_; k++) {
-                int n = voiceNumber_[k];
-
-                preenNoteOnUpdateMatrix(n, note, velocity);
-
-                switch (newNoteType) {
-                    case NEW_NOTE_FREE:
-                        voices_[n]->noteOn(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
-                        break;
-                    case NEW_NOTE_OLD:
-                    case NEW_NOTE_RELEASE:
-                        voices_[n]->noteOnWithoutPop(note, noteFrequencyUnison, velocity, voiceIndex_++, unisonPhase[k]);
-                        break;
-                }
-                noteFrequencyUnison += noteFrequencyUnisonInc;
-            }
-        }
-
+    if (!transferPending) {
         lastPlayedNote_ = voiceToUse;
-        if (note <= lowerNote_ || lowerNoteReleased_ || iNov == 1) {
-            lowerNote_ = note;
-            lowerNoteReleased_ = false;
+    }
+    if (note <= lowerNote_ || lowerNoteReleased_ || mono) {
+        lowerNote_ = note;
+        lowerNoteReleased_ = false;
+        if (!transferPending) {
             lowerNoteFrequency = voices_[voiceToUse]->getNoteRealFrequencyEstimation(noteFrequency);
         }
-
     }
 }
 
@@ -604,12 +764,18 @@ void Timbre::preenNoteOff(char note) {
 
 
 void Timbre::stopPlayingNow() {
-    for (int k = 0; k < numberOfVoices_; k++) {
-        // voice number k of timbre
+    for (int k = 0; k < (int) numberOfVoices_; k++) {
         int n = voiceNumber_[k];
         if (n != -1) {
             voices_[n]->killNow();
+            if (voicePool_ != nullptr) {
+                voicePool_->release(n);
+            }
         }
+    }
+    numberOfVoices_ = 0.0f;
+    for (int c = 0; c < 16; c++) {
+        mpeChannelVoice_[c] = -1;
     }
 }
 
@@ -679,9 +845,10 @@ void Timbre::cleanNextBlock() {
 }
 
 void Timbre::prepareMatrixForNewBlock() {
-    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-        return;
-    }
+    engineImpl_->prepareBlock();
+}
+
+void Timbre::pfm3PrepareMatrixForNewBlock() {
     for (int k = 0; k < numberOfVoices_; k++) {
         voices_[voiceNumber_[k]]->prepareMatrixForNewBlock();
     }
@@ -689,9 +856,10 @@ void Timbre::prepareMatrixForNewBlock() {
 
 
 void Timbre::glide() {
-    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-        return;
-    }
+    engineImpl_->glide();
+}
+
+void Timbre::pfm3Glide() {
     if (unlikely(params_.engine1.playMode == PLAY_MODE_UNISON)) {
         for (int vv = 0; vv < numberOfVoices_; vv++) {
             int v = voiceNumber_[vv];
@@ -707,10 +875,11 @@ void Timbre::glide() {
 }
 
 uint8_t Timbre::voicesNextBlock() {
-    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-        return msfaVoicesNextBlock();
+    if ((int) numberOfVoices_ == 0) {
+        cleanNextBlock();
+        return 0;
     }
-    return pfm3VoicesNextBlock();
+    return engineImpl_->voicesNextBlock();
 }
 
 uint8_t Timbre::pfm3VoicesNextBlock() {
@@ -816,10 +985,8 @@ uint8_t Timbre::msfaVoicesNextBlock() {
 
 void Timbre::msfaNoteOn(char note, char velocity) {
     float scaleFrequency = mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note];
-    msfaDebugLog("T note=%d vel=%d nv=%d sf=%d\n", note, velocity, (int) numberOfVoices_,
-        (int) (scaleFrequency * 1000.0f));
 
-    if (unlikely(numberOfVoices_ == 0 || scaleFrequency == 0.0f)) {
+    if (unlikely(maxVoices_ == 0 || scaleFrequency == 0.0f)) {
         return;
     }
 
@@ -827,48 +994,13 @@ void Timbre::msfaNoteOn(char note, char velocity) {
 
     msfaTimbreKeyDown(msfaState_);
 
-    int voiceToUse = -1;
-
-    // Retrigger the voice already playing this note.
-    for (int k = 0; k < numberOfVoices_; k++) {
-        int n = voiceNumber_[k];
-        if (voices_[n]->isPlaying() && voices_[n]->getNote() == note) {
-            voiceToUse = n;
-            break;
-        }
-    }
-
-    // Otherwise take a free voice.
-    if (voiceToUse == -1) {
-        for (int k = 0; k < numberOfVoices_; k++) {
-            int n = voiceNumber_[k];
-            if (!voices_[n]->isPlaying()) {
-                voiceToUse = n;
-                break;
-            }
-        }
-    }
-
-    // Otherwise steal the oldest voice.
-    if (voiceToUse == -1) {
-        uint32_t indexMin = UINT32_MAX;
-        for (int k = 0; k < numberOfVoices_; k++) {
-            int n = voiceNumber_[k];
-            uint32_t index = voices_[n]->getIndex();
-            if (index < indexMin) {
-                indexMin = index;
-                voiceToUse = n;
-            }
-        }
-    }
-
+    int voiceToUse = allocateVoice(note);
     if (voiceToUse == -1) {
         return;
     }
+    clearMpeMapping(voiceToUse);
 
     voices_[voiceToUse]->msfaNoteOn(msfaProgram_[timbreNumber_], note, velocity, voiceIndex_++, msfaState_);
-
-    msfaDebugLog("A note=%d use=%d idx=%u\n", note, voiceToUse, (unsigned) (voiceIndex_ - 1));
 
     lastPlayedNote_ = voiceToUse;
     if (note <= lowerNote_ || lowerNoteReleased_) {
@@ -937,16 +1069,23 @@ void Timbre::msfaAfterNewParamsLoad() {
 void Timbre::fxAfterBlock() {
 
 	int fx2Type = params_.effect2.type;
-    
-    if (likely(engine_ != SYNTH_ENGINE_MSFA) && !voices_[lastPlayedNote_]->isPlaying()) {
-        // hack : this voice is not playing but still need to calculate lfo
-        voices_[lastPlayedNote_]->matrix.computeAllDestinations();
-    }
 
-    float matrixFilterFrequency = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_PARAM1);
-    float matrixFilterParam2    = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_PARAM2);
-    float matrixFilterAmp       = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_AMP);
-    float matrixFilterPan       = clamp( voices_[lastPlayedNote_]->matrix.getDestination(ALL_PAN), -1, 1);
+    float matrixFilterFrequency = 0.0f;
+    float matrixFilterParam2 = 0.0f;
+    float matrixFilterAmp = 0.0f;
+    float matrixFilterPan = 0.0f;
+
+    if ((int) numberOfVoices_ > 0) {
+        if (likely(engine_ != SYNTH_ENGINE_MSFA) && !voices_[lastPlayedNote_]->isPlaying()) {
+            // hack : this voice is not playing but still need to calculate lfo
+            voices_[lastPlayedNote_]->matrix.computeAllDestinations();
+        }
+
+        matrixFilterFrequency = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_PARAM1);
+        matrixFilterParam2    = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_PARAM2);
+        matrixFilterAmp       = voices_[lastPlayedNote_]->matrix.getDestination(FILTER2_AMP);
+        matrixFilterPan       = clamp( voices_[lastPlayedNote_]->matrix.getDestination(ALL_PAN), -1, 1);
+    }
     float gainTmp               = clamp(this->params_.effect2.param3 + matrixFilterAmp, 0, 16);
 
     if(prevFx2Type != fx2Type) {
@@ -2734,8 +2873,15 @@ void Timbre::voicesToTimbre(float volumeGain) {
 }
 
 void Timbre::gateFx() {
+    engineImpl_->gateFx();
+}
+
+void Timbre::pfm3GateFx() {
     // Gate algo !!
-    float gate = voices_[lastPlayedNote_]->matrix.getDestination(MAIN_GATE);
+    float gate = 0.0f;
+    if ((int) numberOfVoices_ > 0) {
+        gate = voices_[lastPlayedNote_]->matrix.getDestination(MAIN_GATE);
+    }
     if (unlikely(gate > 0 || currentGate_ > 0)) {
         gate *= .72547132656922730694f; // 0 < gate < 1.0
         if (gate > 1.0f) {
@@ -2765,11 +2911,7 @@ void Timbre::gateFx() {
 
 void Timbre::afterNewParamsLoad() {
 
-    if (unlikely(engine_ == SYNTH_ENGINE_MSFA)) {
-        msfaAfterNewParamsLoad();
-    } else {
-        pfm3AfterNewParamsLoad();
-    }
+    engineImpl_->afterNewParamsLoad();
 
     resetArpeggiator();
     for (int k = 0; k < NUMBER_OF_ENCODERS_PFM2; k++) {
@@ -2806,6 +2948,17 @@ void Timbre::setNewValue(int index, struct ParameterDisplay *param, float newVal
         newValue = param->minValue;
     }
     ((float*) &params_)[index] = newValue;
+
+    if (engine_ == SYNTH_ENGINE_PFM3) {
+        int row = index / NUMBER_OF_ENCODERS_PFM2;
+        int encoder = index % NUMBER_OF_ENCODERS_PFM2;
+        if ((row == ROW_ENGINE && encoder == ENCODER_ENGINE_ALGO)
+            || ((row == ROW_OSC_MIX1 || row == ROW_OSC_MIX2 || row == ROW_OSC_MIX3)
+                && (encoder == 1 || encoder == 3))
+            || (row == ROW_EFFECT1 && encoder == ENCODER_EFFECT_PARAM3)) {
+            pfm3Engine_.refreshContext();
+        }
+    }
 }
 
 int Timbre::getSeqStepValue(int whichStepSeq, int step) {
@@ -3285,7 +3438,7 @@ void Timbre::setMatrixSourceMPE(uint8_t channel, enum SourceEnum source, float n
         return;
     }
 
-    int voiceToUse = voiceNumber_[channel -1];
+    int voiceToUse = mpeChannelVoice_[channel -1];
 
     if (unlikely(voiceToUse == -1)) {
         return;

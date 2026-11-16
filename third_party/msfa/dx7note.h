@@ -40,7 +40,7 @@ struct VoiceStatus {
 
 class Dx7Note {
 public:
-    Dx7Note(std::shared_ptr<TuningState> ts, MTSClient *mtsc);
+    Dx7Note(TuningState *ts, MTSClient *mtsc);
     void init(const uint8_t patch[156], int midinote, int velocity, int channel, const Controllers *ctrls);
     void initPortamento(const Dx7Note &srcNote);
 
@@ -73,7 +73,7 @@ public:
     // We should put this as a function and not a DX7Note method
     //int32_t osc_freq(int midinote, int mode, int coarse, int fine, int detune);
 
-    std::shared_ptr<TuningState> tuning_state_;
+    TuningState *tuning_state_;
 
     int mpePitchBend = 8192;
     int mpePressure = 0;

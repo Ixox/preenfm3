@@ -876,11 +876,6 @@ void ScreenMixer::encoderTurned(int encoder, int ticks) {
             float maxValue;
             if (mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES) {
                 maxValue = MAX_NUMBER_OF_VOICES;
-                for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-                    if (t != encoder) {
-                        maxValue -= synthState_->mixerState.instrumentState_[t].numberOfVoices;
-                    }
-                }
             } else {
                 maxValue = buttonStateParam->maxValue;
             }
