@@ -75,6 +75,7 @@ target_link_libraries(preenfm3_firmware PRIVATE
     stm32_usb_audio
     stm32_usb_midi
     hexter
+    msfa
     mutable_midipal
     fonts
     m
@@ -114,6 +115,7 @@ message(STATUS "preenFM3 firmware artifact: ${FIRMWARE_BIN_NAME}")
 # Exclude the RAM/ITCM sections from the binary, as scripts/create_object*.sh do.
 set(FIRMWARE_OBJCOPY_REMOVE
     -R .ram_d2b
+    -R .ram_d2c
     -R .ram_d2
     -R .ram_d1
     -R .ram_d3
