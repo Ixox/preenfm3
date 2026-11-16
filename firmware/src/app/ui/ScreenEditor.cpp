@@ -90,12 +90,12 @@ void ScreenEditor::newTimbre(int timbre) {
     }
 }
 
-void ScreenEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+void ScreenEditor::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
     if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->newParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
+        msfaEditor_->newPfm3ParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
     } else {
-        pfm3Editor_->newParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
+        pfm3Editor_->newPfm3ParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
     }
 }
 
@@ -246,6 +246,14 @@ void ScreenEditor::encoderTurned(int encoder6, int ticks) {
     }
 }
 
+void ScreenEditor::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    if (isMsfaTimbre()) {
+        msfaEditor_->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+    } else {
+        pfm3Editor_->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+    }
+}
+
 void ScreenEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
 
     if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
@@ -311,7 +319,7 @@ void ScreenEditor::refreshOscillatorOperatorEnvelope() {
     int op = synthState_->fullState.operatorNumber;
     if (isMsfaTimbre()) {
         MsfaEnvelopeDisplay env;
-        msfaGetEnvelopeDisplay(synthState_->getTimbre(currentTimbre_)->getMsfaProgram(), op, &env);
+        getMsfaEnvelopeDisplay(synthState_->getTimbre(currentTimbre_)->getPatchMemory(), op, &env);
 
         tft_->oscilloBgSetEnvelope(env.time[0], env.time[1], env.time[2], env.time[3],
                 env.level[0], env.level[1], env.level[2], env.level[3],

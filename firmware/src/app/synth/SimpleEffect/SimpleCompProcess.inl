@@ -44,7 +44,7 @@ namespace chunkware_simple
 {
 
 	//-------------------------------------------------------------
-	INLINE float SimpleComp::processPfm3( float *inStereo )
+	INLINE float SimpleComp::processBlock( float *inStereo )
 	{
 	    float *startBuffer = inStereo;
 	    float maxAbsSample = 0.0f;

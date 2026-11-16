@@ -1,0 +1,35 @@
+/*
+ * Copyright 2026 Xavier Hosxe
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+#ifndef SYNTH_ENGINE_FACTORY_H_
+#define SYNTH_ENGINE_FACTORY_H_
+
+#include "Common.h"
+#include "Preenfm3Engine.h"
+#include "MsfaSynthEngine.h"
+
+class Timbre;
+class SynthState;
+class SynthEngine;
+
+/*
+ * Static engine registry. One PFM3 and one MSFA engine per timbre, created
+ * once at startup; Timbre only keeps a SynthEngine pointer.
+ */
+class SynthEngineFactory {
+public:
+    static void init(Timbre *timbre, SynthState *synthState);
+    static SynthEngine* get(SynthEngineType type, int timbreNumber);
+
+private:
+    static Preenfm3Engine pfm3Engines_[NUMBER_OF_TIMBRES];
+    static MsfaSynthEngine msfaEngines_[NUMBER_OF_TIMBRES];
+};
+
+#endif

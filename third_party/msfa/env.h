@@ -37,6 +37,9 @@ class Env {
 
   void update(const int rates[4], const int levels[4], int outlevel,
       int rate_scaling);
+  // preenFM3: update parameters without resetting the envelope stage.
+  void updateParams(const int rates[4], const int levels[4], int outlevel,
+      int rate_scaling);
   // Result is in Q24/doubling log format. Also, result is subsampled
   // for every N samples.
   // A couple more things need to happen for this to be used as a gain

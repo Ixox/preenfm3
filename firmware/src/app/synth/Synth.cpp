@@ -19,7 +19,6 @@
 #include "Synth.h"
 #include "Menu.h"
 #include "Sequencer.h"
-#include "MsfaEngine.h"
 
 extern RNG_HandleTypeDef hrng;
 extern float noise[32];
@@ -48,7 +47,7 @@ void Synth::init(SynthState *synthState) {
     voicePool_.init();
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         for (uint16_t k = 0; k < (sizeof(struct OneSynthParams) / sizeof(float)); k++) {
-            ((float*) &timbres_[t].params_)[k] = ((float*) &preenMainPreset)[k];
+            ((float*) timbres_[t].getParamRaw())[k] = ((float*) &preenMainPreset)[k];
         }
         timbres_[t].initVoicePool(&voicePool_);
         timbres_[t].init(synthState, t);
@@ -60,7 +59,6 @@ void Synth::init(SynthState *synthState) {
     newTimbre(0);
     for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
         voices_[k].init(k);
-        Preenfm3Engine::initVoiceState(k);
     }
     // Here synthState is already initialized
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
@@ -142,7 +140,7 @@ void Synth::midiClockStop(bool tellSequencer) {
 
 void Synth::midiTick(bool tellSequencer) {
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        timbres_[t].OnMidiClock();
+        timbres_[t].processMidiClock();
     }
     if (tellSequencer) {
         sequencer_->onMidiClock();
@@ -180,7 +178,7 @@ void Synth::allSoundOff() {
     for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
         Timbre *timbre = voices_[k].getCurrentTimbre();
         if (timbre != nullptr) {
-            timbre->engineImpl_->killVoice(&voices_[k]);
+            timbre->killVoice(&voices_[k]);
         } else {
             voices_[k].resetVoiceState();
         }
@@ -242,7 +240,10 @@ void Synth::mixAndPan(int32_t *dest, float *source, float &pan, float sampleMult
 void Synth::processPendingTransfers() {
     for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
         if (voices_[v].isTransferReady()) {
-            voices_[v].completePendingTransfer(v, &voicePool_);
+            Timbre *timbre = voices_[v].getCurrentTimbre();
+            if (timbre != nullptr) {
+                timbre->completeVoiceTransfer(&voices_[v], v, &voicePool_);
+            }
         }
     }
 }
@@ -321,7 +322,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
         // We divide by 5 to have headroom before saturating (>1.0f)
         timbres_[timbre].voicesToTimbre(smoothVolume_[timbre] * .2f);
         timbres_[timbre].gateFx();
-        timbres_[timbre].fxAfterBlock();
+        timbres_[timbre].applyTimbreFx();
 
         // Smooth pan to avoid audio noise
         smoothPan_[timbre] = smoothPan_[timbre] * .95f
@@ -331,7 +332,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *
 
         // Even without compressor we call this meethod
         // It allows to retrieve the volume in DB
-        instrumentCompressor_[timbre].processPfm3(sampleFromTimbre);
+        instrumentCompressor_[timbre].processBlock(sampleFromTimbre);
 
         // Send to bus fx, to mix with other timbres
         fxBus->mixAdd(timbres_[timbre].getSampleBlock(), synthState_->mixerState.instrumentState_[timbre].send, synthState_->mixerState.reverbLevel_);
@@ -481,17 +482,17 @@ void Synth::beforeNewParamsLoad(int timbre) {
 
     if (this->synthState_->params->engineArp1.clock > 0) {
         // Arpegiator : we store pressed key
-        int numberOfPressedNote = timbres_[timbre].note_stack_.size();
+        int numberOfPressedNote = timbres_[timbre].getNoteStack().size();
         for (int k = 0; k < numberOfPressedNote && k < NUMBER_OF_STORED_NOTES; k++) {
-            const NoteEntry &noteEntry = timbres_[timbre].note_stack_.played_note(k);
+            const NoteEntry &noteEntry = timbres_[timbre].getNoteStack().played_note(k);
             noteBeforeNewParalsLoad_[k] = noteEntry.note;
             velocityBeforeNewParalsLoad_[k] = noteEntry.velocity;
         }
     } else {
-        int numberOfVoices = (int) timbres_[timbre].numberOfVoices_;
+        int numberOfVoices = timbres_[timbre].getNumberOfVoices();
         for (int k = 0; k < numberOfVoices && k < NUMBER_OF_STORED_NOTES; k++) {
             // voice number k of timbre
-            int n = timbres_[timbre].voiceNumber_[k];
+            int n = timbres_[timbre].getVoiceNumber(k);
             if (voices_[n].isPlaying() && !voices_[n].isReleased()) {
                 noteBeforeNewParalsLoad_[k] = voices_[n].getNote();
                 velocityBeforeNewParalsLoad_[k] = voices_[n].getMidiVelocity();
@@ -552,7 +553,7 @@ void Synth::afterNewMixerLoad() {
     this->synthState_->mixerState.fxBus_.paramChanged();
 }
 
-void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
+void Synth::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
     float newValue) {
     if (param == NULL) {
         if (currentRow == ROW_ARPEGGIATOR3) {
@@ -568,9 +569,13 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
     }
 }
 
+void Synth::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    timbres_[timbre].engineParamChanged(paramId, context, oldValue, newValue);
+}
+
 // synth is the only one who knows timbres
 void Synth::newTimbre(int timbre) {
-    this->synthState_->setParamsAndTimbre(&timbres_[timbre].params_, timbre);
+    this->synthState_->setParamsAndTimbre(timbres_[timbre].getParamRaw(), timbre);
 }
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
@@ -658,7 +663,7 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
 
 
 void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
-    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, &timbres_[timbre].params_);
+    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, timbres_[timbre].getParamRaw());
 }
 
 void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
@@ -692,7 +697,7 @@ void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue
     ((float*) this->timbres_[timbre].getParamRaw())[index] = newValue;
 
     if (oldValue != newValue) {
-        this->synthState_->propagateNewParamValueFromExternal(timbre, row, encoder, param, oldValue, newValue);
+        this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, row, encoder, param, oldValue, newValue);
     }
 }
 
@@ -750,13 +755,13 @@ void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int 
         int oldStep = this->synthState_->stepSelect[whichStepSeq];
         this->synthState_->stepSelect[whichStepSeq] = step;
         if (oldStep != step) {
-            this->synthState_->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep,
+            this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep,
                 step);
         }
         this->timbres_[timbre].setSeqStepValue(whichStepSeq, step, newValue);
         int newNewValue = this->timbres_[timbre].getSeqStepValue(whichStepSeq, step);
         if (oldValue != newNewValue) {
-            this->synthState_->propagateNewParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue,
+            this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue,
                 newValue);
         }
     }

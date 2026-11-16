@@ -1,4 +1,13 @@
 /*
+ * Copyright 2026 Xavier Hosxe
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+/*
  * MSFA engine state and adapters.
  *
  * The MSFA headers are only included here so their Lfo/Env classes do not
@@ -8,6 +17,7 @@
 #include <new>
 
 #include "MsfaEngine.h"
+#include "MsfaParams.h"
 #include "MsfaDebug.h"
 #include "controllers.h"
 #include "dx7note.h"
@@ -56,11 +66,11 @@ alignas(MsfaTimbreState) static uint8_t msfaTimbreStorage[NUMBER_OF_TIMBRES][siz
 MsfaVoiceState *msfaVoiceStates = reinterpret_cast<MsfaVoiceState *>(msfaVoiceStorage);
 MsfaTimbreState *msfaTimbreStates = reinterpret_cast<MsfaTimbreState *>(msfaTimbreStorage);
 
-MsfaVoiceState *msfaGetVoiceState(int index) {
+MsfaVoiceState *getMsfaVoiceState(int index) {
     return msfaVoiceStates + index;
 }
 
-MsfaTimbreState *msfaGetTimbreState(int index) {
+MsfaTimbreState *getMsfaTimbreState(int index) {
     return msfaTimbreStates + index;
 }
 
@@ -172,7 +182,7 @@ void msfaVoiceKeyUp(MsfaVoiceState *state) {
     state->released = true;
 }
 
-bool msfaVoiceIsActive(MsfaVoiceState *state) {
+bool isMsfaVoiceActive(MsfaVoiceState *state) {
     return state != nullptr && state->active;
 }
 
@@ -222,6 +232,20 @@ void msfaVoiceUpdateProgram(MsfaVoiceState *state, const uint8_t *program) {
     state->noteObj.update(program, state->note, state->velocity, 1);
 }
 
+// preenFM3: fast live-parameter update. Dx7Note::update() is still used for
+// note-on and full preset/engine/DX7 loads; this path avoids reloading all
+// six operators when only one MSFA parameter changes.
+void msfaVoiceUpdateParam(MsfaVoiceState *state, int paramId, int op) {
+    if (state == nullptr || !state->active) {
+        return;
+    }
+    if (paramId >= MSFA_EG_RATE_1 && paramId <= MSFA_DETUNE) {
+        state->noteObj.updateOperator(op, state->velocity);
+    } else {
+        state->noteObj.updateGlobal();
+    }
+}
+
 void msfaVoiceReset(MsfaVoiceState *state) {
     if (state == nullptr) {
         return;
@@ -237,7 +261,7 @@ void msfaVoiceReset(MsfaVoiceState *state) {
     }
 }
 
-void msfaGetEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env) {
+void getMsfaEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env) {
     const uint8_t *op = program + (5 - operatorNumber) * 21;
 
     // A DX7 rate is the time needed to sweep the full level range. Using that

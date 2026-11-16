@@ -132,7 +132,7 @@ void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encode
         }
 
         stepSelect[whichStepSeq] = newValue;
-        propagateNewParamValue(currentTimbre, row, encoder4, (ParameterDisplay*) NULL, oldPos, stepSelect[whichStepSeq]);
+        propagateNewPfm3ParamValue(currentTimbre, row, encoder4, (ParameterDisplay*) NULL, oldPos, stepSelect[whichStepSeq]);
 
     } else if (encoder6 == 4) {
         char *step = &seqSteps->steps[(int) stepSelect[whichStepSeq]];
@@ -147,7 +147,7 @@ void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encode
         }
         if ((*step) != newValue) {
             (*step) = newValue;
-            propagateNewParamValue(currentTimbre, row, encoder4, (ParameterDisplay*) NULL, oldValue, (int) (*step));
+            propagateNewPfm3ParamValue(currentTimbre, row, encoder4, (ParameterDisplay*) NULL, oldValue, (int) (*step));
         }
     }
 }
@@ -166,7 +166,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         }
         if (newPos != oldPos) {
             patternSelect = newPos;
-            propagateNewParamValue(currentTimbre, row, encoder, (ParameterDisplay*) NULL, oldPos, patternSelect);
+            propagateNewPfm3ParamValue(currentTimbre, row, encoder, (ParameterDisplay*) NULL, oldPos, patternSelect);
         }
 
     } else if (encoder == 1) {
@@ -199,7 +199,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         if (oldMask != newMask) {
             ARP_PATTERN_SETMASK(pattern, newMask);
             params->engineArpUserPatterns.patterns[(int) params->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
-            propagateNewParamValue(currentTimbre, row, encoder, (ParameterDisplay*) NULL, oldMask, newMask);
+            propagateNewPfm3ParamValue(currentTimbre, row, encoder, (ParameterDisplay*) NULL, oldMask, newMask);
         }
     }
 }
@@ -403,7 +403,7 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber,
         mixerState.instrumentState_[timbre].engine = SYNTH_ENGINE_MSFA;
         timbres[timbre].setEngine(SYNTH_ENGINE_MSFA);
 
-        timbres[timbre].loadMsfaPackedPatch(packed);
+        timbres[timbre].loadDx7Patch(packed);
         // Keep PFM3 params in sync for display/backward compatibility.
         hexter->loadHexterPatch(packed, params);
     }

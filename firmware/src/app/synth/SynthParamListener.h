@@ -24,8 +24,9 @@
 class SynthParamListener {
 
 public:
-    virtual void newParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
-    virtual void newParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
+    virtual void newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
+    virtual void newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
+    virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {}
     virtual void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) = 0;
     virtual void newTimbre(int timbre) = 0;
     virtual void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) = 0;

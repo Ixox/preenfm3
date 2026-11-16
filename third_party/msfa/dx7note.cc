@@ -405,6 +405,59 @@ void Dx7Note::update(const uint8_t patch[156], int midinote, int velocity, int c
     opSwitch_ = patch[155];
 }
 
+// preenFM3: fast live-parameter update. Dx7Note::update() is still used for
+// note-on and full preset/engine/DX7 loads; this path avoids reloading all
+// six operators when only one MSFA parameter changes.
+void Dx7Note::updateOperator(int op, int velocity) {
+    int off = op * 21;
+    const uint8_t *patch = currentPatch;
+    int rates[4];
+    int levels[4];
+    int mode = patch[off + 17];
+    int coarse = patch[off + 18];
+    int fine = patch[off + 19];
+    int detune = patch[off + 20];
+    basepitch_[op] = osc_freq(playingMidiNote, mode, coarse, fine, detune, midiChannel);
+    ampmodsens_[op] = ampmodsenstab[patch[off + 14] & 3];
+    opMode[op] = mode;
+    for (int i = 0; i < 4; i++) {
+        rates[i] = patch[off + i];
+        levels[i] = patch[off + 4 + i];
+    }
+    int outlevel = patch[off + 16];
+    outlevel = Env::scaleoutlevel(outlevel);
+    int level_scaling = ScaleLevel(playingMidiNote, patch[off + 8], patch[off + 9],
+                                   patch[off + 10], patch[off + 11], patch[off + 12]);
+    outlevel += level_scaling;
+    outlevel = min(127, outlevel);
+    outlevel = outlevel << 5;
+    outlevel += ScaleVelocity(velocity, patch[off + 15]);
+    outlevel = max(0, outlevel);
+    int rate_scaling = ScaleRate(playingMidiNote, patch[off + 13]);
+    env_[op].updateParams(rates, levels, outlevel, rate_scaling);
+}
+
+// preenFM3: fast live-parameter update. Dx7Note::update() is still used for
+// note-on and full preset/engine/DX7 loads; this path avoids reloading all
+// six operators when only one MSFA parameter changes.
+void Dx7Note::updateGlobal() {
+    const uint8_t *patch = currentPatch;
+    algorithm_ = patch[134];
+    int feedback = patch[135];
+    fb_shift_ = feedback != 0 ? FEEDBACK_BITDEPTH - feedback : 16;
+    pitchmoddepth_ = (patch[139] * 165) >> 6;
+    pitchmodsens_ = pitchmodsenstab[patch[143] & 7];
+    ampmoddepth_ = (patch[140] * 165) >> 6;
+    opSwitch_ = patch[155];
+    int rates[4];
+    int levels[4];
+    for (int i = 0; i < 4; i++) {
+        rates[i] = patch[126 + i];
+        levels[i] = patch[130 + i];
+    }
+    pitchenv_.updateParams(rates, levels);
+}
+
 void Dx7Note::peekVoiceStatus(VoiceStatus &status) {
     for(int i=0;i<6;i++) {
         status.amp[i] = Exp2::lookup(params_[i].level_in - (14 * (1 << 24)));

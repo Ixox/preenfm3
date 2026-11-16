@@ -60,8 +60,9 @@ public:
     virtual const struct EditorEditMenu* getEditMenu(int page) const = 0;
     virtual void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) = 0;
     virtual void displayParamValue(int encoder, TFT_COLOR color) = 0;
-    virtual void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+    virtual void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
         ParameterDisplay *param, float oldValue, float newValue) = 0;
+    virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {}
     virtual void tempoClick() = 0;
     virtual void encoderTurned(int encoder, int ticks) = 0;
     virtual void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) = 0;
@@ -86,7 +87,8 @@ public:
 
     void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
-    void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void tempoClick();
 
     bool isPresetModifed(int timbre) {

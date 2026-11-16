@@ -21,9 +21,6 @@
 #include "Timbre.h"
 #include "Voice.h"
 #include "VoicePool.h"
-#include "LfoOsc.h"
-#include "LfoEnv.h"
-#include "LfoStepSeq.h"
 
 #include "SynthParamListener.h"
 #include "SynthStateAware.h"
@@ -72,15 +69,16 @@ public:
         }
     }
 
-    void newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
-        newParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
+    void newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
+        newPfm3ParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
     }
 
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
         newMixerValue(mixerValueType, timbre, oldValue, newValue);
     }
 
-    void newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton) {
     }

@@ -3043,7 +3043,7 @@ const struct EditorEditMenu* ScreenPfm3Editor::getEditMenu(int page) const {
     return mainMenu.editMenu[0];
 }
 
-void ScreenPfm3Editor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+void ScreenPfm3Editor::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
 
     const struct EditorEditMenu *editMenu = parent_->currentEditMenu();
@@ -3316,7 +3316,7 @@ void ScreenPfm3Editor::refreshEditorByStep(int &refreshStatus, int &endRefreshSt
             break;
         case 10:
             if (parent_->isMsfaTimbre()) {
-                tft_->drawDx7Algo(synthState_->getTimbre(synthState_->getCurrentTimbre())->getMsfaProgram()[134]);
+                tft_->drawDx7Algo(synthState_->getTimbre(synthState_->getCurrentTimbre())->getPatchMemory()[134]);
             } else {
                 tft_->drawAlgo(synthState_->params->engine1.algo);
             }
@@ -3334,7 +3334,7 @@ void ScreenPfm3Editor::refreshEditorByStep(int &refreshStatus, int &endRefreshSt
             parent_->displayPreset();
             tft_->oscilloForceNextDisplay();
             if (parent_->isMsfaTimbre()) {
-                tft_->drawDx7Algo(synthState_->getTimbre(synthState_->getCurrentTimbre())->getMsfaProgram()[134]);
+                tft_->drawDx7Algo(synthState_->getTimbre(synthState_->getCurrentTimbre())->getPatchMemory()[134]);
             } else {
                 tft_->drawAlgo(synthState_->params->engine1.algo);
             }
@@ -3910,7 +3910,7 @@ void ScreenPfm3Editor::encoderTurnedPfm2(int row, int encoder4, int ticks, bool 
         (*value) = (float) newValue;
     }
     if (newValue != oldValue) {
-        synthState_->propagateNewParamValue(synthState_->getCurrentTimbre(), row, encoder4, param, oldValue, newValue);
+        synthState_->propagateNewPfm3ParamValue(synthState_->getCurrentTimbre(), row, encoder4, param, oldValue, newValue);
     }
 
 }
@@ -3940,7 +3940,7 @@ void ScreenPfm3Editor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, 
         float newValue = ((float*) defaultParams)[num];
         (*value) = newValue;
 
-        synthState_->propagateNewParamValue(synthState_->getCurrentTimbre(), rowEncoder.row, rowEncoder.encoder, param, oldValue,
+        synthState_->propagateNewPfm3ParamValue(synthState_->getCurrentTimbre(), rowEncoder.row, rowEncoder.encoder, param, oldValue,
             newValue);
         break;
     }

@@ -26,6 +26,8 @@ class PitchEnv {
   // The rates and levels arrays are calibrated to match the Dx7 parameters
   // (ie, value 0..99).
   void set(const int rates[4], const int levels[4]);
+  // preenFM3: update parameters without resetting the envelope stage.
+  void updateParams(const int rates[4], const int levels[4]);
 
   // Result is in Q24/octave
   int32_t getsample();

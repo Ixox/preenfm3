@@ -1,4 +1,13 @@
 /*
+ * Copyright 2026 Xavier Hosxe
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+/*
  * MSFA engine state.
  *
  * The MSFA (Dexed) headers define Lfo/Env, which collide with the PFM3
@@ -29,8 +38,8 @@ struct MsfaEnvelopeDisplay {
 extern MsfaVoiceState *msfaVoiceStates;
 extern MsfaTimbreState *msfaTimbreStates;
 
-MsfaVoiceState *msfaGetVoiceState(int index);
-MsfaTimbreState *msfaGetTimbreState(int index);
+MsfaVoiceState *getMsfaVoiceState(int index);
+MsfaTimbreState *getMsfaTimbreState(int index);
 
 void msfaEngineInit();
 
@@ -43,11 +52,12 @@ void msfaTimbreSetController(MsfaTimbreState *state, enum SourceEnum source, flo
 void msfaVoiceStart(MsfaVoiceState *state, const uint8_t *program, uint8_t note,
                     uint8_t velocity, uint8_t channel, MsfaTimbreState *ts);
 void msfaVoiceKeyUp(MsfaVoiceState *state);
-bool msfaVoiceIsActive(MsfaVoiceState *state);
+bool isMsfaVoiceActive(MsfaVoiceState *state);
 bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out);
 void msfaVoiceUpdateProgram(MsfaVoiceState *state, const uint8_t *program);
+void msfaVoiceUpdateParam(MsfaVoiceState *state, int paramId, int op);
 void msfaVoiceReset(MsfaVoiceState *state);
 
-void msfaGetEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env);
+void getMsfaEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env);
 
 #endif

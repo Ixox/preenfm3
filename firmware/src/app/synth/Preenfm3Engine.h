@@ -56,7 +56,8 @@ public:
     void killVoice(Voice *voice) override;
     void noteOffVoice(Voice *voice) override;
     void noteOffVoiceQuick(Voice *voice) override;
-    void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, bool alreadyOff) override;
+    void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff) override;
+    void completeVoiceTransfer(Voice *voice, int poolIndex, VoicePool *pool) override;
     uint8_t voicesNextBlock() override;
     void prepareBlock() override;
     void glide() override;
@@ -122,6 +123,7 @@ private:
     void updateAllMixOscsAndPans(Voice *voice);
     Pfm3VoiceState& pfm3State(Voice *voice);
     void bindVoiceState(Voice *voice);
+    void resetPfm3VoiceState(Voice *voice);
     void glideToNote(Voice *voice, short newNote, float newNoteFrequency);
     void glideFirstNoteOff(Voice *voice);
     void glideVoice(Voice *voice);

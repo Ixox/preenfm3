@@ -36,7 +36,7 @@ public:
     const struct EditorEditMenu* getEditMenu(int page) const override;
     void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+    void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
         ParameterDisplay *param, float oldValue, float newValue) override;
     void tempoClick() override;
     void encoderTurned(int encoder, int ticks) override;

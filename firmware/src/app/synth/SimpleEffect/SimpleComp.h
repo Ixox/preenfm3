@@ -56,7 +56,7 @@ namespace chunkware_simple
 
 		// runtime
 		virtual void initRuntime( void );			// call before runtime (in resume())
-		float processPfm3( float *inStereo);
+		float processBlock( float *inStereo);
 
 		float getCurrentVolume() {
 		    return keydBMax_;

@@ -52,13 +52,13 @@ public:
         noteOff(note);
     }
 
-    void loadMsfaPackedPatch(const uint8_t *packedPatch);
-    void loadMsfaProgram(const uint8_t *program);
-    const uint8_t* getMsfaProgram() const {
+    void loadDx7Patch(const uint8_t *packedPatch) override;
+    uint8_t* getPatchMemory() override {
         return program_[timbreNumber_];
     }
-    uint8_t* getMsfaProgramMutable() {
-        return program_[timbreNumber_];
+    void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
+    void patchMemoryChanged() override {
+        afterNewParamsLoad();
     }
     void setController(SourceEnum source, float value);
 

@@ -52,6 +52,16 @@ void PitchEnv::set(const int r[4], const int l[4]) {
   advance(0);
 }
 
+void PitchEnv::updateParams(const int r[4], const int l[4]) {
+  for (int i = 0; i < 4; i++) {
+    rates_[i] = r[i];
+    levels_[i] = l[i];
+  }
+  if (ix_ < 4) {
+    advance(ix_);
+  }
+}
+
 int32_t PitchEnv::getsample() {
   if (ix_ < 3 || ((ix_ < 4) && !down_)) {
     if (rising_) {

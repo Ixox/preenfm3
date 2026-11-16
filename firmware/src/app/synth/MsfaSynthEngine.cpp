@@ -14,7 +14,9 @@
 #include "Voice.h"
 #include "Hexter.h"
 #include "MsfaEngine.h"
+#include "MsfaParams.h"
 #include "MsfaDebug.h"
+#include "waves.h"
 
 uint8_t MsfaSynthEngine::packedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE] __attribute__((section(".ram_d1")));
 uint8_t MsfaSynthEngine::program_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE] __attribute__((section(".ram_d1")));
@@ -23,7 +25,7 @@ void MsfaSynthEngine::init(Timbre *timbre, SynthState *synthState) {
     (void) synthState;
     timbre_ = timbre;
     timbreNumber_ = timbre->getTimbreNumber();
-    msfaState_ = msfaGetTimbreState(timbreNumber_);
+    msfaState_ = getMsfaTimbreState(timbreNumber_);
 
     uint8_t *program = program_[timbreNumber_];
     uint8_t *packed = packedPatch_[timbreNumber_];
@@ -41,6 +43,22 @@ void MsfaSynthEngine::init(Timbre *timbre, SynthState *synthState) {
     msfaTimbreLoadProgram(msfaState_, program);
 }
 
+void MsfaSynthEngine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
+    uint8_t *program = program_[timbreNumber_];
+    setMsfaParamValue(program, paramId, context, (uint8_t) newValue);
+
+    if (paramId == MSFA_LFO_SPEED || paramId == MSFA_LFO_DELAY
+        || paramId == MSFA_LFO_KEY_SYNC || paramId == MSFA_LFO_WAVEFORM) {
+        msfaTimbreLoadProgram(msfaState_, program);
+        return;
+    }
+
+    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
+        Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
+        msfaVoiceUpdateParam(getMsfaVoiceState(voice->slot()), paramId, context);
+    }
+}
+
 void MsfaSynthEngine::afterNewParamsLoad() {
     uint8_t *program = program_[timbreNumber_];
 
@@ -53,7 +71,7 @@ void MsfaSynthEngine::afterNewParamsLoad() {
 
 void MsfaSynthEngine::killVoice(Voice *voice) {
     voice->resetVoiceState();
-    msfaVoiceReset(msfaGetVoiceState(voice->slot()));
+    msfaVoiceReset(getMsfaVoiceState(voice->slot()));
 }
 
 void MsfaSynthEngine::noteOffVoice(Voice *voice) {
@@ -66,7 +84,7 @@ void MsfaSynthEngine::noteOffVoiceQuick(Voice *voice) {
 
 void MsfaSynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index) {
     voice->resetVoiceState();
-    MsfaVoiceState *state = msfaGetVoiceState(voice->slot());
+    MsfaVoiceState *state = getMsfaVoiceState(voice->slot());
     msfaVoiceReset(state);
 
     voice->note = note;
@@ -75,22 +93,21 @@ void MsfaSynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t n
     voice->playing = true;
     voice->released = false;
     voice->isFullOfZero = false;
-    voice->newNotePending = false;
     voice->holdedByPedal = false;
 
     msfaVoiceStart(state, program, note, velocity, 1, msfaState_);
 
     msfaDebugLog("V note=%d state=%08x active=%d\n", note, (unsigned) state,
-        msfaVoiceIsActive(state));
+        isMsfaVoiceActive(state));
 }
 
 void MsfaSynthEngine::updateVoiceProgram(Voice *voice, const uint8_t *program) {
-    msfaVoiceUpdateProgram(msfaGetVoiceState(voice->slot()), program);
+    msfaVoiceUpdateProgram(getMsfaVoiceState(voice->slot()), program);
 }
 
 void MsfaSynthEngine::keyUp(Voice *voice) {
-    MsfaVoiceState *state = msfaGetVoiceState(voice->slot());
-    if (!msfaVoiceIsActive(state)) {
+    MsfaVoiceState *state = getMsfaVoiceState(voice->slot());
+    if (!isMsfaVoiceActive(state)) {
         return;
     }
     msfaVoiceKeyUp(state);
@@ -104,9 +121,7 @@ void MsfaSynthEngine::bindVoice(Voice *voice) {
 }
 
 void MsfaSynthEngine::noteOn(char note, char velocity) {
-    float scaleFrequency = timbre_->mixerState_->instrumentState_[timbre_->timbreNumber_].scaleFrequencies[(int) note];
-
-    if (unlikely(timbre_->maxVoices_ == 0 || scaleFrequency == 0.0f)) {
+    if (unlikely(timbre_->maxVoices_ == 0)) {
         return;
     }
 
@@ -126,7 +141,7 @@ void MsfaSynthEngine::noteOn(char note, char velocity) {
     if (note <= timbre_->lowerNote_ || timbre_->lowerNoteReleased_) {
         timbre_->lowerNote_ = note;
         timbre_->lowerNoteReleased_ = false;
-        timbre_->lowerNoteFrequency = scaleFrequency;
+        timbre_->lowerNoteFrequency = diatonicScaleFrequency[(int) note];
     }
 }
 
@@ -172,36 +187,31 @@ uint8_t MsfaSynthEngine::voicesNextBlock() {
 }
 
 void MsfaSynthEngine::renderVoice(Voice *voice) {
-    if (!msfaVoiceIsActive(msfaGetVoiceState(voice->slot()))) {
+    if (!isMsfaVoiceActive(getMsfaVoiceState(voice->slot()))) {
         if (voice->playing) {
-            msfaDebugLog("Z note=%d state=%08x\n", voice->note, (unsigned) msfaGetVoiceState(voice->slot()));
+            msfaDebugLog("Z note=%d state=%08x\n", voice->note, (unsigned) getMsfaVoiceState(voice->slot()));
         }
         voice->emptyBuffer();
         return;
     }
 
-    bool stillPlaying = msfaVoiceRender(msfaGetVoiceState(voice->slot()), msfaState_, voice->sampleBlock);
+    bool stillPlaying = msfaVoiceRender(getMsfaVoiceState(voice->slot()), msfaState_, voice->sampleBlock);
     voice->isFullOfZero = false;
 
     if (!stillPlaying) {
         voice->playing = false;
         voice->released = false;
-        msfaDebugLog("E note=%d state=%08x\n", voice->note, (unsigned) msfaGetVoiceState(voice->slot()));
+        msfaDebugLog("E note=%d state=%08x\n", voice->note, (unsigned) getMsfaVoiceState(voice->slot()));
     }
 }
 
-void MsfaSynthEngine::loadMsfaPackedPatch(const uint8_t *packedPatch) {
+void MsfaSynthEngine::loadDx7Patch(const uint8_t *packedPatch) {
     uint8_t *packed = packedPatch_[timbreNumber_];
     uint8_t *program = program_[timbreNumber_];
     memcpy(packed, packedPatch, MSFA_PACKED_PATCH_SIZE);
     Hexter::patchUnpack(packed, program);
     // Dexed expects a 156th byte holding the operator on/off bitmask.
     program[155] = 0x3F;
-    afterNewParamsLoad();
-}
-
-void MsfaSynthEngine::loadMsfaProgram(const uint8_t *program) {
-    memcpy(program_[timbreNumber_], program, MSFA_PROGRAM_SIZE);
     afterNewParamsLoad();
 }
 

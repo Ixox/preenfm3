@@ -21,6 +21,7 @@
 
 #include "SynthState.h"
 #include "Timbre.h"
+#include "MsfaParams.h"
 
 /*
  * DX7 156-byte program layout (see Dx7Note::init):
@@ -58,165 +59,6 @@
  * DX7 operator 1 (operatorNumber 0) lives in block 5, operator 6 in block 0.
  */
 
-enum MsfaParamId {
-    MSFA_NONE = 0,
-    MSFA_ALGORITHM,
-    MSFA_FEEDBACK,
-    MSFA_OSC_KEY_SYNC,
-    MSFA_LFO_SPEED,
-    MSFA_LFO_DELAY,
-    MSFA_LFO_PITCH_MOD_DEPTH,
-    MSFA_LFO_AMP_MOD_DEPTH,
-    MSFA_LFO_KEY_SYNC,
-    MSFA_LFO_WAVEFORM,
-    MSFA_LFO_PITCH_MOD_SENSITIVITY,
-    MSFA_EG_RATE_1,
-    MSFA_EG_RATE_2,
-    MSFA_EG_RATE_3,
-    MSFA_EG_RATE_4,
-    MSFA_EG_LEVEL_1,
-    MSFA_EG_LEVEL_2,
-    MSFA_EG_LEVEL_3,
-    MSFA_EG_LEVEL_4,
-    MSFA_LEVEL_SCALING_BREAK_POINT,
-    MSFA_LEVEL_SCALING_LEFT_DEPTH,
-    MSFA_LEVEL_SCALING_RIGHT_DEPTH,
-    MSFA_LEVEL_SCALING_LEFT_CURVE,
-    MSFA_LEVEL_SCALING_RIGHT_CURVE,
-    MSFA_RATE_SCALING,
-    MSFA_AMPLITUDE_MOD_SENSITIVITY,
-    MSFA_KEY_VELOCITY_SENSITIVITY,
-    MSFA_OPERATOR_OUTPUT_LEVEL,
-    MSFA_OSCILLATOR_MODE,
-    MSFA_COARSE_FREQUENCY,
-    MSFA_FINE_FREQUENCY,
-    MSFA_DETUNE,
-    MSFA_OPERATOR_ENABLED,
-    MSFA_PITCH_EG_RATE_1,
-    MSFA_PITCH_EG_RATE_2,
-    MSFA_PITCH_EG_RATE_3,
-    MSFA_PITCH_EG_RATE_4,
-    MSFA_PITCH_EG_LEVEL_1,
-    MSFA_PITCH_EG_LEVEL_2,
-    MSFA_PITCH_EG_LEVEL_3,
-    MSFA_PITCH_EG_LEVEL_4,
-    MSFA_PARAM_COUNT
-};
-
-enum MsfaParamKind {
-    MSFA_KIND_GLOBAL,
-    MSFA_KIND_OPERATOR,
-    MSFA_KIND_PITCH_RATE,
-    MSFA_KIND_PITCH_LEVEL,
-    MSFA_KIND_OP_ENABLED
-};
-
-enum MsfaDisplayType {
-    MSFA_DISPLAY_INT,
-    MSFA_DISPLAY_STRINGS,
-    MSFA_DISPLAY_ALGO,
-    MSFA_DISPLAY_DETUNE
-};
-
-struct MsfaParamDesc {
-    const char *name;
-    uint8_t kind;
-    uint8_t offset;
-    uint8_t minValue;
-    uint8_t maxValue;
-    uint8_t displayType;
-    const char **valueNames;
-};
-
-static const char *msfaOffOn[] = { "Off", "On " };
-static const char *msfaOscMode[] = { "Ratio", "Fixed" };
-static const char *msfaLfoWave[] = { "Tri", "Saw-", "Saw+", "Sqr", "Sin", "S&H" };
-static const char *msfaCurve[] = { "-Lin", "-Exp", "+Exp", "+Lin" };
-
-static const struct MsfaParamDesc msfaParams[MSFA_PARAM_COUNT] = {
-    // MSFA_NONE - Empty slot
-    { "",        MSFA_KIND_GLOBAL,      0,   0,  0,  MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_ALGORITHM - Algorithm (DX7 algorithm number, displayed 1-32)
-    { "Algo",    MSFA_KIND_GLOBAL,      134, 0,  31, MSFA_DISPLAY_ALGO,    nullptr },
-    // MSFA_FEEDBACK - Feedback amount
-    { "Fdbk",    MSFA_KIND_GLOBAL,      135, 0,  7,  MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_OSC_KEY_SYNC - Oscillator key sync
-    { "OSync",   MSFA_KIND_GLOBAL,      136, 0,  1,  MSFA_DISPLAY_STRINGS, msfaOffOn },
-    // MSFA_LFO_SPEED - LFO speed
-    { "Speed", MSFA_KIND_GLOBAL,      137, 0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LFO_DELAY - LFO delay
-    { "Delay", MSFA_KIND_GLOBAL,      138, 0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LFO_PITCH_MOD_DEPTH - LFO pitch modulation depth
-    { "Pitch",   MSFA_KIND_GLOBAL,      139, 0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LFO_AMP_MOD_DEPTH - LFO amplitude modulation depth
-    { "Amp",   MSFA_KIND_GLOBAL,      140, 0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LFO_KEY_SYNC - LFO key sync
-    { "K Sync",  MSFA_KIND_GLOBAL,      141, 0,  1,  MSFA_DISPLAY_STRINGS, msfaOffOn },
-    // MSFA_LFO_WAVEFORM - LFO waveform
-    { "Wave",    MSFA_KIND_GLOBAL,      142, 0,  5,  MSFA_DISPLAY_STRINGS, msfaLfoWave },
-    // MSFA_LFO_PITCH_MOD_SENSITIVITY - LFO pitch modulation sensitivity
-    { "PitchM",   MSFA_KIND_GLOBAL,      143, 0,  7,  MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_RATE_1 - Envelope generator rate 1
-    { "Rate 1",      MSFA_KIND_OPERATOR,    0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_RATE_2 - Envelope generator rate 2
-    { "Rate 2",      MSFA_KIND_OPERATOR,    1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_RATE_3 - Envelope generator rate 3
-    { "Rate 3",      MSFA_KIND_OPERATOR,    2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_RATE_4 - Envelope generator rate 4
-    { "Rate 4",      MSFA_KIND_OPERATOR,    3,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_LEVEL_1 - Envelope generator level 1
-    { "Lvl 1",      MSFA_KIND_OPERATOR,    4,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_LEVEL_2 - Envelope generator level 2
-    { "Lvl 2",      MSFA_KIND_OPERATOR,    5,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_LEVEL_3 - Envelope generator level 3
-    { "Lvl 3",      MSFA_KIND_OPERATOR,    6,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_EG_LEVEL_4 - Envelope generator level 4
-    { "Lvl 4",      MSFA_KIND_OPERATOR,    7,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LEVEL_SCALING_BREAK_POINT - Level scaling break point
-    { "Break",   MSFA_KIND_OPERATOR,    8,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LEVEL_SCALING_LEFT_DEPTH - Level scaling left depth
-    { "Lvl Dp", MSFA_KIND_OPERATOR,    9,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LEVEL_SCALING_RIGHT_DEPTH - Level scaling right depth
-    { "Rt Dep", MSFA_KIND_OPERATOR,    10,  0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_LEVEL_SCALING_LEFT_CURVE - Level scaling left curve
-    { "Lv Curv", MSFA_KIND_OPERATOR,    11,  0,  3,  MSFA_DISPLAY_STRINGS, msfaCurve },
-    // MSFA_LEVEL_SCALING_RIGHT_CURVE - Level scaling right curve
-    { "Rt Curv", MSFA_KIND_OPERATOR,    12,  0,  3,  MSFA_DISPLAY_STRINGS, msfaCurve },
-    // MSFA_RATE_SCALING - Rate scaling
-    { "Rt Sc", MSFA_KIND_OPERATOR,    13,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_AMPLITUDE_MOD_SENSITIVITY - Amplitude modulation sensitivity
-    { "A Mod",     MSFA_KIND_OPERATOR,    14,  0,  3,  MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_KEY_VELOCITY_SENSITIVITY - Key velocity sensitivity
-    { "K Velo",     MSFA_KIND_OPERATOR,    15,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_OPERATOR_OUTPUT_LEVEL - Operator output level
-    { "Out Lvl", MSFA_KIND_OPERATOR,    16,  0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_OSCILLATOR_MODE - Oscillator mode (ratio or fixed)
-    { "Mode",    MSFA_KIND_OPERATOR,    17,  0,  1,  MSFA_DISPLAY_STRINGS, msfaOscMode },
-    // MSFA_COARSE_FREQUENCY - Coarse frequency
-    { "Coarse",  MSFA_KIND_OPERATOR,    18,  0,  31, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_FINE_FREQUENCY - Fine frequency
-    { "Fine",    MSFA_KIND_OPERATOR,    19,  0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_DETUNE - Detune
-    { "Detune",  MSFA_KIND_OPERATOR,    20,  0,  14, MSFA_DISPLAY_DETUNE,  nullptr },
-    // MSFA_OPERATOR_ENABLED - Operator enabled (on/off)
-    { "Op On",   MSFA_KIND_OP_ENABLED,  0,   0,  1,  MSFA_DISPLAY_STRINGS, msfaOffOn },
-    // MSFA_PITCH_EG_RATE_1 - Pitch envelope generator rate 1
-    { "Rate 1",    MSFA_KIND_PITCH_RATE,  0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_RATE_2 - Pitch envelope generator rate 2
-    { "Rate 2",    MSFA_KIND_PITCH_RATE,  1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_RATE_3 - Pitch envelope generator rate 3
-    { "Rate 3",    MSFA_KIND_PITCH_RATE,  2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_RATE_4 - Pitch envelope generator rate 4
-    { "Rate 4",    MSFA_KIND_PITCH_RATE,  3,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_LEVEL_1 - Pitch envelope generator level 1
-    { "Lvl 1",    MSFA_KIND_PITCH_LEVEL, 0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_LEVEL_2 - Pitch envelope generator level 2
-    { "Lvl 2",    MSFA_KIND_PITCH_LEVEL, 1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_LEVEL_3 - Pitch envelope generator level 3
-    { "Lvl 3",    MSFA_KIND_PITCH_LEVEL, 2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    // MSFA_PITCH_EG_LEVEL_4 - Pitch envelope generator level 4
-    { "Lvl 4",    MSFA_KIND_PITCH_LEVEL, 3,   0,  99, MSFA_DISPLAY_INT,     nullptr }
-};
 
 static const struct EditorOneButtonState msfaEngineState = {
     "Engine",
@@ -441,53 +283,7 @@ Timbre* ScreenMsfaEditor::timbre() {
     return synthState_->getTimbre(currentTimbre());
 }
 
-uint8_t ScreenMsfaEditor::paramValue(uint8_t paramId) {
-    const struct MsfaParamDesc *d = &msfaParams[paramId];
-    uint8_t *program = timbre()->getMsfaProgramMutable();
 
-    switch (d->kind) {
-    case MSFA_KIND_GLOBAL:
-        return program[d->offset];
-    case MSFA_KIND_OPERATOR:
-        return program[(5 - synthState_->fullState.operatorNumber) * 21 + d->offset];
-    case MSFA_KIND_PITCH_RATE:
-        return program[126 + d->offset];
-    case MSFA_KIND_PITCH_LEVEL:
-        return program[130 + d->offset];
-    case MSFA_KIND_OP_ENABLED:
-        return (program[155] >> (5 - synthState_->fullState.operatorNumber)) & 0x1;
-    }
-    return 0;
-}
-
-void ScreenMsfaEditor::setParamValue(uint8_t paramId, uint8_t value) {
-    const struct MsfaParamDesc *d = &msfaParams[paramId];
-    uint8_t *program = timbre()->getMsfaProgramMutable();
-
-    switch (d->kind) {
-    case MSFA_KIND_GLOBAL:
-        program[d->offset] = value;
-        break;
-    case MSFA_KIND_OPERATOR:
-        program[(5 - synthState_->fullState.operatorNumber) * 21 + d->offset] = value;
-        break;
-    case MSFA_KIND_PITCH_RATE:
-        program[126 + d->offset] = value;
-        break;
-    case MSFA_KIND_PITCH_LEVEL:
-        program[130 + d->offset] = value;
-        break;
-    case MSFA_KIND_OP_ENABLED: {
-        uint8_t bit = 5 - synthState_->fullState.operatorNumber;
-        if (value) {
-            program[155] |= (1U << bit);
-        } else {
-            program[155] &= ~(1U << bit);
-        }
-        break;
-    }
-    }
-}
 
 void ScreenMsfaEditor::displayValue(uint8_t paramId, uint8_t value) {
     const struct MsfaParamDesc *d = &msfaParams[paramId];
@@ -522,7 +318,7 @@ void ScreenMsfaEditor::displayParamValue(int encoder, TFT_COLOR color) {
     tft_->setCharColor(color);
 
     if (rowEncoder.row != MSFA_NONE) {
-        displayValue(rowEncoder.row, paramValue(rowEncoder.row));
+        displayValue(rowEncoder.row, getMsfaParamValue(timbre()->getPatchMemory(), rowEncoder.row, synthState_->fullState.operatorNumber));
     } else {
         tft_->print("     ");
     }
@@ -539,7 +335,7 @@ void ScreenMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSt
         tft_->clear();
         parent_->displayPreset();
         tft_->oscilloForceNextDisplay();
-        tft_->drawDx7Algo(timbre()->getMsfaProgram()[134]);
+        tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
         break;
     case 20:
         tft_->pauseRefresh();
@@ -554,7 +350,7 @@ void ScreenMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshSt
             tft_->print(" ");
         }
         tft_->print(page->states[fullState->buttonState[page->buttonId]]->stateLabel);
-        tft_->drawDx7Algo(timbre()->getMsfaProgram()[134]);
+        tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
         break;
     case 18:
     case 17:
@@ -631,7 +427,8 @@ void ScreenMsfaEditor::encoderTurned(int encoder6, int ticks) {
     }
 
     const struct MsfaParamDesc *d = &msfaParams[rowEncoder.row];
-    uint8_t oldValue = paramValue(rowEncoder.row);
+    const int operatorNumber = fullState->operatorNumber;
+    uint8_t oldValue = getMsfaParamValue(timbre()->getPatchMemory(), rowEncoder.row, operatorNumber);
     int newValue = oldValue;
 
     if (d->displayType == MSFA_DISPLAY_STRINGS) {
@@ -649,50 +446,64 @@ void ScreenMsfaEditor::encoderTurned(int encoder6, int ticks) {
         return;
     }
 
-    setParamValue(rowEncoder.row, (uint8_t) newValue);
-    applyProgramChange();
-
-    int refreshStatus = 0;
-    newParamValue(refreshStatus, currentTimbre(), rowEncoder.row, encoder6, nullptr, oldValue, newValue);
-
-    if (rowEncoder.row == MSFA_ALGORITHM) {
-        tft_->drawDx7Algo(newValue);
-    }
-    parent_->setPresetModified(currentTimbre(), true);
-
-    valueChangedCounter_[encoder6] = 4;
-    tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_YELLOW);
-    displayParamValue(encoder6, COLOR_YELLOW);
+    synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, operatorNumber, oldValue, newValue);
 }
 
-void ScreenMsfaEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+void ScreenMsfaEditor::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
-    // MSFA parameter changes come from encoderTurned with param == nullptr.
-    // PFM3 rows (Arp/Fx/Perf) also reach this function through ScreenEditor.
-    if (param != nullptr || currentRow <= MSFA_NONE || currentRow >= MSFA_PARAM_COUNT) {
+    // MSFA pages do not use the PFM3 flat parameter model.
+    (void) refreshStatus; (void) timbre; (void) currentRow; (void) encoder;
+    (void) param; (void) oldValue; (void) newValue;
+}
+
+void ScreenMsfaEditor::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    (void) timbre; (void) oldValue;
+
+    struct FullState *fullState = &synthState_->fullState;
+    if (fullState->mainPage < 0 || fullState->mainPage > 1
+        || paramId <= MSFA_NONE || paramId >= MSFA_PARAM_COUNT) {
         return;
     }
+    const struct EditorEditMenu *editMenu = getEditMenu(fullState->mainPage);
+    const struct EditorOneButton *page = editMenu->pages[fullState->editPage];
 
-    if (currentRow == MSFA_FEEDBACK) {
+    int encoder = -1;
+    for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
+        const struct RowEncoder re = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[e];
+        if (re.row == paramId) {
+            encoder = e;
+            break;
+        }
+    }
+
+    if (paramId == MSFA_FEEDBACK && encoder >= 0) {
         uint8_t source = 0;
         uint8_t dest = 0;
-        if (tft_->getDx7Feedback(this->timbre()->getMsfaProgram()[134], source, dest)) {
+        if (tft_->getDx7Feedback(this->timbre()->getPatchMemory()[134], source, dest)) {
             tft_->highlightFeedback(encoder, source, dest);
             feedbackChangedCounter_ = 4;
             feedbackSource_ = source;
             feedbackDest_ = dest;
         }
-    } else if (msfaParams[currentRow].kind == MSFA_KIND_OPERATOR
-            || msfaParams[currentRow].kind == MSFA_KIND_OP_ENABLED) {
-        uint8_t op = synthState_->fullState.operatorNumber;
-        tft_->highlightOperator(op);
+    } else if ((msfaParams[paramId].kind == MSFA_KIND_OPERATOR
+            || msfaParams[paramId].kind == MSFA_KIND_OP_ENABLED) && encoder >= 0) {
+        tft_->highlightOperator(context);
         operatorChangedCounter_[encoder] = 4;
-        highlightedOperator_[encoder] = op;
+        highlightedOperator_[encoder] = context;
     }
 
-    if (currentRow >= MSFA_EG_RATE_1 && currentRow <= MSFA_EG_LEVEL_4) {
+    if (paramId >= MSFA_EG_RATE_1 && paramId <= MSFA_EG_LEVEL_4) {
         parent_->refreshOscillatorOperatorEnvelope();
+    }
+    if (paramId == MSFA_ALGORITHM) {
+        tft_->drawDx7Algo((int) newValue);
+    }
+
+    if (encoder >= 0) {
+        valueChangedCounter_[encoder] = 4;
+        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharColor(COLOR_YELLOW);
+        displayParamValue(encoder, COLOR_YELLOW);
     }
 }
 
@@ -752,7 +563,7 @@ void ScreenMsfaEditor::buttonLongPressed(int instrument, int button) {
         return;
     }
 
-    uint8_t *program = timbre()->getMsfaProgramMutable();
+    uint8_t *program = timbre()->getPatchMemory();
     int block = (5 - synthState_->fullState.operatorNumber) * 21;
 
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
@@ -812,5 +623,5 @@ void ScreenMsfaEditor::tempoClick() {
 }
 
 void ScreenMsfaEditor::applyProgramChange() {
-    timbre()->msfaAfterNewParamsLoad();
+    timbre()->patchMemoryChanged();
 }

@@ -21,7 +21,6 @@
 #include "Common.h"
 
 class Timbre;
-class VoicePool;
 
 class Voice {
     friend class Timbre;
@@ -59,9 +58,6 @@ public:
     float getNoteFrequency() {
         return this->noteFrequency;
     }
-    char getNextGlidingNote() {
-        return this->nextGlidingNote;
-    }
     bool isHoldedByPedal() {
         return this->holdedByPedal;
     }
@@ -83,14 +79,10 @@ public:
     bool isTransferReady() {
         return transferReady_;
     }
-    void completePendingTransfer(int poolIndex, VoicePool *pool);
 
             
     Timbre* getCurrentTimbre() {
         return currentTimbre;
-    }
-    bool isGliding() {
-        return gliding;
     }
 
 
@@ -100,9 +92,6 @@ public:
         return sampleBlock;
     }
 
-    bool isNewGlide() {
-        return newGlide;
-    }
 
 private:
     // private function for BP filter
@@ -119,35 +108,15 @@ private:
     char midiVelocity;
     float noteFrequency;
     float velocity;
-    bool newNotePlayed;
 
     bool holdedByPedal;
     // Fixing the "plop" when all notes are buisy...
-    bool newNotePending;
-    char pendingNote;
-    char pendingNoteVelocity;
-    float pendingNoteFrequency;
-    unsigned int nextIndex;
-    float phase_;
-
-    // Gliding ?
-    bool gliding;
-    float glidePhase;
-    char nextGlidingNote;
-    float nextGlidingNoteFrequency;
-    bool newGlide; // Firs gliding note in "Always" mode
-    // Used by 'glide always'
-    float nextMainFrequency;
-    // Used when note Off is received during Quick Release
-    uint8_t noteAlreadyFinished;
-
     Timbre *currentTimbre;
     Timbre *pendingTimbre_;
     bool transferReady_;
 
 
-    // preenfm3
-    // Voice needs their own sample block to apply effects
+    // Voice needs its own sample block to apply effects
     float sampleBlock[BLOCK_SIZE * 2];
     float mixerGain;
 

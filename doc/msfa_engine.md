@@ -454,6 +454,14 @@ reach roughly 75%. MSFA must be benchmarked with the same worst-case setup,
 and the result may require a voice cap, disabling some FX, or deferring MSFA
 support on lower-headroom configurations.
 
+### 3.10 Tuning
+
+MSFA uses its standard DX7 tuning (`createStandardTuning()`, 12-TET, A4 =
+440 Hz) for every note. It ignores the per-instrument Scala/MTS table
+(`MixerState.instrumentState_[t].scaleFrequencies`). The oscilloscope lower-note
+frequency therefore uses `diatonicScaleFrequency[note]` rather than the Scala
+table.
+
 ---
 
 ## 4. UI: mixer engine selection
@@ -801,6 +809,26 @@ For MSFA:
   `DISPLAY_TYPE_DX7_CURVE`, `DISPLAY_TYPE_DX7_ALGORITHM`.
 
 ---
+
+### 5.7 Live parameter edits
+
+`ScreenMsfaEditor` calls `SynthState::propagateNewEngineParamValue()`.
+`Synth::newEngineParamValue()` forwards to `Timbre::engineParamChanged()` and
+`MsfaSynthEngine::engineParamChanged()`:
+
+- `setMsfaParamValue()` updates the DX7 program byte;
+- operator parameters update one operator through
+  `Dx7Note::updateOperator()`;
+- algorithm, feedback, operator on/off, LFO depths and pitch EG use
+  `Dx7Note::updateGlobal()`;
+- LFO speed/delay/key sync/waveform reload the timbre LFO with
+  `msfaTimbreLoadProgram()`.
+
+`Env::updateParams()` / `PitchEnv::updateParams()` update parameters without
+resetting the running envelope. `Dx7Note::update()` is unchanged and remains
+the note-on/full-load path. Full `afterNewParamsLoad()` is used for preset
+load, engine switch and DX7 import; `patchMemoryChanged()` remains for
+operator copy/paste.
 
 ## 6. DX7 sysex loading
 

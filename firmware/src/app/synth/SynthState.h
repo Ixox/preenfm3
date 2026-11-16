@@ -472,9 +472,15 @@ public:
         }
     }
 
-    void propagateNewParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
+    void propagateNewPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
         for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
-            listener->newParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
+            listener->newPfm3ParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
+        }
+    }
+
+    void propagateNewEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+        for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
+            listener->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
         }
     }
 
@@ -490,10 +496,10 @@ public:
         }
     }
 
-    void propagateNewParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
+    void propagateNewPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
             float newValue) {
         for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
-            listener->newParamValueFromExternal(timbre, currentRow, encoder, param, oldValue, newValue);
+            listener->newPfm3ParamValueFromExternal(timbre, currentRow, encoder, param, oldValue, newValue);
         }
     }
 

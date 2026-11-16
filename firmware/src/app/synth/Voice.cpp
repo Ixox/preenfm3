@@ -19,7 +19,8 @@
 
 #include "Voice.h"
 #include "Timbre.h"
-#include "VoicePool.h"
+#include "SynthState.h"
+#include "waves.h"
 
 
 
@@ -373,50 +374,18 @@ void Voice::init(int slot) {
     this->transferReady_ = false;
     this->playing = false;
     this->isFullOfZero = false;
-    this->newNotePending = false;
     this->note = 0;
     this->midiVelocity = 0;
     this->holdedByPedal = false;
-    this->newNotePlayed = false;
-    this->nextMainFrequency = 0.0f;
 }
 
 void Voice::resetVoiceState() {
     pendingTimbre_ = nullptr;
     transferReady_ = false;
-    newNotePlayed = false;
     playing = false;
-    newNotePending = false;
-    pendingNote = 0;
-    nextGlidingNote = 0;
-    gliding = false;
     released = false;
 }
 
-void Voice::completePendingTransfer(int poolIndex, VoicePool *pool) {
-    Timbre *target = pendingTimbre_;
-    if (target == nullptr) {
-        return;
-    }
-
-    int note = pendingNote & 0x7f;
-    bool alreadyOff = pendingNote > 127;
-    uint8_t velocity = (uint8_t) pendingNoteVelocity;
-
-    currentTimbre->dropVoice(poolIndex);
-    if (!target->adoptVoice(this, poolIndex)) {
-        pool->release(poolIndex);
-        resetVoiceState();
-        return;
-    }
-
-    target->updateVoiceMatrix(this, note, velocity);
-
-    pendingTimbre_ = nullptr;
-    transferReady_ = false;
-
-    target->engineImpl_->startVoiceAfterTransfer(this, note, pendingNoteFrequency, velocity, alreadyOff);
-}
 
 
 

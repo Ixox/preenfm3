@@ -63,6 +63,9 @@ public:
     
     // PG:add the update
     void update(const uint8_t patch[156], int midinote, int velocity, int channel);
+    // preenFM3: fast live-parameter updates. update() remains the full path.
+    void updateOperator(int op, int velocity);
+    void updateGlobal();
     void updateBasePitches();
     void peekVoiceStatus(VoiceStatus &status);
     void transferState(Dx7Note& src);

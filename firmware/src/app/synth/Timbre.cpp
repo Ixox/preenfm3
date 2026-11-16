@@ -19,6 +19,8 @@
 #include <math.h>
 #include <string.h>
 #include "Timbre.h"
+#include "SynthState.h"
+#include "SynthEngineFactory.h"
 #include "VoicePool.h"
 #include "Voice.h"
 
@@ -238,7 +240,7 @@ const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
 Timbre::Timbre() {
 
     engine_ = SYNTH_ENGINE_PFM3;
-    engineImpl_ = &pfm3Engine_;
+    engineImpl_ = nullptr;
     maxVoices_ = 0;
     numberOfVoices_ = 0.0f;
     numberOfVoiceInverse_ = 1.0f;
@@ -271,9 +273,9 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
     mixerState_ = &synthState->mixerState;
     timbreNumber_ = timbreNumber;
 
-    pfm3Engine_.init(this, synthState);
-    msfaEngine_.init(this, synthState);
-    deserializeParams(params_);
+    SynthEngineFactory::init(this, synthState);
+    engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
+    deserializeParams(flatParams_);
 
     for (int s = 0; s < 2; s++) {
         for (int n = 0; n < 128; n++) {
@@ -305,14 +307,14 @@ void Timbre::initVoicePointer(int n, Voice *voice) {
 }
 
 void Timbre::setEngine(SynthEngineType engine) {
-    if (engine_ == engine) {
+    if (engine_ == engine && engineImpl_ != nullptr) {
         return;
     }
     stopPlayingNow();
     engine_ = engine;
-    engineImpl_ = (engine_ == SYNTH_ENGINE_MSFA)
-        ? static_cast<SynthEngine *>(&msfaEngine_)
-        : static_cast<SynthEngine *>(&pfm3Engine_);
+    engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
+    // Keep PFM3 compatible with a DX7 patch converted into the flat mirror.
+    deserializeParams(flatParams_);
     engineImpl_->afterNewParamsLoad();
 }
 
@@ -565,6 +567,26 @@ void Timbre::allSoundOff() {
     for (int k = 0; k < (int) numberOfVoices_; k++) {
         engineImpl_->killVoice(voices_[voiceNumber_[k]]);
     }
+}
+
+void Timbre::noteOffVoice(Voice *voice) {
+    engineImpl_->noteOffVoice(voice);
+}
+
+void Timbre::noteOffVoiceQuick(Voice *voice) {
+    engineImpl_->noteOffVoiceQuick(voice);
+}
+
+void Timbre::killVoice(Voice *voice) {
+    engineImpl_->killVoice(voice);
+}
+
+void Timbre::startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff) {
+    engineImpl_->startVoiceAfterTransfer(voice, note, noteFrequency, velocity, phase, alreadyOff);
+}
+
+void Timbre::completeVoiceTransfer(Voice *voice, int poolIndex, VoicePool *pool) {
+    engineImpl_->completeVoiceTransfer(voice, poolIndex, pool);
 }
 
 void Timbre::stopPlayingNow() {
@@ -2481,7 +2503,7 @@ void Timbre::gateFx() {
 
 void Timbre::afterNewParamsLoad() {
 
-    deserializeParams(params_);
+    deserializeParams(flatParams_);
     engineImpl_->afterNewParamsLoad();
 
     resetArpeggiator();
@@ -2505,7 +2527,7 @@ void Timbre::setParamValue(int index, float oldValue, float newValue) {
     int row = index / NUMBER_OF_ENCODERS_PFM2;
     int encoder = index % NUMBER_OF_ENCODERS_PFM2;
 
-    ((float*) &params_)[index] = newValue;
+    ((float*) &flatParams_)[index] = newValue;
 
     if (index >= TimbreParamLayout::sharedBlockStart && index < TimbreParamLayout::sharedBlockEnd) {
         ((float*) &sharedParams())[index - TimbreParamLayout::sharedBlockStart] = newValue;
@@ -2546,14 +2568,18 @@ void Timbre::setParamValue(int index, float oldValue, float newValue) {
 }
 
 void Timbre::syncArpUserPatterns() {
-    sharedParams().engineArpUserPatterns = params_.engineArpUserPatterns;
+    sharedParams().engineArpUserPatterns = flatParams_.engineArpUserPatterns;
+}
+
+void Timbre::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
+    engineImpl_->engineParamChanged(paramId, context, oldValue, newValue);
 }
 
 void Timbre::setStepSequencerSteps(int whichStepSeq) {
     if (whichStepSeq == 0) {
-        engineImpl_->setStepSequencerSteps(0, params_.lfoSteps1);
+        engineImpl_->setStepSequencerSteps(0, flatParams_.lfoSteps1);
     } else {
-        engineImpl_->setStepSequencerSteps(1, params_.lfoSteps2);
+        engineImpl_->setStepSequencerSteps(1, flatParams_.lfoSteps2);
     }
 }
 
@@ -2581,16 +2607,16 @@ int Timbre::getStorageNameOffset(uint32_t magic) const {
         return -1;
     }
     if (engineTypeForStorageMagic(magic) == SYNTH_ENGINE_MSFA) {
-        return msfaEngine_.getStorageNameOffset(magic);
+        return SynthEngineFactory::get(SYNTH_ENGINE_MSFA, timbreNumber_)->getStorageNameOffset(magic);
     }
-    return pfm3Engine_.getStorageNameOffset(magic);
+    return SynthEngineFactory::get(SYNTH_ENGINE_PFM3, timbreNumber_)->getStorageNameOffset(magic);
 }
 
 const char* Timbre::getStorageDefaultName(uint32_t magic) const {
     if (engineTypeForStorageMagic(magic) == SYNTH_ENGINE_MSFA) {
-        return msfaEngine_.getStorageDefaultName();
+        return SynthEngineFactory::get(SYNTH_ENGINE_MSFA, timbreNumber_)->getStorageDefaultName();
     }
-    return pfm3Engine_.getStorageDefaultName();
+    return SynthEngineFactory::get(SYNTH_ENGINE_PFM3, timbreNumber_)->getStorageDefaultName();
 }
 
 SynthEngineType Timbre::engineTypeForStorageMagic(uint32_t magic) const {
@@ -2601,18 +2627,18 @@ SynthEngineType Timbre::engineTypeForStorageMagic(uint32_t magic) const {
 }
 
 void Timbre::applyFlatParams(const struct OneSynthParams &flat) {
-    params_ = flat;
+    flatParams_ = flat;
     deserializeParams(flat);
 }
 
 void Timbre::setSharedParams(const TimbreSharedParams &shared) {
     sharedParams() = shared;
-    params_.engineArp1 = shared.engineArp1;
-    params_.engineArp2 = shared.engineArp2;
-    params_.engineArpUserPatterns = shared.engineArpUserPatterns;
-    params_.effect1 = shared.effect1;
-    params_.effect2 = shared.effect2;
-    memcpy(params_.presetName, shared.presetName, sizeof(params_.presetName));
+    flatParams_.engineArp1 = shared.engineArp1;
+    flatParams_.engineArp2 = shared.engineArp2;
+    flatParams_.engineArpUserPatterns = shared.engineArpUserPatterns;
+    flatParams_.effect1 = shared.effect1;
+    flatParams_.effect2 = shared.effect2;
+    memcpy(flatParams_.presetName, shared.presetName, sizeof(flatParams_.presetName));
 }
 
 void Timbre::serializeParams(struct OneSynthParams &out) const {
@@ -2640,18 +2666,18 @@ void Timbre::deserializeParams(const struct OneSynthParams &in) {
 int Timbre::getSeqStepValue(int whichStepSeq, int step) {
 
     if (whichStepSeq == 0) {
-        return params_.lfoSteps1.steps[step];
+        return flatParams_.lfoSteps1.steps[step];
     } else {
-        return params_.lfoSteps2.steps[step];
+        return flatParams_.lfoSteps2.steps[step];
     }
 }
 
 void Timbre::setSeqStepValue(int whichStepSeq, int step, int value) {
 
     if (whichStepSeq == 0) {
-        params_.lfoSteps1.steps[step] = value;
+        flatParams_.lfoSteps1.steps[step] = value;
     } else {
-        params_.lfoSteps2.steps[step] = value;
+        flatParams_.lfoSteps2.steps[step] = value;
     }
 }
 

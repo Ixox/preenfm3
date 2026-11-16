@@ -20,17 +20,8 @@
 
 #include "Common.h"
 #include "TimbreParams.h"
-
-#include "Osc.h"
-#include "Env.h"
-#include "Lfo.h"
-#include "LfoOsc.h"
-#include "LfoEnv.h"
-#include "LfoEnv2.h"
-#include "LfoStepSeq.h"
-#include "Matrix.h"
-#include "Preenfm3Engine.h"
-#include "MsfaSynthEngine.h"
+#include "SynthEngine.h"
+#include "MixerState.h"
 #include "note_stack.h"
 #include "event_scheduler.h"
 
@@ -44,11 +35,8 @@ enum {
     CLOCK_EXTERNAL
 };
 
-struct MsfaTimbreState;
 
 class Timbre {
-    friend class Synth;
-    friend class Voice;
     friend class MsfaSynthEngine;
     friend class Preenfm3Engine;
 public:
@@ -70,6 +58,7 @@ public:
     void setParamValue(int index, float oldValue, float newValue);
     void syncArpUserPatterns();
     void setStepSequencerSteps(int whichStepSeq);
+    void engineParamChanged(int paramId, int context, float oldValue, float newValue);
     void serializeParams(struct OneSynthParams &out) const;
     void deserializeParams(const struct OneSynthParams &in);
     uint32_t getStorageMagic() const;
@@ -112,20 +101,14 @@ public:
         return engineImpl_->supportsDeferredSteal();
     }
 
-    void loadMsfaPackedPatch(const uint8_t *packedPatch) {
-        msfaEngine_.loadMsfaPackedPatch(packedPatch);
+    void loadDx7Patch(const uint8_t *packedPatch) {
+        engineImpl_->loadDx7Patch(packedPatch);
     }
-    void loadMsfaProgram(const uint8_t *program) {
-        msfaEngine_.loadMsfaProgram(program);
+    uint8_t* getPatchMemory() {
+        return engineImpl_->getPatchMemory();
     }
-    const uint8_t* getMsfaProgram() const {
-        return msfaEngine_.getMsfaProgram();
-    }
-    uint8_t* getMsfaProgramMutable() {
-        return msfaEngine_.getMsfaProgramMutable();
-    }
-    void msfaAfterNewParamsLoad() {
-        msfaEngine_.afterNewParamsLoad();
+    void patchMemoryChanged() {
+        engineImpl_->patchMemoryChanged();
     }
 
     void noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity);
@@ -148,6 +131,27 @@ public:
 
     int getMaxVoices() const {
         return maxVoices_;
+    }
+    NoteStack& getNoteStack() {
+        return note_stack_;
+    }
+    void processMidiClock() {
+        OnMidiClock();
+    }
+    void applyTimbreFx() {
+        fxAfterBlock();
+    }
+    bool adoptVoiceFromPool(Voice *voice, int voiceIndex) {
+        return adoptVoice(voice, voiceIndex);
+    }
+    void dropVoiceToPool(int voiceIndex) {
+        dropVoice(voiceIndex);
+    }
+    int getNumberOfVoices() const {
+        return (int) numberOfVoices_;
+    }
+    int getVoiceNumber(int index) const {
+        return voiceNumber_[index];
     }
 
     void removeActiveVoice(int voiceIndex);
@@ -174,7 +178,7 @@ public:
     void midiClockSongPositionStep(int songPosition);
 
     struct OneSynthParams* getParamRaw() {
-        return &params_;
+        return &flatParams_;
     }
 
     TimbreSharedParams& sharedParams() {
@@ -216,7 +220,7 @@ public:
     }
 
     char* getPresetName() {
-        return params_.presetName;
+        return flatParams_.presetName;
     }
 
     float getNumberOfVoiceInverse() {
@@ -231,6 +235,11 @@ public:
     void allNoteOff();
     void allNoteOffQuick();
     void allSoundOff();
+    void noteOffVoice(Voice *voice);
+    void noteOffVoiceQuick(Voice *voice);
+    void killVoice(Voice *voice);
+    void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff);
+    void completeVoiceTransfer(Voice *voice, int poolIndex, VoicePool *pool);
 
 
     void setMPESetting(uint8_t mpeSetting) {
@@ -361,10 +370,15 @@ private:
     int8_t timbreNumber_;
     SynthEngineType engine_;
     SynthEngine *engineImpl_;
-    Preenfm3Engine pfm3Engine_;
-    MsfaSynthEngine msfaEngine_;
-    struct OneSynthParams params_;
+    // Flat OneSynthParams mirror for the editor and storage.
+    // The PFM3 DSP state is owned by Pfm3TimbreParams in Preenfm3Engine.
+    struct OneSynthParams flatParams_;
+    // Engine-neutral per-timbre parameters: arpeggiator, FX1/FX2 rows and
+    // preset name. Static because Timbre lives in DTCMRAM and this block is
+    // too large to inline; the array itself is placed in .ram_d1.
     static TimbreSharedParams sharedParams_[NUMBER_OF_TIMBRES];
+    // Note-to-frequency scale (MTS) table for this instrument. Engines need
+    // it to start notes, so it is the only MixerState they read.
     struct MixerState *mixerState_;
     float sampleBlock_[BLOCK_SIZE * 2];
     float *sbMax_;

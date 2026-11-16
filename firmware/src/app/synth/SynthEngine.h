@@ -18,6 +18,7 @@
 
 class Timbre;
 class Voice;
+class VoicePool;
 class SynthState;
 
 /*
@@ -63,7 +64,8 @@ public:
     virtual void noteOffVoiceQuick(Voice *voice) {}
 
     // Restart a voice after a deferred cross-timbre transfer.
-    virtual void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, bool alreadyOff) {}
+    virtual void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff) {}
+    virtual void completeVoiceTransfer(Voice *voice, int poolIndex, VoicePool *pool) {}
 
     // Render one block for all voices of the timbre.
     // Returns the number of voices that were playing.
@@ -98,6 +100,8 @@ public:
     // A parameter changed: refresh cached/derived state if needed
     // (PFM3 only refreshes on algorithm, pan and filter changes).
     virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {}
+    // Generic engine-owned parameter change (engine-specific paramId).
+    virtual void engineParamChanged(int paramId, int context, float oldValue, float newValue) {}
 
     // Write a flat parameter value into the engine's owner storage.
     // `index` is the flat index used by the editor/MIDI path (row * 4 + encoder).
@@ -106,6 +110,14 @@ public:
     // Engine-specific helpers used by the shared timbre code.
     virtual bool isUnisonMode() const { return false; }
     virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) {}
+    // DX7 SysEx import. Only the DX7/MSFA engine implements it.
+    virtual void loadDx7Patch(const uint8_t *packedPatch) {}
+
+    // Engine-owned editor/patch memory (nullptr/0 when the engine has none).
+    virtual uint8_t* getPatchMemory() { return nullptr; }
+
+    // Reload the engine after direct edits to getPatchMemory().
+    virtual void patchMemoryChanged() {}
 
     // Flat OneSynthParams mirror (PFM3 UI/storage layout). Engines that do not
     // use the flat mirror keep the default no-op implementations.

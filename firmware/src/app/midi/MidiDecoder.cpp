@@ -949,7 +949,7 @@ void MidiDecoder::decodeNrpn(int timbre) {
     }
 }
 
-void MidiDecoder::newParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue,
+void MidiDecoder::newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue,
         float newValue) {
     // Nothing to do
 }
@@ -958,7 +958,7 @@ void MidiDecoder::newMixerValueFromExternal(int timbre, int mixerValueType, floa
     // Nothing to do
 }
 
-void MidiDecoder::newParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
+void MidiDecoder::newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
     int sendCCOrNRPN = this->synthState_->fullState.midiConfigValue[MIDICONFIG_SENDS];
     int channel = this->synthState_->mixerState.instrumentState_[timbre].midiChannel -1;
 

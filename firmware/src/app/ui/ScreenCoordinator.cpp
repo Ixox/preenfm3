@@ -142,21 +142,28 @@ void ScreenCoordinator::newMixerEdit(int oldButton, int newButton) {
     tft_->clearMixerValues();
 }
 
-void ScreenCoordinator::newParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
+void ScreenCoordinator::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
     checkPresetModified(timbre);
 
     if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR) {
-        editor_->newParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
+        editor_->newPfm3ParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
     }
 }
 
-void ScreenCoordinator::newParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
+void ScreenCoordinator::newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
     checkPresetModified(timbre);
 
     // If Operator we must send
     if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR && this->synthState_->fullState.mainPage != -1 && timbre == currentTimbre_) {
 
-        editor_->newParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
+        editor_->newPfm3ParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
+    }
+}
+
+void ScreenCoordinator::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    checkPresetModified(timbre);
+    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR) {
+        editor_->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
     }
 }
 

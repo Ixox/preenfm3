@@ -65,6 +65,23 @@ struct Pfm3VoiceState {
     float mix1Previous, mix2Previous, mix3Previous, mix4Previous, mix5Previous, mix6Previous;
     float pan1Left, pan2Left, pan3Left, pan4Left, pan5Left, pan6Left;
     float pan1Right, pan2Right, pan3Right, pan4Right, pan5Right, pan6Right;
+
+    // Note-transition state (PFM3 only)
+    bool newNotePlayed;
+    bool newNotePending;
+    char pendingNote;
+    char pendingNoteVelocity;
+    float pendingNoteFrequency;
+    unsigned int nextIndex;
+    float phase_;
+
+    bool gliding;
+    float glidePhase;
+    char nextGlidingNote;
+    float nextGlidingNoteFrequency;
+    bool newGlide;
+    float nextMainFrequency;
+    uint8_t noteAlreadyFinished;
 };
 
 #endif

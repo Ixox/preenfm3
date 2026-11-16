@@ -1,6 +1,6 @@
 # Engine and voice architecture refactor
 
-Status: steps 1–7 and 8a implemented; 8b–8e outstanding.
+Status: steps 1–7, 8a–8e implemented; step 9 outstanding.
 
 This is the single migration plan for two refactorings that meet in the same
 code:
@@ -592,33 +592,62 @@ The two refactorings are interleaved so `Voice` binding is written once.
      `Preenfm3Engine` with `osc_[]` / `env_[]` and remove both accessors from
      `Timbre`.
 
-   - **8b — Hide the concrete engines.** `Timbre` currently contains
-     `Preenfm3Engine pfm3Engine_` and `MsfaSynthEngine msfaEngine_` plus
-     `engineImpl_`, and MSFA-specific passthrough methods
-     (`loadMsfaPackedPatch()`, `getMsfaProgram*()`,
-     `msfaAfterNewParamsLoad()`). Introduce an engine factory/registry so
-     `Timbre` stores only a `SynthEngine*`; engine-specific operations go
-     through the interface (or generic editor/storage hooks).
+   - **8b — Hide the concrete engines.** Add `SynthEngineFactory`, which
+     owns the static per-timbre PFM3/MSFA engine instances. `Timbre` stores
+     only `SynthEngine*` and selects it by `SynthEngineType`. The DX7
+     import stays `loadDx7Patch()`. Editor/patch memory is exposed
+     generically through `getPatchMemory()` and `patchMemoryChanged()`; MSFA implements
+     them and PFM3 keeps the defaults. `setEngine()` re-applies the flat
+     `params_` mirror to the new engine before `afterNewParamsLoad()`, so a
+     DX7 patch converted by Hexter can be played by PFM3 after switching.
+     The generic engine parameter path (`propagateNewEngineParamValue()` →
+     `newEngineParamValue()` → `Timbre::engineParamChanged()` →
+     `SynthEngine::engineParamChanged()`) gives the MSFA editor the same
+     UI→Synth→Timbre→Engine flow as PFM3. MSFA applies operator/global
+     updates granularly without a full `Dx7Note::update()`.
 
-   - **8c — Remove the friend shortcuts.** `Synth` and `Voice` currently reach
-     `Timbre::engineImpl_` directly for note-off/kill/transfer dispatch. Add
-     `Timbre` methods that forward to the engine (`noteOffVoice()`,
-     `noteOffVoiceQuick()`, `killVoice()`, `startVoiceAfterTransfer()`, ...).
+   - **8c — Remove the friend shortcuts.** Implemented: `Synth` and `Voice`
+     no longer access `Timbre::engineImpl_`. `Timbre` exposes
+     `noteOffVoice()`, `noteOffVoiceQuick()`, `killVoice()` and
+     `startVoiceAfterTransfer()`, plus public getters/wrappers for the note
+     stack, MIDI clock, FX and voice-pool transfer. Only
+     `MsfaSynthEngine`/`Preenfm3Engine` remain friends.
 
-   - **8d — Move PFM3-biased note-transition data out of `Voice`.** Glide
-     phase, pending-note fields, `noteAlreadyFinished`, `newNotePlayed` and
-     related state are only used by PFM3. Move them into `Pfm3VoiceState` so
-     `Voice` holds only generic note/voice state, transfer state, the output
-     buffer and the shared FX1 fields.
+   - **8d — Move PFM3-biased note-transition data out of `Voice`.**
+     Implemented: glide phase, pending-note fields, `noteAlreadyFinished`,
+     `newNotePlayed` and related state now live in `Pfm3VoiceState`;
+     `Voice` holds only generic note/voice state, transfer state, the
+     output buffer and the shared FX1 fields. `completePendingTransfer()`
+     moved to `Preenfm3Engine::completeVoiceTransfer()`, and
+     `startVoiceAfterTransfer()` takes the saved phase explicitly.
 
-   - **8e — Contain the flat mirror.** `Timbre::params_` (`OneSynthParams`) is
-     a UI/flash layout mirror while `Pfm3TimbreParams` is the DSP owner. Keep
-     it explicitly as a UI/serialization cache, or move it to a host-level
-     preset object, so `Timbre` is not shaped by the PFM3 preset layout.
+   - **8e — Contain the flat mirror.** Implemented: `Timbre::params_` is now
+     `Timbre::flatParams_`, documented as the editor/storage mirror. The
+     PFM3 DSP state remains owned by `Pfm3TimbreParams`.
 
-   After 8a–8e, add the third engine as a new `SynthEngine` implementation
-   plus registration and verify that neither `Timbre` nor `Voice` needs to
-   change. This is the structural validation that the boundary is complete.
+9. **Add a third engine to validate the boundary.**
+
+   Add `BasicSynthEngine`, a minimal but complete `SynthEngine`
+   implementation intended as a starting point for future engines:
+
+   - **Sound:** one simple oscillator (sine or saw) and one simple ADSR
+     envelope. No matrix, no LFO, no unison, no MPE-specific modulation.
+   - **Parameters:** one per-timbre parameter block and one per-voice state,
+     owned by the engine. Keep the parameter set deliberately small.
+   - **UI:** minimal editor pages (oscillator and envelope) using the existing
+     `EngineEditor` split. Expose the engine in the mixer engine selector so
+     it can be selected and tested manually.
+   - **Persistence:** minimal preset blob with one magic, name and the engine
+     parameters. Reuse the generic `SynthEngine` persistence methods.
+   - **Registration:** add `SYNTH_ENGINE_BASIC` to `SynthEngineType` and a
+     static per-timbre instance to `SynthEngineFactory`.
+   - **Validation:** verify that neither `Timbre` nor `Voice` needs to change.
+     If either does, the boundary is not complete and must be fixed first.
+   - **Tests:** note on/off, ADSR, oscillator pitch, engine switch to/from
+     PFM3 and MSFA, preset save/load, mixer save/load, editor pages.
+
+   This engine is the structural validation that the boundary is complete and
+   doubles as the reference implementation for the next engine.
 
 ## 7. Test plan
 
