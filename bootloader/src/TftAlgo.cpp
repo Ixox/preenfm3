@@ -47,6 +47,12 @@ void TftAlgo::drawMix(uint8_t imNum) {
 void TftAlgo::drawAlgo(int algo) {
 }
 
+void TftAlgo::drawDx7Algo(int algo) {
+}
+
+void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
+}
+
 
 const uint8_t* TftAlgo::getDigitBits(uint8_t digit) {
     return 0;

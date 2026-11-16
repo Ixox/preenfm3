@@ -490,7 +490,11 @@ void TftDisplay::tic(bool checkDisplayPower) {
             break;
         case 1:
             this->tftAlgo->setBufferAdress(bgAlgo);
-            this->tftAlgo->drawAlgo(currentAction.param1);
+            if (currentAction.param1 & 0x80) {
+                this->tftAlgo->drawDx7Algo(currentAction.param1 & 0x7f);
+            } else {
+                this->tftAlgo->drawAlgo(currentAction.param1);
+            }
 
             if (fgAlgoDirty) {
                 currentAction.param3 = 2;
@@ -1045,6 +1049,14 @@ void TftDisplay::drawAlgo(int algo) {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_ALGO;
     newAction.param1 = algo;
+    newAction.param3 = 0;
+    tftActions.insert(newAction);
+}
+
+void TftDisplay::drawDx7Algo(int algo) {
+    TFTAction newAction;
+    newAction.actionType = TFT_DRAW_ALGO;
+    newAction.param1 = algo | 0x80;
     newAction.param3 = 0;
     tftActions.insert(newAction);
 }

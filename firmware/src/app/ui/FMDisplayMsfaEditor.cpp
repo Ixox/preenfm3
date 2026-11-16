@@ -65,41 +65,41 @@ enum MsfaParamId {
     MSFA_OSC_KEY_SYNC,
     MSFA_LFO_SPEED,
     MSFA_LFO_DELAY,
-    MSFA_LFO_PMD,
-    MSFA_LFO_AMD,
+    MSFA_LFO_PITCH_MOD_DEPTH,
+    MSFA_LFO_AMP_MOD_DEPTH,
     MSFA_LFO_KEY_SYNC,
-    MSFA_LFO_WAVE,
-    MSFA_LFO_PMS,
-    MSFA_OP_R1,
-    MSFA_OP_R2,
-    MSFA_OP_R3,
-    MSFA_OP_R4,
-    MSFA_OP_L1,
-    MSFA_OP_L2,
-    MSFA_OP_L3,
-    MSFA_OP_L4,
-    MSFA_OP_BREAKPOINT,
-    MSFA_OP_LEFT_DEPTH,
-    MSFA_OP_RIGHT_DEPTH,
-    MSFA_OP_LEFT_CURVE,
-    MSFA_OP_RIGHT_CURVE,
-    MSFA_OP_RATE_SCALING,
-    MSFA_OP_AMS,
-    MSFA_OP_KVS,
-    MSFA_OP_OUTPUT_LEVEL,
-    MSFA_OP_MODE,
-    MSFA_OP_COARSE,
-    MSFA_OP_FINE,
-    MSFA_OP_DETUNE,
-    MSFA_OP_ENABLED,
-    MSFA_PITCH_R1,
-    MSFA_PITCH_R2,
-    MSFA_PITCH_R3,
-    MSFA_PITCH_R4,
-    MSFA_PITCH_L1,
-    MSFA_PITCH_L2,
-    MSFA_PITCH_L3,
-    MSFA_PITCH_L4,
+    MSFA_LFO_WAVEFORM,
+    MSFA_LFO_PITCH_MOD_SENSITIVITY,
+    MSFA_EG_RATE_1,
+    MSFA_EG_RATE_2,
+    MSFA_EG_RATE_3,
+    MSFA_EG_RATE_4,
+    MSFA_EG_LEVEL_1,
+    MSFA_EG_LEVEL_2,
+    MSFA_EG_LEVEL_3,
+    MSFA_EG_LEVEL_4,
+    MSFA_LEVEL_SCALING_BREAK_POINT,
+    MSFA_LEVEL_SCALING_LEFT_DEPTH,
+    MSFA_LEVEL_SCALING_RIGHT_DEPTH,
+    MSFA_LEVEL_SCALING_LEFT_CURVE,
+    MSFA_LEVEL_SCALING_RIGHT_CURVE,
+    MSFA_RATE_SCALING,
+    MSFA_AMPLITUDE_MOD_SENSITIVITY,
+    MSFA_KEY_VELOCITY_SENSITIVITY,
+    MSFA_OPERATOR_OUTPUT_LEVEL,
+    MSFA_OSCILLATOR_MODE,
+    MSFA_COARSE_FREQUENCY,
+    MSFA_FINE_FREQUENCY,
+    MSFA_DETUNE,
+    MSFA_OPERATOR_ENABLED,
+    MSFA_PITCH_EG_RATE_1,
+    MSFA_PITCH_EG_RATE_2,
+    MSFA_PITCH_EG_RATE_3,
+    MSFA_PITCH_EG_RATE_4,
+    MSFA_PITCH_EG_LEVEL_1,
+    MSFA_PITCH_EG_LEVEL_2,
+    MSFA_PITCH_EG_LEVEL_3,
+    MSFA_PITCH_EG_LEVEL_4,
     MSFA_PARAM_COUNT
 };
 
@@ -134,50 +134,91 @@ static const char *msfaLfoWave[] = { "Tri", "Saw-", "Saw+", "Sqr", "Sin", "S&H" 
 static const char *msfaCurve[] = { "-Lin", "-Exp", "+Exp", "+Lin" };
 
 static const struct MsfaParamDesc msfaParams[MSFA_PARAM_COUNT] = {
+    // MSFA_NONE - Empty slot
     { "",        MSFA_KIND_GLOBAL,      0,   0,  0,  MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_ALGORITHM - Algorithm (DX7 algorithm number, displayed 1-32)
     { "Algo",    MSFA_KIND_GLOBAL,      134, 0,  31, MSFA_DISPLAY_ALGO,    nullptr },
+    // MSFA_FEEDBACK - Feedback amount
     { "Fdbk",    MSFA_KIND_GLOBAL,      135, 0,  7,  MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_OSC_KEY_SYNC - Oscillator key sync
     { "OSync",   MSFA_KIND_GLOBAL,      136, 0,  1,  MSFA_DISPLAY_STRINGS, msfaOffOn },
-    { "LFO Spd", MSFA_KIND_GLOBAL,      137, 0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "LFO Dly", MSFA_KIND_GLOBAL,      138, 0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LFO_SPEED - LFO speed
+    { "Speed", MSFA_KIND_GLOBAL,      137, 0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LFO_DELAY - LFO delay
+    { "Delay", MSFA_KIND_GLOBAL,      138, 0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LFO_PITCH_MOD_DEPTH - LFO pitch modulation depth
     { "P Mod",   MSFA_KIND_GLOBAL,      139, 0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "A Mod",   MSFA_KIND_GLOBAL,      140, 0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LFO_AMP_MOD_DEPTH - LFO amplitude modulation depth
+    { "Amp",   MSFA_KIND_GLOBAL,      140, 0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LFO_KEY_SYNC - LFO key sync
     { "K Sync",  MSFA_KIND_GLOBAL,      141, 0,  1,  MSFA_DISPLAY_STRINGS, msfaOffOn },
+    // MSFA_LFO_WAVEFORM - LFO waveform
     { "Wave",    MSFA_KIND_GLOBAL,      142, 0,  5,  MSFA_DISPLAY_STRINGS, msfaLfoWave },
+    // MSFA_LFO_PITCH_MOD_SENSITIVITY - LFO pitch modulation sensitivity
     { "P M S",   MSFA_KIND_GLOBAL,      143, 0,  7,  MSFA_DISPLAY_INT,     nullptr },
-    { "R1",      MSFA_KIND_OPERATOR,    0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "R2",      MSFA_KIND_OPERATOR,    1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "R3",      MSFA_KIND_OPERATOR,    2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "R4",      MSFA_KIND_OPERATOR,    3,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "L1",      MSFA_KIND_OPERATOR,    4,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "L2",      MSFA_KIND_OPERATOR,    5,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "L3",      MSFA_KIND_OPERATOR,    6,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "L4",      MSFA_KIND_OPERATOR,    7,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_RATE_1 - Envelope generator rate 1
+    { "Rate 1",      MSFA_KIND_OPERATOR,    0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_RATE_2 - Envelope generator rate 2
+    { "Rate 2",      MSFA_KIND_OPERATOR,    1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_RATE_3 - Envelope generator rate 3
+    { "Rate 3",      MSFA_KIND_OPERATOR,    2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_RATE_4 - Envelope generator rate 4
+    { "Rate 4",      MSFA_KIND_OPERATOR,    3,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_LEVEL_1 - Envelope generator level 1
+    { "Lvl 1",      MSFA_KIND_OPERATOR,    4,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_LEVEL_2 - Envelope generator level 2
+    { "Lvl 2",      MSFA_KIND_OPERATOR,    5,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_LEVEL_3 - Envelope generator level 3
+    { "Lvl 3",      MSFA_KIND_OPERATOR,    6,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_EG_LEVEL_4 - Envelope generator level 4
+    { "Lvl 4",      MSFA_KIND_OPERATOR,    7,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LEVEL_SCALING_BREAK_POINT - Level scaling break point
     { "Break",   MSFA_KIND_OPERATOR,    8,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "L Depth", MSFA_KIND_OPERATOR,    9,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "R Depth", MSFA_KIND_OPERATOR,    10,  0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "L Curve", MSFA_KIND_OPERATOR,    11,  0,  3,  MSFA_DISPLAY_STRINGS, msfaCurve },
-    { "R Curve", MSFA_KIND_OPERATOR,    12,  0,  3,  MSFA_DISPLAY_STRINGS, msfaCurve },
-    { "Rate Sc", MSFA_KIND_OPERATOR,    13,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
-    { "AMS",     MSFA_KIND_OPERATOR,    14,  0,  3,  MSFA_DISPLAY_INT,     nullptr },
-    { "KVS",     MSFA_KIND_OPERATOR,    15,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LEVEL_SCALING_LEFT_DEPTH - Level scaling left depth
+    { "Lvl Dp", MSFA_KIND_OPERATOR,    9,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LEVEL_SCALING_RIGHT_DEPTH - Level scaling right depth
+    { "Rt Dep", MSFA_KIND_OPERATOR,    10,  0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_LEVEL_SCALING_LEFT_CURVE - Level scaling left curve
+    { "Lv Curv", MSFA_KIND_OPERATOR,    11,  0,  3,  MSFA_DISPLAY_STRINGS, msfaCurve },
+    // MSFA_LEVEL_SCALING_RIGHT_CURVE - Level scaling right curve
+    { "Rt Curv", MSFA_KIND_OPERATOR,    12,  0,  3,  MSFA_DISPLAY_STRINGS, msfaCurve },
+    // MSFA_RATE_SCALING - Rate scaling
+    { "Rt Sc", MSFA_KIND_OPERATOR,    13,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_AMPLITUDE_MOD_SENSITIVITY - Amplitude modulation sensitivity
+    { "A M S",     MSFA_KIND_OPERATOR,    14,  0,  3,  MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_KEY_VELOCITY_SENSITIVITY - Key velocity sensitivity
+    { "K V S",     MSFA_KIND_OPERATOR,    15,  0,  7,  MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_OPERATOR_OUTPUT_LEVEL - Operator output level
     { "Out Lvl", MSFA_KIND_OPERATOR,    16,  0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_OSCILLATOR_MODE - Oscillator mode (ratio or fixed)
     { "Mode",    MSFA_KIND_OPERATOR,    17,  0,  1,  MSFA_DISPLAY_STRINGS, msfaOscMode },
+    // MSFA_COARSE_FREQUENCY - Coarse frequency
     { "Coarse",  MSFA_KIND_OPERATOR,    18,  0,  31, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_FINE_FREQUENCY - Fine frequency
     { "Fine",    MSFA_KIND_OPERATOR,    19,  0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_DETUNE - Detune
     { "Detune",  MSFA_KIND_OPERATOR,    20,  0,  14, MSFA_DISPLAY_DETUNE,  nullptr },
+    // MSFA_OPERATOR_ENABLED - Operator enabled (on/off)
     { "Op On",   MSFA_KIND_OP_ENABLED,  0,   0,  1,  MSFA_DISPLAY_STRINGS, msfaOffOn },
-    { "P R1",    MSFA_KIND_PITCH_RATE,  0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P R2",    MSFA_KIND_PITCH_RATE,  1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P R3",    MSFA_KIND_PITCH_RATE,  2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P R4",    MSFA_KIND_PITCH_RATE,  3,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P L1",    MSFA_KIND_PITCH_LEVEL, 0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P L2",    MSFA_KIND_PITCH_LEVEL, 1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P L3",    MSFA_KIND_PITCH_LEVEL, 2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
-    { "P L4",    MSFA_KIND_PITCH_LEVEL, 3,   0,  99, MSFA_DISPLAY_INT,     nullptr }
+    // MSFA_PITCH_EG_RATE_1 - Pitch envelope generator rate 1
+    { "Rate 1",    MSFA_KIND_PITCH_RATE,  0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_RATE_2 - Pitch envelope generator rate 2
+    { "Rate 2",    MSFA_KIND_PITCH_RATE,  1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_RATE_3 - Pitch envelope generator rate 3
+    { "Rate 3",    MSFA_KIND_PITCH_RATE,  2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_RATE_4 - Pitch envelope generator rate 4
+    { "Rate 4",    MSFA_KIND_PITCH_RATE,  3,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_LEVEL_1 - Pitch envelope generator level 1
+    { "Lvl 1",    MSFA_KIND_PITCH_LEVEL, 0,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_LEVEL_2 - Pitch envelope generator level 2
+    { "Lvl 2",    MSFA_KIND_PITCH_LEVEL, 1,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_LEVEL_3 - Pitch envelope generator level 3
+    { "Lvl 3",    MSFA_KIND_PITCH_LEVEL, 2,   0,  99, MSFA_DISPLAY_INT,     nullptr },
+    // MSFA_PITCH_EG_LEVEL_4 - Pitch envelope generator level 4
+    { "Lvl 4",    MSFA_KIND_PITCH_LEVEL, 3,   0,  99, MSFA_DISPLAY_INT,     nullptr }
 };
 
-static const struct Pfm3OneButtonState msfaGlobalState = {
+static const struct Pfm3OneButtonState msfaEngineState = {
     "Engine",
     {
         { MSFA_ALGORITHM, 0 },
@@ -189,133 +230,109 @@ static const struct Pfm3OneButtonState msfaGlobalState = {
     }
 };
 
+static const struct Pfm3OneButtonState msfaLfoModState = {
+    "Modulation",
+    {
+        { MSFA_LFO_AMP_MOD_DEPTH, 0 },
+        { MSFA_LFO_PITCH_MOD_DEPTH, 0 },
+        { MSFA_NONE, 0 },
+        { MSFA_NONE, 0 },
+        { MSFA_NONE, 0 },
+        { MSFA_NONE, 0 }
+    }
+};
+
 static const struct Pfm3OneButtonState msfaLfoState = {
     "LFO",
     {
-        { MSFA_LFO_WAVE, 0 },
-        { MSFA_LFO_KEY_SYNC, 0 },
-        { MSFA_NONE, 0 },
         { MSFA_LFO_SPEED, 0 },
         { MSFA_LFO_DELAY, 0 },
-        { MSFA_NONE, 0 }
-    }
-};
-
-static const struct Pfm3OneButtonState msfaLfoModState = {
-    "LFO modulation",
-    {
-        { MSFA_LFO_PMD, 0 },
-        { MSFA_LFO_AMD, 0 },
-        { MSFA_LFO_PMS, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
-    }
-};
-
-static const struct Pfm3OneButtonState msfaOscState = {
-    "Osc",
-    {
-        { MSFA_OP_COARSE, 0 },
-        { MSFA_OP_FINE, 0 },
-        { MSFA_OP_DETUNE, 0 },
-        { MSFA_OP_OUTPUT_LEVEL, 0 },
-        { MSFA_OP_MODE, 0 },
-        { MSFA_OP_RATE_SCALING, 0 }
-    }
-};
-
-static const struct Pfm3OneButtonState msfaModState = {
-    "Mod",
-    {
-        { MSFA_OP_KVS, 0 },
-        { MSFA_OP_AMS, 0 },
-        { MSFA_OP_BREAKPOINT, 0 },
-        { MSFA_OP_LEFT_DEPTH, 0 },
-        { MSFA_OP_RIGHT_DEPTH, 0 },
-        { MSFA_NONE, 0 }
-    }
-};
-
-static const struct Pfm3OneButtonState msfaEgRateState = {
-    "Op Rate",
-    {
-        { MSFA_OP_R1, 0 },
-        { MSFA_OP_R2, 0 },
-        { MSFA_OP_R3, 0 },
-        { MSFA_OP_R4, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
-    }
-};
-
-static const struct Pfm3OneButtonState msfaEgLevelState = {
-    "Op Level",
-    {
-        { MSFA_OP_L1, 0 },
-        { MSFA_OP_L2, 0 },
-        { MSFA_OP_L3, 0 },
-        { MSFA_OP_L4, 0 },
-        { MSFA_NONE, 0 },
+        { MSFA_LFO_WAVEFORM, 0 },
+        { MSFA_LFO_KEY_SYNC, 0 },
+        { MSFA_LFO_PITCH_MOD_SENSITIVITY, 0 },
         { MSFA_NONE, 0 }
     }
 };
 
 static const struct Pfm3OneButtonState msfaPitchRateState = {
-    "Pitch R",
+    "Pitch Rate",
     {
-        { MSFA_PITCH_R1, 0 },
-        { MSFA_PITCH_R2, 0 },
-        { MSFA_PITCH_R3, 0 },
-        { MSFA_PITCH_R4, 0 },
+        { MSFA_PITCH_EG_RATE_1, 0 },
+        { MSFA_PITCH_EG_RATE_2, 0 },
+        { MSFA_PITCH_EG_RATE_3, 0 },
+        { MSFA_PITCH_EG_RATE_4, 0 },
         { MSFA_NONE, 0 },
         { MSFA_NONE, 0 }
     }
 };
 
 static const struct Pfm3OneButtonState msfaPitchLevelState = {
-    "Pitch L",
+    "Pitch Level",
     {
-        { MSFA_PITCH_L1, 0 },
-        { MSFA_PITCH_L2, 0 },
-        { MSFA_PITCH_L3, 0 },
-        { MSFA_PITCH_L4, 0 },
+        { MSFA_PITCH_EG_LEVEL_1, 0 },
+        { MSFA_PITCH_EG_LEVEL_2, 0 },
+        { MSFA_PITCH_EG_LEVEL_3, 0 },
+        { MSFA_PITCH_EG_LEVEL_4, 0 },
         { MSFA_NONE, 0 },
         { MSFA_NONE, 0 }
     }
 };
 
-static const struct Pfm3OneButtonState msfaScaleLevelState = {
-    "Levels",
+static const struct Pfm3OneButtonState msfaAmpState = {
+    "Amp",
     {
-        { MSFA_OP_BREAKPOINT, 0 },
-        { MSFA_OP_LEFT_DEPTH, 0 },
-        { MSFA_OP_RIGHT_DEPTH, 0 },
-        { MSFA_OP_RATE_SCALING, 0 },
+        { MSFA_OPERATOR_ENABLED, 0 },
+        { MSFA_OPERATOR_OUTPUT_LEVEL, 0 },
+        { MSFA_KEY_VELOCITY_SENSITIVITY, 0 },
+        { MSFA_AMPLITUDE_MOD_SENSITIVITY, 0 },
         { MSFA_NONE, 0 },
         { MSFA_NONE, 0 }
     }
 };
 
-static const struct Pfm3OneButtonState msfaScaleCurveState = {
-    "Curves",
+static const struct Pfm3OneButtonState msfaScalState = {
+    "Scaling",
     {
-        { MSFA_OP_LEFT_CURVE, 0 },
-        { MSFA_OP_RIGHT_CURVE, 0 },
-        { MSFA_OP_KVS, 0 },
-        { MSFA_OP_AMS, 0 },
+        { MSFA_LEVEL_SCALING_BREAK_POINT, 0 },
+        { MSFA_LEVEL_SCALING_LEFT_DEPTH, 0 },
+        { MSFA_LEVEL_SCALING_RIGHT_DEPTH, 0 },
+        { MSFA_LEVEL_SCALING_LEFT_CURVE, 0 },
+        { MSFA_LEVEL_SCALING_RIGHT_CURVE, 0 },
+        { MSFA_RATE_SCALING, 0 }
+    }
+};
+
+static const struct Pfm3OneButtonState msfaFreqState = {
+    "Frequency",
+    {
+        { MSFA_OSCILLATOR_MODE, 0 },
+        { MSFA_COARSE_FREQUENCY, 0 },
+        { MSFA_FINE_FREQUENCY, 0 },
+        { MSFA_DETUNE, 0 },
         { MSFA_NONE, 0 },
         { MSFA_NONE, 0 }
     }
 };
 
-static const struct Pfm3OneButtonState msfaScaleSwitchState = {
-    "Switch",
+static const struct Pfm3OneButtonState msfaEgRateState = {
+    "Rate",
     {
-        { MSFA_OP_ENABLED, 0 },
+        { MSFA_EG_RATE_1, 0 },
+        { MSFA_EG_RATE_2, 0 },
+        { MSFA_EG_RATE_3, 0 },
+        { MSFA_EG_RATE_4, 0 },
         { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 },
+        { MSFA_NONE, 0 }
+    }
+};
+
+static const struct Pfm3OneButtonState msfaEgLevelState = {
+    "Level",
+    {
+        { MSFA_EG_LEVEL_1, 0 },
+        { MSFA_EG_LEVEL_2, 0 },
+        { MSFA_EG_LEVEL_3, 0 },
+        { MSFA_EG_LEVEL_4, 0 },
         { MSFA_NONE, 0 },
         { MSFA_NONE, 0 }
     }
@@ -325,73 +342,87 @@ static const struct Pfm3OneButton msfaButtonEngine = {
     "Engine",
     BUTTONID_MSFA_MAIN,
     1,
-    { &msfaGlobalState }
+    { &msfaEngineState }
 };
 
 static const struct Pfm3OneButton msfaButtonLfo = {
     "LFO",
     BUTTONID_MSFA_LFO,
-    1,
-    { &msfaLfoState }
-};
-
-static const struct Pfm3OneButton msfaButtonLfoMod = {
-    "LFO Mod",
-    BUTTONID_MSFA_LFO_MOD,
-    1,
-    { &msfaLfoModState }
-};
-
-static const struct Pfm3OneButton msfaButtonOper = {
-    "Oper",
-    BUTTONID_MSFA_OPER,
     2,
-    { &msfaOscState, &msfaModState }
+    { &msfaLfoModState, &msfaLfoState }
 };
 
-static const struct Pfm3OneButton msfaButtonEg = {
-    "EG",
-    BUTTONID_MSFA_EG,
-    4,
-    { &msfaEgRateState, &msfaEgLevelState, &msfaPitchRateState, &msfaPitchLevelState }
+static const struct Pfm3OneButton msfaButtonPitchEnv = {
+    "Pitch",
+    BUTTONID_MSFA_PITCH_ENV,
+    2,
+    { &msfaPitchRateState, &msfaPitchLevelState }
 };
 
-static const struct Pfm3OneButton msfaButtonScale = {
-    "Scale",
-    BUTTONID_MSFA_SCALE,
-    3,
-    { &msfaScaleLevelState, &msfaScaleCurveState, &msfaScaleSwitchState }
-};
-
-static const struct Pfm3EditMenu msfaEngineMenu = {
-    "Engine",
-    3,
-    { &msfaButtonEngine, &msfaButtonLfo, &msfaButtonLfoMod }
-};
-
-static const struct Pfm3EditMenu msfaOperMenu = {
-    "Oper",
+static const struct Pfm3OneButton msfaButtonAmp = {
+    "Amp",
+    BUTTONID_MSFA_AMP,
     1,
-    { &msfaButtonOper }
+    { &msfaAmpState }
+};
+
+static const struct Pfm3OneButton msfaButtonScal = {
+    "Scal",
+    BUTTONID_MSFA_SCAL,
+    1,
+    { &msfaScalState }
+};
+
+static const struct Pfm3OneButton msfaButtonFreq = {
+    "Freq",
+    BUTTONID_MSFA_FREQ,
+    1,
+    { &msfaFreqState }
+};
+
+static const struct Pfm3OneButton msfaButtonEgRate = {
+    "Rate",
+    BUTTONID_MSFA_EG_RATE,
+    1,
+    { &msfaEgRateState }
+};
+
+static const struct Pfm3OneButton msfaButtonEgLevel = {
+    "Level",
+    BUTTONID_MSFA_EG_LEVEL,
+    1,
+    { &msfaEgLevelState }
+};
+
+static const struct Pfm3EditMenu msfaGlobalMenu = {
+    "Global",
+    3,
+    { &msfaButtonEngine, &msfaButtonLfo, &msfaButtonPitchEnv }
+};
+
+static const struct Pfm3EditMenu msfaLevelMenu = {
+    "Level",
+    2,
+    { &msfaButtonAmp, &msfaButtonScal }
+};
+
+static const struct Pfm3EditMenu msfaOscMenu = {
+    "Osc",
+    1,
+    { &msfaButtonFreq }
 };
 
 static const struct Pfm3EditMenu msfaEgMenu = {
     "EG",
-    1,
-    { &msfaButtonEg }
-};
-
-static const struct Pfm3EditMenu msfaScaleMenu = {
-    "Scale",
-    1,
-    { &msfaButtonScale }
+    2,
+    { &msfaButtonEgRate, &msfaButtonEgLevel }
 };
 
 static const struct Pfm3EditMenu *msfaEditMenus[4] = {
-    &msfaEngineMenu,
-    &msfaOperMenu,
-    &msfaEgMenu,
-    &msfaScaleMenu
+    &msfaGlobalMenu,
+    &msfaLevelMenu,
+    &msfaOscMenu,
+    &msfaEgMenu
 };
 
 FMDisplayMsfaEditor::FMDisplayMsfaEditor() {
@@ -531,6 +562,7 @@ void FMDisplayMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefres
         tft_->clear();
         parent_->displayPreset();
         tft_->oscilloForceNextDisplay();
+        tft_->drawDx7Algo(timbre()->getMsfaProgram()[134]);
         break;
     case 20:
         tft_->pauseRefresh();
@@ -545,6 +577,7 @@ void FMDisplayMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefres
             tft_->print(" ");
         }
         tft_->print(page->states[fullState->buttonState[page->buttonId]]->stateLabel);
+        tft_->drawDx7Algo(timbre()->getMsfaProgram()[134]);
         break;
     case 18:
     case 17:
@@ -641,6 +674,9 @@ void FMDisplayMsfaEditor::encoderTurned(int encoder6, int ticks) {
 
     setParamValue(rowEncoder.row, (uint8_t) newValue);
     applyProgramChange();
+    if (rowEncoder.row == MSFA_ALGORITHM) {
+        tft_->drawDx7Algo(newValue);
+    }
     parent_->setPresetModified(currentTimbre(), true);
 
     valueChangedCounter_[encoder6] = 4;

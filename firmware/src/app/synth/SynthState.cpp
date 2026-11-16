@@ -927,6 +927,10 @@ void SynthState::randomizePreset() {
     }
 }
 
+Timbre* SynthState::getTimbre(int timbre) {
+    return &timbres[timbre];
+}
+
 char* SynthState::getTimbreName(int t) {
     return timbres[t].getPresetName();
 }

@@ -401,6 +401,8 @@ public:
         this->timbres = timbres;
     }
 
+    Timbre* getTimbre(int timbre);
+
     void init(FMDisplayMixer* displayMixer, FMDisplayEditor* dDisplayEditor, FMDisplayMenu* displayMenu, FMDisplaySequencer* displaySequencer);
 
     void encoderTurned(int encoder, int ticks);
