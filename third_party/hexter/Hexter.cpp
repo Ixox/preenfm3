@@ -178,7 +178,7 @@ Hexter::Hexter() {
 }
 
 
-void Hexter::loadHexterPatch(uint8_t* packedPatch, struct OneSynthParams *params) {
+void Hexter::loadHexterPatch(uint8_t* packedPatch, Pfm3Preset *params) {
 	patchUnpack(packedPatch, unpackedData);
 	voiceSetData(params, unpackedData);
 }
@@ -228,7 +228,7 @@ int Hexter::limit(int x, int min, int max)
     return x;
 }
 
-void Hexter::setIM(struct OneSynthParams *params, int im, uint8_t *patch, int op) {
+void Hexter::setIM(Pfm3Preset *params, int im, uint8_t *patch, int op) {
 	float ratios[]  = { 1.0, .7, .5, .3, .2, .15, .1, .1};
 	im--;
 	op--;
@@ -239,7 +239,7 @@ void Hexter::setIM(struct OneSynthParams *params, int im, uint8_t *patch, int op
 	((float*)&params->engineIm1.modulationIndexVelo1)[im * 2] = modulation * (1 - ratio);
 }
 
-void Hexter::setIMWithMax(struct OneSynthParams *params, int im, uint8_t *patch, int op, float max) {
+void Hexter::setIMWithMax(Pfm3Preset *params, int im, uint8_t *patch, int op, float max) {
 	setIM(params, im, patch, op);
 
 	if (((float*)&params->engineIm1.modulationIndex1)[im * 2] > max) {
@@ -250,7 +250,7 @@ void Hexter::setIMWithMax(struct OneSynthParams *params, int im, uint8_t *patch,
 	}
 }
 
-void Hexter::setMix(struct OneSynthParams *params, int im, uint8_t *patch, int op) {
+void Hexter::setMix(Pfm3Preset *params, int im, uint8_t *patch, int op) {
 	im--;
 	op--;
 	uint8_t *eb_op = patch + ((5 - op) * 21);
@@ -307,9 +307,9 @@ float Hexter::getRounded(float r) {
 /*
  * dx7_voice_set_data
  */
-void Hexter::voiceSetData(struct OneSynthParams *params, uint8_t *patch)
+void Hexter::voiceSetData(Pfm3Preset *params, uint8_t *patch)
 {
-    for (int k=0; k<sizeof(struct OneSynthParams)/sizeof(float); k++) {
+    for (int k=0; k<sizeof(Pfm3Preset)/sizeof(float); k++) {
         int row = k >> 2;
         if (row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ENGINE) {
             // Don't override the arpeggiator neither the ENGINE

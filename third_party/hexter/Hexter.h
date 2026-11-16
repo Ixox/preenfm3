@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include "Common.h"
+#include "Pfm3Preset.h"
 
 #define DX7_VOICE_SIZE_PACKED         128
 #define DX7_VOICE_SIZE_UNPACKED       155
@@ -45,16 +46,16 @@ class Hexter {
 public:
 	Hexter();
 	virtual ~Hexter() {}
-	void loadHexterPatch(uint8_t* packedPatch, struct OneSynthParams *params);
+	void loadHexterPatch(uint8_t* packedPatch, Pfm3Preset *params);
 	static void patchUnpack(uint8_t *packed_patch, uint8_t *unpacked_patch);
 
 protected:
 	int limit(int x, int min, int max);
-	void setIM(struct OneSynthParams *params, int im, uint8_t *patch, int op);
-	void setIMWithMax(struct OneSynthParams *params, int im, uint8_t *patch, int op, float max);
-	void setMix(struct OneSynthParams *params, int im, uint8_t *patch, int op);
+	void setIM(Pfm3Preset *params, int im, uint8_t *patch, int op);
+	void setIMWithMax(Pfm3Preset *params, int im, uint8_t *patch, int op, float max);
+	void setMix(Pfm3Preset *params, int im, uint8_t *patch, int op);
 	float getPreenFMIM(int lvl);
-	void voiceSetData(struct OneSynthParams *params, uint8_t *voice);
+	void voiceSetData(Pfm3Preset *params, uint8_t *voice);
 	int  bulkDumpChecksum(uint8_t *data, int length);
 	void voiceCopyName(char *name, uint8_t *patch);
 	int abs(int value);
