@@ -87,7 +87,8 @@ st-flash --reset write build/firmware/p3_1_04.bin 0x08020000
 
 ## Git
 
-- Do not create commits unless explicitly asked.
+- Never create commits. The user commits themselves; an explicit request
+  does not change this.
 - Never amend or force-push.
 - Do not commit `build/`, binaries, or editor artefacts.
 - Do not commit secrets or keys.

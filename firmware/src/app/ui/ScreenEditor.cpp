@@ -470,6 +470,11 @@ void ScreenEditor::buttonLongPressed(int instrument, int button) {
 
 void ScreenEditor::refreshOscilloBG() {
     EditorEngine *editor = activeEditor();
+    if (editor == nullptr) {
+        // Main-page menu (mainPage == -1) or invalid page: still clear/redraw
+        // the oscilloscope background for the current engine.
+        editor = editorForEngine();
+    }
     if (editor != nullptr) {
         editor->refreshOscilloBG();
     }

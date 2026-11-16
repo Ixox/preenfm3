@@ -341,4 +341,5 @@ void EditorByos::tempoClick() {
 }
 
 void EditorByos::refreshOscilloBG() {
+    tft_->oscilloBgActionClear();
 }
