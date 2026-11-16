@@ -134,7 +134,7 @@ public:
     virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) { return false; }
 
     // Map a generic engine-parameter change to an outgoing CC/NRPN message.
-    // `paramId` and `context` are engine-defined (e.g. MSFA parameter/operator).
+    // `paramId` and `context` are engine-defined (e.g. parameter/operator).
     virtual bool midiParamFeedback(int paramId, int context, float newValue,
                                    struct MidiParamMessage &out) const { return false; }
 
@@ -171,7 +171,7 @@ public:
     // Return -1 if `magic` is unknown. Engines may support legacy magics.
     virtual int getStorageNameOffset(uint32_t magic) const = 0;
 
-    // Name displayed when the stored name is empty (e.g. "MSFA"). May be "".
+    // Name displayed when the stored name is empty. May be "".
     virtual const char* getStorageDefaultName() const = 0;
 
     // Write the on-flash engine bytes (without magic) into `out`.

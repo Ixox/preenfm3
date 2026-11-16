@@ -19,7 +19,7 @@
 #include "fatfs.h"
 #include "Synth.h"
 #include "SynthState.h"
-#include "MsfaEngine.h"
+#include "SynthEngineFactory.h"
 #include "MidiDecoder.h"
 #include "ScreenCoordinator.h"
 #include "ScreenMixer.h"
@@ -32,7 +32,6 @@
 #include "Encoders.h"
 #include "Hexter.h"
 #include "Sequencer.h"
-#include "msfa_init.h"
 
 extern UART_HandleTypeDef huart1;
 extern SAI_HandleTypeDef hsai_BlockA1;
@@ -100,11 +99,9 @@ void preenfm3Init() {
     tft.init(&tftAlgo);
     ILI9341_Init();
 
-    // MSFA uses static lookup tables built for the audio sample rate. This
-    // must happen once, before the SAI DMA callbacks start, and before the
-    // MSFA voice/timbre state is initialized.
-    msfaInit(PREENFM_FREQUENCY);
-    msfaEngineInit();
+    // Engine DSP lookup tables must be initialized once, before the SAI DMA
+    // callbacks start, and before the engine voice/timbre state is initialized.
+    SynthEngineFactory::initDsp();
 
     dependencyInjection();
 

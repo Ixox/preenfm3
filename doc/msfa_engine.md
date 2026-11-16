@@ -56,7 +56,7 @@ The per-timbre stereo buffer is `Timbre::sampleBlock_`
 
 `Timbre` already owns:
 
-- the parameter block `OneSynthParams params_` — `Timbre.h:279`;
+- the parameter block `Pfm3Preset params_` — `Timbre.h:279`;
 - six PFM3 `Osc` and six `Env` objects — `Timbre.h:295-308`;
 - the global voice pointers `Voice *voices_[MAX_NUMBER_OF_VOICES]` —
   `Timbre.h:290`;
@@ -82,14 +82,14 @@ The main coupling points are:
   detune/spread.
 - `Synth::newParamValue()` — `Synth.cpp:589-682`: PFM3 `ROW_*` dispatch.
 - The editor and MIDI NRPN path write directly into the flat
-  `OneSynthParams` array:
+  `Pfm3Preset` array:
   - `ScreenEditor::encoderTurnedPfm2()` — `ScreenEditor.cpp:3843-3998`
   - `ScreenEditor::displayParamValue()` — `ScreenEditor.cpp:3227-3267`
   - `MidiDecoder::decodeNrpn()` — `MidiDecoder.cpp:914-936`
 
 The PFM3 parameter model is row-oriented: `row * NUMBER_OF_ENCODERS_PFM2 +
-encoder` indexes `OneSynthParams`. See `Common.h:149-225` for the `ROW_*`
-enum and `Common.h:544-608` for `OneSynthParams`.
+encoder` indexes `Pfm3Preset`. See `Common.h:149-225` for the `ROW_*`
+enum and `Common.h:544-608` for `Pfm3Preset`.
 
 ---
 
@@ -325,7 +325,7 @@ Current preenFM3 DX7 flow:
 - `Hexter::patchUnpack()` — `Hexter.cpp:186-222` produces the 155-byte
   unpacked layout.
 - `Hexter::voiceSetData()` — `Hexter.cpp:310-955` converts the DX7 patch into
-  PFM3 `OneSynthParams`.
+  PFM3 `Pfm3Preset`.
 
 For MSFA:
 
@@ -494,8 +494,8 @@ const struct Pfm3MixerButton voiceButton = {
 Required changes:
 
 1. Add `MIXER_VALUE_ENGINE` to `enum MixerValueType` in `Common.h:710-729`.
-2. Add `engineDisplay[]` (`"PFM3"`, `"MSFA"`) near the other display arrays
-   in `ScreenMixer.cpp:31-62`.
+2. Add the engine name to `SynthEngineFactory::getEngineDisplayName()`.
+   `ScreenMixer` builds `engineDisplay[]` from it.
 3. Add the per-timbre field to `MixerInstrumentState`
    (`MixerState.h:42-58`).
 4. Map it in `ScreenMixer::getValuePointer()` — `ScreenMixer.cpp:278-419`:
@@ -584,7 +584,7 @@ Replace direct `mainMenu.editMenu[...]` uses (see `ScreenEditor.cpp:3036`,
 
 ### 5.3 MSFA parameter model
 
-Do **not** add MSFA parameters to `OneSynthParams`. It is a flat PFM3 preset
+Do **not** add MSFA parameters to `Pfm3Preset`. It is a flat PFM3 preset
 layout indexed by `row * 4 + encoder`, used by the editor, MIDI NRPN and
 preset storage. DX7 has roughly 150 parameters and a different structure.
 
@@ -690,8 +690,8 @@ the patch already provides the Dexed extension.
 
 ### 5.5 MSFA editor navigation
 
-The MSFA editor is implemented in `ScreenMsfaEditor`
-(`firmware/src/app/ui/ScreenMsfaEditor.{h,cpp}`) and owned by
+The MSFA editor is implemented in `EditorMsfa`
+(`firmware/src/app/ui/EditorMsfa.{h,cpp}`) and owned by
 `ScreenEditor`. It uses the same six-button / six-encoder model as the PFM3
 editor. The six buttons are drawn as a 2×3 grid. Pages 1–4 (`Global`, `Level`,
 `Osc`, `EG`) are MSFA-specific; pages 5–6 reuse the PFM3 `Arp/Fx` and `Perf`
@@ -812,7 +812,7 @@ For MSFA:
 
 ### 5.7 Live parameter edits
 
-`ScreenMsfaEditor` calls `SynthState::propagateNewEngineParamValue()`.
+`EditorMsfa` calls `SynthState::propagateNewEngineParamValue()`.
 `Synth::newEngineParamValue()` forwards to `Timbre::engineParamChanged()` and
 `MsfaSynthEngine::engineParamChanged()`:
 
@@ -847,7 +847,7 @@ Proposed new flow:
 
 ```cpp
 void SynthState::loadDx7Patch(int timbre, PFM3File const *bank,
-                              int patchNumber, OneSynthParams *params) {
+                              int patchNumber, Pfm3Preset *params) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
@@ -1018,28 +1018,51 @@ The MSFA LFO and pitch envelope are driven by the DX7 program
 `MsfaEngine.cpp:120-122`), not by the PFM3 matrix/LFO.
 
 The MSFA editor writes directly to the DX7 program
-(`ScreenMsfaEditor::setParamValue()`), so MSFA parameter changes do not go
+(`EditorMsfa::setParamValue()`), so MSFA parameter changes do not go
 through `SynthState::setNewValue()` and therefore emit no CC/NRPN.
 
 ### 8.3 PFM3-specific MIDI
 
 These paths exist for the PFM3 parameter model and must not be interpreted as
-MSFA parameters. On an MSFA timbre they currently edit the inactive PFM3
-`OneSynthParams` block, so they have no audible effect.
+MSFA parameters. On an MSFA timbre the engine MIDI hooks return false, so
+PFM3 CCs and NRPNs have no effect.
 
 - **CC parameter map** (`receives & 0x01`) —
-  `MidiDecoder::controlChange()` (`MidiDecoder.cpp:527-759`) maps CCs to
-  `Synth::setNewValueFromMidi(timbre, ROW_*, ENCODER_*, ...)`: algorithm, IM,
-  mix/pan, oscillator frequency, matrix, LFO, FX1/FX2, envelopes, arpeggiator,
-  mixer volume, unison, step sequencer. There is no MSFA CC map.
-- **NRPN** (`receives & 0x02`) — `MidiDecoder::decodeNrpn()`
-  (`MidiDecoder.cpp:914-950`) maps NRPN indexes to PFM3 `allParameterRows`.
-  `sendCurrentPatchAsNrpns()` (`MidiDecoder.cpp:808-912`) dumps the PFM3
-  parameter block, not the DX7 program.
-- **Outgoing CC/NRPN** — `MidiDecoder::newParamValue()`
-  (`MidiDecoder.cpp:961-1218`) only runs for parameters changed through
-  `SynthState::setNewValue()`. MSFA editor changes bypass it, so no MSFA
-  CC/NRPN is emitted.
+  `MidiDecoder::controlChange()` maps shared CCs (Arp/FX/mixer/sequencer) and
+  forwards the rest to `Timbre::midiControlChange()` →
+  `Preenfm3Engine::midiControlChange()`: algorithm, IM, mix/pan, oscillator
+  frequency, matrix, LFO, envelopes, unison, step sequencer.
+  `MsfaSynthEngine::midiControlChange()` adds a small global map:
+
+  | CC | MSFA parameter |
+  |---|---|
+  | 33 | Algorithm |
+  | 34 | Feedback |
+  | 35 | LFO speed |
+  | 36 | LFO delay |
+  | 37 | LFO pitch mod depth |
+  | 39 | LFO amp mod depth |
+  | 111 | LFO key sync |
+  | 112 | LFO waveform |
+  | 113 | LFO pitch mod sensitivity |
+
+  Values are linearly mapped from 0..127 to the parameter's min..max (key sync
+  switches at 64). CC 38 is skipped because it is the NRPN data LSB. The same
+  CCs are emitted when a global parameter changes in the editor
+  (`MsfaSynthEngine::midiParamFeedback()`). CCs received from MIDI are applied
+  with `propagateNewEngineParamValueFromExternal()`, so they update audio/UI
+  but are not echoed back.
+- **NRPN** (`receives & 0x02`) — `MidiDecoder` accumulates NRPN and forwards
+  it to `Timbre::midiNrpn()` → `Preenfm3Engine::midiNrpn()`, which maps the
+  legacy indexes to PFM3 `allParameterRows`. MSFA ignores them.
+  `sendCurrentPatchAsNrpns()` enumerates the patch through
+  `midiPatchParam()`; MSFA uses the default (nothing), so it no longer sends
+  the PFM3 block.
+- **Outgoing CC/NRPN** — `MidiDecoder::newPfm3ParamValue()` delegates the
+  row/encoder → CC/NRPN mapping to `Preenfm3Engine::midiPfm3ParamFeedback()`,
+  and `newEngineParamValue()` delegates to the generic
+  `SynthEngine::midiParamFeedback(paramId, context, ...)`. MSFA does not
+  override it, so no MSFA CC/NRPN is emitted yet.
 - **MPE per-note modulation and poly aftertouch** —
   `Timbre::setMatrixSourceMPE()` and `Timbre::setMatrixPolyAfterTouch()`
   return early for MSFA (`Timbre.cpp:3283-3310`). MPE notes still play, but
@@ -1060,24 +1083,19 @@ MSFA parameters. On an MSFA timbre they currently edit the inactive PFM3
 | Program change / bank select | yes (bank 0) | yes (bank 0 MSFA preset, banks 2-4 DX7) |
 | Pitch bend / mod wheel / channel AT / breath | PFM3 matrix | MSFA `Controllers` |
 | Poly aftertouch / MPE per-note modulation | yes | ignored |
-| PFM3 CC parameter map | yes | no effect |
+| Engine CC map | full PFM3 | algo, fdbk, 7 global LFO |
 | PFM3 NRPN map | yes | no effect |
-| Outgoing CC/NRPN | yes | no (editor bypasses it) |
+| Outgoing CC/NRPN | yes | same global CC map |
 | Custom `0x7d` mixer-volume sysex | yes | yes |
 | DX7 sysex input | not supported | not supported |
 
 ### 8.5 Intended enforcement
 
-The split above is the intended behavior. The current `MidiDecoder` does not
-yet guard the PFM3 CC/NRPN paths by engine, so an MSFA timbre still receives
-PFM3 CC/NRPN edits (harmlessly, into the inactive PFM3 parameter block). To
-enforce the split in code:
-
-- skip the `receives & 0x01` PFM3 CC map in `controlChange()` when
-  `mixerState.instrumentState_[timbre].engine == SYNTH_ENGINE_MSFA`;
-- return early from `decodeNrpn()` for MSFA timbres;
-- skip `sendCurrentPatchAsNrpns()` for MSFA timbres;
-- optionally add a dedicated MSFA CC/NRPN map later.
+The split above is the intended behavior. The CC and NRPN maps are enforced:
+the engine hooks default to "not handled", so MSFA timbres ignore PFM3
+parameter CCs and NRPNs. The PFM3 patch dump is engine-enumerated, so an MSFA
+timbre sends nothing. The MSFA CC map currently covers only algorithm,
+feedback and the seven global LFO parameters; it can be extended later.
 
 Do not reuse PFM3 row indexes for MSFA parameters; the meaning would be
 ambiguous.
@@ -1214,7 +1232,7 @@ or a `SynthState::markPresetModified(timbre)` helper) and call it from
 `processAsyncActions()`.
 
 For the editor display, add a method such as
-`ScreenMsfaEditor::refreshParam(uint8_t dx7Param)` that:
+`EditorMsfa::refreshParam(uint8_t dx7Param)` that:
 
 - scans the current page's `rowEncoder[]`;
 - finds the encoder showing the changed parameter;
@@ -1228,7 +1246,7 @@ also possible but heavier and may reset page state.
 #### Highlighting
 
 The changed DX7 parameter can reuse the existing MSFA highlight logic in
-`ScreenMsfaEditor::newParamValue()`:
+`EditorMsfa::newParamValue()`:
 
 - `pp` 0..125 → operator parameter; the operator is
   `6 - (pp / 21)` (OP6 for 0..20, …, OP1 for 105..125), so highlight that

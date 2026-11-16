@@ -24,8 +24,11 @@ class SynthEngine;
  */
 class SynthEngineFactory {
 public:
+    // One-time DSP table initialization, before any engine/voice init.
+    static void initDsp();
     static void init(Timbre *timbre, SynthState *synthState);
     static SynthEngine* get(SynthEngineType type, int timbreNumber);
+    static const char* getEngineDisplayName(SynthEngineType type);
     // Map a preset/mixer storage magic to its engine, or COUNT if unknown.
     static SynthEngineType engineTypeForStorageMagic(uint32_t magic);
     static SynthEngine* getForStorageMagic(uint32_t magic, int timbreNumber);

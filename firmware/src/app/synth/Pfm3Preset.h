@@ -26,7 +26,7 @@
 
 /*
  * On-flash PFM3 preset layout and editor/storage mirror.
- * This is PFM3-specific: the MSFA engine does not use this layout.
+ * This is PFM3-specific.
  */
 struct Pfm3Preset {
     struct Engine1Params engine1;

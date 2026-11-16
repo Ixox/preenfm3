@@ -3533,7 +3533,7 @@ bool EditorPfm3::isInOperatorPage(uint8_t pageNumber) {
 }
 
 bool EditorPfm3::isInMatrixPage(uint8_t pageNumber) {
-    // MSFA uses mainPage 2 for the shared Arp/Fx page, not the PFM3 matrix.
+    // Main page 2 is the shared Arp/Fx page, not the PFM3 matrix.
     return getEngineType() == parent_->currentEngineType() && pageNumber == 2;
 }
 

@@ -44,6 +44,21 @@ SynthEngine* SynthEngineFactory::getForStorageMagic(uint32_t magic, int timbreNu
     return get(type, timbreNumber);
 }
 
+void SynthEngineFactory::initDsp() {
+    MsfaSynthEngine::initGlobal();
+}
+
+const char* SynthEngineFactory::getEngineDisplayName(SynthEngineType type) {
+    switch (type) {
+    case SYNTH_ENGINE_PFM3:
+        return "PFM3";
+    case SYNTH_ENGINE_MSFA:
+        return "MSFA";
+    default:
+        return "";
+    }
+}
+
 void SynthEngineFactory::init(Timbre *timbre, SynthState *synthState) {
     int timbreNumber = timbre->getTimbreNumber();
     pfm3Engines_[timbreNumber].init(timbre, synthState);

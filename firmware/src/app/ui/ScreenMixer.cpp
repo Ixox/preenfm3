@@ -16,6 +16,7 @@
 
 #include "ScreenMixer.h"
 #include "SynthState.h"
+#include "SynthEngineFactory.h"
 #include "TftDisplay.h"
 #include "TftAlgo.h"
 
@@ -30,7 +31,10 @@
 
 const char* outDisplay[] = { "1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6" };
 const char* compDisplay[]= { "Off", "Slow", "Medium", "Fast"};
-const char* engineDisplay[]= { "PFM3", "MSFA" };
+const char* engineDisplay[]= {
+    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
+    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_MSFA)
+};
 const char* enableNames[] = { "Off", "On" };
 const char* levelMeterWhere[] = { "Off", "Mix", "All" };
 const char* scalaMapNames[] = { "Keybrd", "Continu" };

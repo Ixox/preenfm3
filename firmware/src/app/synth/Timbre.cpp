@@ -316,7 +316,7 @@ void Timbre::setEngine(SynthEngineType engine) {
     stopPlayingNow();
     engine_ = engine;
     engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
-    // Keep PFM3 compatible with a DX7 patch converted into the flat mirror.
+    // Keep the PFM3 preset mirror in sync when switching engines.
     if (engineImpl_->usesPfm3PresetMirror()) {
         deserializePfm3Preset(pfm3Preset_);
     }

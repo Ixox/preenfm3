@@ -42,6 +42,8 @@ st-flash --reset write build/firmware/p3_1_04.bin 0x08020000
   increase, a compiler warning, or a possible performance regression), stop and
   ask the user. Do not spend a lot of time investigating unless they confirm it
   is worth investigating.
+- If the user asks a question, do not change code. Answer the question and wait
+  for an explicit "Go" before making any code change.
 
 ## Code conventions
 
@@ -61,7 +63,7 @@ st-flash --reset write build/firmware/p3_1_04.bin 0x08020000
 ## MSFA engine (opt-in)
 
 - Keep PFM3 as the default engine; MSFA is selected per timbre.
-- Do not add MSFA parameters to `OneSynthParams`.
+- Do not add MSFA parameters to `Pfm3Preset`.
 - MSFA has no unison mode.
 - DX7 program layout (156 bytes): operator block `(5 - operatorNumber) * 21`;
   rates at `[0..3]`, levels at `[4..7]`; global data from `[126]`; algorithm

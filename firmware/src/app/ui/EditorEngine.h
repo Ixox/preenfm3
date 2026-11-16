@@ -46,7 +46,7 @@ public:
 
     // Engine implemented by this editor.
     virtual SynthEngineType getEngineType() const = 0;
-    // Display name of the engine ("preenfm3", "DX7").
+    // Display name of the engine.
     virtual const char *getEngineName() const = 0;
     // Menu for an engine-owned main page, or nullptr.
     virtual const struct EditorEditMenu* getEngineMenu(int page) const = 0;
@@ -69,7 +69,7 @@ public:
     virtual void preparePage() {}
     // Print the value of encoder `encoder`.
     virtual void displayParamValue(int encoder, TFT_COLOR color) = 0;
-    // An engine-specific parameter changed (MSFA paramId); update UI feedback.
+    // An engine-specific parameter changed (engine-defined paramId); update UI feedback.
     virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {}
     // Tempo clock tick: refresh time-synced value feedback.
     virtual void tempoClick() = 0;

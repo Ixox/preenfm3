@@ -184,42 +184,42 @@ static const struct EditorOneButtonState msfaEgLevelState = {
 
 static const struct EditorOneButton msfaButtonEngine = {
     "Engine",
-    BUTTONID_MSFA_MAIN,
+    BUTTONID_ENGINE_PAGE_1,
     1,
     { &msfaEngineState }
 };
 
 static const struct EditorOneButton msfaButtonLfo = {
     "LFO",
-    BUTTONID_MSFA_LFO,
+    BUTTONID_ENGINE_PAGE_2,
     2,
     { &msfaLfoModState, &msfaLfoState }
 };
 
 static const struct EditorOneButton msfaButtonPitchEnv = {
     "Pitch",
-    BUTTONID_MSFA_PITCH_ENV,
+    BUTTONID_ENGINE_PAGE_3,
     2,
     { &msfaPitchRateState, &msfaPitchLevelState }
 };
 
 static const struct EditorOneButton msfaButtonLevel = {
     "Level",
-    BUTTONID_MSFA_AMP,
+    BUTTONID_ENGINE_PAGE_4,
     2,
     { &msfaAmpState, &msfaScalState }
 };
 
 static const struct EditorOneButton msfaButtonOsc = {
     "Osc",
-    BUTTONID_MSFA_FREQ,
+    BUTTONID_ENGINE_PAGE_6,
     1,
     { &msfaFreqState }
 };
 
 static const struct EditorOneButton msfaButtonEnv = {
     "Env",
-    BUTTONID_MSFA_EG_RATE,
+    BUTTONID_ENGINE_PAGE_7,
     2,
     { &msfaEgRateState, &msfaEgLevelState }
 };

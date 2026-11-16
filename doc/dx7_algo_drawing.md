@@ -185,7 +185,7 @@ does **not** give is screen positions, which is the missing piece.
      through the action queue.
 
 4. **Call sites**:
-   - `ScreenMsfaEditor::refreshEditorByStep()` (Engine page) should draw
+   - `EditorMsfa::refreshEditorByStep()` (Engine page) should draw
      the DX7 algorithm instead of clearing, using `program[134]` (0..31).
    - `ScreenEditor::refreshEditorByStep()` currently skips `drawAlgo` for
      MSFA (`case 10` and `case 21`); those should call the DX7 variant on the

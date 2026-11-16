@@ -170,13 +170,16 @@ Otherwise derive from `EditorEngine` and own the parameter pages.
 2. `SynthEngineFactory.h/.cpp` — include `NewEngine.h`, add a static
    `NewEngine newEngines_[NUMBER_OF_TIMBRES]`, init it in `init()` and return
    it from `get()` for `SYNTH_ENGINE_NEWENGINE`. The current `get()` falls
-   back to PFM3 for unknown types, so add an explicit branch.
+   back to PFM3 for unknown types, so add an explicit branch. Add a case to
+   `getEngineDisplayName()` (keep it short for the TFT big font, e.g. `"NEW"`).
+   If the engine needs one-time DSP tables, add `NewEngine::initGlobal()` and
+   call it from `SynthEngineFactory::initDsp()`.
 3. `PersistenceMagic.h` — add a `PRESET_NEWENGINE` magic number.
 4. `SynthEngineFactory.cpp` — add
    `{ PRESET_NEWENGINE, SYNTH_ENGINE_NEWENGINE }` to `storageMagics[]`.
    `Timbre` and the storage layer then resolve the engine automatically.
-5. `ScreenMixer.cpp` — append the engine name to `engineDisplay[]`
-   (keep it short for the TFT big font, e.g. `"NEW"`).
+5. `ScreenMixer.cpp` — no change: `engineDisplay[]` is built from
+   `SynthEngineFactory::getEngineDisplayName()`.
 6. `ScreenEditor.cpp` — include `EditorNewEngine.h`, add a static
    `EditorNewEngine newEngineEditorInstance`, and call its `init()` in
    `ScreenEditor::init()`.

@@ -1,6 +1,9 @@
 # Engine and voice architecture refactor
 
-Status: steps 1–7, 8a–8e implemented; step 9 outstanding.
+Status: steps 1–7 and 8a–8e implemented. Step 9 (`BasicSynthEngine`)
+outstanding. The editor split (`doc/screen_separation.md`) and the two
+framework leaks (Synth MSFA checks, storage-magic mapping) are also
+implemented.
 
 This is the single migration plan for two refactorings that meet in the same
 code:
@@ -482,7 +485,7 @@ Shared, stays in `Synth`/`Timbre`:
   `performance1`, which feeds the Perf1..Perf4 matrix sources).
 - MSFA keeps its own program blob.
 - Engine-specific parameters live with the engine, not in the shared block.
-- A generic engine-editor interface already exists (`EngineEditor`); the engine
+- A generic engine-editor interface already exists (`EditorEngine`); the engine
   separation does not change the editor split, only where parameters live.
 - MIDI/NRPN paths that are currently PFM3-only should be routed by engine or
   documented as PFM3-only.
@@ -530,10 +533,10 @@ The two refactorings are interleaved so `Voice` binding is written once.
      sources). MSFA keeps its own `program_[156]` blob.
 
    - **6b — Split the runtime storage.** Add `TimbreSharedParams` in `Timbre`
-     and `Pfm3TimbreParams` in `Preenfm3Engine`. Keep `OneSynthParams` as the
+     and `Pfm3TimbreParams` in `Preenfm3Engine`. Keep `Pfm3Preset` as the
      on-flash layout **and** as the in-memory UI/serialization mirror: the
      editor writes it directly, and `convertParamsToFlash/FromFlash`,
-     `backupParams`, `copyNewPreset` and the preset constants all operate on
+     `backupPfm3Preset`, `copyNewPreset` and the preset constants all operate on
      the flat buffer. Add `serialize()` / `deserialize()` and
      `getParamValue(flatIndex)` / `setParamValue(flatIndex, value)`.
 
@@ -545,7 +548,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
      for MSFA timbres.
 
    - **6d — Update persistence.** `PatchBank`, `MixerBank` and `SynthState`
-     keep using `OneSynthParams`; load calls `deserialize()`, save calls
+     keep using `Pfm3Preset`; load calls `deserialize()`, save calls
      `serialize()`. No PFM3 flash-format change; the MSFA preset/mixer layout
      is unchanged.
 
@@ -622,7 +625,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
      `startVoiceAfterTransfer()` takes the saved phase explicitly.
 
    - **8e — Contain the flat mirror.** Implemented: `Timbre::params_` is now
-     `Timbre::flatParams_`, documented as the editor/storage mirror. The
+     `Timbre::pfm3Preset_`, documented as the editor/storage mirror. The
      PFM3 DSP state remains owned by `Pfm3TimbreParams`.
 
 9. **Add a third engine to validate the boundary.**
@@ -635,7 +638,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
    - **Parameters:** one per-timbre parameter block and one per-voice state,
      owned by the engine. Keep the parameter set deliberately small.
    - **UI:** minimal editor pages (oscillator and envelope) using the existing
-     `EngineEditor` split. Expose the engine in the mixer engine selector so
+     `EditorEngine` split. Expose the engine in the mixer engine selector so
      it can be selected and tested manually.
    - **Persistence:** minimal preset blob with one magic, name and the engine
      parameters. Reuse the generic `SynthEngine` persistence methods.
@@ -726,5 +729,5 @@ The two refactorings are interleaved so `Voice` binding is written once.
 15. `Timbre::params_` stays in `Timbre` during steps 1–5; the PFM3 parameter
     split happens in step 6.
 16. MSFA note-on/off uses the same `VoicePool` from step 3.
-17. Keep a flat `OneSynthParams` mirror in `Timbre` for the editor, storage and
+17. Keep a flat `Pfm3Preset` mirror in `Timbre` for the editor, storage and
     MIDI; the DSP owners are `TimbreSharedParams` / `Pfm3TimbreParams`.

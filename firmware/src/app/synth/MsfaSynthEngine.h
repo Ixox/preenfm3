@@ -13,6 +13,9 @@
 #include "Common.h"
 #include "SynthEngine.h"
 
+#define MSFA_PACKED_PATCH_SIZE 128
+#define MSFA_PROGRAM_SIZE 156
+
 class Timbre;
 class Voice;
 class SynthState;
@@ -27,6 +30,7 @@ class MsfaSynthEngine : public SynthEngine {
 public:
     MsfaSynthEngine() : timbre_(nullptr), synthState_(nullptr), msfaState_(nullptr), timbreNumber_(0) {}
 
+    static void initGlobal();
     void init(Timbre *timbre, SynthState *synthState) override;
     void afterNewParamsLoad() override;
     void bindVoice(Voice *voice) override;

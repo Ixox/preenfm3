@@ -18,10 +18,16 @@
 #include "MsfaEngine.h"
 #include "MsfaParams.h"
 #include "MsfaDebug.h"
+#include "msfa_init.h"
 #include "waves.h"
 
 uint8_t MsfaSynthEngine::packedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE] __attribute__((section(".ram_d1")));
 uint8_t MsfaSynthEngine::program_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE] __attribute__((section(".ram_d1")));
+
+void MsfaSynthEngine::initGlobal() {
+    msfaInit(PREENFM_FREQUENCY);
+    msfaEngineInit();
+}
 
 void MsfaSynthEngine::init(Timbre *timbre, SynthState *synthState) {
     timbre_ = timbre;

@@ -59,6 +59,10 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `Lfo*.{h,cpp}` | LFO oscillator, envelope, step sequencer |
 | `Matrix.*` | Modulation matrix |
 | `MixerState.*`, `SynthState.*`, `Presets.*`, `Common.*` | Shared state, presets, DX7/algorithm constants |
+| `Pfm3Params.h`, `Pfm3Preset.h` | PFM3 parameter structs and on-flash preset layout |
+| `MidiControlChange.h`, `Pfm3ControlChange.h`, `MsfaControlChange.h` | Shared MIDI CC numbers and engine-specific CC numbers |
+| `SharedParams.h` | Timbre-wide Arp/FX parameter ids used by MIDI |
+| `Pfm3Midi.*` | Legacy PFM3 NRPN index ↔ flat parameter index translation |
 | `FxBus.*` | Reverb / FX bus |
 | `SimpleEffect/` | Compressor, simple envelope/gain helpers |
 | `MsfaEngine.*`, `MsfaDebug.*` | Bridge to the MSFA (Dexed DX7) engine |
@@ -70,8 +74,12 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 |---------|----------|
 | `ScreenCoordinator.*` | Screen coordinator and refresh state machine |
 | `ScreenMixer.*` | Mixer screen |
-| `ScreenEditor.*` | PFM3 editor screen |
-| `ScreenMsfaEditor.*` | MSFA editor screen |
+| `ScreenEditor.*` | Common editor entry point, page routing and dispatch |
+| `EditorEngine.*` | Editor interface and shared page/menu helpers |
+| `EditorParamPage.*` | Generic menu/encoder page mechanics over `Pfm3Preset` |
+| `EditorPfm3.*` | PFM3 engine pages |
+| `EditorMsfa.*` | MSFA engine pages |
+| `EditorCommon.*` | Shared Arp/Fx page |
 | `ScreenMenu.*` | Menu/file browser |
 | `ScreenSequencer.*` | Sequencer screen |
 | `FirmwareTftDisplay.*` | Oscilloscope background / firmware-specific TFT actions |
@@ -180,9 +188,9 @@ bootloader links the USB MSC class.
 
 ## Where to add code
 
-- **New PFM3 parameter**: `Common.h` / `SynthState.h`, then the editor UI in
+- **New PFM3 parameter**: `Pfm3Params.h` / `SynthState.h`, then the editor UI in
   `ScreenEditor.cpp`, and the DSP use in `Voice.cpp` / `Timbre.cpp`.
-- **New MSFA parameter**: `ScreenMsfaEditor.*` and the MSFA program layout
+- **New MSFA parameter**: `EditorMsfa.*` and the MSFA program layout
   (see `doc/msfa_engine.md`).
 - **New screen/page**: add a `Screen*` class and wire it in `ScreenCoordinator`.
 - **New file type**: add a class under `firmware/src/app/storage/` and register
