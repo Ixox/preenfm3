@@ -67,9 +67,9 @@ public:
 
     // PFM3 implementations called by Preenfm3Engine.
     void afterNewParamsLoad();
-    void setParamValue(int index, float value);
+    void setParamValue(int index, float oldValue, float newValue);
     void syncArpUserPatterns();
-    void syncLfoSteps(int whichStepSeq);
+    void setStepSequencerSteps(int whichStepSeq);
     void serializeParams(struct OneSynthParams &out) const;
     void deserializeParams(const struct OneSynthParams &in);
     uint32_t getStorageMagic() const;
@@ -184,12 +184,6 @@ public:
         return sharedParams_[timbreNumber_];
     }
 
-    Osc& getOsc(int index) {
-        return pfm3Engine_.osc(index);
-    }
-    Env& getEnv(int index) {
-        return pfm3Engine_.env(index);
-    }
 
     void updateVoiceMatrix(Voice *voice, int note, int velocity) {
         engineImpl_->updateVoiceMatrix(voice, note, velocity);
@@ -234,6 +228,9 @@ public:
     }
 
     void stopPlayingNow();
+    void allNoteOff();
+    void allNoteOffQuick();
+    void allSoundOff();
 
 
     void setMPESetting(uint8_t mpeSetting) {

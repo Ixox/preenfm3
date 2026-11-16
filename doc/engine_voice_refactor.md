@@ -1,6 +1,6 @@
 # Engine and voice architecture refactor
 
-Status: design / not implemented.
+Status: steps 1–7 and 8a implemented; 8b–8e outstanding.
 
 This is the single migration plan for two refactorings that meet in the same
 code:
@@ -565,7 +565,60 @@ The two refactorings are interleaved so `Voice` binding is written once.
    path (formerly `Voice::msfaNextBlock()`). `Voice::fxAfterBlock()` stays
    shared: FX1 is per voice but common to both engines.
 
-8. **Add a third engine to validate the structure.**
+8. **Finish the engine boundary and validate it with a third engine.**
+
+   Steps 1–7 removed the engine DSP from `Voice` and moved it behind
+   `SynthEngine`. The remaining coupling is localized and should be removed
+   while preparing the third engine:
+
+   - **8a — Move engine parameter side effects into the engine.**
+     Replace `SynthEngine::newParamValue(row, encoder)` with
+     `paramChanged(row, encoder, oldValue, newValue)`. `Timbre::setParamValue()`
+     receives the old value from the host, writes the mirror/owner, then calls
+     it, so both UI and MIDI edits take the same path. `Preenfm3Engine::paramChanged()` owns
+     the engine-specific rows: envelope time/level (`reloadADSR`), envelope
+     curve (`applyCurves`), matrix sources/destinations (`verifyLfoUsed`,
+     `resetMatrixDestination`), LFO rows (`lfoValueChange`), performance
+     sources, MIDI note curves, and context refresh (algorithm, pan, FX1
+     param3). `Synth::newParamValue()` keeps only the non-float step and
+     arp-pattern sync. The remaining shared rows (arp clock/BPM/direction/
+     latch and FX1 effect params) move into `Timbre::setParamValue()`, and
+     the per-timbre voice group operations (`allNoteOff()`,
+     `allNoteOffQuick()`, `allSoundOff()`) move from `Synth` to `Timbre`
+     (the `Synth` methods become thin wrappers for external callers).
+     Step-sequencer edits call `Timbre::setStepSequencerSteps()`, which
+     forwards to the existing `SynthEngine::setStepSequencerSteps()`.
+     Then replace the remaining `Timbre::getOsc()` / `getEnv()` calls inside
+     `Preenfm3Engine` with `osc_[]` / `env_[]` and remove both accessors from
+     `Timbre`.
+
+   - **8b — Hide the concrete engines.** `Timbre` currently contains
+     `Preenfm3Engine pfm3Engine_` and `MsfaSynthEngine msfaEngine_` plus
+     `engineImpl_`, and MSFA-specific passthrough methods
+     (`loadMsfaPackedPatch()`, `getMsfaProgram*()`,
+     `msfaAfterNewParamsLoad()`). Introduce an engine factory/registry so
+     `Timbre` stores only a `SynthEngine*`; engine-specific operations go
+     through the interface (or generic editor/storage hooks).
+
+   - **8c — Remove the friend shortcuts.** `Synth` and `Voice` currently reach
+     `Timbre::engineImpl_` directly for note-off/kill/transfer dispatch. Add
+     `Timbre` methods that forward to the engine (`noteOffVoice()`,
+     `noteOffVoiceQuick()`, `killVoice()`, `startVoiceAfterTransfer()`, ...).
+
+   - **8d — Move PFM3-biased note-transition data out of `Voice`.** Glide
+     phase, pending-note fields, `noteAlreadyFinished`, `newNotePlayed` and
+     related state are only used by PFM3. Move them into `Pfm3VoiceState` so
+     `Voice` holds only generic note/voice state, transfer state, the output
+     buffer and the shared FX1 fields.
+
+   - **8e — Contain the flat mirror.** `Timbre::params_` (`OneSynthParams`) is
+     a UI/flash layout mirror while `Pfm3TimbreParams` is the DSP owner. Keep
+     it explicitly as a UI/serialization cache, or move it to a host-level
+     preset object, so `Timbre` is not shaped by the PFM3 preset layout.
+
+   After 8a–8e, add the third engine as a new `SynthEngine` implementation
+   plus registration and verify that neither `Timbre` nor `Voice` needs to
+   change. This is the structural validation that the boundary is complete.
 
 ## 7. Test plan
 

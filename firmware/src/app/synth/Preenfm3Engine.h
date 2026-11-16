@@ -68,7 +68,7 @@ public:
     void setMatrixPolyAfterTouch(uint8_t note, float value) override;
     void noteOnMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
     void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
-    void newParamValue(int row, int encoder) override;
+    void paramChanged(int row, int encoder, float oldValue, float newValue) override;
     void setParamValue(int index, float value) override;
     bool isUnisonMode() const override;
     void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) override;

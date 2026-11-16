@@ -889,23 +889,23 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
     // After matrix
     if (unlikely(voice->newNotePlayed)) {
         voice->newNotePlayed = false;
-        pfm3State_.env1ValueMem  = currentTimbre->getEnv(0).noteOnAfterMatrixCompute(&pfm3State_.envState1_, &pfm3State_.matrix);
-        pfm3State_.env2ValueMem  = currentTimbre->getEnv(1).noteOnAfterMatrixCompute(&pfm3State_.envState2_, &pfm3State_.matrix);
-        pfm3State_.env3ValueMem  = currentTimbre->getEnv(2).noteOnAfterMatrixCompute(&pfm3State_.envState3_, &pfm3State_.matrix);
-        pfm3State_.env4ValueMem  = currentTimbre->getEnv(3).noteOnAfterMatrixCompute(&pfm3State_.envState4_, &pfm3State_.matrix);
-        pfm3State_.env5ValueMem  = currentTimbre->getEnv(4).noteOnAfterMatrixCompute(&pfm3State_.envState5_, &pfm3State_.matrix);
-        pfm3State_.env6ValueMem  = currentTimbre->getEnv(5).noteOnAfterMatrixCompute(&pfm3State_.envState6_, &pfm3State_.matrix);
+        pfm3State_.env1ValueMem  = env_[0].noteOnAfterMatrixCompute(&pfm3State_.envState1_, &pfm3State_.matrix);
+        pfm3State_.env2ValueMem  = env_[1].noteOnAfterMatrixCompute(&pfm3State_.envState2_, &pfm3State_.matrix);
+        pfm3State_.env3ValueMem  = env_[2].noteOnAfterMatrixCompute(&pfm3State_.envState3_, &pfm3State_.matrix);
+        pfm3State_.env4ValueMem  = env_[3].noteOnAfterMatrixCompute(&pfm3State_.envState4_, &pfm3State_.matrix);
+        pfm3State_.env5ValueMem  = env_[4].noteOnAfterMatrixCompute(&pfm3State_.envState5_, &pfm3State_.matrix);
+        pfm3State_.env6ValueMem  = env_[5].noteOnAfterMatrixCompute(&pfm3State_.envState6_, &pfm3State_.matrix);
     }
 
     updateAllMixOscsAndPans(voice);
 
     // Hoist the wave tables once per block; getNextSample() runs per sample.
-    const WaveTable* waveTable1 = currentTimbre->getOsc(0).getWaveTable();
-    const WaveTable* waveTable2 = currentTimbre->getOsc(1).getWaveTable();
-    const WaveTable* waveTable3 = currentTimbre->getOsc(2).getWaveTable();
-    const WaveTable* waveTable4 = currentTimbre->getOsc(3).getWaveTable();
-    const WaveTable* waveTable5 = currentTimbre->getOsc(4).getWaveTable();
-    const WaveTable* waveTable6 = currentTimbre->getOsc(5).getWaveTable();
+    const WaveTable* waveTable1 = osc_[0].getWaveTable();
+    const WaveTable* waveTable2 = osc_[1].getWaveTable();
+    const WaveTable* waveTable3 = osc_[2].getWaveTable();
+    const WaveTable* waveTable4 = osc_[3].getWaveTable();
+    const WaveTable* waveTable5 = osc_[4].getWaveTable();
+    const WaveTable* waveTable6 = osc_[5].getWaveTable();
 
     float env1Value;
     float env2Value;
@@ -961,27 +961,27 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             float f2x;
@@ -993,12 +993,12 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq3 = osc3Values[k];
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm3 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
+                f2x = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 pfm3State_.oscState1_.frequency = pfm3State_.oscState1_.mainFrequencyPlusMatrix + voiceIm1 * freq2 + voiceIm2 * freq3;
-                float currentSample = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * velocity * env1Value * pfm3State_.mix1;
+                float currentSample = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * velocity * env1Value * pfm3State_.mix1;
 
                 *sample++ = currentSample * pfm3State_.pan1Right;
                 *sample++ = currentSample * pfm3State_.pan1Left;
@@ -1010,7 +1010,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f2xm1;
             pfm3State_.freqAo = freq2;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -1034,27 +1034,27 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm1 = pfm3State_.modulationIndex1;
             float voiceIm2 = pfm3State_.modulationIndex2;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = velocity * .5f;
@@ -1064,10 +1064,10 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq3 = osc3Values[k];
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left;
@@ -1077,7 +1077,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env3Value += env3Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -1102,36 +1102,36 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             float f4x;
@@ -1144,12 +1144,12 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
                 pfm3State_.oscState4_.frequency = freq3 * voiceIm4 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
 
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float currentSample = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * velocity;
+                float currentSample = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * velocity;
 
                 *sample++ = currentSample * pfm3State_.pan1Right;
                 *sample++ = currentSample * pfm3State_.pan1Left;
@@ -1163,7 +1163,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f4xm1;
             pfm3State_.freqAo = freq4;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -1187,33 +1187,33 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = velocity * .5f;
@@ -1226,15 +1226,15 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq4 = osc4Values[k];
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm4 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                f3x = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.oscState3_.frequency;
+                f3x = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.oscState3_.frequency;
                 freq3 = f3x - f3xm1 + 0.99525f * freq3;
                 f3xm1 = f3x;
 
                 pfm3State_.oscState2_.frequency = freq4 * voiceIm2 + freq3 * voiceIm3 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left;
@@ -1247,7 +1247,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f3xm1;
             pfm3State_.freqAo = freq3;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_))) {
                 endNoteOrBeginNextOne(voice);
             }
             break;
@@ -1277,34 +1277,34 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             float f2x;
@@ -1319,17 +1319,17 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq4 = osc4Values[k];
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm3 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                f3x = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.oscState3_.frequency;
+                f3x = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.oscState3_.frequency;
                 freq3 = f3x - f3xm1 + 0.99535f * freq3;
                 f3xm1 = f3x;
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + freq4 * voiceIm4 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
+                f2x = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * velocity * pfm3State_.mix1;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * velocity * pfm3State_.mix1;
 
                 *sample++ = car1 * pfm3State_.pan1Right;
                 *sample++ = car1 * pfm3State_.pan1Left;
@@ -1342,7 +1342,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAo = freq2;
             pfm3State_.freqBi = f3xm1;
             pfm3State_.freqBo = freq3;
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_))) {
                 endNoteOrBeginNextOne(voice);
             }
             break;
@@ -1364,33 +1364,33 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             float div3TimesVelocity = .33f * velocity;
@@ -1400,13 +1400,13 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq4 = osc4Values[k];
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm3 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div3TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div3TimesVelocity;
 
                 pfm3State_.oscState2_.frequency = freq4 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div3TimesVelocity;
+                float car2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div3TimesVelocity;
 
                 pfm3State_.oscState1_.frequency = freq4 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car3 * pfm3State_.pan3Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left + car3 * pfm3State_.pan3Left;
@@ -1416,7 +1416,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env3Value += env3Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[2].isDead(&pfm3State_.envState3_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -1443,48 +1443,48 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             float div3TimesVelocity = .33f * velocity;
@@ -1500,18 +1500,18 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq2 = osc2Values[k] * env2Value * pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState6_.frequency = freq4 * voiceIm4 + pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-                f6x = currentTimbre->getOsc(5).getNextSample(&pfm3State_.oscState6_, waveTable6) * env6Value * pfm3State_.oscState6_.frequency;
+                f6x = osc_[5].getNextSample(&pfm3State_.oscState6_, waveTable6) * env6Value * pfm3State_.oscState6_.frequency;
                 freq6 = f6x - f6xm1 + 0.99525f * freq6;
                 f6xm1 = f6x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div3TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div3TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm3 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix3 * div3TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car3 * pfm3State_.pan2Right + car5 * pfm3State_.pan3Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car3 * pfm3State_.pan2Left + car5 * pfm3State_.pan3Left;
@@ -1526,7 +1526,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f6xm1;
             pfm3State_.freqAo = freq6;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_) && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_) && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -1549,55 +1549,55 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div2TimesVelocity = .5f * velocity;
 
@@ -1615,10 +1615,10 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq2 *= pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car5 * pfm3State_.pan2Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car5 * pfm3State_.pan2Left;
@@ -1631,7 +1631,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -1660,51 +1660,51 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = .5f * velocity;
@@ -1725,15 +1725,15 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq2 *= pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
+                f5x = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car4 * pfm3State_.pan2Right + car1 * pfm3State_.pan1Right;
                 *sample++ = car4 * pfm3State_.pan2Left + car1 * pfm3State_.pan1Left;
@@ -1747,7 +1747,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f5xm1;
             pfm3State_.freqAo = freq5;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[3].isDead(&pfm3State_.envState4_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -1782,49 +1782,49 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState2_, pfm3State_.feedbackModulation, env2Value, env2Inc,
+            float *osc2Values = osc_[1].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState2_, pfm3State_.feedbackModulation, env2Value, env2Inc,
                 pfm3State_.oscState2_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div2TimesVelocity = .5f * velocity;
 
@@ -1841,23 +1841,23 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq2 = osc2Values[k];
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 float freq6 = osc6Values[k] * env6Value;
                 freq6 *= pfm3State_.oscState6_.frequency;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
+                f5x = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car3 * pfm3State_.pan2Right + car1 * pfm3State_.pan1Right;
                 *sample++ = car3 * pfm3State_.pan2Left + car1 * pfm3State_.pan1Left;
@@ -1875,7 +1875,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f4xm1;
             pfm3State_.freqAo = freq4;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -1905,48 +1905,48 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = .5f * velocity;
@@ -1965,22 +1965,22 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq3 *= pfm3State_.oscState3_.frequency;
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
+                f2x = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 float freq6 = osc6Values[k];
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
+                f5x = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car4 * pfm3State_.pan2Right + car1 * pfm3State_.pan1Right;
                 *sample++ = car4 * pfm3State_.pan2Left + car1 * pfm3State_.pan1Left;
@@ -1998,7 +1998,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqBi = f5xm1;
             pfm3State_.freqBo = freq5;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[3].isDead(&pfm3State_.envState4_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2023,51 +2023,51 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlock(&pfm3State_.oscState4_);
+            float *osc4Values = osc_[3].getNextBlock(&pfm3State_.oscState4_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div3TimesVelocity = .33f * velocity;
@@ -2083,13 +2083,13 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq6 = osc6Values[k];
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div3TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div3TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm3 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix3 * div3TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car3 * pfm3State_.pan2Right + car5 * pfm3State_.pan3Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car3 * pfm3State_.pan2Left + car5 * pfm3State_.pan3Left;
@@ -2100,7 +2100,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env4Value += env4Inc;
                 env5Value += env5Inc;
             }
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_) && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_) && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -2127,52 +2127,52 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div2TimesVelocity = velocity * .5f;
 
@@ -2191,15 +2191,15 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq2 *= pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
+                f5x = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + freq5 * voiceIm3 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car3 * pfm3State_.pan2Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car3 * pfm3State_.pan2Left;
@@ -2214,7 +2214,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f5xm1;
             pfm3State_.freqAo = freq5;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2242,51 +2242,51 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-            float *osc5Values = currentTimbre->getOsc(4).getNextBlock(&pfm3State_.oscState5_);
+            float *osc5Values = osc_[4].getNextBlock(&pfm3State_.oscState5_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = .5f * velocity;
@@ -2306,15 +2306,15 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq6 = osc6Values[k];
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
+                f2x = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car4 * pfm3State_.pan2Right + car1 * pfm3State_.pan1Right;
                 *sample++ = car4 * pfm3State_.pan2Left + car1 * pfm3State_.pan1Left;
@@ -2329,7 +2329,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f2xm1;
             pfm3State_.freqAo = freq2;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[3].isDead(&pfm3State_.envState4_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2356,54 +2356,54 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlock(&pfm3State_.oscState4_);
+            float *osc4Values = osc_[3].getNextBlock(&pfm3State_.oscState4_);
 
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-            float *osc5Values = currentTimbre->getOsc(4).getNextBlock(&pfm3State_.oscState5_);
+            float *osc5Values = osc_[4].getNextBlock(&pfm3State_.oscState5_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = .5f * velocity;
@@ -2414,7 +2414,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq2 *= pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 float freq4 = osc4Values[k] * env4Value;
                 freq4 *= pfm3State_.oscState4_.frequency;
@@ -2423,7 +2423,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq6 = osc6Values[k];
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + freq5 * voiceIm3 + freq6 * voiceIm4 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car3 * pfm3State_.pan2Right + car1 * pfm3State_.pan1Right;
                 *sample++ = car3 * pfm3State_.pan2Left + car1 * pfm3State_.pan1Left;
@@ -2435,7 +2435,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env5Value += env5Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2463,52 +2463,52 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState2_, pfm3State_.feedbackModulation, env2Value, env2Inc,
+            float *osc2Values = osc_[1].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState2_, pfm3State_.feedbackModulation, env2Value, env2Inc,
                 pfm3State_.oscState2_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-            float *osc5Values = currentTimbre->getOsc(4).getNextBlock(&pfm3State_.oscState5_);
+            float *osc5Values = osc_[4].getNextBlock(&pfm3State_.oscState5_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div2TimesVelocity = .5f * velocity;
 
@@ -2521,7 +2521,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq2 = osc2Values[k];
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div2TimesVelocity;
 
                 float freq6 = osc6Values[k] * env6Value;
                 freq6 *= pfm3State_.oscState6_.frequency;
@@ -2530,12 +2530,12 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq5 *= pfm3State_.oscState5_.frequency;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div2TimesVelocity;
 
                 *sample++ = car3 * pfm3State_.pan2Right + car1 * pfm3State_.pan1Right;
                 *sample++ = car3 * pfm3State_.pan2Left + car1 * pfm3State_.pan1Left;
@@ -2550,7 +2550,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f4xm1;
             pfm3State_.freqAo = freq4;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2580,52 +2580,52 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm4 = pfm3State_.modulationIndex4;
             float voiceIm5 = pfm3State_.modulationIndex5;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState2_, pfm3State_.feedbackModulation, env2Value, env2Inc,
+            float *osc2Values = osc_[1].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState2_, pfm3State_.feedbackModulation, env2Value, env2Inc,
                 pfm3State_.oscState2_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlock(&pfm3State_.oscState4_);
+            float *osc4Values = osc_[3].getNextBlock(&pfm3State_.oscState4_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float f3x;
             float f3xm1 = pfm3State_.freqAi;
@@ -2646,17 +2646,17 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq2 = osc2Values[k];
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm3 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                f3x = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.oscState3_.frequency;
+                f3x = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.oscState3_.frequency;
                 freq3 = f3x - f3xm1 + 0.99525f * freq3;
                 f3xm1 = f3x;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm5 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
+                f5x = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq5 * voiceIm4 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * velocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * velocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right;
                 *sample++ = car1 * pfm3State_.pan1Left;
@@ -2674,7 +2674,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqBi = f5xm1;
             pfm3State_.freqBo = freq5;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2707,52 +2707,52 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm4 = pfm3State_.modulationIndex4;
             float voiceIm5 = pfm3State_.modulationIndex5;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float f4x;
             float f4xm1 = pfm3State_.freqAi;
@@ -2773,17 +2773,17 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq2 *= pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm5 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
+                f5x = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm4 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * velocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * velocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right;
                 *sample++ = car1 * pfm3State_.pan1Left;
@@ -2801,7 +2801,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqBi = f5xm1;
             pfm3State_.freqBo = freq5;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -2832,48 +2832,48 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div3TimesVelocity = .33f * velocity;
@@ -2890,18 +2890,18 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq6 = osc6Values[k];
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
+                f2x = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq6 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div3TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix2 * div3TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix3 * div3TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car4 * pfm3State_.pan2Right + car5 * pfm3State_.pan3Right;
                 *sample++ = car1 * pfm3State_.pan1Left  + car4 * pfm3State_.pan2Left  + car5 * pfm3State_.pan3Left;
@@ -2916,7 +2916,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f2xm1;
             pfm3State_.freqAo = freq2;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_) && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[3].isDead(&pfm3State_.envState4_) && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -2940,52 +2940,52 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-            float *osc5Values = currentTimbre->getOsc(4).getNextBlock(&pfm3State_.oscState5_);
+            float *osc5Values = osc_[4].getNextBlock(&pfm3State_.oscState5_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div3TimesVelocity = .33f * velocity;
 
@@ -3000,13 +3000,13 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq6 *= pfm3State_.oscState6_.frequency;
 
                 pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div3TimesVelocity;
+                float car2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div3TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix3 * div3TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car4 * pfm3State_.pan3Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left + car4 * pfm3State_.pan3Left;
@@ -3018,7 +3018,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env6Value += env6Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[3].isDead(&pfm3State_.envState4_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3041,49 +3041,49 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div4TimesVelocity = .25f * velocity;
 
@@ -3095,16 +3095,16 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq3 = osc3Values[k];
 
                 pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div4TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div4TimesVelocity;
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div4TimesVelocity;
+                float car2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * pfm3State_.mix2 * div4TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq6 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix3 * div4TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix3 * div4TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix4 * div4TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix4 * div4TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car4 * pfm3State_.pan3Right + car5 * pfm3State_.pan4Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left + car4 * pfm3State_.pan3Left + car5 * pfm3State_.pan4Left;
@@ -3116,8 +3116,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env6Value += env6Inc;
             }
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_)
-                    && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[3].isDead(&pfm3State_.envState4_)
+                    && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3140,48 +3140,48 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div4TimesVelocity = .25f * velocity;
@@ -3194,16 +3194,16 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 freq2 *= pfm3State_.oscState2_.frequency;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div4TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div4TimesVelocity;
 
                 pfm3State_.oscState3_.frequency = freq6 * voiceIm2 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div4TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div4TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq6 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix3 * div4TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix3 * div4TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm4 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix4 * div4TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix4 * div4TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car3 * pfm3State_.pan2Right + car4 * pfm3State_.pan3Right + car5 * pfm3State_.pan4Right;
                 *sample++ = car1 * pfm3State_.pan1Left  + car3 * pfm3State_.pan2Left  + car4 * pfm3State_.pan3Left  + car5 * pfm3State_.pan4Left;
@@ -3215,8 +3215,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env5Value += env5Inc;
             }
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_)
-                    && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_) && env_[3].isDead(&pfm3State_.envState4_)
+                    && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3239,51 +3239,51 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState1_.frequency = pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-            float *osc1Values = currentTimbre->getOsc(0).getNextBlock(&pfm3State_.oscState1_);
+            float *osc1Values = osc_[0].getNextBlock(&pfm3State_.oscState1_);
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div5TimesVelocity = .2f * velocity;
@@ -3297,13 +3297,13 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float car2 = osc2Values[k] * env2Value * pfm3State_.mix2 * div5TimesVelocity;
 
                 pfm3State_.oscState3_.frequency = freq6 * voiceIm1 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div5TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div5TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq6 * voiceIm2 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix4 * div5TimesVelocity;
+                float car4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.mix4 * div5TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm3 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix5 * div5TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix5 * div5TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car3 * pfm3State_.pan3Right + car4 * pfm3State_.pan4Right + car5 * pfm3State_.pan5Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left + car3 * pfm3State_.pan3Left + car4 * pfm3State_.pan4Left + car5 * pfm3State_.pan5Left;
@@ -3315,8 +3315,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env5Value += env5Inc;
             }
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_)
-                    && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[3].isDead(&pfm3State_.envState4_)
+                    && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3345,52 +3345,52 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-            float *osc5Values = currentTimbre->getOsc(4).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState5_, pfm3State_.feedbackModulation, env5Value, env5Inc,
+            float *osc5Values = osc_[4].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState5_, pfm3State_.feedbackModulation, env5Value, env5Inc,
                 pfm3State_.oscState5_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div3TimesVelocity = .33f * velocity;
 
@@ -3406,15 +3406,15 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq5 = osc5Values[k];
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm3 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
+                float car1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * env1Value * pfm3State_.mix1 * div3TimesVelocity;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm2 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div3TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix2 * div3TimesVelocity;
 
                 float car6 = osc6Values[k] * env6Value * pfm3State_.mix3 * div3TimesVelocity;
 
@@ -3431,7 +3431,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f4xm1;
             pfm3State_.freqAo = freq4;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_) && currentTimbre->getEnv(5).isDead(&pfm3State_.envState6_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[2].isDead(&pfm3State_.envState3_) && env_[5].isDead(&pfm3State_.envState6_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3455,54 +3455,54 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm1 = pfm3State_.modulationIndex1;
             float voiceIm2 = pfm3State_.modulationIndex2;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState1_.frequency = pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-            float *osc1Values = currentTimbre->getOsc(0).getNextBlock(&pfm3State_.oscState1_);
+            float *osc1Values = osc_[0].getNextBlock(&pfm3State_.oscState1_);
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlock(&pfm3State_.oscState4_);
+            float *osc4Values = osc_[3].getNextBlock(&pfm3State_.oscState4_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div4TimesVelocity = .25f * velocity;
@@ -3519,10 +3519,10 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float car2 = osc2Values[k] * env2Value * pfm3State_.mix2 * div4TimesVelocity;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm1 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div4TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div4TimesVelocity;
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm2 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix4 * div4TimesVelocity;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix4 * div4TimesVelocity;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car3 * pfm3State_.pan3Right + car5 * pfm3State_.pan4Right;
                 *sample++ = car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left + car3 * pfm3State_.pan3Left + car5 * pfm3State_.pan4Left;
@@ -3534,8 +3534,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env5Value += env5Inc;
             }
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_)
-                    && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[2].isDead(&pfm3State_.envState3_)
+                    && env_[4].isDead(&pfm3State_.envState5_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3562,55 +3562,55 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm1 = pfm3State_.modulationIndex1;
             float voiceIm2 = pfm3State_.modulationIndex2;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState1_.frequency = pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-            float *osc1Values = currentTimbre->getOsc(0).getNextBlock(&pfm3State_.oscState1_);
+            float *osc1Values = osc_[0].getNextBlock(&pfm3State_.oscState1_);
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-            float *osc5Values = currentTimbre->getOsc(4).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState5_, pfm3State_.feedbackModulation, env5Value, env5Inc,
+            float *osc5Values = osc_[4].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState5_, pfm3State_.feedbackModulation, env5Value, env5Inc,
                 pfm3State_.oscState5_.frequency, pfm3State_.fdbLastValue);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlock(&pfm3State_.oscState6_);
+            float *osc6Values = osc_[5].getNextBlock(&pfm3State_.oscState6_);
 
             float div4TimesVelocity = .25f * velocity;
 
@@ -3627,12 +3627,12 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float car2 = osc2Values[k] * env2Value * pfm3State_.mix2 * div4TimesVelocity;
 
                 pfm3State_.oscState4_.frequency = freq5 * voiceIm2 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm1 + pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div4TimesVelocity;
+                float car3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * env3Value * pfm3State_.mix3 * div4TimesVelocity;
 
                 float car6 = osc6Values[k] * env6Value * pfm3State_.mix4 * div4TimesVelocity;
 
@@ -3650,8 +3650,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAo = freq4;
 
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_)
-                    && currentTimbre->getEnv(5).isDead(&pfm3State_.envState6_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[2].isDead(&pfm3State_.envState3_)
+                    && env_[5].isDead(&pfm3State_.envState6_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3668,61 +3668,61 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
              */
         {
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState1_.frequency = pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-            float *osc1Values = currentTimbre->getOsc(0).getNextBlock(&pfm3State_.oscState1_);
+            float *osc1Values = osc_[0].getNextBlock(&pfm3State_.oscState1_);
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlock(&pfm3State_.oscState4_);
+            float *osc4Values = osc_[3].getNextBlock(&pfm3State_.oscState4_);
 
             // Not enough float arrays for a fifth optimization
             pfm3State_.oscState5_.frequency = pfm3State_.oscState5_.mainFrequencyPlusMatrix;
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
 
             // Multiplier is 1 because op6 is a carrier
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc, 1.0f,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc, 1.0f,
                 pfm3State_.fdbLastValue);
 
             float div6TimesVelocity = .16f * velocity;
@@ -3736,7 +3736,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 // getNextBlockWithFeedbackAndEnveloppe already applied envelope
                 float car6 = osc6Values[k] * pfm3State_.mix6;
 
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix5;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix5;
 
                 *sample++ = (car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car3 * pfm3State_.pan3Right + car4 * pfm3State_.pan4Right + car5 * pfm3State_.pan5Right + car6 * pfm3State_.pan6Right)
                     * div6TimesVelocity;
@@ -3749,8 +3749,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env5Value += env5Inc;
             }
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_)
-                    && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_) && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_) && currentTimbre->getEnv(5).isDead(&pfm3State_.envState6_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[2].isDead(&pfm3State_.envState3_)
+                    && env_[3].isDead(&pfm3State_.envState4_) && env_[4].isDead(&pfm3State_.envState5_) && env_[5].isDead(&pfm3State_.envState6_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3770,59 +3770,59 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
              */
         {
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(4).calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(5).calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[4].calculateFrequencyWithMatrix(&pfm3State_.oscState5_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[5].calculateFrequencyWithMatrix(&pfm3State_.oscState6_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             float voiceIm1 = pfm3State_.modulationIndex1;
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             env5Value = pfm3State_.env5ValueMem;
-            envNextValue = currentTimbre->getEnv(4).getNextAmpExp(&pfm3State_.envState5_);
+            envNextValue = env_[4].getNextAmpExp(&pfm3State_.envState5_);
             env5Inc = (envNextValue - env5Value) * inv32;
             pfm3State_.env5ValueMem = envNextValue;
 
             env6Value = pfm3State_.env6ValueMem;
-            envNextValue = currentTimbre->getEnv(5).getNextAmpExp(&pfm3State_.envState6_);
+            envNextValue = env_[5].getNextAmpExp(&pfm3State_.envState6_);
             env6Inc = (envNextValue - env6Value) * inv32;
             pfm3State_.env6ValueMem = envNextValue;
 
             pfm3State_.oscState1_.frequency = pfm3State_.oscState1_.mainFrequencyPlusMatrix;
-            float *osc1Values = currentTimbre->getOsc(0).getNextBlock(&pfm3State_.oscState1_);
+            float *osc1Values = osc_[0].getNextBlock(&pfm3State_.oscState1_);
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlock(&pfm3State_.oscState3_);
+            float *osc3Values = osc_[2].getNextBlock(&pfm3State_.oscState3_);
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlock(&pfm3State_.oscState4_);
+            float *osc4Values = osc_[3].getNextBlock(&pfm3State_.oscState4_);
 
             pfm3State_.oscState6_.frequency = pfm3State_.oscState6_.mainFrequencyPlusMatrix;
-            float *osc6Values = currentTimbre->getOsc(5).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
+            float *osc6Values = osc_[5].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState6_, pfm3State_.feedbackModulation, env6Value, env6Inc,
                 pfm3State_.oscState6_.frequency, pfm3State_.fdbLastValue);
 
             float div5TimesVelocity = .2f * velocity;
@@ -3837,7 +3837,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq6 = osc6Values[k];
 
                 pfm3State_.oscState5_.frequency = freq6 * voiceIm1 + pfm3State_.oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->getOsc(4).getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix5;
+                float car5 = osc_[4].getNextSample(&pfm3State_.oscState5_, waveTable5) * env5Value * pfm3State_.mix5;
 
                 *sample++ = (car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right + car3 * pfm3State_.pan3Right + car4 * pfm3State_.pan4Right + car5 * pfm3State_.pan5Right) * div5TimesVelocity;
                 *sample++ = (car1 * pfm3State_.pan1Left + car2 * pfm3State_.pan2Left + car3 * pfm3State_.pan3Left + car4 * pfm3State_.pan4Left + car5 * pfm3State_.pan5Left) * div5TimesVelocity;
@@ -3849,8 +3849,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env5Value += env5Inc;
             }
             if (unlikely(
-                currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_)
-                    && currentTimbre->getEnv(3).isDead(&pfm3State_.envState4_) && currentTimbre->getEnv(4).isDead(&pfm3State_.envState5_) && currentTimbre->getEnv(5).isDead(&pfm3State_.envState6_))) {
+                env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[2].isDead(&pfm3State_.envState3_)
+                    && env_[3].isDead(&pfm3State_.envState4_) && env_[4].isDead(&pfm3State_.envState5_) && env_[5].isDead(&pfm3State_.envState6_))) {
                 endNoteOrBeginNextOne(voice);
             }
         }
@@ -3878,33 +3878,33 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = velocity * .5f;
@@ -3919,8 +3919,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq4 = osc4Values[k];
 
                 pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix + voiceIm3 * freq4;
-                float osc3  = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3);
-                float phase = currentTimbre->getOsc(2).getPhase(&pfm3State_.oscState3_);
+                float osc3  = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3);
+                float phase = osc_[2].getPhase(&pfm3State_.oscState3_);
                 float freq3 = osc3 * env3Value * pfm3State_.oscState3_.frequency;
   
                 // sync check
@@ -3930,16 +3930,16 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
                 // sync slave osc
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = currentTimbre->getOsc(0).geIndexFromtPhase(phase);
+                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
                 }
 
                 pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix;
-                float carSample1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
+                float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
 
                 pfm3State_.oscState2_.frequency = freq4 * voiceIm2 + pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * mix2V;
+                float car2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * env2Value * mix2V;
 
                 *sample++ = car1 * pfm3State_.pan1Right + car2 * pfm3State_.pan2Right;
                 *sample++ = car1 * pfm3State_.pan1Left  + car2 * pfm3State_.pan2Left;
@@ -3949,7 +3949,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env3Value += env3Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_))) {
                 endNoteOrBeginNextOne(voice);
             }
             break;
@@ -3973,33 +3973,33 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-            float *osc4Values = currentTimbre->getOsc(3).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
+            float *osc4Values = osc_[3].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState4_, pfm3State_.feedbackModulation, env4Value, env4Inc,
                 pfm3State_.oscState4_.frequency, pfm3State_.fdbLastValue);
 
             float div2TimesVelocity = velocity * .5f;
@@ -4017,8 +4017,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 float freq4 = osc4Values[k];
 
                 pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-                float osc3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3);
-                float phase = currentTimbre->getOsc(2).getPhase(&pfm3State_.oscState3_);
+                float osc3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3);
+                float phase = osc_[2].getPhase(&pfm3State_.oscState3_);
                 float freq3 = osc3 * env3Value * pfm3State_.oscState3_.frequency;
   
                 // sync check
@@ -4028,17 +4028,17 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
                 // sync slave osc
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = currentTimbre->getOsc(0).geIndexFromtPhase(phase);
-                    pfm3State_.oscState2_.index = currentTimbre->getOsc(1).geIndexFromtPhase(phase);
+                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
+                    pfm3State_.oscState2_.index = osc_[1].geIndexFromtPhase(phase);
                 }
 
                 pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix + freq4 * voiceIm3;
-                float carSample1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
+                float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
 
                 pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + osc2FrequencyPlusMatrix + freq4 * voiceIm4;
-                float carSample2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * window;
+                float carSample2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * window;
                 carSample2 *= fabsf(carSample2); // vosim shape
                 float car2 = carSample2 * env2Value * mix2V;
 
@@ -4050,7 +4050,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env3Value += env3Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_))) {
                 endNoteOrBeginNextOne(voice);
             }
             break;
@@ -4073,28 +4073,28 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm2 = pfm3State_.modulationIndex2;
             float voiceIm3 = pfm3State_.modulationIndex3;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
@@ -4116,8 +4116,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
                 pfm3State_.oscState4_.frequency = pfm3State_.oscState4_.mainFrequencyPlusMatrix;
-                float osc4 = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4);
-                float phase = currentTimbre->getOsc(3).getPhase(&pfm3State_.oscState4_);
+                float osc4 = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4);
+                float phase = osc_[3].getPhase(&pfm3State_.oscState4_);
                 float freq4 = osc4 * env4Value * pfm3State_.oscState4_.frequency;
 
                 bool isSync = pfm3State_.prevPhase > phase;
@@ -4126,23 +4126,23 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
                 // sync slave osc
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = currentTimbre->getOsc(0).geIndexFromtPhase(phase);
-                    pfm3State_.oscState2_.index = currentTimbre->getOsc(1).geIndexFromtPhase(phase);
-                    pfm3State_.oscState3_.index = currentTimbre->getOsc(2).geIndexFromtPhase(phase);
+                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
+                    pfm3State_.oscState2_.index = osc_[1].geIndexFromtPhase(phase);
+                    pfm3State_.oscState3_.index = osc_[2].geIndexFromtPhase(phase);
                 }
 
                 pfm3State_.oscState3_.frequency = freq4 * voiceIm3 + osc3FrequencyPlusMatrix;
-                float carSample3 = currentTimbre->getOsc(2).getNextSample(&pfm3State_.oscState3_, waveTable3) * window;
+                float carSample3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * window;
                 carSample3 *= fabsf(carSample3); // vosim shape
                 float car3 = carSample3 * env3Value * mix3V;
 
                 pfm3State_.oscState2_.frequency = freq4 * voiceIm2 + osc2FrequencyPlusMatrix;
-                float carSample2 = currentTimbre->getOsc(1).getNextSample(&pfm3State_.oscState2_, waveTable2) * window;
+                float carSample2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * window;
                 carSample2 *= fabsf(carSample2); // vosim shape
                 float car2 = carSample2 * env2Value * mix2V;
 
                 pfm3State_.oscState1_.frequency = freq4 * voiceIm1 + osc1FrequencyPlusMatrix;
-                float carSample1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
+                float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
 
@@ -4155,7 +4155,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
                 env4Value += env4Inc;
             }
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_) && currentTimbre->getEnv(1).isDead(&pfm3State_.envState2_) && currentTimbre->getEnv(2).isDead(&pfm3State_.envState3_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_) && env_[1].isDead(&pfm3State_.envState2_) && env_[2].isDead(&pfm3State_.envState3_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -4181,36 +4181,36 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             float voiceIm3 = pfm3State_.modulationIndex3;
             float voiceIm4 = pfm3State_.modulationIndex4;
 
-            currentTimbre->getOsc(0).calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(1).calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(2).calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
-            currentTimbre->getOsc(3).calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[0].calculateFrequencyWithMatrix(&pfm3State_.oscState1_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[1].calculateFrequencyWithMatrix(&pfm3State_.oscState2_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[2].calculateFrequencyWithMatrix(&pfm3State_.oscState3_, &pfm3State_.matrix, pfm3State_.freqHarm);
+            osc_[3].calculateFrequencyWithMatrix(&pfm3State_.oscState4_, &pfm3State_.matrix, pfm3State_.freqHarm);
 
             env1Value = pfm3State_.env1ValueMem;
-            envNextValue = currentTimbre->getEnv(0).getNextAmpExp(&pfm3State_.envState1_);
+            envNextValue = env_[0].getNextAmpExp(&pfm3State_.envState1_);
             env1Inc = (envNextValue - env1Value) * inv32;  // divide by 32
             pfm3State_.env1ValueMem = envNextValue;
 
             env2Value = pfm3State_.env2ValueMem;
-            envNextValue = currentTimbre->getEnv(1).getNextAmpExp(&pfm3State_.envState2_);
+            envNextValue = env_[1].getNextAmpExp(&pfm3State_.envState2_);
             env2Inc = (envNextValue - env2Value) * inv32;
             pfm3State_.env2ValueMem = envNextValue;
 
             env3Value = pfm3State_.env3ValueMem;
-            envNextValue = currentTimbre->getEnv(2).getNextAmpExp(&pfm3State_.envState3_);
+            envNextValue = env_[2].getNextAmpExp(&pfm3State_.envState3_);
             env3Inc = (envNextValue - env3Value) * inv32;
             pfm3State_.env3ValueMem = envNextValue;
 
             env4Value = pfm3State_.env4ValueMem;
-            envNextValue = currentTimbre->getEnv(3).getNextAmpExp(&pfm3State_.envState4_);
+            envNextValue = env_[3].getNextAmpExp(&pfm3State_.envState4_);
             env4Inc = (envNextValue - env4Value) * inv32;
             pfm3State_.env4ValueMem = envNextValue;
 
             pfm3State_.oscState2_.frequency = pfm3State_.oscState2_.mainFrequencyPlusMatrix;
-            float *osc2Values = currentTimbre->getOsc(1).getNextBlock(&pfm3State_.oscState2_);
+            float *osc2Values = osc_[1].getNextBlock(&pfm3State_.oscState2_);
 
             pfm3State_.oscState3_.frequency = pfm3State_.oscState3_.mainFrequencyPlusMatrix;
-            float *osc3Values = currentTimbre->getOsc(2).getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
+            float *osc3Values = osc_[2].getNextBlockWithFeedbackAndEnveloppe(&pfm3State_.oscState3_, pfm3State_.feedbackModulation, env3Value, env3Inc,
                 pfm3State_.oscState3_.frequency, pfm3State_.fdbLastValue);
 
             float f4x;
@@ -4227,8 +4227,8 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
                 pfm3State_.oscState4_.frequency = freq3 * voiceIm4 + pfm3State_.oscState4_.mainFrequencyPlusMatrix;
 
-                f4x = currentTimbre->getOsc(3).getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
-                float phase = currentTimbre->getOsc(3).getPhase(&pfm3State_.oscState4_);
+                f4x = osc_[3].getNextSample(&pfm3State_.oscState4_, waveTable4) * env4Value * pfm3State_.oscState4_.frequency;
+                float phase = osc_[3].getPhase(&pfm3State_.oscState4_);
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
@@ -4238,11 +4238,11 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
 
                 // sync slave osc
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = currentTimbre->getOsc(0).geIndexFromtPhase(phase);
+                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
                 }
 
                 pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + osc1FrequencyPlusMatrix;
-                float carSample1 = currentTimbre->getOsc(0).getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
+                float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float currentSample = carSample1 * env1Value * mix1V;
 
@@ -4258,7 +4258,7 @@ void Preenfm3Engine::renderVoice(Voice *voice) {
             pfm3State_.freqAi = f4xm1;
             pfm3State_.freqAo = freq4;
 
-            if (unlikely(currentTimbre->getEnv(0).isDead(&pfm3State_.envState1_))) {
+            if (unlikely(env_[0].isDead(&pfm3State_.envState1_))) {
                 endNoteOrBeginNextOne(voice);
             }
 
@@ -4504,12 +4504,89 @@ void Preenfm3Engine::noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity)
     }
 }
 
-void Preenfm3Engine::newParamValue(int row, int encoder) {
-    if ((row == ROW_ENGINE && encoder == ENCODER_ENGINE_ALGO)
-        || ((row == ROW_OSC_MIX1 || row == ROW_OSC_MIX2 || row == ROW_OSC_MIX3)
-            && (encoder == 1 || encoder == 3))
-        || (row == ROW_EFFECT1 && encoder == ENCODER_EFFECT_PARAM3)) {
-        refreshContext();
+void Preenfm3Engine::paramChanged(int row, int encoder, float oldValue, float newValue) {
+    switch (row) {
+        case ROW_ENV1_TIME:
+        case ROW_ENV1_LEVEL:
+            env_[0].reloadADSR(encoder);
+            break;
+        case ROW_ENV2_TIME:
+        case ROW_ENV2_LEVEL:
+            env_[1].reloadADSR(encoder);
+            break;
+        case ROW_ENV3_TIME:
+        case ROW_ENV3_LEVEL:
+            env_[2].reloadADSR(encoder);
+            break;
+        case ROW_ENV4_TIME:
+        case ROW_ENV4_LEVEL:
+            env_[3].reloadADSR(encoder);
+            break;
+        case ROW_ENV5_TIME:
+        case ROW_ENV5_LEVEL:
+            env_[4].reloadADSR(encoder);
+            break;
+        case ROW_ENV6_TIME:
+        case ROW_ENV6_LEVEL:
+            env_[5].reloadADSR(encoder);
+            break;
+        case ROW_ENV1_CURVE:
+            env_[0].applyCurves();
+            break;
+        case ROW_ENV2_CURVE:
+            env_[1].applyCurves();
+            break;
+        case ROW_ENV3_CURVE:
+            env_[2].applyCurves();
+            break;
+        case ROW_ENV4_CURVE:
+            env_[3].applyCurves();
+            break;
+        case ROW_ENV5_CURVE:
+            env_[4].applyCurves();
+            break;
+        case ROW_ENV6_CURVE:
+            env_[5].applyCurves();
+            break;
+        case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
+            verifyLfoUsed(encoder, oldValue, newValue);
+            if (encoder == ENCODER_MATRIX_DEST1 || encoder == ENCODER_MATRIX_DEST2) {
+                resetMatrixDestination(oldValue);
+            }
+            break;
+        case ROW_LFOOSC1 ... ROW_LFOOSC3:
+        case ROW_LFOENV1 ... ROW_LFOENV2:
+        case ROW_LFOSEQ1 ... ROW_LFOSEQ2:
+            lfoValueChange(row, encoder, newValue);
+            break;
+        case ROW_PERFORMANCE1:
+            setMatrixSource((SourceEnum) (MATRIX_SOURCE_CC1 + encoder), newValue);
+            break;
+        case ROW_MIDINOTE1CURVE:
+            updateMidiNoteScale(0);
+            break;
+        case ROW_MIDINOTE2CURVE:
+            updateMidiNoteScale(1);
+            break;
+        case ROW_ENGINE:
+            if (encoder == ENCODER_ENGINE_ALGO) {
+                refreshContext();
+            }
+            break;
+        case ROW_OSC_MIX1:
+        case ROW_OSC_MIX2:
+        case ROW_OSC_MIX3:
+            if (encoder == 1 || encoder == 3) {
+                refreshContext();
+            }
+            break;
+        case ROW_EFFECT1:
+            if (encoder == ENCODER_EFFECT_PARAM3) {
+                refreshContext();
+            }
+            break;
+        default:
+            break;
     }
 }
 

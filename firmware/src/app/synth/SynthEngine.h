@@ -97,7 +97,7 @@ public:
 
     // A parameter changed: refresh cached/derived state if needed
     // (PFM3 only refreshes on algorithm, pan and filter changes).
-    virtual void newParamValue(int row, int encoder) {}
+    virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {}
 
     // Write a flat parameter value into the engine's owner storage.
     // `index` is the flat index used by the editor/MIDI path (row * 4 + encoder).

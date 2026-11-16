@@ -543,6 +543,30 @@ int Timbre::countPendingVoices() const {
     return count;
 }
 
+void Timbre::allNoteOff() {
+    for (int k = 0; k < (int) numberOfVoices_; k++) {
+        Voice *voice = voices_[voiceNumber_[k]];
+        if (voice->isPlaying() && !voice->isReleased()) {
+            engineImpl_->noteOffVoice(voice);
+        }
+    }
+}
+
+void Timbre::allNoteOffQuick() {
+    for (int k = 0; k < (int) numberOfVoices_; k++) {
+        Voice *voice = voices_[voiceNumber_[k]];
+        if (voice->isPlaying()) {
+            engineImpl_->noteOffVoiceQuick(voice);
+        }
+    }
+}
+
+void Timbre::allSoundOff() {
+    for (int k = 0; k < (int) numberOfVoices_; k++) {
+        engineImpl_->killVoice(voices_[voiceNumber_[k]]);
+    }
+}
+
 void Timbre::stopPlayingNow() {
     for (int k = 0; k < (int) numberOfVoices_; k++) {
         int n = voiceNumber_[k];
@@ -2477,25 +2501,55 @@ void Timbre::resetArpeggiator() {
     setLatchMode(sharedParams().engineArp2.latche);
 }
 
-void Timbre::setParamValue(int index, float value) {
-    ((float*) &params_)[index] = value;
+void Timbre::setParamValue(int index, float oldValue, float newValue) {
+    int row = index / NUMBER_OF_ENCODERS_PFM2;
+    int encoder = index % NUMBER_OF_ENCODERS_PFM2;
+
+    ((float*) &params_)[index] = newValue;
 
     if (index >= TimbreParamLayout::sharedBlockStart && index < TimbreParamLayout::sharedBlockEnd) {
-        ((float*) &sharedParams())[index - TimbreParamLayout::sharedBlockStart] = value;
+        ((float*) &sharedParams())[index - TimbreParamLayout::sharedBlockStart] = newValue;
     } else if (index >= TimbreParamLayout::effect2Start && index < TimbreParamLayout::presetNameStart) {
-        ((float*) &sharedParams())[index - TimbreParamLayout::effect2Start + TimbreParamLayout::sharedGap] = value;
+        ((float*) &sharedParams())[index - TimbreParamLayout::effect2Start + TimbreParamLayout::sharedGap] = newValue;
     } else {
-        engineImpl_->setParamValue(index, value);
+        engineImpl_->setParamValue(index, newValue);
     }
 
-    engineImpl_->newParamValue(index / NUMBER_OF_ENCODERS_PFM2, index % NUMBER_OF_ENCODERS_PFM2);
+    engineImpl_->paramChanged(row, encoder, oldValue, newValue);
+
+    switch (row) {
+        case ROW_ARPEGGIATOR1:
+            switch (encoder) {
+                case ENCODER_ARPEGGIATOR_CLOCK:
+                    allNoteOff();
+                    setArpeggiatorClock((uint8_t) newValue);
+                    break;
+                case ENCODER_ARPEGGIATOR_BPM:
+                    setNewBPMValue((uint8_t) newValue);
+                    break;
+                case ENCODER_ARPEGGIATOR_DIRECTION:
+                    setDirection((uint8_t) newValue);
+                    break;
+            }
+            break;
+        case ROW_ARPEGGIATOR2:
+            if (encoder == ENCODER_ARPEGGIATOR_LATCH) {
+                setLatchMode((uint8_t) newValue);
+            }
+            break;
+        case ROW_EFFECT1:
+            setNewEffectParam(encoder);
+            break;
+        default:
+            break;
+    }
 }
 
 void Timbre::syncArpUserPatterns() {
     sharedParams().engineArpUserPatterns = params_.engineArpUserPatterns;
 }
 
-void Timbre::syncLfoSteps(int whichStepSeq) {
+void Timbre::setStepSequencerSteps(int whichStepSeq) {
     if (whichStepSeq == 0) {
         engineImpl_->setStepSequencerSteps(0, params_.lfoSteps1);
     } else {

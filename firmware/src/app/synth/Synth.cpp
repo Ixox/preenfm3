@@ -160,13 +160,7 @@ void Synth::setHoldPedal(int timbre, int value) {
 }
 
 void Synth::allNoteOffQuick(int timbre) {
-    for (int k = 0; k < (int) timbres_[timbre].numberOfVoices_; k++) {
-        // voice number k of timbre
-        int n = timbres_[timbre].voiceNumber_[k];
-        if (voices_[n].isPlaying()) {
-            timbres_[timbre].engineImpl_->noteOffVoiceQuick(&voices_[n]);
-        }
-    }
+    timbres_[timbre].allNoteOffQuick();
 }
 
 void Synth::stopArpegiator(int timbre) {
@@ -175,21 +169,11 @@ void Synth::stopArpegiator(int timbre) {
 
 
 void Synth::allNoteOff(int timbre) {
-    for (int k = 0; k < (int) timbres_[timbre].numberOfVoices_; k++) {
-        // voice number k of timbre
-        int n = timbres_[timbre].voiceNumber_[k];
-        if (voices_[n].isPlaying() && !voices_[n].isReleased()) {
-            timbres_[timbre].engineImpl_->noteOffVoice(&voices_[n]);
-        }
-    }
+    timbres_[timbre].allNoteOff();
 }
 
 void Synth::allSoundOff(int timbre) {
-    for (int k = 0; k < (int) timbres_[timbre].numberOfVoices_; k++) {
-        // voice number k of timbre
-        int n = timbres_[timbre].voiceNumber_[k];
-        timbres_[timbre].engineImpl_->killVoice(&voices_[n]);
-    }
+    timbres_[timbre].allSoundOff();
 }
 
 void Synth::allSoundOff() {
@@ -574,104 +558,13 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
         if (currentRow == ROW_ARPEGGIATOR3) {
             timbres_[timbre].syncArpUserPatterns();
         } else if (currentRow == ROW_LFOSEQ1 || currentRow == ROW_LFOSEQ2) {
-            timbres_[timbre].syncLfoSteps(currentRow - ROW_LFOSEQ1);
+            timbres_[timbre].setStepSequencerSteps(currentRow - ROW_LFOSEQ1);
         }
     } else {
         int index = currentRow * NUMBER_OF_ENCODERS_PFM2 + encoder;
         if (index < TimbreParamLayout::presetNameStart) {
-            timbres_[timbre].setParamValue(index, newValue);
+            timbres_[timbre].setParamValue(index, oldValue, newValue);
         }
-    }
-    switch (currentRow) {
-        case ROW_ARPEGGIATOR1:
-            switch (encoder) {
-                case ENCODER_ARPEGGIATOR_CLOCK:
-                    allNoteOff(timbre);
-                    timbres_[timbre].setArpeggiatorClock((uint8_t) newValue);
-                    break;
-                case ENCODER_ARPEGGIATOR_BPM:
-                    timbres_[timbre].setNewBPMValue((uint8_t) newValue);
-                    break;
-                case ENCODER_ARPEGGIATOR_DIRECTION:
-                    timbres_[timbre].setDirection((uint8_t) newValue);
-                    break;
-            }
-            break;
-        case ROW_ARPEGGIATOR2:
-            if (unlikely(encoder == ENCODER_ARPEGGIATOR_LATCH)) {
-                timbres_[timbre].setLatchMode((uint8_t) newValue);
-            }
-            break;
-        case ROW_ARPEGGIATOR3:
-            break;
-        case ROW_EFFECT1:
-            timbres_[timbre].setNewEffectParam(encoder);
-            break;
-        case ROW_ENV1_TIME:
-        case ROW_ENV1_LEVEL:
-            timbres_[timbre].getEnv(0).reloadADSR(encoder);
-            break;
-        case ROW_ENV2_TIME:
-        case ROW_ENV2_LEVEL:
-            timbres_[timbre].getEnv(1).reloadADSR(encoder);
-            break;
-        case ROW_ENV3_TIME:
-        case ROW_ENV3_LEVEL:
-            timbres_[timbre].getEnv(2).reloadADSR(encoder);
-            break;
-        case ROW_ENV4_TIME:
-        case ROW_ENV4_LEVEL:
-            timbres_[timbre].getEnv(3).reloadADSR(encoder);
-            break;
-        case ROW_ENV5_TIME:
-        case ROW_ENV5_LEVEL:
-            timbres_[timbre].getEnv(4).reloadADSR(encoder);
-            break;
-        case ROW_ENV6_TIME:
-        case ROW_ENV6_LEVEL:
-            timbres_[timbre].getEnv(5).reloadADSR(encoder);
-            break;
-        case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
-            timbres_[timbre].verifyLfoUsed(encoder, oldValue, newValue);
-            if (encoder == ENCODER_MATRIX_DEST1 || encoder == ENCODER_MATRIX_DEST2) {
-                // Reset old destination
-                timbres_[timbre].resetMatrixDestination(oldValue);
-            }
-            break;
-        case ROW_LFOOSC1 ... ROW_LFOOSC3:
-        case ROW_LFOENV1 ... ROW_LFOENV2:
-        case ROW_LFOSEQ1 ... ROW_LFOSEQ2:
-            // timbres[timbre].lfo[currentRow - ROW_LFOOSC1]->valueChanged(encoder);
-            timbres_[timbre].lfoValueChange(currentRow, encoder, newValue);
-            break;
-        case ROW_PERFORMANCE1:
-            timbres_[timbre].setMatrixSource((enum SourceEnum) (MATRIX_SOURCE_CC1 + encoder), newValue);
-            break;
-        case ROW_MIDINOTE1CURVE:
-            timbres_[timbre].updateMidiNoteScale(0);
-            break;
-        case ROW_MIDINOTE2CURVE:
-            timbres_[timbre].updateMidiNoteScale(1);
-            break;
-        case ROW_ENV1_CURVE:
-            timbres_[timbre].getEnv(0).applyCurves();
-            break;
-        case ROW_ENV2_CURVE:
-            timbres_[timbre].getEnv(1).applyCurves();
-            break;
-        case ROW_ENV3_CURVE:
-            timbres_[timbre].getEnv(2).applyCurves();
-            break;
-        case ROW_ENV4_CURVE:
-            timbres_[timbre].getEnv(3).applyCurves();
-            break;
-        case ROW_ENV5_CURVE:
-            timbres_[timbre].getEnv(4).applyCurves();
-            break;
-        case ROW_ENV6_CURVE:
-            timbres_[timbre].getEnv(5).applyCurves();
-            break;
-
     }
 }
 
