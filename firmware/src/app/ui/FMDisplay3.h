@@ -84,6 +84,7 @@ public:
 
     void setRefreshStatus(int refreshStatus) {
         refreshStatus_ = refreshStatus;
+        endRefreshStatus_ = 0;
     }
 
 private:

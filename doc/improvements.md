@@ -1,6 +1,7 @@
 # Improvements
 
-Known issues and suggested improvements for the preenFM3 firmware, with a focus on STM32H7 cache/MPU correctness.
+Known issues and suggested improvements for the preenFM3 firmware, covering
+STM32H7 cache/MPU correctness, the display pipeline and audio performance.
 
 ## Table of Contents
 
@@ -22,11 +23,26 @@ Known issues and suggested improvements for the preenFM3 firmware, with a focus 
   - [Problem 7 — SPI1 clock may exceed the ILI9341 rating](#problem-7--spi1-clock-may-exceed-the-ili9341-rating)
   - [Problem 8 — duplicate TFT pin definitions](#problem-8--duplicate-tft-pin-definitions)
   - [Display suggested order of work](#display-suggested-order-of-work)
+- [Audio performance](#audio-performance)
+  - [Audio path budget](#audio-path-budget)
+  - [1. PFM3 — wave-table reload per sample](#1-pfm3--wave-table-reload-per-sample)
+  - [2. Synth — hardware RNG in the audio callback](#2-synth--hardware-rng-in-the-audio-callback)
+  - [3. I-cache pressure in the render switches](#3-i-cache-pressure-in-the-render-switches)
+  - [4. Skip FX setup when the effect is off](#4-skip-fx-setup-when-the-effect-is-off)
+  - [5. MSFA — fixed-point kernel](#5-msfa--fixed-point-kernel)
+  - [6. Mixing loops](#6-mixing-loops)
+  - [7. Already-good behaviour](#7-already-good-behaviour)
+  - [Audio performance suggested order of work](#audio-performance-suggested-order-of-work)
+  - [Also noticed (correctness, not performance)](#also-noticed-correctness-not-performance)
 - [MPU suggested order of work](#mpu-suggested-order-of-work)
 
 ---
 
 ## MPU and cache coherency
+
+Status: problems 1–6 below are fixed. The MPU is configured before the caches,
+`RAM_D2B` and `RAM_D2C` are non-cacheable, `RAM_D3` is not shareable, and
+`__DSB()` barriers surround the SAI, DMA2D and SD DMA transfers.
 
 The STM32H753 has a Cortex-M7 with separate I-cache and D-cache. DMA masters (SAI, SPI, DMA2D) are **not coherent** with the CPU cache. The firmware therefore has to either:
 
@@ -37,16 +53,18 @@ The current MPU setup uses cacheable memory for all DMA buffers and does not per
 
 ### Current setup
 
-- `SCB_EnableICache()` and `SCB_EnableDCache()` are called in `firmware/Src/main.c:116-119`.
-- `MPU_RegionConfig()` is called later from `firmware/Src/main.c:164` and defined in `firmware/Src/main.c:694-765`.
-- Four MPU regions are configured:
+- `HAL_Init()`, then `MPU_RegionConfig()`, then `SCB_EnableICache()` /
+  `SCB_EnableDCache()` in `firmware/src/app/main.c`.
+- `MPU_RegionConfig()` is defined in `firmware/src/app/main.c`.
+- Five MPU regions are configured:
 
 | Region | Range | Attributes | Policy |
 |--------|-------|------------|--------|
 | 1 | `0x24000000` + 512 KB | TEX0, C=1, B=0, S=0 | Normal, write-through |
 | 2 | `0x30000000` + 128 KB | TEX0, C=1, B=0, S=0 | Normal, write-through |
-| 3 | `0x30020000` + 128 KB | TEX0, C=1, B=1, S=1 | Normal, write-back, write-allocate, shareable |
-| 4 | `0x38000000` + 64 KB | TEX0, C=1, B=1, S=1 | Normal, write-back, write-allocate, shareable |
+| 3 | `0x30020000` + 128 KB | TEX1, C=0, B=0, S=1 | Normal, non-cacheable |
+| 4 | `0x38000000` + 64 KB | TEX0, C=1, B=1, S=0 | Normal, write-back, write-allocate |
+| 5 | `0x30040000` + 32 KB | TEX1, C=0, B=0, S=1 | Normal, non-cacheable (`RAM_D2C`) |
 
 The linker sections map as follows (`firmware/preenfm3_2MB.ld:161-179`):
 
@@ -236,6 +254,12 @@ Either remove `RAM_D2C` from the linker script or add an explicit MPU region and
 
 ## Display and FMDisplay3
 
+Status: problems 1, 3, 4 and 5 below are fixed. Problem 2 (ring buffer
+overflow protection) was reverted: the current behaviour works and the
+`isFull()` check is not wanted on the insertion path. Problem 7 (SPI1 clock)
+is **accepted**: 32 MHz works and must not be changed. Problem 6 (named
+refresh-step constants) is low severity and not planned.
+
 ### Problem 1 — `TFT_WAITCYCLE` and oscilloscope background share action type 14
 
 **Severity: high**
@@ -351,9 +375,8 @@ The ILI9341 datasheet typically specifies around 10 MHz for write and 6.67 MHz f
 
 **Recommendation**
 
-- Verify the actual SCK with a scope.
-- If the panel is stable, document the overclock explicitly.
-- Otherwise increase the SPI prescaler to bring SCK within the ILI9341 specification.
+- Accepted as-is: 32 MHz works reliably on the tested panels. **Do not change
+  the SPI1 clock.**
 
 ---
 
@@ -376,21 +399,146 @@ Remove the unused TFT aliases from `main.h`, or add a comment that the authorita
 
 ### Display suggested order of work
 
-1. Fix the action type 14 collision and initialize `TFTAction` fields.
-2. Add ring buffer overflow protection.
-3. Reset `endRefreshStatus_` on mode changes.
-4. Move dirty-bit clearing to DMA completion and add SPI1 error recovery.
-5. Fix the `waveForm` off-by-one.
-6. Verify or reduce the SPI1 clock.
-7. Replace hard-coded refresh step numbers with named constants.
+1. ~~Fix the action type 14 collision and initialize `TFTAction` fields.~~ Done.
+2. Ring buffer overflow protection: reverted. Current behaviour works; the
+   `isFull()` check must not slow the insertion path.
+3. ~~Reset `endRefreshStatus_` on mode changes.~~ Done.
+4. ~~Move dirty-bit clearing to DMA completion and add SPI1 error recovery.~~ Done.
+5. ~~Fix the `waveForm` off-by-one.~~ Done.
+6. SPI1 clock: accepted at 32 MHz; do not change.
+7. Replace hard-coded refresh step numbers with named constants. Not planned
+   (low severity).
+
+---
+
+## Audio performance
+
+Notes from a walk through the sample-generation path. These are **candidate
+optimisations to measure**, not confirmed bottlenecks. The DWT cycle counter is
+already available (`SHOW_CPU_USAGE` in `firmware/src/platform/clock/dwt.h`) and
+`Synth::buildNewSampleBlock()` is wrapped with `CYCLE_MEASURE_START/END`, so the
+existing CPU indicator can validate any change.
+
+### Audio path budget
+
+- Sample rate: `PREENFM_FREQUENCY` = 47,916 Hz; `BLOCK_SIZE` = 32.
+- One block every ~668 µs, i.e. ~1,497 blocks/s.
+- At 480 MHz that is ~320,000 CPU cycles per block.
+- Worst case per block: 6 timbres × 16 shared voices × up to 6 operators ×
+  32 samples = 3,072 oscillator samples, plus envelopes, FX1 (per voice),
+  FX2 (per timbre), compressor, FX bus and output conversion.
+
+The PFM3 engine is float DSP; the MSFA engine is 32-bit fixed point.
+
+### 1. PFM3 — wave-table reload per sample
+
+**Priority: high. Implemented.** `Osc::getWaveTable()` returns the
+`WaveTable*` for the current shape. `Voice::nextBlock()` hoists one pointer per
+oscillator once per block and passes it to `Osc::getNextSample()`, so the
+per-sample loop no longer indexes `waveTables[]`. This adds only six pointers
+to the `nextBlock()` stack frame and **no persistent RAM** (`OscState` and
+`Voice` sizes are unchanged), keeping DTCMRAM at 96.65%.
+
+Measured on hardware: 10 notes with FX went from 45.1% to 41.4% CPU. Flash
+grew by ~11 KB because the smaller `getNextSample()` is inlined more
+aggressively (call overhead removed), which likely contributes to the gain.
+
+### 2. Synth — hardware RNG in the audio callback
+
+**Priority: medium.** `Synth::buildNewSampleBlock()` calls
+`HAL_RNG_GenerateRandomNumber()` to seed the first two noise samples, then uses
+a 32-bit LCG for the other 30. The HAL call polls the RNG ready bit and can
+block for several microseconds inside the audio interrupt.
+
+Suggested action: generate all 32 noise values with the existing LCG (or seed
+the LCG from the RNG once, outside the audio path). This removes a
+variable-latency hardware call from the block callback.
+
+### 3. I-cache pressure in the render switches
+
+**Priority: medium, measure first.** `Voice::nextBlock()` is a very large
+function with a per-algorithm `switch` and one per-sample loop per algorithm.
+`Voice::fxAfterBlock()` and `Timbre::fxAfterBlock()` are also large switches.
+The STM32H7 I-cache is 16 KB. With six timbres using different algorithms and
+FX, the hot code can exceed it and cause I-cache misses in the audio ISR.
+
+Suggested action: measure with the DWT counter; if it matters, keep the
+per-sample loops compact and factor shared code rather than adding more
+algorithm-specific inline code.
+
+### 4. Skip FX setup when the effect is off
+
+**Priority: low.** `Voice::fxAfterBlock()` (`FILTER_OFF`) and
+`Timbre::fxAfterBlock()` (`FILTER2_OFF`) compute matrix destinations and
+smoothed parameters before the `switch`, even when the effect is off.
+
+Suggested action: early-return when `effect1.type == FILTER_OFF` /
+`effect2.type == FILTER2_OFF`, keeping the delay tails running only for
+non-off effects. This saves a few matrix reads and multiplies per voice/timbre
+per block.
+
+### 5. MSFA — fixed-point kernel
+
+**Priority: low/medium, only if MSFA is the hot engine.**
+`FmOpKernel::compute()` / `compute_fb()` (`third_party/msfa/fm_op_kernel.cc`)
+do `((int64_t)y * gain) >> 24` per sample, and `Sin::lookup()`
+(`third_party/msfa/sin.h`) does another 64-bit multiply for delta
+interpolation. On Cortex-M7 `SMULL` is cheap, so this is unlikely to dominate,
+but if profiling shows the MSFA kernel at the top, consider a 32-bit path
+(`__SMMUL`/`__SMULWB`) or a non-delta sine LUT. `SIN_DELTA` doubles the LUT
+(8 KB) to save a subtraction; measure the trade-off.
+
+`Env::getsample()` is already block-rate (once per block per operator), and
+`msfaVoiceRender()` computes 64 samples at a time and outputs 32 per block.
+Both are reasonable.
+
+### 6. Mixing loops
+
+**Priority: low.** `Timbre::voicesToTimbre()` and the per-timbre output dispatch
+in `Synth::buildNewSampleBlock()` are simple scalar loops. They are already
+branch-hoisted and benefit from `-funroll-loops`; the Cortex-M7 has no NEON, so
+`-fno-tree-vectorize` is appropriate. Revisit only if profiling shows them.
+
+### 7. Already-good behaviour
+
+- `updateAllModulationIndexes()` and `updateAllMixOscsAndPans()` early-return
+  after the operators used by the current algorithm.
+- `prepareMatrixForNewBlock()` skips matrix work for non-playing voices.
+- `Voice::emptyBuffer()` only clears a voice buffer once.
+- `calculateFrequencyWithMatrix()` and the envelope advances are block-rate,
+  not per sample.
+- `Timbre::pfm3VoicesNextBlock()` sums unison voices into the first voice
+  buffer, so `voicesToTimbre()` only copies one buffer in unison mode.
+
+### Audio performance suggested order of work
+
+1. ~~Hoist the `WaveTable` out of the per-sample loop.~~ Done: passed as a
+   per-block pointer, no persistent RAM.
+2. Remove the `HAL_RNG_GenerateRandomNumber()` call from the audio block
+   callback.
+3. Add early returns for `FILTER_OFF` / `FILTER2_OFF`.
+4. Measure I-cache pressure before restructuring `Voice::nextBlock()`.
+5. Only optimise the MSFA fixed-point kernel if it is the hot engine.
+
+### Also noticed (correctness, not performance)
+
+`Synth::buildNewSampleBlock()` uses `abs()` on a float
+(`abs(smoothVolume_[timbre] - volume) < .0005f`). If `abs()` resolves to the
+integer overload, the difference is truncated before the comparison. Prefer
+`fabsf()`.
 
 ---
 
 ## MPU suggested order of work
 
-1. Fix Region 3: make `.ram_d2b` non-cacheable, or add clean/invalidate around SPI2 DMA. This is the highest-risk issue.
-2. Move MPU configuration before `SCB_EnableDCache()`.
-3. Add `__DSB()` barriers around SAI, DMA2D and SPI DMA transfers.
-4. Decide and document the cache policy for `tftMemory` and the display buffers.
-5. Align all DMA buffers to 32-byte cache lines.
-6. Add a comment or assertion for every DMA buffer stating its cache policy and required maintenance.
+1. ~~Fix Region 3: make `.ram_d2b` non-cacheable, or add clean/invalidate around SPI2 DMA.~~ Done: `RAM_D2B` is non-cacheable.
+2. ~~Move MPU configuration before `SCB_EnableDCache()`.~~ Done.
+3. ~~Add `__DSB()` barriers around SAI, DMA2D and SPI DMA transfers.~~ Done.
+4. Cache policy for `tftMemory` and the display buffers: `.ram_d1` is
+   write-through; `tftMemory` is written by DMA2D and read by SPI DMA, and the
+   CPU does not read it. `pushToTft()` waits for DMA2D and issues a `__DSB()`
+   before starting SPI DMA. No further change needed.
+5. Align DMA buffers to 32-byte cache lines: not required with the current
+   policy (non-cacheable `RAM_D2B`/`RAM_D2C`, write-through `RAM_D1`/`RAM_D2`).
+6. Add a comment for every DMA buffer stating its cache policy: the MPU region
+   comments cover this; add per-buffer notes when touching those buffers.

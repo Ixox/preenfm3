@@ -173,6 +173,8 @@ void FMDisplay3::newMixerValueFromExternal(int timbre, int mixerValueType, float
 
 void FMDisplay3::newSynthMode(FullState *fullState) {
 
+    endRefreshStatus_ = 0;
+
     switch (fullState->synthMode) {
         case SYNTH_MODE_MIXER:
             refreshStatus_ = 21;

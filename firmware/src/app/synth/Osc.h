@@ -57,9 +57,11 @@ public:
         oscState->mainFrequencyPlusMatrix +=  (oscState->mainFrequency  * (matrix->getDestination(destFreq) + matrix->getDestination(ALL_OSC_FREQ)) * .1f);
     }
 
-    inline float getNextSample(struct OscState *oscState)  {
-        struct WaveTable* waveTable = &waveTables[(int) oscillator->shape];
+    inline const struct WaveTable* getWaveTable() {
+        return &waveTables[(int) oscillator->shape];
+    }
 
+    inline float getNextSample(struct OscState *oscState, const struct WaveTable* waveTable)  {
         oscState->index +=  oscState->frequency * waveTable->precomputedValue + waveTable->floatToAdd;
 
         // convert to int;

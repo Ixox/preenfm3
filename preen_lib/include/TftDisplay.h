@@ -55,7 +55,8 @@ enum {
     TFT_WAITCYCLE,
     TFT_STANDARD_LAST_ACTION = TFT_WAITCYCLE,
     TFT_HIGHLIGHT_ALGO_FEEDBACK,
-    TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK
+    TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK,
+    TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM
 };
 
 
@@ -104,19 +105,19 @@ enum TFTActionType {
 };
 
 struct TFTAction {
-    uint8_t actionType;
-    uint8_t param1;
-    uint16_t param2;
-    uint8_t param3;
-    uint16_t param4;
-    uint8_t param5;
+    uint8_t actionType = 0;
+    uint8_t param1 = 0;
+    uint16_t param2 = 0;
+    uint8_t param3 = 0;
+    uint16_t param4 = 0;
+    uint8_t param5 = 0;
 };
 
 #define OSCILLO_WIDTH 160
 #define OSCILLO_BUFFER_SIZE 1024
 
 #define PFM_IS_DMA2D_READY() (hdma2d.Instance->CR & DMA2D_CR_START) == 0
-#define PFM_START_DMA2D() hdma2d.Instance->CR |= DMA2D_CR_START
+#define PFM_START_DMA2D() do { __DSB(); hdma2d.Instance->CR |= DMA2D_CR_START; } while (0)
 
 
 
@@ -131,6 +132,7 @@ public:
 
     bool pushToTft();
     void pushToTftFinished();
+    void pushToTftError();
 
     void setCursor(uint8_t x, uint16_t y);
     void setCursorSmallChar(uint8_t x, uint16_t y);
@@ -263,6 +265,7 @@ private:
     bool bHasJustBeenCleared;
 
     bool pushToTftInProgress;
+    uint8_t pushingPart;
     uint32_t tftDirtyBits;
     uint8_t part;
 

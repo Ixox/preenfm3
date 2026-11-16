@@ -738,6 +738,14 @@ void Voice::nextBlock() {
 
     updateAllMixOscsAndPans();
 
+    // Hoist the wave tables once per block; getNextSample() runs per sample.
+    const WaveTable* waveTable1 = currentTimbre->osc1_.getWaveTable();
+    const WaveTable* waveTable2 = currentTimbre->osc2_.getWaveTable();
+    const WaveTable* waveTable3 = currentTimbre->osc3_.getWaveTable();
+    const WaveTable* waveTable4 = currentTimbre->osc4_.getWaveTable();
+    const WaveTable* waveTable5 = currentTimbre->osc5_.getWaveTable();
+    const WaveTable* waveTable6 = currentTimbre->osc6_.getWaveTable();
+
     float env1Value;
     float env2Value;
     float env3Value;
@@ -824,12 +832,12 @@ void Voice::nextBlock() {
                 float freq3 = osc3Values[k];
 
                 oscState2_.frequency = freq3 * voiceIm3 + oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * oscState2_.frequency;
+                f2x = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 oscState1_.frequency = oscState1_.mainFrequencyPlusMatrix + voiceIm1 * freq2 + voiceIm2 * freq3;
-                float currentSample = currentTimbre->osc1_.getNextSample(&oscState1_) * this->velocity * env1Value * mix1;
+                float currentSample = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * this->velocity * env1Value * mix1;
 
                 *sample++ = currentSample * pan1Right;
                 *sample++ = currentSample * pan1Left;
@@ -895,10 +903,10 @@ void Voice::nextBlock() {
                 float freq3 = osc3Values[k];
 
                 oscState2_.frequency = freq3 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div2TimesVelocity;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * mix2 * div2TimesVelocity;
 
                 oscState1_.frequency = freq3 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left;
@@ -975,12 +983,12 @@ void Voice::nextBlock() {
 
                 oscState4_.frequency = freq3 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
 
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + oscState1_.mainFrequencyPlusMatrix;
-                float currentSample = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * this->velocity;
+                float currentSample = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * this->velocity;
 
                 *sample++ = currentSample * pan1Right;
                 *sample++ = currentSample * pan1Left;
@@ -1057,15 +1065,15 @@ void Voice::nextBlock() {
                 float freq4 = osc4Values[k];
 
                 oscState3_.frequency = freq4 * voiceIm4 + oscState3_.mainFrequencyPlusMatrix;
-                f3x = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * oscState3_.frequency;
+                f3x = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * oscState3_.frequency;
                 freq3 = f3x - f3xm1 + 0.99525f * freq3;
                 f3xm1 = f3x;
 
                 oscState2_.frequency = freq4 * voiceIm2 + freq3 * voiceIm3 + oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div2TimesVelocity;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * mix2 * div2TimesVelocity;
 
                 oscState1_.frequency = freq3 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left;
@@ -1150,17 +1158,17 @@ void Voice::nextBlock() {
                 float freq4 = osc4Values[k];
 
                 oscState3_.frequency = freq4 * voiceIm3 + oscState3_.mainFrequencyPlusMatrix;
-                f3x = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * oscState3_.frequency;
+                f3x = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * oscState3_.frequency;
                 freq3 = f3x - f3xm1 + 0.99535f * freq3;
                 f3xm1 = f3x;
 
                 oscState2_.frequency = freq3 * voiceIm2 + freq4 * voiceIm4 + oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * oscState2_.frequency;
+                f2x = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * this->velocity * mix1;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * this->velocity * mix1;
 
                 *sample++ = car1 * pan1Right;
                 *sample++ = car1 * pan1Left;
@@ -1231,13 +1239,13 @@ void Voice::nextBlock() {
                 float freq4 = osc4Values[k];
 
                 oscState3_.frequency = freq4 * voiceIm3 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix3 * div3TimesVelocity;
 
                 oscState2_.frequency = freq4 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div3TimesVelocity;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * mix2 * div3TimesVelocity;
 
                 oscState1_.frequency = freq4 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div3TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left;
@@ -1331,18 +1339,18 @@ void Voice::nextBlock() {
                 float freq2 = osc2Values[k] * env2Value * oscState2_.frequency;
 
                 oscState6_.frequency = freq4 * voiceIm4 + oscState6_.mainFrequencyPlusMatrix;
-                f6x = currentTimbre->osc6_.getNextSample(&oscState6_) * env6Value * oscState6_.frequency;
+                f6x = currentTimbre->osc6_.getNextSample(&oscState6_, waveTable6) * env6Value * oscState6_.frequency;
                 freq6 = f6x - f6xm1 + 0.99525f * freq6;
                 f6xm1 = f6x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div3TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm3 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix3 * div3TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car3 * pan2Right + car5 * pan3Right;
                 *sample++ = car1 * pan1Left + car3 * pan2Left + car5 * pan3Left;
@@ -1446,10 +1454,10 @@ void Voice::nextBlock() {
                 freq2 *= oscState2_.frequency;
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix2 * div2TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car5 * pan2Right;
                 *sample++ = car1 * pan1Left + car5 * pan2Left;
@@ -1556,15 +1564,15 @@ void Voice::nextBlock() {
                 freq2 *= oscState2_.frequency;
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * oscState5_.frequency;
+                f5x = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 oscState4_.frequency = freq5 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div2TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car4 * pan2Right + car1 * pan1Right;
                 *sample++ = car4 * pan2Left + car1 * pan1Left;
@@ -1672,23 +1680,23 @@ void Voice::nextBlock() {
                 float freq2 = osc2Values[k];
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 float freq6 = osc6Values[k] * env6Value;
                 freq6 *= oscState6_.frequency;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * oscState5_.frequency;
+                f5x = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 oscState4_.frequency = freq5 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car3 * pan2Right + car1 * pan1Right;
                 *sample++ = car3 * pan2Left + car1 * pan1Left;
@@ -1796,22 +1804,22 @@ void Voice::nextBlock() {
                 freq3 *= oscState3_.frequency;
 
                 oscState2_.frequency = freq3 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * oscState2_.frequency;
+                f2x = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 float freq6 = osc6Values[k];
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * oscState5_.frequency;
+                f5x = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 oscState4_.frequency = freq5 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div2TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car4 * pan2Right + car1 * pan1Right;
                 *sample++ = car4 * pan2Left + car1 * pan1Left;
@@ -1914,13 +1922,13 @@ void Voice::nextBlock() {
                 float freq6 = osc6Values[k];
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div3TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm3 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix3 * div3TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car3 * pan2Right + car5 * pan3Right;
                 *sample++ = car1 * pan1Left + car3 * pan2Left + car5 * pan3Left;
@@ -2022,15 +2030,15 @@ void Voice::nextBlock() {
                 freq2 *= oscState2_.frequency;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * oscState5_.frequency;
+                f5x = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 oscState3_.frequency = freq4 * voiceIm2 + freq5 * voiceIm3 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car3 * pan2Right;
                 *sample++ = car1 * pan1Left + car3 * pan2Left;
@@ -2137,15 +2145,15 @@ void Voice::nextBlock() {
                 float freq6 = osc6Values[k];
 
                 oscState2_.frequency = freq3 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * oscState2_.frequency;
+                f2x = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div2TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car4 * pan2Right + car1 * pan1Right;
                 *sample++ = car4 * pan2Left + car1 * pan1Left;
@@ -2245,7 +2253,7 @@ void Voice::nextBlock() {
                 freq2 *= oscState2_.frequency;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 float freq4 = osc4Values[k] * env4Value;
                 freq4 *= oscState4_.frequency;
@@ -2254,7 +2262,7 @@ void Voice::nextBlock() {
                 float freq6 = osc6Values[k];
 
                 oscState3_.frequency = freq4 * voiceIm2 + freq5 * voiceIm3 + freq6 * voiceIm4 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car3 * pan2Right + car1 * pan1Right;
                 *sample++ = car3 * pan2Left + car1 * pan1Left;
@@ -2352,7 +2360,7 @@ void Voice::nextBlock() {
                 float freq2 = osc2Values[k];
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div2TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div2TimesVelocity;
 
                 float freq6 = osc6Values[k] * env6Value;
                 freq6 *= oscState6_.frequency;
@@ -2361,12 +2369,12 @@ void Voice::nextBlock() {
                 freq5 *= oscState5_.frequency;
 
                 oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div2TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div2TimesVelocity;
 
                 *sample++ = car3 * pan2Right + car1 * pan1Right;
                 *sample++ = car3 * pan2Left + car1 * pan1Left;
@@ -2477,17 +2485,17 @@ void Voice::nextBlock() {
                 float freq2 = osc2Values[k];
 
                 oscState3_.frequency = freq4 * voiceIm3 + oscState3_.mainFrequencyPlusMatrix;
-                f3x = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * oscState3_.frequency;
+                f3x = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * oscState3_.frequency;
                 freq3 = f3x - f3xm1 + 0.99525f * freq3;
                 f3xm1 = f3x;
 
                 oscState5_.frequency = freq6 * voiceIm5 + oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * oscState5_.frequency;
+                f5x = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq5 * voiceIm4 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * velocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * velocity;
 
                 *sample++ = car1 * pan1Right;
                 *sample++ = car1 * pan1Left;
@@ -2604,17 +2612,17 @@ void Voice::nextBlock() {
                 freq2 *= oscState2_.frequency;
 
                 oscState5_.frequency = freq6 * voiceIm5 + oscState5_.mainFrequencyPlusMatrix;
-                f5x = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * oscState5_.frequency;
+                f5x = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * oscState5_.frequency;
                 freq5 = f5x - f5xm1 + 0.99525f * freq5;
                 f5xm1 = f5x;
 
                 oscState4_.frequency = freq5 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * velocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * velocity;
 
                 *sample++ = car1 * pan1Right;
                 *sample++ = car1 * pan1Left;
@@ -2721,18 +2729,18 @@ void Voice::nextBlock() {
                 float freq6 = osc6Values[k];
 
                 oscState2_.frequency = freq3 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                f2x = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * oscState2_.frequency;
+                f2x = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * oscState2_.frequency;
                 freq2 = f2x - f2xm1 + 0.99525f * freq2;
                 f2xm1 = f2x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix2 * div3TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix2 * div3TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix3 * div3TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car4 * pan2Right + car5 * pan3Right;
                 *sample++ = car1 * pan1Left  + car4 * pan2Left  + car5 * pan3Left;
@@ -2831,13 +2839,13 @@ void Voice::nextBlock() {
                 freq6 *= oscState6_.frequency;
 
                 oscState1_.frequency = freq3 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState2_.frequency = freq3 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div3TimesVelocity;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * mix2 * div3TimesVelocity;
 
                 oscState4_.frequency = freq5 * voiceIm3 + freq6 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix3 * div3TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix3 * div3TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right + car4 * pan3Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left + car4 * pan3Left;
@@ -2926,16 +2934,16 @@ void Voice::nextBlock() {
                 float freq3 = osc3Values[k];
 
                 oscState1_.frequency = freq3 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div4TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div4TimesVelocity;
 
                 oscState2_.frequency = freq3 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2 * div4TimesVelocity;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * mix2 * div4TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix3 * div4TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix3 * div4TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix4 * div4TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix4 * div4TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right + car4 * pan3Right + car5 * pan4Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left + car4 * pan3Left + car5 * pan4Left;
@@ -3025,16 +3033,16 @@ void Voice::nextBlock() {
                 freq2 *= oscState2_.frequency;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div4TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div4TimesVelocity;
 
                 oscState3_.frequency = freq6 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div4TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div4TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix3 * div4TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix3 * div4TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm4 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix4 * div4TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix4 * div4TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car3 * pan2Right + car4 * pan3Right + car5 * pan4Right;
                 *sample++ = car1 * pan1Left  + car3 * pan2Left  + car4 * pan3Left  + car5 * pan4Left;
@@ -3128,13 +3136,13 @@ void Voice::nextBlock() {
                 float car2 = osc2Values[k] * env2Value * mix2 * div5TimesVelocity;
 
                 oscState3_.frequency = freq6 * voiceIm1 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div5TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix3 * div5TimesVelocity;
 
                 oscState4_.frequency = freq6 * voiceIm2 + oscState4_.mainFrequencyPlusMatrix;
-                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * mix4 * div5TimesVelocity;
+                float car4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * mix4 * div5TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm3 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5 * div5TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix5 * div5TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car4 * pan4Right + car5 * pan5Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car4 * pan4Left + car5 * pan5Left;
@@ -3237,15 +3245,15 @@ void Voice::nextBlock() {
                 float freq5 = osc5Values[k];
 
                 oscState4_.frequency = freq5 * voiceIm3 + oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 oscState1_.frequency = freq2 * voiceIm1 + oscState1_.mainFrequencyPlusMatrix;
-                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_) * env1Value * mix1 * div3TimesVelocity;
+                float car1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * env1Value * mix1 * div3TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm2 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix2 * div3TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix2 * div3TimesVelocity;
 
                 float car6 = osc6Values[k] * env6Value * mix3 * div3TimesVelocity;
 
@@ -3350,10 +3358,10 @@ void Voice::nextBlock() {
                 float car2 = osc2Values[k] * env2Value * mix2 * div4TimesVelocity;
 
                 oscState3_.frequency = freq4 * voiceIm1 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div4TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix3 * div4TimesVelocity;
 
                 oscState5_.frequency = freq6 * voiceIm2 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix4 * div4TimesVelocity;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix4 * div4TimesVelocity;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car5 * pan4Right;
                 *sample++ = car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car5 * pan4Left;
@@ -3458,12 +3466,12 @@ void Voice::nextBlock() {
                 float car2 = osc2Values[k] * env2Value * mix2 * div4TimesVelocity;
 
                 oscState4_.frequency = freq5 * voiceIm2 + oscState4_.mainFrequencyPlusMatrix;
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
 
                 oscState3_.frequency = freq4 * voiceIm1 + oscState3_.mainFrequencyPlusMatrix;
-                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_) * env3Value * mix3 * div4TimesVelocity;
+                float car3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * env3Value * mix3 * div4TimesVelocity;
 
                 float car6 = osc6Values[k] * env6Value * mix4 * div4TimesVelocity;
 
@@ -3567,7 +3575,7 @@ void Voice::nextBlock() {
                 // getNextBlockWithFeedbackAndEnveloppe already applied envelope
                 float car6 = osc6Values[k] * mix6;
 
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix5;
 
                 *sample++ = (car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car4 * pan4Right + car5 * pan5Right + car6 * pan6Right)
                     * div6TimesVelocity;
@@ -3668,7 +3676,7 @@ void Voice::nextBlock() {
                 float freq6 = osc6Values[k];
 
                 oscState5_.frequency = freq6 * voiceIm1 + oscState5_.mainFrequencyPlusMatrix;
-                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_) * env5Value * mix5;
+                float car5 = currentTimbre->osc5_.getNextSample(&oscState5_, waveTable5) * env5Value * mix5;
 
                 *sample++ = (car1 * pan1Right + car2 * pan2Right + car3 * pan3Right + car4 * pan4Right + car5 * pan5Right) * div5TimesVelocity;
                 *sample++ = (car1 * pan1Left + car2 * pan2Left + car3 * pan3Left + car4 * pan4Left + car5 * pan5Left) * div5TimesVelocity;
@@ -3750,7 +3758,7 @@ void Voice::nextBlock() {
                 float freq4 = osc4Values[k];
 
                 oscState3_.frequency = oscState3_.mainFrequencyPlusMatrix + voiceIm3 * freq4;
-                float osc3  = currentTimbre->osc3_.getNextSample(&oscState3_);
+                float osc3  = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3);
                 float phase = currentTimbre->osc3_.getPhase(&oscState3_);
                 float freq3 = osc3 * env3Value * oscState3_.frequency;
   
@@ -3765,12 +3773,12 @@ void Voice::nextBlock() {
                 }
 
                 oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix;
-                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
 
                 oscState2_.frequency = freq4 * voiceIm2 + oscState2_.mainFrequencyPlusMatrix;
-                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_) * env2Value * mix2V;
+                float car2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * env2Value * mix2V;
 
                 *sample++ = car1 * pan1Right + car2 * pan2Right;
                 *sample++ = car1 * pan1Left  + car2 * pan2Left;
@@ -3848,7 +3856,7 @@ void Voice::nextBlock() {
                 float freq4 = osc4Values[k];
 
                 oscState3_.frequency = oscState3_.mainFrequencyPlusMatrix;
-                float osc3 = currentTimbre->osc3_.getNextSample(&oscState3_);
+                float osc3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3);
                 float phase = currentTimbre->osc3_.getPhase(&oscState3_);
                 float freq3 = osc3 * env3Value * oscState3_.frequency;
   
@@ -3864,12 +3872,12 @@ void Voice::nextBlock() {
                 }
 
                 oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix + freq4 * voiceIm3;
-                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
 
                 oscState2_.frequency = freq3 * voiceIm2 + osc2FrequencyPlusMatrix + freq4 * voiceIm4;
-                float carSample2 = currentTimbre->osc2_.getNextSample(&oscState2_) * window;
+                float carSample2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * window;
                 carSample2 *= fabsf(carSample2); // vosim shape
                 float car2 = carSample2 * env2Value * mix2V;
 
@@ -3947,7 +3955,7 @@ void Voice::nextBlock() {
             for (int k = 0; k < BLOCK_SIZE; k++) {
 
                 oscState4_.frequency = oscState4_.mainFrequencyPlusMatrix;
-                float osc4 = currentTimbre->osc4_.getNextSample(&oscState4_);
+                float osc4 = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4);
                 float phase = currentTimbre->osc4_.getPhase(&oscState4_);
                 float freq4 = osc4 * env4Value * oscState4_.frequency;
 
@@ -3963,17 +3971,17 @@ void Voice::nextBlock() {
                 }
 
                 oscState3_.frequency = freq4 * voiceIm3 + osc3FrequencyPlusMatrix;
-                float carSample3 = currentTimbre->osc3_.getNextSample(&oscState3_) * window;
+                float carSample3 = currentTimbre->osc3_.getNextSample(&oscState3_, waveTable3) * window;
                 carSample3 *= fabsf(carSample3); // vosim shape
                 float car3 = carSample3 * env3Value * mix3V;
 
                 oscState2_.frequency = freq4 * voiceIm2 + osc2FrequencyPlusMatrix;
-                float carSample2 = currentTimbre->osc2_.getNextSample(&oscState2_) * window;
+                float carSample2 = currentTimbre->osc2_.getNextSample(&oscState2_, waveTable2) * window;
                 carSample2 *= fabsf(carSample2); // vosim shape
                 float car2 = carSample2 * env2Value * mix2V;
 
                 oscState1_.frequency = freq4 * voiceIm1 + osc1FrequencyPlusMatrix;
-                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
 
@@ -4058,7 +4066,7 @@ void Voice::nextBlock() {
 
                 oscState4_.frequency = freq3 * voiceIm4 + oscState4_.mainFrequencyPlusMatrix;
 
-                f4x = currentTimbre->osc4_.getNextSample(&oscState4_) * env4Value * oscState4_.frequency;
+                f4x = currentTimbre->osc4_.getNextSample(&oscState4_, waveTable4) * env4Value * oscState4_.frequency;
                 float phase = currentTimbre->osc4_.getPhase(&oscState4_);
                 freq4 = f4x - f4xm1 + 0.99525f * freq4;
                 f4xm1 = f4x;
@@ -4073,7 +4081,7 @@ void Voice::nextBlock() {
                 }
 
                 oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + osc1FrequencyPlusMatrix;
-                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_) * window;
+                float carSample1 = currentTimbre->osc1_.getNextSample(&oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float currentSample = carSample1 * env1Value * mix1V;
 

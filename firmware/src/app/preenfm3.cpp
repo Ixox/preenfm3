@@ -338,6 +338,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai) {
         preenfm3DecodeMidiIn();
 
         saturatedOutput |= synth.buildNewSampleBlock(&waveform1[64], &waveform2[64], &waveform3[64]);
+        __DSB();
         tft.oscilloRecord32Samples(timbreSamples);
     }
 }
@@ -353,6 +354,7 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
         preenfm3DecodeMidiIn();
 
         saturatedOutput |= synth.buildNewSampleBlock(waveform1, waveform2, waveform3);
+        __DSB();
         tft.oscilloRecord32Samples(timbreSamples);
     }
 }
@@ -368,6 +370,10 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     if (hspi == &hspi1) {
         tft.pushToTftFinished();
     }
+}
+
+extern "C" void tftSpiError() {
+    tft.pushToTftError();
 }
 
 

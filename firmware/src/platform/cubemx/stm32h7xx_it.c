@@ -56,6 +56,7 @@ extern DMA_HandleTypeDef hdma_spi2_tx;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 extern uint8_t midiControllerMode;
+extern void tftSpiError(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -380,6 +381,10 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
     if (hspi == &sd_spi2) {
         spi2TransferComplete();
+    }
+
+    if (hspi == &hspi1) {
+        tftSpiError();
     }
 
 }

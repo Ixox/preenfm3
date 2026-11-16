@@ -525,16 +525,16 @@ Each screen divides its redraw into numbered steps (cases), pushing actions into
 
 ### TFTAction Struct
 
-**File**: `lib/Inc/TftDisplay.h`, lines 104–111
+**File**: `preen_lib/include/TftDisplay.h`
 
 ```cpp
 struct TFTAction {
-    uint8_t actionType :4;   // Which action (0x0–0xF)
-    uint8_t param1;
-    uint16_t param2;
-    uint8_t param3;
-    uint16_t param4;
-    uint8_t param5;
+    uint8_t actionType = 0;   // TFT_* action type (0..17)
+    uint8_t param1 = 0;
+    uint16_t param2 = 0;
+    uint8_t param3 = 0;
+    uint16_t param4 = 0;
+    uint8_t param5 = 0;
 };
 ```
 
@@ -572,13 +572,14 @@ Standard action types (`TftDisplay.h`, lines 40–57):
 | 11 | `TFT_DRAW_FILL_AREA` | Fill rectangular area with color |
 | 12 | `TFT_RESTART_REFRESH` | Restart screen refresh from top |
 | 13 | `TFT_PAUSE_REFRESH` | Pause screen refresh |
-| 14 | `TFT_WAITCYCLE` | Wait `param2` ticks before continuing; also aliased by `TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM` |
+| 14 | `TFT_WAITCYCLE` | Wait `param2` ticks before continuing |
+| 15 | `TFT_HIGHLIGHT_ALGO_FEEDBACK` | Highlight a feedback path in the algorithm |
+| 16 | `TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK` | Erase a feedback highlight |
+| 17 | `TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM` | Draw the oscilloscope background (handled by `FirmwareTftDisplay::additionalActions()`) |
 
-Firmware-specific action (`firmware/Src/hardware/FirmwareTftDisplay.h:36-38`):
-
-| Value | Type | Description |
-|-------|------|-------------|
-| 14 | `TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM` | Alias of `TFT_STANDARD_LAST_ACTION` / `TFT_WAITCYCLE`; handled by `FirmwareTftDisplay::additionalActions()`, not by the standard switch |
+The oscilloscope-background action has its own type (17); it no longer aliases
+`TFT_WAITCYCLE`. `FirmwareTftDisplay::additionalActions()` handles it after the
+standard switch.
 
 The values below are **not action types**. They are selectors stored in `TFTAction.param1` when the action type is `TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM`:
 
@@ -587,8 +588,6 @@ The values below are **not action types**. They are selectors stored in `TFTActi
 | 0–13 | `TFT_NUMBER_OF_WAVEFORM_EXT` range | Operator waveform index |
 | 15 | `TFT_DRAW_ENVELOPPE` | Draw envelope shape in the oscilloscope background |
 | 16 | `TFT_DRAW_LFO` | Draw LFO shape in the oscilloscope background |
-
-`TFTAction.actionType` is a 4-bit field, so it can hold values 0–15. This is why the oscilloscope background action reuses action type 14 and stores the waveform selector in `param1`.
 
 ### Methods That Push Actions
 
@@ -753,7 +752,7 @@ The filesystem is mounted on `USERPath` after `ADAFRUIT_802_SD_Init()` succeeds.
 
 ### Cache Coherency Note
 
-`.ram_d2b` is MPU Region 3, configured write-back/write-allocate. SPI2 DMA reads and writes FatFS/SD buffers in that region, and there is currently no cache clean/invalidate around those transfers. This is the highest-risk cache issue in the firmware; see `doc/improvements.md`.
+`.ram_d2b` is MPU Region 3, configured normal non-cacheable, so the CPU and SPI2 DMA see the same data without cache maintenance. `__DSB()` barriers are placed before the SPI2 DMA start and after completion. See `doc/improvements.md`.
 
 ---
 
@@ -923,7 +922,7 @@ MIDI clock handling is also in `newByte()`: `MIDI_CLOCK` increments the clock co
 | RAM_D1 | `0x24000000` | 512 KB | `.ram_d1` | TFT framebuffer/foreground/background, LFO table, some FX delay buffers |
 | RAM_D2 | `0x30000000` | 128 KB | `.ram_d2` | DAC `waveform1/2/3`, PPM image, FX buffers |
 | RAM_D2B | `0x30020000` | 128 KB | `.ram_d2b` | FatFS/SD/file/sequence buffers, some delay/diffuser buffers |
-| RAM_D2C | `0x30040000` | 32 KB | — (unused) | No linker section and no MPU region |
+| RAM_D2C | `0x30040000` | 32 KB | `.ram_d2c` (empty) | Reserved; MPU region 5, non-cacheable |
 | RAM_D3 | `0x38000000` | 64 KB | `.ram_d3` | Sequencer actions and step notes |
 | Flash | `0x08000000` | 128 KB | — | Bootloader |
 | Flash | `0x08020000` | 1920 KB | `.text`, `.rodata` | Firmware application |
@@ -948,26 +947,26 @@ RAM_D2_SECTION int32_t waveform3[64 * 2];
 
 ### MPU regions
 
-`MPU_RegionConfig()` (`firmware/Src/main.c:694-765`) configures four regions. Attribute encoding is from `HAL_MPU_ConfigRegion()`; `C=1, B=0` is write-through, `C=1, B=1` is write-back/write-allocate (see `firmware/Drivers/CMSIS/Include/mpu_armv7.h:85-86`).
+`MPU_RegionConfig()` (`firmware/src/app/main.c`) configures five regions. Attribute encoding is from `HAL_MPU_ConfigRegion()`; `C=1, B=0` is write-through, `C=1, B=1` is write-back/write-allocate, and `TEX=1, C=0, B=0` is normal non-cacheable (see `third_party/CMSIS/Include/mpu_armv7.h`).
 
 | MPU region | Base | Size | TEX | C | B | S | Cache policy | Covered section / use |
 |------------|------|------|-----|---|---|---|--------------|-----------------------|
 | Region 1 | `0x24000000` | 512 KB | 0 | 1 | 0 | 0 | Normal, write-through | `.ram_d1` — display buffers, LFO table, FX delays |
 | Region 2 | `0x30000000` | 128 KB | 0 | 1 | 0 | 0 | Normal, write-through | `.ram_d2` — DAC waveforms, PPM/FX buffers |
-| Region 3 | `0x30020000` | 128 KB | 0 | 1 | 1 | 1 | Normal, write-back, write-allocate, shareable | `.ram_d2b` — FatFS/SD/file/sequence buffers |
-| Region 4 | `0x38000000` | 64 KB | 0 | 1 | 1 | 1 | Normal, write-back, write-allocate, shareable | `.ram_d3` — sequencer data |
+| Region 3 | `0x30020000` | 128 KB | 1 | 0 | 0 | 1 | Normal, non-cacheable | `.ram_d2b` — FatFS/SD/file/sequence buffers |
+| Region 4 | `0x38000000` | 64 KB | 0 | 1 | 1 | 0 | Normal, write-back, write-allocate | `.ram_d3` — sequencer data |
+| Region 5 | `0x30040000` | 32 KB | 1 | 0 | 0 | 1 | Normal, non-cacheable | `.ram_d2c` — reserved for future DMA buffers |
 
-`RAM_D2C` (`0x30040000`, 32 KB), DTCM, ITCM, flash and peripherals are not covered by an explicit MPU region; they use the default memory map. The MPU is enabled with `HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT)`.
+DTCM, ITCM, flash and peripherals are not covered by an explicit MPU region and use the default memory map. The MPU is enabled with `HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT)`.
 
 ### Cache / DMA usage
 
-The I-cache and D-cache are enabled in `firmware/Src/main.c:116-119`. The MPU is configured later, from `main.c:164`.
+The MPU is configured first (`MPU_RegionConfig()`), then the I-cache and D-cache are enabled (`firmware/src/app/main.c`).
 
 | Buffer(s) | Section / MPU region | Cache policy | DMA master | Notes |
 |-----------|----------------------|--------------|------------|-------|
-| `waveform1/2/3` | `.ram_d2` / Region 2 | Write-through | SAI1/SAI2 TX DMA | TX-only from CPU to DAC; no invalidate needed, but a barrier before DMA is still required |
-| `tftMemory`, `tftForeground`, `tftBackground` | `.ram_d1` / Region 1 | Write-through | DMA2D + SPI1 TX DMA | CPU writes foreground/background, DMA2D reads them and writes `tftMemory`, then SPI1 DMA reads `tftMemory` |
-| FatFS/SD/file buffers | `.ram_d2b` / Region 3 | Write-back, write-allocate | SPI2 TX/RX DMA | Needs clean before TX and invalidate after RX |
+| `waveform1/2/3` | `.ram_d2` / Region 2 | Write-through | SAI1/SAI2 TX DMA | CPU fills the block, then `__DSB()` before the DMA consumes it |
+| `tftMemory`, `tftForeground`, `tftBackground` | `.ram_d1` / Region 1 | Write-through | DMA2D + SPI1 TX DMA | `pushToTft()` waits for DMA2D and issues `__DSB()` before starting SPI DMA |
+| FatFS/SD/file buffers | `.ram_d2b` / Region 3 | Non-cacheable | SPI2 TX/RX DMA | No cache maintenance required; `__DSB()` before start and after completion |
+| `RAM_D2C` buffers | `.ram_d2c` / Region 5 | Non-cacheable | none currently | Reserved for future DMA buffers |
 | Sequencer actions/notes | `.ram_d3` / Region 4 | Write-back, write-allocate | CPU only | No DMA coherency concern |
-
-There is currently no application-level cache maintenance (`SCB_CleanDCache_by_Addr`, `SCB_InvalidateDCache_by_Addr`) or explicit `__DSB`/`__DMB` around these DMA transfers. See `doc/improvements.md` for the coherency problems this creates.

@@ -155,7 +155,11 @@ public:
     }
 
 
-    inline float getNextAmpExp(struct EnvData* env) {
+    // Large block-rate routine inlined at ~170 call sites in Voice::nextBlock().
+    // Keep it out of line to limit code size / I-cache pressure; the call
+    // overhead is negligible because it runs once per block per operator.
+    __attribute__((noinline))
+    float getNextAmpExp(struct EnvData* env) {
         float incPhase;
 
         switch(env->envState) {

@@ -250,6 +250,8 @@ static HAL_StatusTypeDef SD_IO_WriteReadData(const uint8_t *DataIn, uint8_t *Dat
 volatile uint32_t spi2TransferState = 1;
 
 void spi2TransferComplete() {
+    // Make the DMA RX writes visible before the polling code reads the buffer.
+    __DSB();
     spi2TransferState = 1;
 }
 

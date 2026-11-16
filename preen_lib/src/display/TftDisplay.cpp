@@ -68,6 +68,7 @@ uint16_t convertTo565(uint32_t x) {
 
 TftDisplay::TftDisplay() {
     pushToTftInProgress = false;
+    pushingPart = 0;
 
     tftDirtyBits = TFT_PART_ALL_BITS;
 
@@ -668,6 +669,11 @@ bool TftDisplay::pushToTft() {
         return false;
     }
 
+    // Do not start an SPI transfer while DMA2D is still composing tftMemory.
+    if (!PFM_IS_DMA2D_READY()) {
+        return false;
+    }
+
     // 4 max - can break before
     int p;
     for (p = 0; p < TFT_NUMBER_OF_PARTS ; p++) {
@@ -683,8 +689,11 @@ bool TftDisplay::pushToTft() {
 
                 PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
 
+                // Make sure the composed pixels are visible before SPI DMA reads them.
+                __DSB();
+
                 if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
-                    tftDirtyBits &= ~(1UL << part);
+                    pushingPart = part;
                     pushToTftInProgress = true;
                 }
             }
@@ -699,6 +708,15 @@ bool TftDisplay::pushToTft() {
 }
 
 void TftDisplay::pushToTftFinished() {
+    if (pushToTftInProgress) {
+        tftDirtyBits &= ~(1UL << pushingPart);
+    }
+    ILI9341_Unselect();
+    pushToTftInProgress = false;
+}
+
+void TftDisplay::pushToTftError() {
+    // Keep the dirty bit set so the part is retried on the next push.
     ILI9341_Unselect();
     pushToTftInProgress = false;
 }

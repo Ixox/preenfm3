@@ -126,6 +126,7 @@ See [doc/compilation.md](doc/compilation.md) for detailed build information and 
 
 ## Documentation
 
+- [Folder structure](doc/folder_structure.md)
 - [Hardware documentation](doc/hardware.md)
 - [Compilation and CMake migration](doc/compilation.md)
 - [Known improvements](doc/improvements.md)

@@ -217,6 +217,8 @@ HAL_StatusTypeDef BSP_SPI_SendRecv_DMA(uint8_t *pTxData, uint8_t *pRxData, uint3
   if (sd_spi2.Lock == HAL_LOCKED) {
       return HAL_BUSY;
   }
+  // Make sure the TX buffer stores are complete before DMA reads them.
+  __DSB();
   //HAL_SPI_TransmitReceive_IT(&sd_spi2, pTxData, pRxData, (uint16_t)Legnth);
   return HAL_SPI_TransmitReceive_DMA(&sd_spi2, pTxData, pRxData, (uint16_t)Legnth);
 }

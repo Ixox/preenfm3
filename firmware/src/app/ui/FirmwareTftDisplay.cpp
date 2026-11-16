@@ -89,7 +89,7 @@ void FirmwareTftDisplay::additionalActions() {
             }
             break;
         case 1:
-            if (currentAction.param1 <= TFT_NUMBER_OF_WAVEFORM_EXT) {
+            if (currentAction.param1 < TFT_NUMBER_OF_WAVEFORM_EXT) {
                 oscilloBgDrawOperatorShape(waveForm[currentAction.param1].waveForms, waveForm[currentAction.param1].size);
                 operatorInQueue--;
             } else if (currentAction.param1 == TFT_DRAW_ENVELOPPE) {

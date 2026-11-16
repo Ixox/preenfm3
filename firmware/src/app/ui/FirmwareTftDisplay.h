@@ -37,11 +37,6 @@ struct WaveFormExt {
 };
 
 
-enum {
-    TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM = TFT_STANDARD_LAST_ACTION
-};
-
-
 /*
  * Add specific firmware display features
  * Added 12/2022 to access env user waveforms

@@ -113,16 +113,20 @@ int main(void)
   /* USER CODE END 1 */
 
 
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* Configure the MPU before enabling the caches, so that no cache line is
+     populated with attributes that differ from the final MPU setup. */
+  MPU_RegionConfig();
+
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
 
   /* Enable D-Cache---------------------------------------------------------*/
   SCB_EnableDCache();
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -161,8 +165,6 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
-
-  MPU_RegionConfig();
 
   // If button 1 is pressed => Midi controller mode
 //  if (isButton1Pressed()) {
@@ -730,23 +732,23 @@ void MPU_RegionConfig(void) {
 
     HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-    /* Configure the MPU attributes as WT for RADM_D2B */
-    // Some variables are here
+    /* Configure RAM_D2B as normal, non-cacheable.
+       FatFS/SD buffers live here and are accessed by SPI2 DMA. */
     MPU_InitStruct.Number = MPU_REGION_NUMBER3;
     MPU_InitStruct.Enable = MPU_REGION_ENABLE;
     MPU_InitStruct.BaseAddress = 0x30020000;
     MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
     MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-    MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-    MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
     MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
     MPU_InitStruct.SubRegionDisable = 0x00;
     MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
 
     HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-    /* Configure the MPU attributes as WT for RADM_D3 */
+    /* Configure RAM_D3 as write-back for the sequencer data (no DMA user). */
     MPU_InitStruct.Number = MPU_REGION_NUMBER4;
     MPU_InitStruct.Enable = MPU_REGION_ENABLE;
     MPU_InitStruct.BaseAddress = 0x38000000;
@@ -754,8 +756,24 @@ void MPU_RegionConfig(void) {
     MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
     MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
     MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-    MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
     MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+    MPU_InitStruct.SubRegionDisable = 0x00;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+    /* Configure RAM_D2C as normal, non-cacheable, so any future DMA buffer
+       placed there is safe by default. */
+    MPU_InitStruct.Number = MPU_REGION_NUMBER5;
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.BaseAddress = 0x30040000;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
+    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
     MPU_InitStruct.SubRegionDisable = 0x00;
     MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
 
