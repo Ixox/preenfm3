@@ -26,6 +26,9 @@ class SynthEngineFactory {
 public:
     static void init(Timbre *timbre, SynthState *synthState);
     static SynthEngine* get(SynthEngineType type, int timbreNumber);
+    // Map a preset/mixer storage magic to its engine, or COUNT if unknown.
+    static SynthEngineType engineTypeForStorageMagic(uint32_t magic);
+    static SynthEngine* getForStorageMagic(uint32_t magic, int timbreNumber);
 
 private:
     static Preenfm3Engine pfm3Engines_[NUMBER_OF_TIMBRES];

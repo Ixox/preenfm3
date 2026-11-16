@@ -116,7 +116,7 @@ void ScreenCoordinator::newTimbre(int timbre) {
         tft_->pauseRefresh();
         tft_->clear();
         this->refreshOscilloBG();
-        tft_->drawAlgo(this->synthState_->params->engine1.algo);
+        editor_->drawAlgorithm();
         editor_->displayPreset();
         refreshStatus_ = 20;
         endRefreshStatus_ = 0;
@@ -355,32 +355,7 @@ void ScreenCoordinator::newPfm3Page(FullState *fullState) {
 }
 
 void ScreenCoordinator::refreshOscilloBG() {
-    FullState *fullState = &this->synthState_->fullState;
-    if (editor_->isMsfaTimbre()) {
-        if (fullState->mainPage == 1) {
-            editor_->refreshOscillatorOperatorEnvelope();
-        } else {
-            tft_->oscilloBgActionClear();
-        }
-        return;
-    }
-    if (fullState->mainPage == 1) {
-        if (fullState->editPage == 0) {
-            editor_->refreshOscillatorOperatorShape();
-        } else {
-            editor_->refreshOscillatorOperatorEnvelope();
-        }
-    } else if (fullState->mainPage == 3) {
-        if (fullState->editPage == 0) {
-            editor_->refreshLfoOscillator();
-        } else if (fullState->editPage == 1) {
-            editor_->refreshLfoEnv();
-        } else {
-            tft_->oscilloBgActionClear();
-        }
-    } else {
-        tft_->oscilloBgActionClear();
-    }
+    editor_->refreshOscilloBG();
 }
 
 // Overide SynthParamListener

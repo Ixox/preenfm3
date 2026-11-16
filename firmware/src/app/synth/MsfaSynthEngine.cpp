@@ -43,6 +43,11 @@ void MsfaSynthEngine::init(Timbre *timbre, SynthState *synthState) {
     msfaTimbreLoadProgram(msfaState_, program);
 }
 
+bool MsfaSynthEngine::acceptsFlatParamFromMidi(int row) const {
+    return row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2
+        || row == ROW_ARPEGGIATOR3 || row == ROW_EFFECT1 || row == ROW_EFFECT2;
+}
+
 void MsfaSynthEngine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
     uint8_t *program = program_[timbreNumber_];
     setMsfaParamValue(program, paramId, context, (uint8_t) newValue);

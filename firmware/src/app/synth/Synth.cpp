@@ -667,12 +667,8 @@ void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patc
 }
 
 void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
-    if (this->timbres_[timbre].getEngine() == SYNTH_ENGINE_MSFA) {
-        bool sharedRow = row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ARPEGGIATOR3
-            || row == ROW_EFFECT1 || row == ROW_EFFECT2;
-        if (!sharedRow) {
-            return;
-        }
+    if (!this->timbres_[timbre].acceptsFlatParamFromMidi(row)) {
+        return;
     }
     struct ParameterDisplay *param = &(allParameterRows.row[row]->params[encoder]);
     int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
@@ -741,7 +737,7 @@ void Synth::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t new
 
 void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int newValue) {
 
-    if (this->timbres_[timbre].getEngine() == SYNTH_ENGINE_MSFA) {
+    if (!this->timbres_[timbre].supportsStepSequencer()) {
         return;
     }
 

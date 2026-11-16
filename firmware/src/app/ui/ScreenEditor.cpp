@@ -16,22 +16,26 @@
  */
 
 
+#include <string.h>
 #include <FirmwareTftDisplay.h>
 #include "ScreenEditor.h"
-#include "ScreenMsfaEditor.h"
-#include "ScreenPfm3Editor.h"
+#include "EditorMsfa.h"
+#include "EditorPfm3.h"
+#include "EditorCommon.h"
 #include "ScreenTypes.h"
-#include "MsfaEngine.h"
 #include "SynthState.h"
 #include "Timbre.h"
 #include "preenfm3.h"
 
-static ScreenMsfaEditor msfaEditorInstance;
-static ScreenPfm3Editor pfm3EditorInstance;
+static EditorMsfa msfaEditorInstance;
+static EditorPfm3 pfm3EditorInstance;
+static EditorCommon commonEditorInstance;
 
 ScreenEditor::ScreenEditor() {
-    msfaEditor_ = &msfaEditorInstance;
-    pfm3Editor_ = &pfm3EditorInstance;
+    firstEditor_ = nullptr;
+    cachedEngineType_ = SYNTH_ENGINE_COUNT;
+    cachedEditor_ = nullptr;
+    currentTimbre_ = 0;
     for (int k = 0; k < NUMBER_OF_TIMBRES; k++) {
         presetModifed_[k] = false;
     }
@@ -40,38 +44,80 @@ ScreenEditor::ScreenEditor() {
 void ScreenEditor::init(SynthState *synthState, FirmwareTftDisplay *tft) {
     synthState_ = synthState;
     tft_ = tft;
-    msfaEditor_->init(this, synthState, tft);
-    pfm3Editor_->init(this, synthState, tft);
+    firstEditor_ = nullptr;
+    cachedEngineType_ = SYNTH_ENGINE_COUNT;
+    cachedEditor_ = nullptr;
+    msfaEditorInstance.init(this, synthState, tft);
+    pfm3EditorInstance.init(this, synthState, tft);
+    commonEditorInstance.init(this, synthState, tft);
 }
 
-bool ScreenEditor::isMsfaTimbre() const {
-    return synthState_->mixerState.instrumentState_[currentTimbre_].engine == SYNTH_ENGINE_MSFA;
+void ScreenEditor::insertEditor(EditorEngine *editor) {
+    editor->nextEditor = firstEditor_;
+    firstEditor_ = editor;
+    cachedEngineType_ = SYNTH_ENGINE_COUNT;
+    cachedEditor_ = nullptr;
+}
+
+EditorEngine *ScreenEditor::activeEditor() const {
+    EditorEngine *engine = editorForEngine();
+    if (engine == nullptr) {
+        return nullptr;
+    }
+    int page = synthState_->fullState.mainPage;
+    if (engine->getEngineMenu(page) != nullptr) {
+        return engine;
+    }
+    if (engine->getCommonPage(page) != COMMON_PAGE_NONE) {
+        return &commonEditorInstance;
+    }
+    return nullptr;
+}
+
+SynthEngineType ScreenEditor::currentEngineType() const {
+    return (SynthEngineType) synthState_->mixerState.instrumentState_[currentTimbre_].engine;
+}
+
+EditorEngine *ScreenEditor::editorForEngine() const {
+    SynthEngineType type = currentEngineType();
+    if (cachedEditor_ != nullptr && cachedEngineType_ == type) {
+        return cachedEditor_;
+    }
+    for (EditorEngine *editor = firstEditor_; editor != nullptr; editor = editor->nextEditor) {
+        if (editor->getEngineType() == type) {
+            cachedEngineType_ = type;
+            cachedEditor_ = editor;
+            return editor;
+        }
+    }
+    cachedEngineType_ = type;
+    cachedEditor_ = nullptr;
+    return nullptr;
+}
+
+const struct EditorEditMenu* ScreenEditor::getMainMenu(int page) const {
+    EditorEngine *engine = editorForEngine();
+    if (engine == nullptr) {
+        return nullptr;
+    }
+    const struct EditorEditMenu *menu = engine->getEngineMenu(page);
+    if (menu != nullptr) {
+        return menu;
+    }
+    int commonPage = engine->getCommonPage(page);
+    if (commonPage != COMMON_PAGE_NONE) {
+        return commonEditorInstance.getCommonMenu(commonPage);
+    }
+    return nullptr;
 }
 
 const struct EditorEditMenu* ScreenEditor::currentEditMenu() const {
-    int page = synthState_->fullState.mainPage;
-    if (isMsfaTimbre()) {
-        if (page >= 0 && page <= 1) {
-            return msfaEditor_->getEditMenu(page);
-        }
-        if (page == 2) {
-            return pfm3Editor_->getEditMenu(4);
-        }
-    }
-    return pfm3Editor_->getEditMenu(page);
+    return getMainMenu(synthState_->fullState.mainPage);
 }
 
 const char* ScreenEditor::mainMenuName(int button) const {
-    if (isMsfaTimbre()) {
-        if (button >= 0 && button <= 1) {
-            return msfaEditor_->getEditMenu(button)->mainMenuName;
-        }
-        if (button == 2) {
-            return pfm3Editor_->getEditMenu(4)->mainMenuName;
-        }
-        return "";
-    }
-    return pfm3Editor_->getEditMenu(button)->mainMenuName;
+    const struct EditorEditMenu *menu = getMainMenu(button);
+    return menu != nullptr ? menu->mainMenuName : "";
 }
 
 void ScreenEditor::markPresetModified(int timbre) {
@@ -81,45 +127,156 @@ void ScreenEditor::markPresetModified(int timbre) {
     }
 }
 
+void ScreenEditor::drawAlgorithm() {
+    EditorEngine *editor = editorForEngine();
+    if (editor != nullptr) {
+        editor->drawAlgorithm();
+    }
+}
+
 void ScreenEditor::newTimbre(int timbre) {
     currentTimbre_ = timbre;
-    if (isMsfaTimbre()) {
-        msfaEditor_->checkOperatorNumber();
-    } else {
-        pfm3Editor_->checkOperatorNumber();
+    EditorEngine *editor = editorForEngine();
+    if (editor != nullptr) {
+        editor->newTimbre();
     }
 }
 
 void ScreenEditor::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
-    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->newPfm3ParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
-    } else {
-        pfm3Editor_->newPfm3ParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->newPfm3ParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
     }
 }
 
 void ScreenEditor::displayParamValue(int encoder, TFT_COLOR color) {
-    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->displayParamValue(encoder, color);
-    } else {
-        pfm3Editor_->displayParamValue(encoder, color);
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->displayParamValue(encoder, color);
     }
 }
 
 void ScreenEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) {
-    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->refreshEditorByStep(refreshStatus, endRefreshStatus);
+    EditorEngine *engineEditor = editorForEngine();
+    if (engineEditor == nullptr) {
+        return;
+    }
+
+    // The selected page may not exist for the current engine (e.g. after an
+    // engine switch): fall back to the main menu instead of drawing nothing.
+    if (synthState_->fullState.mainPage >= 0 && activeEditor() == nullptr) {
+        synthState_->fullState.mainPage = -1;
+        synthState_->fullState.editPage = 0;
+        refreshStatus = 20;
+        endRefreshStatus = 0;
+        return;
+    }
+
+    if (synthState_->fullState.mainPage == -1) {
+        switch (refreshStatus) {
+        case 20:
+            tft_->pauseRefresh();
+            tft_->clear();
+            displayPreset();
+            tft_->oscilloForceNextDisplay();
+            break;
+        case 19:
+        case 18:
+        case 17:
+        case 16:
+        case 15:
+        case 14: {
+            int button = 19 - refreshStatus;
+            tft_->drawButton(mainMenuName(button), 270, 29, button, 0, 1);
+            break;
+        }
+        case 13: {
+            const char *title = engineEditor->getEngineName();
+            int length = strlen(title);
+            tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
+            tft_->print(title, COLOR_CYAN, COLOR_BLACK);
+            break;
+        }
+        case 11:
+            break;
+        case 10:
+            engineEditor->drawAlgorithm();
+            break;
+        }
     } else {
-        pfm3Editor_->refreshEditorByStep(refreshStatus, endRefreshStatus);
+        EditorEngine *editor = activeEditor();
+        const struct EditorEditMenu *editMenu = currentEditMenu();
+        if (editor == nullptr || editMenu == nullptr) {
+            return;
+        }
+        if (synthState_->fullState.editPage >= editMenu->numberOfButtons) {
+            synthState_->fullState.editPage = 0;
+        }
+        const struct EditorOneButton *page = editMenu->pages[synthState_->fullState.editPage];
+
+        switch (refreshStatus) {
+        case 21:
+            tft_->pauseRefresh();
+            tft_->clear();
+            displayPreset();
+            tft_->oscilloForceNextDisplay();
+            engineEditor->drawAlgorithm();
+            break;
+        case 20:
+            tft_->pauseRefresh();
+            tft_->fillArea(0, 40, 240, 120, COLOR_BLACK);
+            tft_->fillArea(0, 270, 240, 30, COLOR_BLACK);
+            tft_->setCursor(0, 2);
+            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharColor(COLOR_CYAN);
+            editor->drawPageHeader();
+            tft_->print(page->states[synthState_->fullState.buttonState[page->buttonId]]->stateLabel);
+            editor->preparePage();
+            break;
+        case 18:
+        case 17:
+        case 16:
+        case 15:
+        case 14:
+        case 13: {
+            int button = 18 - refreshStatus;
+            editor->drawEditorButton(button, editMenu, page);
+            break;
+        }
+        case 12:
+        case 11:
+        case 10:
+        case 9:
+        case 8:
+        case 7: {
+            int button = 12 - refreshStatus;
+            const struct RowEncoder rowEncoder =
+                page->states[synthState_->fullState.buttonState[page->buttonId]]->rowEncoder[button];
+            editor->drawParameterName(button, rowEncoder, editMenu, page);
+            break;
+        }
+        case 6:
+        case 5:
+        case 4:
+        case 3:
+        case 2:
+        case 1:
+            editor->displayParamValue(6 - refreshStatus, COLOR_WHITE);
+            break;
+        }
+    }
+
+    if (refreshStatus == endRefreshStatus) {
+        endRefreshStatus = 0;
+        refreshStatus = 0;
     }
 }
 
 void ScreenEditor::tempoClick() {
-    if (isMsfaTimbre()) {
-        msfaEditor_->tempoClick();
-    } else {
-        pfm3Editor_->tempoClick();
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->tempoClick();
     }
     displayLevelMeter();
 }
@@ -239,37 +396,40 @@ void ScreenEditor::encoderTurned(int encoder6, int ticks) {
         return;
     }
 
-    if (isMsfaTimbre() && fullState->mainPage <= 1) {
-        msfaEditor_->encoderTurned(encoder6, ticks);
-    } else {
-        pfm3Editor_->encoderTurned(encoder6, ticks);
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->encoderTurned(encoder6, ticks);
     }
 }
 
 void ScreenEditor::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
-    if (isMsfaTimbre()) {
-        msfaEditor_->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
-    } else {
-        pfm3Editor_->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
     }
 }
 
 void ScreenEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
 
-    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->encoderTurnedWhileButtonPressed(encoder6, ticks, button);
-    } else {
-        pfm3Editor_->encoderTurnedWhileButtonPressed(encoder6, ticks, button);
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->encoderTurnedWhileButtonPressed(encoder6, ticks, button);
     }
 }
 
 void ScreenEditor::buttonPressed(int button) {
-    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->buttonPressed(button);
-    } else if (synthState_->fullState.mainPage == -1) {
+    if (synthState_->fullState.mainPage == -1) {
         buttonPressedMenuPage(button);
     } else {
-        pfm3Editor_->buttonPressed(button);
+        EditorEngine *editor = activeEditor();
+        if (editor != nullptr) {
+            editor->buttonPressed(button);
+        } else {
+            // No editor for this page (e.g. engine switched while on a page
+            // that the new engine does not provide): go back to the menu.
+            synthState_->fullState.mainPage = -1;
+            synthState_->fullState.editPage = 0;
+        }
     }
 
     synthState_->propagateNewPfm3Page();
@@ -277,7 +437,7 @@ void ScreenEditor::buttonPressed(int button) {
 
 void ScreenEditor::buttonPressedMenuPage(int button) {
     if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6
-            && !(isMsfaTimbre() && button >= BUTTON_PFM3_4)) {
+            && getMainMenu(button) != nullptr) {
         synthState_->fullState.mainPage = button;
         int editPage = editPageSelected_[synthState_->fullState.mainPage];
         if (editPage >= currentEditMenu()->numberOfButtons) {
@@ -299,55 +459,15 @@ void ScreenEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) {
 }
 
 void ScreenEditor::buttonLongPressed(int instrument, int button) {
-    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
-        msfaEditor_->buttonLongPressed(instrument, button);
-        return;
-    }
-
-    pfm3Editor_->buttonLongPressed(instrument, button);
-}
-
-void ScreenEditor::refreshOscillatorOperatorShape() {
-    if (isMsfaTimbre()) {
-        msfaEditor_->refreshOscillatorOperatorShape();
-    } else {
-        pfm3Editor_->refreshOscillatorOperatorShape();
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->buttonLongPressed(instrument, button);
     }
 }
 
-void ScreenEditor::refreshOscillatorOperatorEnvelope() {
-    int op = synthState_->fullState.operatorNumber;
-    if (isMsfaTimbre()) {
-        MsfaEnvelopeDisplay env;
-        getMsfaEnvelopeDisplay(synthState_->getTimbre(currentTimbre_)->getPatchMemory(), op, &env);
-
-        tft_->oscilloBgSetEnvelope(env.time[0], env.time[1], env.time[2], env.time[3],
-                env.level[0], env.level[1], env.level[2], env.level[3],
-                CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN);
-        tft_->oscilloBgActionEnvelope();
-        return;
-    }
-    EnvelopeTimeMemory *envTime = &synthState_->params->env1Time;
-    EnvelopeLevelMemory *envLevel = &synthState_->params->env1Level;
-    EnvelopeCurveParams *envCurve = &synthState_->params->env1Curve;
-    tft_->oscilloBgSetEnvelope(envTime[op].attackTime, envTime[op].decayTime, envTime[op].sustainTime, envTime[op].releaseTime,
-            envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel,
-            envCurve[op].attackCurve, envCurve[op].decayCurve, envCurve[op].sustainCurve, envCurve[op].releaseCurve);
-    tft_->oscilloBgActionEnvelope();
-}
-
-void ScreenEditor::refreshLfoOscillator() {
-    if (isMsfaTimbre()) {
-        msfaEditor_->refreshLfoOscillator();
-    } else {
-        pfm3Editor_->refreshLfoOscillator();
-    }
-}
-
-void ScreenEditor::refreshLfoEnv() {
-    if (isMsfaTimbre()) {
-        msfaEditor_->refreshLfoEnv();
-    } else {
-        pfm3Editor_->refreshLfoEnv();
+void ScreenEditor::refreshOscilloBG() {
+    EditorEngine *editor = activeEditor();
+    if (editor != nullptr) {
+        editor->refreshOscilloBG();
     }
 }

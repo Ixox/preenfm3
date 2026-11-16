@@ -134,6 +134,14 @@ public:
     // the new timbre starts (deferred cross-timbre transfer).
     virtual bool supportsDeferredSteal() const { return false; }
 
+    // Accept a flat-parameter edit coming from MIDI for `row`.
+    // Rejecting rows also protects the shared OneSynthParams mirror
+    // (the hidden PFM3 patch).
+    virtual bool acceptsFlatParamFromMidi(int row) const { return true; }
+
+    // Does the engine provide the PFM3-style step sequencer?
+    virtual bool supportsStepSequencer() const { return true; }
+
     // An LFO/step parameter changed: forward the new value to the voices.
     virtual void lfoValueChange(int row, int encoder, float value) {}
 

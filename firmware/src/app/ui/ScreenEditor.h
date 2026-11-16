@@ -18,61 +18,10 @@
 #ifndef SCREEN_EDITOR
 #define SCREEN_EDITOR
 
-#include "FirmwareTftDisplay.h"
+#include "EditorEngine.h"
 #include "SynthParamListener.h"
-#include "ScreenTypes.h"
 
-class SynthState; class TftDisplay; class ScreenMsfaEditor; class ScreenEditor; class ScreenPfm3Editor;
-
-struct EditorOneButtonState {
-    const char *stateLabel;
-    const RowEncoder rowEncoder[6];
-};
-
-struct EditorOneButton {
-    const char *buttonLabel;
-    const uint8_t buttonId;
-    const int numberOfStates;
-    const EditorOneButtonState *states[];
-
-};
-
-struct EditorEditMenu {
-    const char *mainMenuName;
-    const int numberOfButtons;
-    const EditorOneButton *pages[];
-};
-
-struct EditorMainMenu {
-    const EditorEditMenu *editMenu[6];
-};
-
-/*
- * Common interface for engine-specific editor pages.
- * ScreenEditor owns one implementation per engine and dispatches to the
- * active one. Calls are per page/note/block, never per sample.
- */
-class EngineEditor {
-public:
-    virtual ~EngineEditor() {}
-
-    virtual void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) = 0;
-    virtual const struct EditorEditMenu* getEditMenu(int page) const = 0;
-    virtual void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) = 0;
-    virtual void displayParamValue(int encoder, TFT_COLOR color) = 0;
-    virtual void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-        ParameterDisplay *param, float oldValue, float newValue) = 0;
-    virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {}
-    virtual void tempoClick() = 0;
-    virtual void encoderTurned(int encoder, int ticks) = 0;
-    virtual void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) = 0;
-    virtual void buttonPressed(int button) = 0;
-    virtual void buttonLongPressed(int instrument, int button) = 0;
-    virtual void refreshOscillatorOperatorShape() {}
-    virtual void refreshLfoOscillator() {}
-    virtual void refreshLfoEnv() {}
-    virtual void checkOperatorNumber() {}
-};
+class SynthState; class TftDisplay; class ScreenEditor;
 
 class ScreenEditor {
 public:
@@ -80,10 +29,21 @@ public:
 
     void init(SynthState *synthState, FirmwareTftDisplay *tft);
 
-    bool isMsfaTimbre() const;
+    // Register an engine editor; called from each editor's init().
+    void insertEditor(EditorEngine *editor);
+    // Editor handling the current timbre and main page, or nullptr.
+    EditorEngine *activeEditor() const;
+    // Editor implementing the current timbre's engine, or nullptr.
+    EditorEngine *editorForEngine() const;
+    // Engine selected for the current timbre.
+    SynthEngineType currentEngineType() const;
+
+    // Menu for a main page, resolved by the current engine's editor.
+    const struct EditorEditMenu* getMainMenu(int page) const;
     const struct EditorEditMenu* currentEditMenu() const;
     const char* mainMenuName(int button) const;
     void markPresetModified(int timbre);
+    void drawAlgorithm();
 
     void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
@@ -110,18 +70,17 @@ public:
     void buttonLongPressed(int instrument, int button);
     void newTimbre(int timbre);
 
-    void refreshOscillatorOperatorShape();
-    void refreshOscillatorOperatorEnvelope();
-    void refreshLfoOscillator();
-    void refreshLfoEnv();
+    void refreshOscilloBG();
 
 private:
     void buttonPressedMenuPage(int button);
     void displayLevelMeter();
     FirmwareTftDisplay *tft_;
     SynthState *synthState_;
-    ScreenMsfaEditor *msfaEditor_;
-    ScreenPfm3Editor *pfm3Editor_;
+    EditorEngine *firstEditor_;
+    // editorForEngine() cache, keyed by engine type.
+    mutable SynthEngineType cachedEngineType_;
+    mutable EditorEngine *cachedEditor_;
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
     int currentTimbre_;

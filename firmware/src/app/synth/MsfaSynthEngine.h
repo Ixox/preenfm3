@@ -57,6 +57,10 @@ public:
         return program_[timbreNumber_];
     }
     void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
+    bool acceptsFlatParamFromMidi(int row) const override;
+    bool supportsStepSequencer() const override {
+        return false;
+    }
     void patchMemoryChanged() override {
         afterNewParamsLoad();
     }

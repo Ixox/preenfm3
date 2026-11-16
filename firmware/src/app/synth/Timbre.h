@@ -101,6 +101,14 @@ public:
         return engineImpl_->supportsDeferredSteal();
     }
 
+    bool acceptsFlatParamFromMidi(int row) const {
+        return engineImpl_->acceptsFlatParamFromMidi(row);
+    }
+
+    bool supportsStepSequencer() const {
+        return engineImpl_->supportsStepSequencer();
+    }
+
     void loadDx7Patch(const uint8_t *packedPatch) {
         engineImpl_->loadDx7Patch(packedPatch);
     }
@@ -252,7 +260,6 @@ public:
 
 private:
 
-    SynthEngineType engineTypeForStorageMagic(uint32_t magic) const;
     int allocateVoice(int note);
     int reuseVoice(int voiceIndex);
     bool adoptVoice(Voice *voice, int voiceIndex);

@@ -17,65 +17,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCREEN_PFM3_EDITOR
-#define SCREEN_PFM3_EDITOR
+#ifndef EDITOR_PARAM_PAGE
+#define EDITOR_PARAM_PAGE
 
 #include "Common.h"
-#include "ScreenEditor.h"
+#include "EditorEngine.h"
 
 /*
- * PFM3 editor pages, parameter handling and menu tables.
- *
- * Shared pages (Arp/Fx, Perf) still use the common ScreenEditor helpers.
+ * Generic menu/encoder page mechanics over the flat OneSynthParams model.
+ * Used by the PFM3 editor and by the shared Arp/Fx page. Engine-specific
+ * pages override the drawing/editing hooks they need.
  */
-class ScreenPfm3Editor : public EngineEditor {
+class EditorParamPage : public EditorEngine {
 public:
-    ScreenPfm3Editor();
+    EditorParamPage();
 
-    void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) override;
-    const struct EditorEditMenu* getEditMenu(int page) const override;
-    void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) override;
+    void drawEditorButton(int button, const struct EditorEditMenu *editMenu,
+        const struct EditorOneButton *page) override;
+    void drawParameterName(int button, const struct RowEncoder &rowEncoder,
+        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
     void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
         ParameterDisplay *param, float oldValue, float newValue) override;
     void tempoClick() override;
     void encoderTurned(int encoder, int ticks) override;
-    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) override;
     void buttonPressed(int button) override;
-    void buttonLongPressed(int instrument, int button) override;
-    void refreshOscillatorOperatorShape() override;
-    void refreshLfoOscillator() override;
-    void refreshLfoEnv() override;
-    void checkOperatorNumber() override;
+    void preparePage() override;
+    void refreshOscilloBG() override;
 
-private:
+protected:
     void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
-    void buttonPressedEditPage(int button);
     void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param,
         float oldValue, float newFloatValue);
     void resetHideParams();
-    bool isInOperatorPage(uint8_t pageNumber);
-    bool isInMatrixPage(uint8_t pageNumber);
-    bool isInModulatorPage(uint8_t pageNumber);
-    uint8_t getX(int encoder);
-
-    ScreenEditor *parent_;
-    SynthState *synthState_;
-    FirmwareTftDisplay *tft_;
 
     bool hideParam_[NUMBER_OF_ENCODERS];
-    // Value Changed info
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
-    uint8_t imChangedCounter_[NUMBER_OF_ENCODERS];
-    uint8_t mixChangedCounter_[NUMBER_OF_ENCODERS];
-    uint8_t mixChangeOperatorNumber_[NUMBER_OF_ENCODERS];
-    bool multipleEdition_;
-    // Remember previous lfo freq value
     float lfoFreqPreviousValue[5];
-    // Buffer to copy and past
-    int8_t bufferPageNumber;
-    uint8_t bufferEditNumber;
-    float bufferParam[6];
 };
 
 #endif

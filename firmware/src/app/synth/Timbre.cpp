@@ -2592,10 +2592,10 @@ uint32_t Timbre::getStorageBlob(uint8_t *out, uint32_t maxSize) {
 }
 
 bool Timbre::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
-    if (magic != PRESET_VERSION1 && magic != PRESET_VERSION2 && magic != PRESET_MSFA) {
+    SynthEngineType type = SynthEngineFactory::engineTypeForStorageMagic(magic);
+    if (type == SYNTH_ENGINE_COUNT) {
         return false;
     }
-    SynthEngineType type = engineTypeForStorageMagic(magic);
     if (engine_ != type) {
         setEngine(type);
     }
@@ -2603,27 +2603,13 @@ bool Timbre::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
 }
 
 int Timbre::getStorageNameOffset(uint32_t magic) const {
-    if (magic != PRESET_VERSION1 && magic != PRESET_VERSION2 && magic != PRESET_MSFA) {
-        return -1;
-    }
-    if (engineTypeForStorageMagic(magic) == SYNTH_ENGINE_MSFA) {
-        return SynthEngineFactory::get(SYNTH_ENGINE_MSFA, timbreNumber_)->getStorageNameOffset(magic);
-    }
-    return SynthEngineFactory::get(SYNTH_ENGINE_PFM3, timbreNumber_)->getStorageNameOffset(magic);
+    SynthEngine *engine = SynthEngineFactory::getForStorageMagic(magic, timbreNumber_);
+    return engine != nullptr ? engine->getStorageNameOffset(magic) : -1;
 }
 
 const char* Timbre::getStorageDefaultName(uint32_t magic) const {
-    if (engineTypeForStorageMagic(magic) == SYNTH_ENGINE_MSFA) {
-        return SynthEngineFactory::get(SYNTH_ENGINE_MSFA, timbreNumber_)->getStorageDefaultName();
-    }
-    return SynthEngineFactory::get(SYNTH_ENGINE_PFM3, timbreNumber_)->getStorageDefaultName();
-}
-
-SynthEngineType Timbre::engineTypeForStorageMagic(uint32_t magic) const {
-    if (magic == PRESET_MSFA) {
-        return SYNTH_ENGINE_MSFA;
-    }
-    return SYNTH_ENGINE_PFM3;
+    SynthEngine *engine = SynthEngineFactory::getForStorageMagic(magic, timbreNumber_);
+    return engine != nullptr ? engine->getStorageDefaultName() : nullptr;
 }
 
 void Timbre::applyFlatParams(const struct OneSynthParams &flat) {

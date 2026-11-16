@@ -8,10 +8,41 @@
  */
 
 #include "SynthEngineFactory.h"
+#include "PersistenceMagic.h"
 #include "Timbre.h"
 
 Preenfm3Engine SynthEngineFactory::pfm3Engines_[NUMBER_OF_TIMBRES];
 MsfaSynthEngine SynthEngineFactory::msfaEngines_[NUMBER_OF_TIMBRES];
+
+namespace {
+struct StorageMagicEntry {
+    uint32_t magic;
+    SynthEngineType type;
+};
+
+const StorageMagicEntry storageMagics[] = {
+    { PRESET_VERSION1, SYNTH_ENGINE_PFM3 },
+    { PRESET_VERSION2, SYNTH_ENGINE_PFM3 },
+    { PRESET_MSFA, SYNTH_ENGINE_MSFA },
+};
+}
+
+SynthEngineType SynthEngineFactory::engineTypeForStorageMagic(uint32_t magic) {
+    for (const StorageMagicEntry &entry : storageMagics) {
+        if (entry.magic == magic) {
+            return entry.type;
+        }
+    }
+    return SYNTH_ENGINE_COUNT;
+}
+
+SynthEngine* SynthEngineFactory::getForStorageMagic(uint32_t magic, int timbreNumber) {
+    SynthEngineType type = engineTypeForStorageMagic(magic);
+    if (type == SYNTH_ENGINE_COUNT) {
+        return nullptr;
+    }
+    return get(type, timbreNumber);
+}
 
 void SynthEngineFactory::init(Timbre *timbre, SynthState *synthState) {
     int timbreNumber = timbre->getTimbreNumber();

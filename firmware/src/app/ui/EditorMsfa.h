@@ -17,52 +17,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCREEN_MSFA_EDITOR
-#define SCREEN_MSFA_EDITOR
+#ifndef EDITOR_MSFA
+#define EDITOR_MSFA
 
 #include "Common.h"
-#include "ScreenEditor.h"
+#include "EditorEngine.h"
 
 class Timbre;
 
 /*
  * MSFA (DX7) editor pages. ScreenEditor owns one instance and delegates
- * pages 0..1 (Global, Oper) to it. Pages 2..5 (Matrix, Env, Arp/Fx, Perf)
- * stay on the PFM3 parameter path because they are shared with OneSynthParams.
+ * pages 0..1 (Global, Oper) to it. Page 2 reuses the PFM3 Arp/Fx menu;
+ * pages 3..5 are hidden.
  */
-class ScreenMsfaEditor : public EngineEditor {
+class EditorMsfa : public EditorEngine {
 public:
-    ScreenMsfaEditor();
+    EditorMsfa();
 
     void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) override;
-
-    const struct EditorEditMenu* getEditMenu(int page) const override;
-
-    void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) override;
+    SynthEngineType getEngineType() const override;
+    const char* getEngineName() const override;
+    const struct EditorEditMenu* getEngineMenu(int page) const override;
+    int getCommonPage(int page) const override;
+    void drawAlgorithm() override;
+    void drawPageHeader() override;
+    void drawEditorButton(int button, const struct EditorEditMenu *editMenu,
+        const struct EditorOneButton *page) override;
+    void drawParameterName(int button, const struct RowEncoder &rowEncoder,
+        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void encoderTurned(int encoder6, int ticks);
-    void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-        ParameterDisplay *param, float oldValue, float newValue) override;
+    void encoderTurned(int encoder6, int ticks) override;
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) override;
-    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
-    void buttonPressed(int button);
-    void buttonLongPressed(int instrument, int button);
-    void refreshOscillatorOperatorShape() override;
-    void refreshLfoOscillator() override;
-    void refreshLfoEnv() override;
+    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) override;
+    void buttonPressed(int button) override;
+    void buttonLongPressed(int instrument, int button) override;
+    void refreshOscilloBG() override;
     void tempoClick() override;
 
 private:
-    uint8_t getX(int encoder);
+    void refreshOscillatorOperatorEnvelope();
     int currentTimbre() const;
     Timbre* timbre();
 
     void displayValue(uint8_t paramId, uint8_t value);
     void applyProgramChange();
 
-    ScreenEditor *parent_;
-    SynthState *synthState_;
-    FirmwareTftDisplay *tft_;
     uint8_t valueChangedCounter_[6];
     uint8_t operatorChangedCounter_[6];
     uint8_t feedbackChangedCounter_;

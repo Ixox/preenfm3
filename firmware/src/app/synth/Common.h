@@ -113,8 +113,11 @@ struct AlgoInformation {
 };
 
 // Button Ids
+// All screens share this flat namespace: fullState.buttonState[NUMBER_OF_BUTTONIDS].
 enum {
+    // PFM3 editor
     BUTTONID_ONLY_ONE_STATE = 0,
+    // Mixer screen
     BUTTONID_MIXER_FIRST_BUTTON = 1,
     BUTTONID_MIXER_MIX = 1,
     BUTTONID_MIXER_OUTPUT,
@@ -122,11 +125,14 @@ enum {
     BUTTONID_MIXER_MIDI,
     BUTTONID_MIXER_SCALA,
     BUTTONID_MIXER_GLOBAL,
+    // PFM3 editor
     BUTTONID_EDIT_ENGINE,
     BUTTONID_EDIT_IM,
     BUTTONID_EDIT_MIX,
     BUTTONID_EDIT_FILTER,
+    // Operator pages, shared by PFM3 and MSFA editors
     BUTTONID_OPERATOR_1_2,
+    // PFM3 editor
     BUTTONID_OPERATOR_3_4,
     BUTTONID_OPERATOR_5_6,
     BUTTONID_MATRIX_1_2,
@@ -140,13 +146,16 @@ enum {
     BUTTONID_EDIT_ENVS,
     BUTTONID_EDIT_STEPS,
     BUTTONID_EDIT_NOTES,
+    // Menu / performance
     BUTTONID_MENU_LOAD,
     BUTTONID_MENU_SAVE,
     BUTTONID_MENU_RANDOM,
     BUTTONID_MENU_SCALA,
     BUTTONID_MENU_SETTINGS,
     BUTTONID_PERFORMANCE,
+    // PFM3 editor
     BUTTONID_ENV_1,
+    // MSFA editor
     BUTTONID_MSFA_MAIN,
     BUTTONID_MSFA_LFO,
     BUTTONID_MSFA_PITCH_ENV,

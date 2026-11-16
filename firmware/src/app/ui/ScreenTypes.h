@@ -25,6 +25,7 @@
 
 extern const char* lfoSeqMidiClock[];
 extern const char* lfoOscMidiClock[];
+extern const char *polyMonoNames[];
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define CUSTOM_CHAR_NOTE (char)7
@@ -74,6 +75,26 @@ struct ParameterDisplay {
     float incValue;
 };
 
+struct EditorOneButtonState {
+    const char *stateLabel;
+    const RowEncoder rowEncoder[6];
+};
 
+struct EditorOneButton {
+    const char *buttonLabel;
+    const uint8_t buttonId;
+    const int numberOfStates;
+    const EditorOneButtonState *states[];
+};
+
+struct EditorEditMenu {
+    const char *mainMenuName;
+    const int numberOfButtons;
+    const EditorOneButton *pages[];
+};
+
+struct EditorMainMenu {
+    const EditorEditMenu *editMenu[6];
+};
 
 #endif

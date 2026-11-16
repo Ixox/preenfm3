@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScreenMsfaEditor.h"
+#include "EditorMsfa.h"
+#include "ScreenEditor.h"
 
 #include "SynthState.h"
 #include "Timbre.h"
+#include "MsfaEngine.h"
 #include "MsfaParams.h"
 
 /*
@@ -234,15 +236,7 @@ static const struct EditorEditMenu msfaOperMenu = {
     { &msfaButtonLevel, &msfaButtonOsc, &msfaButtonEnv }
 };
 
-static const struct EditorEditMenu *msfaEditMenus[2] = {
-    &msfaGlobalMenu,
-    &msfaOperMenu
-};
-
-ScreenMsfaEditor::ScreenMsfaEditor() {
-    parent_ = nullptr;
-    synthState_ = nullptr;
-    tft_ = nullptr;
+EditorMsfa::EditorMsfa() {
     copyOperatorValid_ = false;
     feedbackChangedCounter_ = 0;
     feedbackSource_ = 0;
@@ -254,38 +248,57 @@ ScreenMsfaEditor::ScreenMsfaEditor() {
     }
 }
 
-void ScreenMsfaEditor::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
+void EditorMsfa::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
     parent_ = parent;
     synthState_ = synthState;
     tft_ = tft;
+    parent->insertEditor(this);
 }
 
-const struct EditorEditMenu* ScreenMsfaEditor::getEditMenu(int page) const {
-    if (page >= 0 && page < 2) {
-        return msfaEditMenus[page];
+SynthEngineType EditorMsfa::getEngineType() const {
+    return SYNTH_ENGINE_MSFA;
+}
+
+const char* EditorMsfa::getEngineName() const {
+    return "DX7";
+}
+
+const struct EditorEditMenu* EditorMsfa::getEngineMenu(int page) const {
+    if (page == 0) {
+        return &msfaGlobalMenu;
+    }
+    if (page == 1) {
+        return &msfaOperMenu;
     }
     return nullptr;
 }
 
-uint8_t ScreenMsfaEditor::getX(int encoder) {
-    uint8_t x = (encoder) * 8;
-    if (x >= 24) {
-        x -= 24;
+int EditorMsfa::getCommonPage(int page) const {
+    if (page == 2) {
+        return COMMON_PAGE_ARP_FX;
     }
-    return x;
+    return COMMON_PAGE_NONE;
 }
 
-int ScreenMsfaEditor::currentTimbre() const {
+void EditorMsfa::drawPageHeader() {
+    if (synthState_->fullState.mainPage == 1) {
+        tft_->print("Op ");
+        tft_->print(synthState_->fullState.operatorNumber + 1);
+        tft_->print(" ");
+    }
+}
+
+int EditorMsfa::currentTimbre() const {
     return synthState_->getCurrentTimbre();
 }
 
-Timbre* ScreenMsfaEditor::timbre() {
+Timbre* EditorMsfa::timbre() {
     return synthState_->getTimbre(currentTimbre());
 }
 
 
 
-void ScreenMsfaEditor::displayValue(uint8_t paramId, uint8_t value) {
+void EditorMsfa::displayValue(uint8_t paramId, uint8_t value) {
     const struct MsfaParamDesc *d = &msfaParams[paramId];
 
     switch (d->displayType) {
@@ -305,14 +318,16 @@ void ScreenMsfaEditor::displayValue(uint8_t paramId, uint8_t value) {
     }
 }
 
-void ScreenMsfaEditor::displayParamValue(int encoder, TFT_COLOR color) {
+void EditorMsfa::displayParamValue(int encoder, TFT_COLOR color) {
     struct FullState *fullState = &synthState_->fullState;
-    const struct EditorEditMenu *editMenu = getEditMenu(fullState->mainPage);
-    const struct EditorOneButton *page = editMenu->pages[fullState->editPage];
+    const struct EditorOneButton *page = currentPage();
+    if (page == nullptr) {
+        return;
+    }
     const struct RowEncoder rowEncoder =
         page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder];
 
-    uint8_t x = getX(encoder);
+    uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(color);
@@ -324,101 +339,51 @@ void ScreenMsfaEditor::displayParamValue(int encoder, TFT_COLOR color) {
     }
 }
 
-void ScreenMsfaEditor::refreshEditorByStep(int &refreshStatus, int &endRefreshStatus) {
+void EditorMsfa::drawAlgorithm() {
+    tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
+}
+
+void EditorMsfa::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
+        const struct EditorOneButton *page) {
     struct FullState *fullState = &synthState_->fullState;
-    const struct EditorEditMenu *editMenu = getEditMenu(fullState->mainPage);
-    const struct EditorOneButton *page = editMenu->pages[fullState->editPage];
-
-    switch (refreshStatus) {
-    case 21:
-        tft_->pauseRefresh();
-        tft_->clear();
-        parent_->displayPreset();
-        tft_->oscilloForceNextDisplay();
-        tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
-        break;
-    case 20:
-        tft_->pauseRefresh();
-        tft_->fillArea(0, 40, 240, 120, COLOR_BLACK);
-        tft_->fillArea(0, 270, 240, 30, COLOR_BLACK);
-        tft_->setCursor(0, 2);
-        tft_->setCharBackgroundColor(COLOR_BLACK);
-        tft_->setCharColor(COLOR_CYAN);
-        if (fullState->mainPage == 1) {
-            tft_->print("Op ");
-            tft_->print(fullState->operatorNumber + 1);
-            tft_->print(" ");
-        }
-        tft_->print(page->states[fullState->buttonState[page->buttonId]]->stateLabel);
-        tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
-        break;
-    case 18:
-    case 17:
-    case 16:
-    case 15:
-    case 14:
-    case 13: {
-        int button = 18 - refreshStatus;
-
-        if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
-            tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5,
-                fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
-        } else if (button < editMenu->numberOfButtons) {
-            const struct EditorOneButton *buttonPage = editMenu->pages[button];
-            tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
-                fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
-        } else {
-            tft_->drawButton("", 270, 29, button, 0, 0);
-        }
-        break;
-    }
-    case 12:
-    case 11:
-    case 10:
-    case 9:
-    case 8:
-    case 7: {
-        int button = 12 - refreshStatus;
-        const struct RowEncoder rowEncoder =
-            page->states[fullState->buttonState[page->buttonId]]->rowEncoder[button];
-        uint8_t x = getX(button);
-
-        tft_->setCharBackgroundColor(COLOR_BLACK);
-        tft_->setCharColor(COLOR_MEDIUM_GRAY);
-        tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
-
-        if (rowEncoder.row != MSFA_NONE) {
-            tft_->print(msfaParams[rowEncoder.row].name);
-        } else {
-            tft_->print("     ");
-        }
-        break;
-    }
-    case 6:
-    case 5:
-    case 4:
-    case 3:
-    case 2:
-    case 1:
-        displayParamValue(6 - refreshStatus, COLOR_WHITE);
-        break;
-    }
-
-    if (refreshStatus == endRefreshStatus) {
-        endRefreshStatus = 0;
-        refreshStatus = 0;
+    if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
+        tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5,
+            fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
+    } else if (button < editMenu->numberOfButtons) {
+        const struct EditorOneButton *buttonPage = editMenu->pages[button];
+        tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
+            fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
+    } else {
+        tft_->drawButton("", 270, 29, button, 0, 0);
     }
 }
 
-void ScreenMsfaEditor::encoderTurned(int encoder6, int ticks) {
+void EditorMsfa::drawParameterName(int button, const struct RowEncoder &rowEncoder,
+        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) {
+    (void) editMenu;
+    (void) page;
+    uint8_t x = getEncoderX(button);
+    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharColor(COLOR_MEDIUM_GRAY);
+    tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
+    if (rowEncoder.row != MSFA_NONE) {
+        tft_->print(msfaParams[rowEncoder.row].name);
+    } else {
+        tft_->print("     ");
+    }
+}
+
+void EditorMsfa::encoderTurned(int encoder6, int ticks) {
     struct FullState *fullState = &synthState_->fullState;
 
     if (fullState->mainPage < 0) {
         return;
     }
 
-    const struct EditorEditMenu *editMenu = getEditMenu(fullState->mainPage);
-    const struct EditorOneButton *page = editMenu->pages[fullState->editPage];
+    const struct EditorOneButton *page = currentPage();
+    if (page == nullptr) {
+        return;
+    }
     const struct RowEncoder rowEncoder =
         page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder6];
 
@@ -449,14 +414,7 @@ void ScreenMsfaEditor::encoderTurned(int encoder6, int ticks) {
     synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, operatorNumber, oldValue, newValue);
 }
 
-void ScreenMsfaEditor::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-    ParameterDisplay *param, float oldValue, float newValue) {
-    // MSFA pages do not use the PFM3 flat parameter model.
-    (void) refreshStatus; (void) timbre; (void) currentRow; (void) encoder;
-    (void) param; (void) oldValue; (void) newValue;
-}
-
-void ScreenMsfaEditor::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+void EditorMsfa::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
     (void) timbre; (void) oldValue;
 
     struct FullState *fullState = &synthState_->fullState;
@@ -464,8 +422,10 @@ void ScreenMsfaEditor::newEngineParamValue(int timbre, int paramId, int context,
         || paramId <= MSFA_NONE || paramId >= MSFA_PARAM_COUNT) {
         return;
     }
-    const struct EditorEditMenu *editMenu = getEditMenu(fullState->mainPage);
-    const struct EditorOneButton *page = editMenu->pages[fullState->editPage];
+    const struct EditorOneButton *page = currentPage();
+    if (page == nullptr) {
+        return;
+    }
 
     int encoder = -1;
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
@@ -493,7 +453,7 @@ void ScreenMsfaEditor::newEngineParamValue(int timbre, int paramId, int context,
     }
 
     if (paramId >= MSFA_EG_RATE_1 && paramId <= MSFA_EG_LEVEL_4) {
-        parent_->refreshOscillatorOperatorEnvelope();
+        refreshOscillatorOperatorEnvelope();
     }
     if (paramId == MSFA_ALGORITHM) {
         tft_->drawDx7Algo((int) newValue);
@@ -507,15 +467,18 @@ void ScreenMsfaEditor::newEngineParamValue(int timbre, int paramId, int context,
     }
 }
 
-void ScreenMsfaEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void EditorMsfa::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
     // MSFA has no multiple-operator edition yet.
 }
 
-void ScreenMsfaEditor::buttonPressed(int button) {
+void EditorMsfa::buttonPressed(int button) {
     struct FullState *fullState = &synthState_->fullState;
     int mainPage = fullState->mainPage;
-    const struct EditorEditMenu *editMenu = getEditMenu(mainPage);
-    const struct EditorOneButton *page = editMenu->pages[fullState->editPage];
+    const struct EditorEditMenu *editMenu = currentEditMenu();
+    const struct EditorOneButton *page = currentPage();
+    if (editMenu == nullptr || page == nullptr) {
+        return;
+    }
 
     switch (button) {
     case BUTTON_PFM3_EDIT:
@@ -556,7 +519,7 @@ void ScreenMsfaEditor::buttonPressed(int button) {
     synthState_->propagateNewPfm3Page();
 }
 
-void ScreenMsfaEditor::buttonLongPressed(int instrument, int button) {
+void EditorMsfa::buttonLongPressed(int instrument, int button) {
     int mainPage = synthState_->fullState.mainPage;
 
     if (mainPage != 1) {
@@ -586,19 +549,26 @@ void ScreenMsfaEditor::buttonLongPressed(int instrument, int button) {
     }
 }
 
-void ScreenMsfaEditor::refreshOscillatorOperatorShape() {
-    tft_->oscilloBgActionClear();
+void EditorMsfa::refreshOscilloBG() {
+    if (synthState_->fullState.mainPage == 1) {
+        refreshOscillatorOperatorEnvelope();
+    } else {
+        tft_->oscilloBgActionClear();
+    }
 }
 
-void ScreenMsfaEditor::refreshLfoOscillator() {
-    tft_->oscilloBgActionClear();
+void EditorMsfa::refreshOscillatorOperatorEnvelope() {
+    int op = synthState_->fullState.operatorNumber;
+    MsfaEnvelopeDisplay env;
+    getMsfaEnvelopeDisplay(timbre()->getPatchMemory(), op, &env);
+
+    tft_->oscilloBgSetEnvelope(env.time[0], env.time[1], env.time[2], env.time[3],
+            env.level[0], env.level[1], env.level[2], env.level[3],
+            CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN);
+    tft_->oscilloBgActionEnvelope();
 }
 
-void ScreenMsfaEditor::refreshLfoEnv() {
-    tft_->oscilloBgActionClear();
-}
-
-void ScreenMsfaEditor::tempoClick() {
+void EditorMsfa::tempoClick() {
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;
@@ -622,6 +592,6 @@ void ScreenMsfaEditor::tempoClick() {
     }
 }
 
-void ScreenMsfaEditor::applyProgramChange() {
+void EditorMsfa::applyProgramChange() {
     timbre()->patchMemoryChanged();
 }
