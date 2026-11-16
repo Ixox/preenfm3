@@ -1,0 +1,1 @@
+st-flash --reset write @FW_BIN@ 0x08020000

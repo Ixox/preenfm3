@@ -77,6 +77,7 @@ else()
     set(BOOTLOADER_VERSION "unknown")
 endif()
 string(REPLACE "." "_" BOOTLOADER_VERSION_FILE "${BOOTLOADER_VERSION}")
+set(BOOTLOADER_VERSION_FILE "${BOOTLOADER_VERSION_FILE}" PARENT_SCOPE)
 message(STATUS "preenFM3 bootloader version: ${BOOTLOADER_VERSION}")
 
 # The bootloader is flashed at 0x08000000; the firmware starts at 0x08020000.
