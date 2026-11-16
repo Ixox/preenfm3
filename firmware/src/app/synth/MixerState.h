@@ -32,10 +32,12 @@ enum MIXER_BANK_VERSION {
     // MPE
     MIXER_BANK_VERSION5,
     // REVERB
-    MIXER_BANK_VERSION6
+    MIXER_BANK_VERSION6,
+    // Synth engine per timbre
+    MIXER_BANK_VERSION7
 };
 
-#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION6
+#define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION7
 
 
 
@@ -55,6 +57,7 @@ struct MixerInstrumentState {
     float *scaleFrequencies;
     int8_t pan;
     float send;
+    uint8_t engine;
 };
 
 
@@ -89,6 +92,7 @@ private:
     void restoreFullStateVersion4(char *buffer);
     void restoreFullStateVersion5(char *buffer);
     void restoreFullStateVersion6(char *buffer);
+    void restoreFullStateVersion7(char *buffer);
     void setDefaultValues();
 };
 

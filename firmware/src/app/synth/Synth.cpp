@@ -546,6 +546,7 @@ void Synth::afterNewMixerLoad() {
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         synthState_->scalaSettingsChanged(timbre);
         timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState.instrumentState_[timbre].numberOfVoices);
+        timbres_[timbre].setEngine((SynthEngineType) this->synthState_->mixerState.instrumentState_[timbre].engine);
         timbres_[timbre].afterNewParamsLoad();
         // values to force check lfo used
         timbres_[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
@@ -715,6 +716,10 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
         case MIXER_VALUE_MIDI_LAST_NOTE:
         case MIXER_VALUE_MIDI_SHIFT_NOTE:
             timbres_[timbre].resetArpeggiator();
+            allNoteOff(timbre);
+            break;
+        case MIXER_VALUE_ENGINE:
+            timbres_[timbre].setEngine((SynthEngineType) ((int) newValue));
             allNoteOff(timbre);
             break;
         case MIXER_VALUE_NUMBER_OF_VOICES:
