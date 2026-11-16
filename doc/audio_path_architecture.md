@@ -20,17 +20,17 @@ Synth                                   global audio engine + transport
     │       │   ├── Pfm3TimbreContext [4]    static, indexed by timbre
     │       │   ├── Osc osc_[6] / Env env_[6]
     │       │   └── Pfm3VoiceState [16]      static, indexed by voice slot
-    │       └── MsfaSynthEngine [4]     MSFA/DX7 engine
+    │       └── Dx7SynthEngine [4]     DX7/DX7 engine
     │           ├── program_[4][156] / packedPatch_[4]
-    │           ├── MsfaTimbreState [4]      static, indexed by timbre
-    │           └── MsfaVoiceState [16]      static, indexed by voice slot
+    │           ├── Dx7TimbreState [4]      static, indexed by timbre
+    │           └── Dx7VoiceState [16]      static, indexed by voice slot
 ```
 
 The 16 voices form a single global pool shared by all four timbres. A voice is
 only ever rendered by the engine of the timbre that currently owns it.
 
 The per-timbre and per-voice engine arrays (`Pfm3TimbreParams`,
-`Pfm3TimbreContext`, `Pfm3VoiceState`, `MsfaTimbreState`, `MsfaVoiceState`) are
+`Pfm3TimbreContext`, `Pfm3VoiceState`, `Dx7TimbreState`, `Dx7VoiceState`) are
 static and indexed by timbre number or global voice slot, so they are shared by
 the four engine instances rather than duplicated per instance.
 
@@ -67,7 +67,7 @@ the four engine instances rather than duplicated per instance.
 
 ### Engines
 
-- **`SynthEngineFactory`** owns the static per-timbre PFM3 and MSFA engine
+- **`SynthEngineFactory`** owns the static per-timbre PFM3 and DX7 engine
   instances and returns the one selected by `SynthEngineType`.
 - **`SynthEngine`** is the abstract per-timbre contract: note on/off, block
   rendering, matrix sources, glide, FX matrix preparation, LFO/clock handling,
@@ -80,10 +80,10 @@ the four engine instances rather than duplicated per instance.
   oscillators, envelopes, per-voice `Pfm3VoiceState` (matrix, LFOs, envelope
   and oscillator state), note lifecycle, block rendering and PFM3 preset
   serialization.
-- **`MsfaSynthEngine`** adapts the vendored DX7/MSFA C code: it owns the
-  156-byte program and packed patch, and drives the static `MsfaTimbreState` /
-  `MsfaVoiceState` through the `MsfaEngine` adapter, including controller
-  handling, note start/key-up, per-voice rendering and MSFA preset
+- **`Dx7SynthEngine`** adapts the vendored DX7/DX7 C code: it owns the
+  156-byte program and packed patch, and drives the static `Dx7TimbreState` /
+  `Dx7VoiceState` through the `Dx7Engine` adapter, including controller
+  handling, note start/key-up, per-voice rendering and DX7 preset
   serialization. It has no unison and no matrix.
 
 ### Engine data
@@ -101,10 +101,10 @@ the four engine instances rather than duplicated per instance.
   modulation indexes, feedback memory, and the note-transition/glide state
   (`newNotePending`, `pendingNote*`, `phase_`, `gliding`, `nextGlidingNote*`,
   `nextMainFrequency`, `noteAlreadyFinished`).
-- **`MsfaTimbreState` / `MsfaVoiceState`** are opaque C structs from the
-  vendored MSFA code: timbre-level algorithm/controllers and per-voice DX7
-  operator/envelope state. They are accessed through `getMsfaTimbreState()`
-  and `getMsfaVoiceState()`.
+- **`Dx7TimbreState` / `Dx7VoiceState`** are opaque C structs from the
+  vendored DX7 code: timbre-level algorithm/controllers and per-voice DX7
+  operator/envelope state. They are accessed through `getDx7TimbreState()`
+  and `getDx7VoiceState()`.
 - **`TimbreSharedParams`** holds engine-independent part data: arpeggiator,
   FX1, FX2 and preset name. It is used by both engines and by storage.
 
@@ -142,13 +142,13 @@ internals directly.
 Engine-specific editor changes use
 `SynthState::propagateNewEngineParamValue()` → `Synth::newEngineParamValue()` →
 `Timbre::engineParamChanged()` → the active engine. PFM3 uses its flat
-`paramChanged()` path; MSFA maps the parameter ID to the DX7 program byte and
+`paramChanged()` path; DX7 maps the parameter ID to the DX7 program byte and
 updates only the affected operator/global state.
 
 ## Effects placement
 
 - **FX1**: per voice, in `Voice::fxAfterBlock()`. Shared by both engines; the
-  engine passes the matrix-derived filter values (PFM3) or zero (MSFA).
+  engine passes the matrix-derived filter values (PFM3) or zero (DX7).
 - **GateFX / FX2**: per timbre, in `Timbre::gateFx()` / `Timbre::applyTimbreFx()`.
 - **Mix, pan, compressor**: global, in `Synth`.
 
@@ -158,7 +158,7 @@ Persistence is engine-owned. `SynthEngine` exposes `getStorageMagic()`,
 `getStorageNameOffset()`, `getStorageDefaultName()`, `getStorageBlob()` and
 `loadStorageBlob()`. A slot is `ALIGNED_PATCH_SIZE` bytes: engine blob followed
 by a 4-byte magic. `TimbreSharedParams` can be included in the blob by engines
-that need it. PFM3 serializes the legacy `FlashSynthParams` layout; MSFA stores
+that need it. PFM3 serializes the legacy `FlashSynthParams` layout; DX7 stores
 the DX7 program, name and shared parameters.
 
 ## Separation of concerns
@@ -169,7 +169,7 @@ The main boundaries are clear:
 - `Timbre` handles one part: voice ownership, allocation/steal, arp,
   GateFX/FX2.
 - `Voice` is a neutral note container plus shared per-voice FX1.
-- `Preenfm3Engine` and `MsfaSynthEngine` own all DSP, parameters and
+- `Preenfm3Engine` and `Dx7SynthEngine` own all DSP, parameters and
   per-voice engine state.
 - `VoicePool` is pure ownership bookkeeping.
 - Persistence is engine-owned behind `SynthEngine`.

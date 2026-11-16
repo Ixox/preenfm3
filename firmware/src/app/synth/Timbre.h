@@ -39,7 +39,7 @@ enum {
 
 
 class Timbre {
-    friend class MsfaSynthEngine;
+    friend class Dx7SynthEngine;
     friend class Preenfm3Engine;
     friend class ByosEngine;
 public:

@@ -12,7 +12,7 @@
 
 #include "Common.h"
 #include "Preenfm3Engine.h"
-#include "MsfaSynthEngine.h"
+#include "Dx7SynthEngine.h"
 #include "byos/ByosEngine.h"
 
 class Timbre;
@@ -20,7 +20,7 @@ class SynthState;
 class SynthEngine;
 
 /*
- * Static engine registry. One PFM3, MSFA and BYOS engine per timbre, created
+ * Static engine registry. One PFM3, DX7 and BYOS engine per timbre, created
  * once at startup; Timbre only keeps a SynthEngine pointer.
  */
 class SynthEngineFactory {
@@ -36,7 +36,7 @@ public:
 
 private:
     static Preenfm3Engine pfm3Engines_[NUMBER_OF_TIMBRES];
-    static MsfaSynthEngine msfaEngines_[NUMBER_OF_TIMBRES];
+    static Dx7SynthEngine dx7Engines_[NUMBER_OF_TIMBRES];
     static ByosEngine byosEngines_[NUMBER_OF_TIMBRES];
 };
 

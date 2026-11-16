@@ -319,6 +319,24 @@ void EditorByos::buttonPressed(int button) {
     synthState_->propagateNewPfm3Page();
 }
 
+void EditorByos::drawAlgorithm() {
+    // Same 80x100 box as the PFM3/DX7 algorithm (TFT_ALGO_X/Y in TftDisplay.cpp).
+    static const int algoX = 160;
+    static const int algoY = 160;
+    static const int algoWidth = 80;
+    static const int algoHeight = 100;
+    static const char *lines[] = { "Your", "Synth", "Here" };
+    static const int lineLength[] = { 4, 5, 4 };
+
+    int y = algoY + (algoHeight - 3 * TFT_BIG_CHAR_HEIGHT) / 2;
+    for (int i = 0; i < 3; i++) {
+        int x = algoX + (algoWidth - lineLength[i] * TFT_BIG_CHAR_WIDTH) / 2;
+        tft_->setCursorInPixel(x, y);
+        tft_->print(lines[i], COLOR_CYAN, COLOR_BLACK);
+        y += TFT_BIG_CHAR_HEIGHT;
+    }
+}
+
 void EditorByos::tempoClick() {
 }
 

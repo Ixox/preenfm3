@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EDITOR_MSFA
-#define EDITOR_MSFA
+#ifndef EDITOR_DX7
+#define EDITOR_DX7
 
 #include "Common.h"
 #include "EditorEngine.h"
@@ -26,13 +26,13 @@
 class Timbre;
 
 /*
- * MSFA (DX7) editor pages. ScreenEditor owns one instance and delegates
+ * DX7 (DX7) editor pages. ScreenEditor owns one instance and delegates
  * pages 0..1 (Global, Oper) to it. Page 2 reuses the PFM3 Arp/Fx menu;
  * pages 3..5 are hidden.
  */
-class EditorMsfa : public EditorEngine {
+class EditorDx7 : public EditorEngine {
 public:
-    EditorMsfa();
+    EditorDx7();
 
     void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) override;
     SynthEngineType getEngineType() const override;

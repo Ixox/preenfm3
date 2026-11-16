@@ -7,28 +7,28 @@
  * (at your option) any later version.
  */
 
-#ifndef MSFA_SYNTH_ENGINE_H_
-#define MSFA_SYNTH_ENGINE_H_
+#ifndef DX7_SYNTH_ENGINE_H_
+#define DX7_SYNTH_ENGINE_H_
 
 #include "Common.h"
 #include "SynthEngine.h"
 
-#define MSFA_PACKED_PATCH_SIZE 128
-#define MSFA_PROGRAM_SIZE 156
+#define DX7_PACKED_PATCH_SIZE 128
+#define DX7_PROGRAM_SIZE 156
 
 class Timbre;
 class Voice;
 class SynthState;
-struct MsfaTimbreState;
+struct Dx7TimbreState;
 
 /*
- * MSFA engine adapter.
- * Owns the MSFA program/patch and timbre state; the low-level DSP stays in
- * MsfaEngine.*.
+ * DX7 engine adapter.
+ * Owns the DX7 program/patch and timbre state; the low-level DSP stays in
+ * Dx7Engine.*.
  */
-class MsfaSynthEngine : public SynthEngine {
+class Dx7SynthEngine : public SynthEngine {
 public:
-    MsfaSynthEngine() : timbre_(nullptr), synthState_(nullptr), msfaState_(nullptr), timbreNumber_(0) {}
+    Dx7SynthEngine() : timbre_(nullptr), synthState_(nullptr), dx7State_(nullptr), timbreNumber_(0) {}
 
     static void initGlobal();
     void init(Timbre *timbre, SynthState *synthState) override;
@@ -85,10 +85,10 @@ private:
 
     Timbre *timbre_;
     SynthState *synthState_;
-    MsfaTimbreState *msfaState_;
+    Dx7TimbreState *dx7State_;
     int timbreNumber_;
-    static uint8_t packedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE] __attribute__((section(".ram_d1")));
-    static uint8_t program_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE] __attribute__((section(".ram_d1")));
+    static uint8_t packedPatch_[NUMBER_OF_TIMBRES][DX7_PACKED_PATCH_SIZE] __attribute__((section(".ram_d1")));
+    static uint8_t program_[NUMBER_OF_TIMBRES][DX7_PROGRAM_SIZE] __attribute__((section(".ram_d1")));
 };
 
 #endif

@@ -8,7 +8,7 @@ engines:
 - `EditorParamPage` — generic menu/encoder page mechanics over
   `Pfm3Preset`. Not instantiated directly.
 - `EditorPfm3 : EditorParamPage` — PFM3 engine pages.
-- `EditorMsfa` — MSFA engine pages.
+- `EditorDx7` — DX7 engine pages.
 - `EditorCommon : EditorParamPage` — pages shared by all engines
   (Arp/Fx).
 
@@ -22,7 +22,7 @@ ScreenCoordinator
    v
 ScreenEditor  (common utilities + page routing)
    |-- EditorPfm3 : EditorParamPage   (PFM3 pages 0–3, 5)
-   |-- EditorMsfa                    (MSFA pages 0–1)
+   |-- EditorDx7                    (DX7 pages 0–1)
    `-- EditorCommon : EditorParamPage (shared Arp/Fx)
 ```
 
@@ -50,7 +50,7 @@ Current mappings:
 | Engine | Engine pages | Shared page |
 |--------|--------------|-------------|
 | PFM3   | 0 FM, 1 Oper, 2 Matrix, 3 Modul, 5 Perf | 4 → Arp/Fx |
-| MSFA   | 0 Global, 1 Oper | 2 → Arp/Fx |
+| DX7   | 0 Global, 1 Oper | 2 → Arp/Fx |
 
 `ScreenEditor::getMainMenu(page)` resolves the engine menu first, then the
 shared menu. `activeEditor()` uses the same mapping to pick the editor that
@@ -94,12 +94,12 @@ State: `hideParam_`, `valueChangedCounter_`, `lfoFreqPreviousValue`.
 - PFM3-specific `newPfm3ParamValue()` (operator rows, algorithm refresh).
 - `getCommonPage(4) = COMMON_PAGE_ARP_FX`; Perf (page 5) stays here.
 
-## MSFA editor (`EditorMsfa`)
+## DX7 editor (`EditorDx7`)
 
-- MSFA menus and parameter mapping (pages 0–1: Global, Oper).
-- MSFA value display and refresh steps.
-- MSFA operator/feedback highlighting and copy/paste.
-- MSFA program access.
+- DX7 menus and parameter mapping (pages 0–1: Global, Oper).
+- DX7 value display and refresh steps.
+- DX7 operator/feedback highlighting and copy/paste.
+- DX7 program access.
 - `getCommonPage(2) = COMMON_PAGE_ARP_FX`.
 - Uses public `ScreenEditor` accessors only; no friend declaration.
 
@@ -129,7 +129,7 @@ State: `hideParam_`, `valueChangedCounter_`, `lfoFreqPreviousValue`.
   behaviour.
 - Page index and preset-modified flags are shared; per-editor counters stay in
   their editor.
-- Keep `isInMatrixPage()` engine-aware: MSFA page 2 is Arp/Fx, not the PFM3
+- Keep `isInMatrixPage()` engine-aware: DX7 page 2 is Arp/Fx, not the PFM3
   matrix.
 - Parameter display and copy/paste behaviour must be preserved.
 - RAM/flash are tight; avoid adding per-engine copies of shared buffers.

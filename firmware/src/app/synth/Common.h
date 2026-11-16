@@ -393,7 +393,7 @@ enum {
 
 enum SynthEngineType {
     SYNTH_ENGINE_PFM3 = 0,
-    SYNTH_ENGINE_MSFA,
+    SYNTH_ENGINE_DX7,
     SYNTH_ENGINE_BYOS,
     SYNTH_ENGINE_COUNT
 };

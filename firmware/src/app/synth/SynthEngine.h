@@ -34,7 +34,7 @@ struct MidiParamMessage {
 /*
  * Per-timbre sound engine interface.
  *
- * A Timbre owns one Preenfm3Engine and one MsfaSynthEngine and selects one at
+ * A Timbre owns one Preenfm3Engine and one Dx7SynthEngine and selects one at
  * runtime. The engine owns its format's parameters, per-voice state, note
  * allocation, block rendering and persistence.
  *
@@ -232,7 +232,7 @@ public:
     virtual bool isLfoUsed(int lfo) { return false; }
 
     /*
-     * MSFA only.
+     * DX7 only.
      */
 
     // DX7 SysEx import (156-byte packed DX7 program).

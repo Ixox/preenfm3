@@ -1,6 +1,6 @@
 # Adding a new engine
 
-This is the short checklist for adding an engine beside PFM3 and MSFA.
+This is the short checklist for adding an engine beside PFM3 and DX7.
 The examples use **NewEngine**. A complete working third engine lives in
 `firmware/src/app/synth/byos/` (see its `README.md`).
 
@@ -41,7 +41,7 @@ ignored until needed (`setParamValue`, `serializePfm3Preset`,
 `loadDx7Patch`, MIDI clock, LFO helpers, ...).
 
 Per-voice state: keep one static array indexed by `voice->slot()` and bind it
-from `bindVoice()`, like `Pfm3VoiceState` / the MSFA voice state.
+from `bindVoice()`, like `Pfm3VoiceState` / the DX7 voice state.
 
 If the engine does not use the flat `Pfm3Preset` model, also check
 `Timbre::setEngine()`: it currently calls `deserializePfm3Preset(pfm3Preset_)` and
@@ -59,7 +59,7 @@ If the engine should expose them:
 - In `voicesNextBlock()`, after rendering each voice, call
   `voice->fxAfterBlock(matrixFilterFrequency, matrixFilterParam2,
   matrixFilterAmp)`. Use `0.0f, 0.0f, 0.0f` when the engine has no per-voice
-  matrix filter modulation (like MSFA/BYOS). FX1 keeps per-voice state and must
+  matrix filter modulation (like DX7/BYOS). FX1 keeps per-voice state and must
   run before `Timbre::voicesToTimbre()` sums the voices.
 - FX2 and the global reverb/FX bus need nothing: `Synth::buildNewSampleBlock()`
   calls `Timbre::applyTimbreFx()` and `FxBus` for every engine.

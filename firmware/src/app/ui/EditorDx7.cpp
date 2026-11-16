@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EditorMsfa.h"
+#include "EditorDx7.h"
 #include "ScreenEditor.h"
 
 #include "SynthState.h"
 #include "Timbre.h"
-#include "MsfaEngine.h"
-#include "MsfaParams.h"
+#include "Dx7Engine.h"
+#include "Dx7Params.h"
 
 /*
  * DX7 156-byte program layout (see Dx7Note::init):
@@ -62,181 +62,181 @@
  */
 
 
-static const struct EditorOneButtonState msfaEngineState = {
+static const struct EditorOneButtonState dx7EngineState = {
     "Engine",
     {
-        { MSFA_ALGORITHM, 0 },
-        { MSFA_FEEDBACK, 0 },
-        { MSFA_OSC_KEY_SYNC, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_ALGORITHM, 0 },
+        { DX7_FEEDBACK, 0 },
+        { DX7_OSC_KEY_SYNC, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaLfoModState = {
+static const struct EditorOneButtonState dx7LfoModState = {
     "Modulation",
     {
-        { MSFA_LFO_AMP_MOD_DEPTH, 0 },
-        { MSFA_LFO_PITCH_MOD_DEPTH, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_LFO_AMP_MOD_DEPTH, 0 },
+        { DX7_LFO_PITCH_MOD_DEPTH, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaLfoState = {
+static const struct EditorOneButtonState dx7LfoState = {
     "LFO",
     {
-        { MSFA_LFO_SPEED, 0 },
-        { MSFA_LFO_DELAY, 0 },
-        { MSFA_LFO_WAVEFORM, 0 },
-        { MSFA_LFO_KEY_SYNC, 0 },
-        { MSFA_LFO_PITCH_MOD_SENSITIVITY, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_LFO_SPEED, 0 },
+        { DX7_LFO_DELAY, 0 },
+        { DX7_LFO_WAVEFORM, 0 },
+        { DX7_LFO_KEY_SYNC, 0 },
+        { DX7_LFO_PITCH_MOD_SENSITIVITY, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaPitchRateState = {
+static const struct EditorOneButtonState dx7PitchRateState = {
     "Pitch Rate",
     {
-        { MSFA_PITCH_EG_RATE_1, 0 },
-        { MSFA_PITCH_EG_RATE_2, 0 },
-        { MSFA_PITCH_EG_RATE_3, 0 },
-        { MSFA_PITCH_EG_RATE_4, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_PITCH_EG_RATE_1, 0 },
+        { DX7_PITCH_EG_RATE_2, 0 },
+        { DX7_PITCH_EG_RATE_3, 0 },
+        { DX7_PITCH_EG_RATE_4, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaPitchLevelState = {
+static const struct EditorOneButtonState dx7PitchLevelState = {
     "Pitch Level",
     {
-        { MSFA_PITCH_EG_LEVEL_1, 0 },
-        { MSFA_PITCH_EG_LEVEL_2, 0 },
-        { MSFA_PITCH_EG_LEVEL_3, 0 },
-        { MSFA_PITCH_EG_LEVEL_4, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_PITCH_EG_LEVEL_1, 0 },
+        { DX7_PITCH_EG_LEVEL_2, 0 },
+        { DX7_PITCH_EG_LEVEL_3, 0 },
+        { DX7_PITCH_EG_LEVEL_4, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaAmpState = {
+static const struct EditorOneButtonState dx7AmpState = {
     "Amp",
     {
-        { MSFA_OPERATOR_ENABLED, 0 },
-        { MSFA_OPERATOR_OUTPUT_LEVEL, 0 },
-        { MSFA_KEY_VELOCITY_SENSITIVITY, 0 },
-        { MSFA_AMPLITUDE_MOD_SENSITIVITY, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_OPERATOR_ENABLED, 0 },
+        { DX7_OPERATOR_OUTPUT_LEVEL, 0 },
+        { DX7_KEY_VELOCITY_SENSITIVITY, 0 },
+        { DX7_AMPLITUDE_MOD_SENSITIVITY, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaScalState = {
+static const struct EditorOneButtonState dx7ScalState = {
     "Scaling",
     {
-        { MSFA_LEVEL_SCALING_BREAK_POINT, 0 },
-        { MSFA_LEVEL_SCALING_LEFT_DEPTH, 0 },
-        { MSFA_LEVEL_SCALING_RIGHT_DEPTH, 0 },
-        { MSFA_LEVEL_SCALING_LEFT_CURVE, 0 },
-        { MSFA_LEVEL_SCALING_RIGHT_CURVE, 0 },
-        { MSFA_RATE_SCALING, 0 }
+        { DX7_LEVEL_SCALING_BREAK_POINT, 0 },
+        { DX7_LEVEL_SCALING_LEFT_DEPTH, 0 },
+        { DX7_LEVEL_SCALING_RIGHT_DEPTH, 0 },
+        { DX7_LEVEL_SCALING_LEFT_CURVE, 0 },
+        { DX7_LEVEL_SCALING_RIGHT_CURVE, 0 },
+        { DX7_RATE_SCALING, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaFreqState = {
+static const struct EditorOneButtonState dx7FreqState = {
     "Frequency",
     {
-        { MSFA_OSCILLATOR_MODE, 0 },
-        { MSFA_COARSE_FREQUENCY, 0 },
-        { MSFA_FINE_FREQUENCY, 0 },
-        { MSFA_DETUNE, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_OSCILLATOR_MODE, 0 },
+        { DX7_COARSE_FREQUENCY, 0 },
+        { DX7_FINE_FREQUENCY, 0 },
+        { DX7_DETUNE, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaEgRateState = {
+static const struct EditorOneButtonState dx7EgRateState = {
     "Rate",
     {
-        { MSFA_EG_RATE_1, 0 },
-        { MSFA_EG_RATE_2, 0 },
-        { MSFA_EG_RATE_3, 0 },
-        { MSFA_EG_RATE_4, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_EG_RATE_1, 0 },
+        { DX7_EG_RATE_2, 0 },
+        { DX7_EG_RATE_3, 0 },
+        { DX7_EG_RATE_4, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButtonState msfaEgLevelState = {
+static const struct EditorOneButtonState dx7EgLevelState = {
     "Level",
     {
-        { MSFA_EG_LEVEL_1, 0 },
-        { MSFA_EG_LEVEL_2, 0 },
-        { MSFA_EG_LEVEL_3, 0 },
-        { MSFA_EG_LEVEL_4, 0 },
-        { MSFA_NONE, 0 },
-        { MSFA_NONE, 0 }
+        { DX7_EG_LEVEL_1, 0 },
+        { DX7_EG_LEVEL_2, 0 },
+        { DX7_EG_LEVEL_3, 0 },
+        { DX7_EG_LEVEL_4, 0 },
+        { DX7_NONE, 0 },
+        { DX7_NONE, 0 }
     }
 };
 
-static const struct EditorOneButton msfaButtonEngine = {
+static const struct EditorOneButton dx7ButtonEngine = {
     "Engine",
     BUTTONID_ENGINE_PAGE_1,
     1,
-    { &msfaEngineState }
+    { &dx7EngineState }
 };
 
-static const struct EditorOneButton msfaButtonLfo = {
+static const struct EditorOneButton dx7ButtonLfo = {
     "LFO",
     BUTTONID_ENGINE_PAGE_2,
     2,
-    { &msfaLfoModState, &msfaLfoState }
+    { &dx7LfoModState, &dx7LfoState }
 };
 
-static const struct EditorOneButton msfaButtonPitchEnv = {
+static const struct EditorOneButton dx7ButtonPitchEnv = {
     "Pitch",
     BUTTONID_ENGINE_PAGE_3,
     2,
-    { &msfaPitchRateState, &msfaPitchLevelState }
+    { &dx7PitchRateState, &dx7PitchLevelState }
 };
 
-static const struct EditorOneButton msfaButtonLevel = {
+static const struct EditorOneButton dx7ButtonLevel = {
     "Level",
     BUTTONID_ENGINE_PAGE_4,
     2,
-    { &msfaAmpState, &msfaScalState }
+    { &dx7AmpState, &dx7ScalState }
 };
 
-static const struct EditorOneButton msfaButtonOsc = {
+static const struct EditorOneButton dx7ButtonOsc = {
     "Osc",
     BUTTONID_ENGINE_PAGE_6,
     1,
-    { &msfaFreqState }
+    { &dx7FreqState }
 };
 
-static const struct EditorOneButton msfaButtonEnv = {
+static const struct EditorOneButton dx7ButtonEnv = {
     "Env",
     BUTTONID_ENGINE_PAGE_7,
     2,
-    { &msfaEgRateState, &msfaEgLevelState }
+    { &dx7EgRateState, &dx7EgLevelState }
 };
 
-static const struct EditorEditMenu msfaGlobalMenu = {
+static const struct EditorEditMenu dx7GlobalMenu = {
     "Global",
     3,
-    { &msfaButtonEngine, &msfaButtonLfo, &msfaButtonPitchEnv }
+    { &dx7ButtonEngine, &dx7ButtonLfo, &dx7ButtonPitchEnv }
 };
 
-static const struct EditorEditMenu msfaOperMenu = {
+static const struct EditorEditMenu dx7OperMenu = {
     "Oper",
     3,
-    { &msfaButtonLevel, &msfaButtonOsc, &msfaButtonEnv }
+    { &dx7ButtonLevel, &dx7ButtonOsc, &dx7ButtonEnv }
 };
 
-EditorMsfa::EditorMsfa() {
+EditorDx7::EditorDx7() {
     copyOperatorValid_ = false;
     feedbackChangedCounter_ = 0;
     feedbackSource_ = 0;
@@ -248,39 +248,39 @@ EditorMsfa::EditorMsfa() {
     }
 }
 
-void EditorMsfa::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
+void EditorDx7::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
     parent_ = parent;
     synthState_ = synthState;
     tft_ = tft;
     parent->insertEditor(this);
 }
 
-SynthEngineType EditorMsfa::getEngineType() const {
-    return SYNTH_ENGINE_MSFA;
+SynthEngineType EditorDx7::getEngineType() const {
+    return SYNTH_ENGINE_DX7;
 }
 
-const char* EditorMsfa::getEngineName() const {
+const char* EditorDx7::getEngineName() const {
     return "DX7";
 }
 
-const struct EditorEditMenu* EditorMsfa::getEngineMenu(int page) const {
+const struct EditorEditMenu* EditorDx7::getEngineMenu(int page) const {
     if (page == 0) {
-        return &msfaGlobalMenu;
+        return &dx7GlobalMenu;
     }
     if (page == 1) {
-        return &msfaOperMenu;
+        return &dx7OperMenu;
     }
     return nullptr;
 }
 
-int EditorMsfa::getCommonPage(int page) const {
+int EditorDx7::getCommonPage(int page) const {
     if (page == 2) {
         return COMMON_PAGE_ARP_FX;
     }
     return COMMON_PAGE_NONE;
 }
 
-void EditorMsfa::drawPageHeader() {
+void EditorDx7::drawPageHeader() {
     if (synthState_->fullState.mainPage == 1) {
         tft_->print("Op ");
         tft_->print(synthState_->fullState.operatorNumber + 1);
@@ -288,37 +288,37 @@ void EditorMsfa::drawPageHeader() {
     }
 }
 
-int EditorMsfa::currentTimbre() const {
+int EditorDx7::currentTimbre() const {
     return synthState_->getCurrentTimbre();
 }
 
-Timbre* EditorMsfa::timbre() {
+Timbre* EditorDx7::timbre() {
     return synthState_->getTimbre(currentTimbre());
 }
 
 
 
-void EditorMsfa::displayValue(uint8_t paramId, uint8_t value) {
-    const struct MsfaParamDesc *d = &msfaParams[paramId];
+void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
+    const struct Dx7ParamDesc *d = &dx7Params[paramId];
 
     switch (d->displayType) {
-    case MSFA_DISPLAY_STRINGS:
+    case DX7_DISPLAY_STRINGS:
         tft_->print(d->valueNames[value]);
         break;
-    case MSFA_DISPLAY_ALGO:
+    case DX7_DISPLAY_ALGO:
         tft_->printValueWithSpace(value + 1);
         break;
-    case MSFA_DISPLAY_DETUNE:
+    case DX7_DISPLAY_DETUNE:
         tft_->printValueWithSpace((int) value - 7);
         break;
-    case MSFA_DISPLAY_INT:
+    case DX7_DISPLAY_INT:
     default:
         tft_->printValueWithSpace(value);
         break;
     }
 }
 
-void EditorMsfa::displayParamValue(int encoder, TFT_COLOR color) {
+void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
     struct FullState *fullState = &synthState_->fullState;
     const struct EditorOneButton *page = currentPage();
     if (page == nullptr) {
@@ -332,18 +332,18 @@ void EditorMsfa::displayParamValue(int encoder, TFT_COLOR color) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(color);
 
-    if (rowEncoder.row != MSFA_NONE) {
-        displayValue(rowEncoder.row, getMsfaParamValue(timbre()->getPatchMemory(), rowEncoder.row, synthState_->fullState.operatorNumber));
+    if (rowEncoder.row != DX7_NONE) {
+        displayValue(rowEncoder.row, getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, synthState_->fullState.operatorNumber));
     } else {
         tft_->print("     ");
     }
 }
 
-void EditorMsfa::drawAlgorithm() {
+void EditorDx7::drawAlgorithm() {
     tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
 }
 
-void EditorMsfa::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
+void EditorDx7::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
         const struct EditorOneButton *page) {
     struct FullState *fullState = &synthState_->fullState;
     if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
@@ -358,7 +358,7 @@ void EditorMsfa::drawEditorButton(int button, const struct EditorEditMenu *editM
     }
 }
 
-void EditorMsfa::drawParameterName(int button, const struct RowEncoder &rowEncoder,
+void EditorDx7::drawParameterName(int button, const struct RowEncoder &rowEncoder,
         const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) {
     (void) editMenu;
     (void) page;
@@ -366,14 +366,14 @@ void EditorMsfa::drawParameterName(int button, const struct RowEncoder &rowEncod
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_MEDIUM_GRAY);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
-    if (rowEncoder.row != MSFA_NONE) {
-        tft_->print(msfaParams[rowEncoder.row].name);
+    if (rowEncoder.row != DX7_NONE) {
+        tft_->print(dx7Params[rowEncoder.row].name);
     } else {
         tft_->print("     ");
     }
 }
 
-void EditorMsfa::encoderTurned(int encoder6, int ticks) {
+void EditorDx7::encoderTurned(int encoder6, int ticks) {
     struct FullState *fullState = &synthState_->fullState;
 
     if (fullState->mainPage < 0) {
@@ -387,16 +387,16 @@ void EditorMsfa::encoderTurned(int encoder6, int ticks) {
     const struct RowEncoder rowEncoder =
         page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder6];
 
-    if (rowEncoder.row == MSFA_NONE) {
+    if (rowEncoder.row == DX7_NONE) {
         return;
     }
 
-    const struct MsfaParamDesc *d = &msfaParams[rowEncoder.row];
+    const struct Dx7ParamDesc *d = &dx7Params[rowEncoder.row];
     const int operatorNumber = fullState->operatorNumber;
-    uint8_t oldValue = getMsfaParamValue(timbre()->getPatchMemory(), rowEncoder.row, operatorNumber);
+    uint8_t oldValue = getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, operatorNumber);
     int newValue = oldValue;
 
-    if (d->displayType == MSFA_DISPLAY_STRINGS) {
+    if (d->displayType == DX7_DISPLAY_STRINGS) {
         ticks = ticks > 0 ? 1 : -1;
     }
 
@@ -414,12 +414,12 @@ void EditorMsfa::encoderTurned(int encoder6, int ticks) {
     synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, operatorNumber, oldValue, newValue);
 }
 
-void EditorMsfa::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
     (void) timbre; (void) oldValue;
 
     struct FullState *fullState = &synthState_->fullState;
     if (fullState->mainPage < 0 || fullState->mainPage > 1
-        || paramId <= MSFA_NONE || paramId >= MSFA_PARAM_COUNT) {
+        || paramId <= DX7_NONE || paramId >= DX7_PARAM_COUNT) {
         return;
     }
     const struct EditorOneButton *page = currentPage();
@@ -436,7 +436,7 @@ void EditorMsfa::newEngineParamValue(int timbre, int paramId, int context, float
         }
     }
 
-    if (paramId == MSFA_FEEDBACK && encoder >= 0) {
+    if (paramId == DX7_FEEDBACK && encoder >= 0) {
         uint8_t source = 0;
         uint8_t dest = 0;
         if (tft_->getDx7Feedback(this->timbre()->getPatchMemory()[134], source, dest)) {
@@ -445,17 +445,17 @@ void EditorMsfa::newEngineParamValue(int timbre, int paramId, int context, float
             feedbackSource_ = source;
             feedbackDest_ = dest;
         }
-    } else if ((msfaParams[paramId].kind == MSFA_KIND_OPERATOR
-            || msfaParams[paramId].kind == MSFA_KIND_OP_ENABLED) && encoder >= 0) {
+    } else if ((dx7Params[paramId].kind == DX7_KIND_OPERATOR
+            || dx7Params[paramId].kind == DX7_KIND_OP_ENABLED) && encoder >= 0) {
         tft_->highlightOperator(context);
         operatorChangedCounter_[encoder] = 4;
         highlightedOperator_[encoder] = context;
     }
 
-    if (paramId >= MSFA_EG_RATE_1 && paramId <= MSFA_EG_LEVEL_4) {
+    if (paramId >= DX7_EG_RATE_1 && paramId <= DX7_EG_LEVEL_4) {
         refreshOscillatorOperatorEnvelope();
     }
-    if (paramId == MSFA_ALGORITHM) {
+    if (paramId == DX7_ALGORITHM) {
         tft_->drawDx7Algo((int) newValue);
     }
 
@@ -467,11 +467,11 @@ void EditorMsfa::newEngineParamValue(int timbre, int paramId, int context, float
     }
 }
 
-void EditorMsfa::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
-    // MSFA has no multiple-operator edition yet.
+void EditorDx7::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+    // DX7 has no multiple-operator edition yet.
 }
 
-void EditorMsfa::buttonPressed(int button) {
+void EditorDx7::buttonPressed(int button) {
     struct FullState *fullState = &synthState_->fullState;
     int mainPage = fullState->mainPage;
     const struct EditorEditMenu *editMenu = currentEditMenu();
@@ -519,7 +519,7 @@ void EditorMsfa::buttonPressed(int button) {
     synthState_->propagateNewPfm3Page();
 }
 
-void EditorMsfa::buttonLongPressed(int instrument, int button) {
+void EditorDx7::buttonLongPressed(int instrument, int button) {
     int mainPage = synthState_->fullState.mainPage;
 
     if (mainPage != 1) {
@@ -549,7 +549,7 @@ void EditorMsfa::buttonLongPressed(int instrument, int button) {
     }
 }
 
-void EditorMsfa::refreshOscilloBG() {
+void EditorDx7::refreshOscilloBG() {
     if (synthState_->fullState.mainPage == 1) {
         refreshOscillatorOperatorEnvelope();
     } else {
@@ -557,10 +557,10 @@ void EditorMsfa::refreshOscilloBG() {
     }
 }
 
-void EditorMsfa::refreshOscillatorOperatorEnvelope() {
+void EditorDx7::refreshOscillatorOperatorEnvelope() {
     int op = synthState_->fullState.operatorNumber;
-    MsfaEnvelopeDisplay env;
-    getMsfaEnvelopeDisplay(timbre()->getPatchMemory(), op, &env);
+    Dx7EnvelopeDisplay env;
+    getDx7EnvelopeDisplay(timbre()->getPatchMemory(), op, &env);
 
     tft_->oscilloBgSetEnvelope(env.time[0], env.time[1], env.time[2], env.time[3],
             env.level[0], env.level[1], env.level[2], env.level[3],
@@ -568,7 +568,7 @@ void EditorMsfa::refreshOscillatorOperatorEnvelope() {
     tft_->oscilloBgActionEnvelope();
 }
 
-void EditorMsfa::tempoClick() {
+void EditorDx7::tempoClick() {
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;
@@ -592,6 +592,6 @@ void EditorMsfa::tempoClick() {
     }
 }
 
-void EditorMsfa::applyProgramChange() {
+void EditorDx7::applyProgramChange() {
     timbre()->patchMemoryChanged();
 }

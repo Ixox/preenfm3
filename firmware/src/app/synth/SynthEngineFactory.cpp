@@ -12,7 +12,7 @@
 #include "Timbre.h"
 
 Preenfm3Engine SynthEngineFactory::pfm3Engines_[NUMBER_OF_TIMBRES];
-MsfaSynthEngine SynthEngineFactory::msfaEngines_[NUMBER_OF_TIMBRES];
+Dx7SynthEngine SynthEngineFactory::dx7Engines_[NUMBER_OF_TIMBRES];
 ByosEngine SynthEngineFactory::byosEngines_[NUMBER_OF_TIMBRES];
 
 namespace {
@@ -24,7 +24,7 @@ struct StorageMagicEntry {
 const StorageMagicEntry storageMagics[] = {
     { PRESET_VERSION1, SYNTH_ENGINE_PFM3 },
     { PRESET_VERSION2, SYNTH_ENGINE_PFM3 },
-    { PRESET_MSFA, SYNTH_ENGINE_MSFA },
+    { PRESET_DX7, SYNTH_ENGINE_DX7 },
     { PRESET_BYOS, SYNTH_ENGINE_BYOS },
 };
 }
@@ -47,15 +47,15 @@ SynthEngine* SynthEngineFactory::getForStorageMagic(uint32_t magic, int timbreNu
 }
 
 void SynthEngineFactory::initDsp() {
-    MsfaSynthEngine::initGlobal();
+    Dx7SynthEngine::initGlobal();
 }
 
 const char* SynthEngineFactory::getEngineDisplayName(SynthEngineType type) {
     switch (type) {
     case SYNTH_ENGINE_PFM3:
         return "PFM3";
-    case SYNTH_ENGINE_MSFA:
-        return "MSFA";
+    case SYNTH_ENGINE_DX7:
+        return "DX7";
     case SYNTH_ENGINE_BYOS:
         return "BYOS";
     default:
@@ -66,13 +66,13 @@ const char* SynthEngineFactory::getEngineDisplayName(SynthEngineType type) {
 void SynthEngineFactory::init(Timbre *timbre, SynthState *synthState) {
     int timbreNumber = timbre->getTimbreNumber();
     pfm3Engines_[timbreNumber].init(timbre, synthState);
-    msfaEngines_[timbreNumber].init(timbre, synthState);
+    dx7Engines_[timbreNumber].init(timbre, synthState);
     byosEngines_[timbreNumber].init(timbre, synthState);
 }
 
 SynthEngine* SynthEngineFactory::get(SynthEngineType type, int timbreNumber) {
-    if (type == SYNTH_ENGINE_MSFA) {
-        return static_cast<SynthEngine*>(&msfaEngines_[timbreNumber]);
+    if (type == SYNTH_ENGINE_DX7) {
+        return static_cast<SynthEngine*>(&dx7Engines_[timbreNumber]);
     }
     if (type == SYNTH_ENGINE_BYOS) {
         return static_cast<SynthEngine*>(&byosEngines_[timbreNumber]);

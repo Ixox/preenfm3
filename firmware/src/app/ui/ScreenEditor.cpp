@@ -19,7 +19,7 @@
 #include <string.h>
 #include <FirmwareTftDisplay.h>
 #include "ScreenEditor.h"
-#include "EditorMsfa.h"
+#include "EditorDx7.h"
 #include "EditorPfm3.h"
 #include "EditorCommon.h"
 #include "byos/EditorByos.h"
@@ -28,7 +28,7 @@
 #include "Timbre.h"
 #include "preenfm3.h"
 
-static EditorMsfa msfaEditorInstance;
+static EditorDx7 dx7EditorInstance;
 static EditorPfm3 pfm3EditorInstance;
 static EditorCommon commonEditorInstance;
 static EditorByos byosEditorInstance;
@@ -49,7 +49,7 @@ void ScreenEditor::init(SynthState *synthState, FirmwareTftDisplay *tft) {
     firstEditor_ = nullptr;
     cachedEngineType_ = SYNTH_ENGINE_COUNT;
     cachedEditor_ = nullptr;
-    msfaEditorInstance.init(this, synthState, tft);
+    dx7EditorInstance.init(this, synthState, tft);
     pfm3EditorInstance.init(this, synthState, tft);
     commonEditorInstance.init(this, synthState, tft);
     byosEditorInstance.init(this, synthState, tft);

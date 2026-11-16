@@ -397,9 +397,9 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber,
 
     uint8_t *packed = storage->getDX7SysexFile()->dx7LoadPatch(bank, patchNumber);
     if (packed != nullptr) {
-        // DX7 sysex patches always switch the target timbre to MSFA.
-        mixerState.instrumentState_[timbre].engine = SYNTH_ENGINE_MSFA;
-        timbres[timbre].setEngine(SYNTH_ENGINE_MSFA);
+        // DX7 sysex patches always switch the target timbre to DX7.
+        mixerState.instrumentState_[timbre].engine = SYNTH_ENGINE_DX7;
+        timbres[timbre].setEngine(SYNTH_ENGINE_DX7);
 
         timbres[timbre].loadDx7Patch(packed);
         // Keep PFM3 params in sync for display/backward compatibility.

@@ -6,7 +6,7 @@ controls do. It is written for musicians and patch creators, not for developers.
 ## Overview
 
 The preenFM3 has **6 timbres**. Each timbre runs one engine: **PFM3** (default)
-or **MSFA** (DX7-compatible). This document covers PFM3.
+or **DX7** (DX7-compatible). This document covers PFM3.
 
 PFM3 is a 6-operator FM synthesizer:
 
@@ -264,7 +264,7 @@ A preset/mixer slot is 1024 bytes:
   current preset is kept.
 
 PFM3 uses the legacy `FlashSynthParams` layout, so existing PFM3 banks remain
-compatible. MSFA uses its program blob plus the shared timbre parameters.
+compatible. DX7 uses its program blob plus the shared timbre parameters.
 
 ## Tips
 

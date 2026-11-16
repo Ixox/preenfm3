@@ -1,7 +1,7 @@
 # Drawing the DX7 algorithm on the preenFM3 TFT
 
 This note records how the PFM3 algorithm diagram is drawn and what is needed
-to draw the 32 DX7 (MSFA) algorithms the same way.
+to draw the 32 DX7 (DX7) algorithms the same way.
 
 ## 1. PFM3 drawing pipeline
 
@@ -185,13 +185,13 @@ does **not** give is screen positions, which is the missing piece.
      through the action queue.
 
 4. **Call sites**:
-   - `EditorMsfa::refreshEditorByStep()` (Engine page) should draw
+   - `EditorDx7::refreshEditorByStep()` (Engine page) should draw
      the DX7 algorithm instead of clearing, using `program[134]` (0..31).
    - `ScreenEditor::refreshEditorByStep()` currently skips `drawAlgo` for
-     MSFA (`case 10` and `case 21`); those should call the DX7 variant on the
+     DX7 (`case 10` and `case 21`); those should call the DX7 variant on the
      main edit screen.
 
-5. **Highlight mapping**: the MSFA editor's `operatorNumber` is `0..5` for
+5. **Highlight mapping**: the DX7 editor's `operatorNumber` is `0..5` for
    DX7 OP1..OP6, which is exactly what `highlightOperator()` expects, provided
    the DX7 table stores positions with DX7 operator numbers `1..6`
    (`operatorPosition_[op-1]`).
@@ -251,7 +251,7 @@ need hand-authored positions (or an auto-layout pass).
 
 1. Add `dx7Algos[32]` and `drawDx7Algo()` to `TftAlgo`.
 2. Add `TftDisplay::drawDx7Algo()` + action handling.
-3. Call it from the MSFA Engine page (`program[134]`) and the main edit
+3. Call it from the DX7 Engine page (`program[134]`) and the main edit
    screen.
 4. Verify operator highlight on the Oper page.
 5. Optionally derive the tables at build time from `FmCore::algorithms` to

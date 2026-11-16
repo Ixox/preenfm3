@@ -1,6 +1,6 @@
 # BYOS — Bring Your Own Synth
 
-BYOS is the third engine example, next to PFM3 and MSFA. It is deliberately
+BYOS is the third engine example, next to PFM3 and DX7. It is deliberately
 small: two additive oscillators, one linear AR envelope, seven parameters, a
 minimal editor and a simple MIDI CC map.
 
@@ -84,7 +84,7 @@ There is no NRPN map and no `midiPatchParam()` patch dump.
   - `OP` — row 1 is op1 (`Wave`, `Mult`, `Mix 12`), row 2 (encoders 4–6) is
     op2 (`Wave`, `Mult`). `Mix 12` is the single global crossfade.
   - `ENV` — `Attack`, `Release`.
-- `Arp/Fx` (button 2) — the common page shared with PFM3 and MSFA
+- `Arp/Fx` (button 2) — the common page shared with PFM3 and DX7
   (`Arp`, `Fx1`, `Fx2`). It is not implemented by BYOS: `EditorByos` maps main
   page 1 to `COMMON_PAGE_ARP_FX` in `getCommonPage()`, and `ScreenEditor`
   routes it to the shared `EditorCommon`/`EditorParamPage` editor.
@@ -93,6 +93,10 @@ The engine page uses the shared `EditorOneButton`/`EditorEditMenu` structures
 and the `EditorEngine` helpers (`currentEditMenu()`, `currentPage()`,
 `rowEncoderFor()`, `getEncoderX()`). The engine parameters are read through
 `Timbre::getPatchMemory()` cast to `ByosParams*`.
+
+Where PFM3/DX7 draw their algorithm, BYOS leaves the 80×100 box empty.
+`EditorByos::drawAlgorithm()` uses it as a placeholder and prints
+`Your` / `Synth` / `Here` in three big-font lines.
 
 Arp/Fx are not engine-specific: the arpeggiator lives in `Timbre`, FX1 is
 applied by `Voice::fxAfterBlock()` (called from `ByosEngine::voicesNextBlock`)

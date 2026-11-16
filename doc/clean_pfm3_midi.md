@@ -69,7 +69,7 @@ Only engine-owned parameter CCs move to the engine.
 
 Add four methods to `SynthEngine` (`firmware/src/app/synth/SynthEngine.h`),
 next to the existing capability hooks. All default to "not handled", so
-`MsfaSynthEngine` is automatically safe and a third engine can start with the
+`Dx7SynthEngine` is automatically safe and a third engine can start with the
 defaults.
 
 ```cpp
@@ -98,7 +98,7 @@ virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) { return false
 virtual bool midiPfm3ParamFeedback(int row, int encoder, float value,
                                    struct MidiParamMessage &out) const { return false; }
 
-// Map a generic engine-parameter change (MSFA or a future engine) to an
+// Map a generic engine-parameter change (DX7 or a future engine) to an
 // outgoing CC/NRPN. `paramId` and `context` are engine-defined.
 virtual bool midiParamFeedback(int paramId, int context, float value,
                                struct MidiParamMessage &out) const { return false; }
@@ -182,8 +182,8 @@ NRPN indexes are part of the external protocol and must stay stable:
   a device-level request; keep the async action in `MidiDecoder` and have it
   loop on the engine's `midiPatchParam()`.
 
-MSFA timbres must not fall into the PFM3 map. With the virtual defaults this
-happens automatically; do not reuse PFM3 row indexes for MSFA parameters.
+DX7 timbres must not fall into the PFM3 map. With the virtual defaults this
+happens automatically; do not reuse PFM3 row indexes for DX7 parameters.
 
 ## 6. Phases
 
@@ -225,14 +225,14 @@ the PFM3 listener method name remains (`newPfm3ParamValue`).
   buffer of messages.
 - `param == NULL` feedback (step-select changes) must keep working through the
   engine hook.
-- The Arp/FX CCs must keep working on MSFA timbres.
+- The Arp/FX CCs must keep working on DX7 timbres.
 - `Synth::setNewValueFromMidi()` is called only from the MIDI path today; after
   the move it can delegate to the engine or be deleted. `Timbre::setParamValue()`
   already writes both the shared block and the PFM3 mirror.
 
 ## 8. Test matrix
 
-| Area | PFM3 | MSFA |
+| Area | PFM3 | DX7 |
 |---|---|---|
 | CC parameter map | applies | ignored |
 | CC Arp/FX | applies | applies |
@@ -247,4 +247,4 @@ the PFM3 listener method name remains (`newPfm3ParamValue`).
 
 Hardware check after each phase: load a PFM3 preset, edit from an external CC
 controller, send an NRPN dump, request `SEND_PATCH_AS_NRPN`, then switch one
-timbre to MSFA and repeat the CC/NRPN edits to confirm they are ignored.
+timbre to DX7 and repeat the CC/NRPN edits to confirm they are ignored.

@@ -2,13 +2,13 @@
 
 Status: steps 1–7 and 8a–8e implemented. Step 9 (`BasicSynthEngine`)
 outstanding. The editor split (`doc/screen_separation.md`) and the two
-framework leaks (Synth MSFA checks, storage-magic mapping) are also
+framework leaks (Synth DX7 checks, storage-magic mapping) are also
 implemented.
 
 This is the single migration plan for two refactorings that meet in the same
 code:
 
-1. **Engine separation** — `Synth` becomes the host; `Preenfm3` and `Msfa`
+1. **Engine separation** — `Synth` becomes the host; `Preenfm3` and `Dx7`
    become independent sound engines behind a `SynthEngine` interface.
 2. **Dynamic voice allocation** — the static per-timbre voice reservation is
    replaced by one global 16-voice pool that timbres borrow on demand.
@@ -22,14 +22,14 @@ They are planned together because both rewrite the same seams:
 - Keep 16 global voices and 6 timbres.
 - Stop permanently reserving voices per timbre; let any timbre borrow any free
   global voice.
-- Keep PFM3 as the default engine and MSFA as an opt-in per-timbre engine.
+- Keep PFM3 as the default engine and DX7 as an opt-in per-timbre engine.
 - Make a third engine a matter of implementing the engine interface and being
   registered.
 - Keep the audio path real-time safe: no dynamic allocation, no per-sample
   virtual dispatch.
 - Preserve poly, mono, unison, MPE, arpeggiator, voice stealing, FX and the
   existing mixer/preset model.
-- Keep the PFM3 preset layout compatible; MSFA keeps its own program blob.
+- Keep the PFM3 preset layout compatible; DX7 keeps its own program blob.
 
 ## 2. Current architecture
 
@@ -70,17 +70,17 @@ the sum of all per-timbre counts cannot exceed 16.
 `Timbre` is the per-timbre dispatcher:
 
 - `engineNoteOn()` / `engineNoteOff()` choose `preenNoteOn/Off()` or
-  `msfaNoteOn/Off()`.
+  `dx7NoteOn/Off()`.
 - `voicesNextBlock()` chooses `pfm3VoicesNextBlock()` or
-  `msfaVoicesNextBlock()`.
+  `dx7VoicesNextBlock()`.
 - `afterNewParamsLoad()` chooses `pfm3AfterNewParamsLoad()` or
-  `msfaAfterNewParamsLoad()`.
+  `dx7AfterNewParamsLoad()`.
 - `setEngine()` switches `engine_`.
 - `prepareMatrixForNewBlock()`, `glide()`, `resetMatrixDestination()`,
   `setMatrixSource*()`, `setMatrixPolyAfterTouch()`, `fxAfterBlock()` and the
-  MPE note paths branch on MSFA.
+  MPE note paths branch on DX7.
 
-`Voice` is not engine-agnostic either: it contains both PFM3 DSP and MSFA state,
+`Voice` is not engine-agnostic either: it contains both PFM3 DSP and DX7 state,
 and some `Voice` methods test `currentTimbre->getEngine()`.
 
 ### 2.4 `Timbre` inventory
@@ -94,7 +94,7 @@ PFM3-only state:
 - `currentGate_`
 - `unisonPhase[]` (static)
 - `lowerNoteFrequency` (`lowerNote_` / `lowerNoteReleased_` are shared with
-  MSFA)
+  DX7)
 
 PFM3-only methods:
 
@@ -113,12 +113,12 @@ PFM3-only methods:
 - the PFM3 branches of `noteOnMPE()` / `noteOffMPE()`
 - the unison paths in `preenNoteOn()` / `preenNoteOff()` / `voicesToTimbre()`
 
-MSFA-only state and methods:
+DX7-only state and methods:
 
-- `msfaState_`, `msfaPackedPatch_[]`, `msfaProgram_[]`
-- `loadMsfaPackedPatch()`, `loadMsfaProgram()`, `getMsfaProgram*()`
-- `msfaNoteOn()`, `msfaNoteOff()`, `msfaVoicesNextBlock()`,
-  `msfaAfterNewParamsLoad()`
+- `dx7State_`, `dx7PackedPatch_[]`, `dx7Program_[]`
+- `loadDx7PackedPatch()`, `loadDx7Program()`, `getDx7Program*()`
+- `dx7NoteOn()`, `dx7NoteOff()`, `dx7VoicesNextBlock()`,
+  `dx7AfterNewParamsLoad()`
 
 Shared (stays with the timbre host):
 
@@ -145,10 +145,10 @@ PFM3-only:
 - `updateAllMixOscsAndPans()`, `updateAllModulationIndexes()`
 - `prepareMatrixForNewBlock()`, `fxAfterBlock()` PFM3 part
 
-MSFA-only:
+DX7-only:
 
-- `msfaState_`, `msfaNoteOn()`, `msfaNoteOff()`, `msfaNextBlock()`,
-  `msfaUpdateProgram()`
+- `dx7State_`, `dx7NoteOn()`, `dx7NoteOff()`, `dx7NextBlock()`,
+  `dx7UpdateProgram()`
 
 Shared:
 
@@ -163,7 +163,7 @@ Synth (host)
   ├── VoicePool (16 global voices)
   ├── shared services: MIDI, arpeggiator, mixer, FX, presets, CPU meter
   └── Timbre[6]
-        ├── SynthEngine* engine  (Preenfm3Engine or MsfaEngine or future)
+        ├── SynthEngine* engine  (Preenfm3Engine or Dx7Engine or future)
         ├── shared timbre state (mixer, FX, arp, active voice list)
         └── engine-owned timbre context
 ```
@@ -206,8 +206,8 @@ public:
 
 `Preenfm3Engine` owns the PFM3 DSP objects (`Osc`, `Env`, `Lfo*`, `Matrix`
 pointers/context, PFM3 per-voice state) and implements the PFM3 render path.
-`MsfaSynthEngine` implements the interface as a wrapper around the existing
-`MsfaEngine.*` free-function API; `MsfaEngine.*` stays the low-level MSFA API.
+`Dx7SynthEngine` implements the interface as a wrapper around the existing
+`Dx7Engine.*` free-function API; `Dx7Engine.*` stays the low-level DX7 API.
 
 The virtual calls are per note and per voice per block, not per sample.
 
@@ -234,7 +234,7 @@ struct Pfm3TimbreContext {
 };
 ```
 
-`MsfaTimbreContext` holds the MSFA program, operator on/off mask, algorithm and
+`Dx7TimbreContext` holds the DX7 program, operator on/off mask, algorithm and
 feedback, and any precomputed values.
 
 The context is invalidated/recomputed from `afterNewParamsLoad()`, `setNewValue()`
@@ -255,22 +255,22 @@ struct Pfm3VoiceState {
     EnvData envState[6];
 };
 
-struct MsfaVoiceState {
-    // Dx7Note + MSFA per-voice state
+struct Dx7VoiceState {
+    // Dx7Note + DX7 per-voice state
 };
 ```
 
 Implementation note: `Pfm3VoiceState` lives in `Pfm3VoiceState.h` and is a
 member of `Voice` (`pfm3State_`). The per-voice filter/effect state stays in
-`Voice` because `fxAfterBlock()` is shared with MSFA. `Voice::engine` is not
+`Voice` because `fxAfterBlock()` is shared with DX7. `Voice::engine` is not
 added yet; binding goes through `currentTimbre` until step 4.
 
 Storage differs by engine because of RAM:
 
 - `Pfm3VoiceState` stays inline in `Voice` (DTCMRAM), as the PFM3 DSP state is
   today.
-- `MsfaVoiceState` stays in the existing dedicated RAM_D1 arrays
-  (`msfaVoiceStates`, see `MsfaEngine.h`). It is large and must not be inlined
+- `Dx7VoiceState` stays in the existing dedicated RAM_D1 arrays
+  (`dx7VoiceStates`, see `Dx7Engine.h`). It is large and must not be inlined
   into `Voice`.
 
 `Voice` therefore holds a typed pointer/index, not both full states:
@@ -281,7 +281,7 @@ class Voice {
     Timbre *currentTimbre;
     SynthEngine *engine;
     Pfm3VoiceState pfm3State;      // inline, as today
-    MsfaVoiceState *msfaState_;    // pointer into the RAM_D1 array, as today
+    Dx7VoiceState *dx7State_;    // pointer into the RAM_D1 array, as today
     // note/glide/steal state, output buffer
 };
 ```
@@ -392,8 +392,8 @@ not rendered yet, and would mutate the old timbre's list during iteration.
 
 Pending voices are not yet in the target's active list, so `allocateVoice()`
 counts them when checking `maxVoices_` (by scanning the pool). Idle voices are
-reused immediately (no tail to protect). MSFA targets and cross-engine steals
-keep the immediate path because MSFA has no quick-release mechanism.
+reused immediately (no tail to protect). DX7 targets and cross-engine steals
+keep the immediate path because DX7 has no quick-release mechanism.
 
 If ownership or binding moves before the quick release completes, the old tail
 is cut off or decays through the new timbre's envelopes (click / wrong sound).
@@ -456,11 +456,11 @@ PFM3-specific, to `Preenfm3Engine`:
   `lowerNoteFrequency`.
 - The PFM3-specific part of the parameter block.
 
-MSFA-specific, to `MsfaEngine`:
+DX7-specific, to `Dx7Engine`:
 
-- `MsfaEngine.*`, `Voice::msfa*`, `Timbre::msfa*`, `msfaProgram_`,
-  `msfaPackedPatch_`, MSFA init currently done in `Synth::init()`.
-- MSFA program/patch loading and the MSFA editor data.
+- `Dx7Engine.*`, `Voice::dx7*`, `Timbre::dx7*`, `dx7Program_`,
+  `dx7PackedPatch_`, DX7 init currently done in `Synth::init()`.
+- DX7 program/patch loading and the DX7 editor data.
 
 Shared, stays in `Synth`/`Timbre`:
 
@@ -468,7 +468,7 @@ Shared, stays in `Synth`/`Timbre`:
 - Arpeggiator, MIDI clock, sequencer interaction.
 - Per-timbre mixer state, volume/pan, compressor, FX1, FX2, FX bus.
 - MIDI, presets, CPU meter, oscilloscope note info.
-- `Timbre::lowerNote_` / `lowerNoteReleased_` (shared with MSFA);
+- `Timbre::lowerNote_` / `lowerNoteReleased_` (shared with DX7);
   `lowerNoteFrequency` is PFM3-only.
 - Shared parameters: arp, FX, preset name.
 - PFM3 parameters: `performance1` (exposed as the Perf1..Perf4 matrix
@@ -483,7 +483,7 @@ Shared, stays in `Synth`/`Timbre`:
 - Split the parameter block conceptually into shared timbre parameters (arp, FX,
   preset name) and PFM3 DSP parameters owned by `Preenfm3Engine` (including
   `performance1`, which feeds the Perf1..Perf4 matrix sources).
-- MSFA keeps its own program blob.
+- DX7 keeps its own program blob.
 - Engine-specific parameters live with the engine, not in the shared block.
 - A generic engine-editor interface already exists (`EditorEngine`); the engine
   separation does not change the editor split, only where parameters live.
@@ -500,19 +500,19 @@ The two refactorings are interleaved so `Voice` binding is written once.
 
 2. **Add engine-owned timbre contexts and typed per-voice state.**
    `Preenfm3Engine` owns `Pfm3TimbreContext`; `Voice` gets `Pfm3VoiceState` and
-   `MsfaVoiceState`; `Voice::setCurrentTimbre()` becomes `bindTimbre()` through
+   `Dx7VoiceState`; `Voice::setCurrentTimbre()` becomes `bindTimbre()` through
    the engine. Verify no audio change with static allocation.
 
 3. **Add `VoicePool` and active lists.**
    Implement the global pool and `maxVoices_` / `activeVoices_`. Update
-   `preenNoteOn/Off`, `msfaNoteOn/Off`, render loops, MPE, unison and the mixer
+   `preenNoteOn/Off`, `dx7NoteOn/Off`, render loops, MPE, unison and the mixer
    value path. Remove `rebuidVoiceAllTimbre()`, `getFreeVoice()` and
    `getNumberOfFreeVoicesForThisTimbre()`.
 
 4. **Put both engines' state behind the interface.**
    First move the PFM3 timbre DSP objects (`Timbre::osc1_..osc6_`,
    `Timbre::env1_..env6_`) and their initialization into `Preenfm3Engine`.
-   Then move MSFA state and methods into `MsfaEngine`, remove the MSFA branches
+   Then move DX7 state and methods into `Dx7Engine`, remove the DX7 branches
    from `Timbre`/`Voice`, and use the same allocator/binding path.
 
 5. **Remove the static reservation and engine branches.**
@@ -530,7 +530,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
      `osc1..6`, `env1..6` time/level/curve, `matrixRowState1..12`,
      `lfoOsc1..3`, `lfoPhases`, `lfoEnv1/2`, `lfoSeq1/2`, `lfoSteps1/2`,
      `midiNote1/2Curve`, and `performance1` (the Perf1..Perf4 matrix
-     sources). MSFA keeps its own `program_[156]` blob.
+     sources). DX7 keeps its own `program_[156]` blob.
 
    - **6b — Split the runtime storage.** Add `TimbreSharedParams` in `Timbre`
      and `Pfm3TimbreParams` in `Preenfm3Engine`. Keep `Pfm3Preset` as the
@@ -543,13 +543,13 @@ The two refactorings are interleaved so `Voice` binding is written once.
    - **6c — Route editor and MIDI access.** The editor and MIDI keep reading
      and writing the flat mirror. `setParamValue()` updates the mirror and the
      real owner (`TimbreSharedParams` or `Pfm3TimbreParams`). Shared rows
-     (Arp/Fx) stay on `Timbre`; PFM3 rows go to `Preenfm3Engine`. The MSFA
+     (Arp/Fx) stay on `Timbre`; PFM3 rows go to `Preenfm3Engine`. The DX7
      editor keeps writing its own program blob. Ignore the PFM3 CC/NRPN maps
-     for MSFA timbres.
+     for DX7 timbres.
 
    - **6d — Update persistence.** `PatchBank`, `MixerBank` and `SynthState`
      keep using `Pfm3Preset`; load calls `deserialize()`, save calls
-     `serialize()`. No PFM3 flash-format change; the MSFA preset/mixer layout
+     `serialize()`. No PFM3 flash-format change; the DX7 preset/mixer layout
      is unchanged.
 
    - **6e — Update the PFM3 engine context.** `initOscEnv()` and
@@ -557,15 +557,15 @@ The two refactorings are interleaved so `Voice` binding is written once.
      `Timbre::afterNewParamsLoad()` resets shared and engine state.
 
    - **6f — Test.** PFM3 preset/mixer round-trip, randomizer, editor on both
-     engines, MIDI CC/NRPN, MSFA patch load, cross-engine switching.
+     engines, MIDI CC/NRPN, DX7 patch load, cross-engine switching.
 
    The flat mirror is kept during step 6 to avoid rewriting all flat accesses;
    it is a UI/serialization cache, not the DSP owner.
 
 7. **Move the per-voice DSP behind the engine.** `Preenfm3Engine::renderVoice()`
    owns the PFM3 sample calculation (formerly `Voice::nextBlock()`) and
-   `updateAllMixOscsAndPans()`; `MsfaSynthEngine::renderVoice()` owns the MSFA
-   path (formerly `Voice::msfaNextBlock()`). `Voice::fxAfterBlock()` stays
+   `updateAllMixOscsAndPans()`; `Dx7SynthEngine::renderVoice()` owns the DX7
+   path (formerly `Voice::dx7NextBlock()`). `Voice::fxAfterBlock()` stays
    shared: FX1 is per voice but common to both engines.
 
 8. **Finish the engine boundary and validate it with a third engine.**
@@ -596,17 +596,17 @@ The two refactorings are interleaved so `Voice` binding is written once.
      `Timbre`.
 
    - **8b — Hide the concrete engines.** Add `SynthEngineFactory`, which
-     owns the static per-timbre PFM3/MSFA engine instances. `Timbre` stores
+     owns the static per-timbre PFM3/DX7 engine instances. `Timbre` stores
      only `SynthEngine*` and selects it by `SynthEngineType`. The DX7
      import stays `loadDx7Patch()`. Editor/patch memory is exposed
-     generically through `getPatchMemory()` and `patchMemoryChanged()`; MSFA implements
+     generically through `getPatchMemory()` and `patchMemoryChanged()`; DX7 implements
      them and PFM3 keeps the defaults. `setEngine()` re-applies the flat
      `params_` mirror to the new engine before `afterNewParamsLoad()`, so a
      DX7 patch converted by Hexter can be played by PFM3 after switching.
      The generic engine parameter path (`propagateNewEngineParamValue()` →
      `newEngineParamValue()` → `Timbre::engineParamChanged()` →
-     `SynthEngine::engineParamChanged()`) gives the MSFA editor the same
-     UI→Synth→Timbre→Engine flow as PFM3. MSFA applies operator/global
+     `SynthEngine::engineParamChanged()`) gives the DX7 editor the same
+     UI→Synth→Timbre→Engine flow as PFM3. DX7 applies operator/global
      updates granularly without a full `Dx7Note::update()`.
 
    - **8c — Remove the friend shortcuts.** Implemented: `Synth` and `Voice`
@@ -614,7 +614,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
      `noteOffVoice()`, `noteOffVoiceQuick()`, `killVoice()` and
      `startVoiceAfterTransfer()`, plus public getters/wrappers for the note
      stack, MIDI clock, FX and voice-pool transfer. Only
-     `MsfaSynthEngine`/`Preenfm3Engine` remain friends.
+     `Dx7SynthEngine`/`Preenfm3Engine` remain friends.
 
    - **8d — Move PFM3-biased note-transition data out of `Voice`.**
      Implemented: glide phase, pending-note fields, `noteAlreadyFinished`,
@@ -647,7 +647,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
    - **Validation:** verify that neither `Timbre` nor `Voice` needs to change.
      If either does, the boundary is not complete and must be fixed first.
    - **Tests:** note on/off, ADSR, oscillator pitch, engine switch to/from
-     PFM3 and MSFA, preset save/load, mixer save/load, editor pages.
+     PFM3 and DX7, preset save/load, mixer save/load, editor pages.
 
    This engine is the structural validation that the boundary is complete and
    doubles as the reference implementation for the next engine.
@@ -660,7 +660,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
 - Several timbres set to max 16; only the active count stays at or below 16.
 - No minimum reservation: a timbre may be fully stolen; no voice leak.
 - Old mixer banks load with `numberOfVoices` as maxima.
-- Mixed engines: PFM3 and MSFA timbres competing for the same 16 voices.
+- Mixed engines: PFM3 and DX7 timbres competing for the same 16 voices.
 - Poly, mono, unison, glide, hold pedal.
 - Unison width equals `min(maxVoices_, 7)` (up to 7); insufficient voices follow the
   steal/skip policy; `numberOfVoiceInverse_` matches the width.
@@ -690,7 +690,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
 - Real-time audio path: no per-sample virtual dispatch, no allocation.
 - `Voice` RAM: keep the two typed states lean; DTCMRAM and RAM_D1 are tight.
 - Preset compatibility, especially the PFM3 parameter layout.
-- MSFA/PFM3 header name collisions (`Env`, `Lfo`); keep MSFA in its own
+- DX7/PFM3 header name collisions (`Env`, `Lfo`); keep DX7 in its own
   translation units and use opaque state across the boundary.
 - UI and MIDI paths that currently branch on the engine.
 - Cross-timbre steal ordering must be exact; a mistake produces clicks or a
@@ -698,10 +698,10 @@ The two refactorings are interleaved so `Voice` binding is written once.
 
 ## 9. Decisions
 
-1. Engine context is engine-owned (`Pfm3TimbreContext` / `MsfaTimbreContext`),
+1. Engine context is engine-owned (`Pfm3TimbreContext` / `Dx7TimbreContext`),
    not a generic `Timbre` struct.
 2. Per-voice engine state is split into separate types
-   (`Pfm3VoiceState`, `MsfaVoiceState`), not a union.
+   (`Pfm3VoiceState`, `Dx7VoiceState`), not a union.
 3. Mixer semantics: Option A — `numberOfVoices` is a per-timbre maximum,
    0..16 independently; the sum of maxima may exceed 16.
 4. Stealing order: same-note retrigger > global free > global idle > oldest
@@ -718,16 +718,16 @@ The two refactorings are interleaved so `Voice` binding is written once.
    `Synth::processPendingTransfers()`.
 10. MPE `X` is the editable last member channel, clamped to
     `min(16, 1 + maxVoices_)`; lowering `X` kills voices above it immediately.
-11. `MsfaSynthEngine` is a class wrapper over the existing `MsfaEngine.*`
+11. `Dx7SynthEngine` is a class wrapper over the existing `Dx7Engine.*`
     free-function API; `Preenfm3Engine` is new.
 12. Per-block orchestration uses engine hooks
     (`prepareBlock` / `renderVoices` / `postRender`); `voicesToTimbre` and FX
-    stay shared; `gateFx` moves to `Preenfm3Engine` (MSFA no-op).
+    stay shared; `gateFx` moves to `Preenfm3Engine` (DX7 no-op).
 13. Persisting the editable MPE last-member channel is deferred; derive
     `X = min(16, 1 + maxVoices_)` initially.
 14. `Timbre` owns one `SynthEngine` instance; selection is per timbre.
 15. `Timbre::params_` stays in `Timbre` during steps 1–5; the PFM3 parameter
     split happens in step 6.
-16. MSFA note-on/off uses the same `VoicePool` from step 3.
+16. DX7 note-on/off uses the same `VoicePool` from step 3.
 17. Keep a flat `Pfm3Preset` mirror in `Timbre` for the editor, storage and
     MIDI; the DSP owners are `TimbreSharedParams` / `Pfm3TimbreParams`.

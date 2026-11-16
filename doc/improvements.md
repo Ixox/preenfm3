@@ -29,7 +29,7 @@ STM32H7 cache/MPU correctness, the display pipeline and audio performance.
   - [2. Synth — hardware RNG in the audio callback](#2-synth--hardware-rng-in-the-audio-callback)
   - [3. I-cache pressure in the render switches](#3-i-cache-pressure-in-the-render-switches)
   - [4. Skip FX setup when the effect is off](#4-skip-fx-setup-when-the-effect-is-off)
-  - [5. MSFA — fixed-point kernel](#5-msfa--fixed-point-kernel)
+  - [5. DX7 — fixed-point kernel](#5-dx7--fixed-point-kernel)
   - [6. Mixing loops](#6-mixing-loops)
   - [7. Already-good behaviour](#7-already-good-behaviour)
   - [Audio performance suggested order of work](#audio-performance-suggested-order-of-work)
@@ -428,7 +428,7 @@ existing CPU indicator can validate any change.
   32 samples = 3,072 oscillator samples, plus envelopes, FX1 (per voice),
   FX2 (per timbre), compressor, FX bus and output conversion.
 
-The PFM3 engine is float DSP; the MSFA engine is 32-bit fixed point.
+The PFM3 engine is float DSP; the DX7 engine is 32-bit fixed point.
 
 ### 1. PFM3 — wave-table reload per sample
 
@@ -477,19 +477,19 @@ Suggested action: early-return when `effect1.type == FILTER_OFF` /
 non-off effects. This saves a few matrix reads and multiplies per voice/timbre
 per block.
 
-### 5. MSFA — fixed-point kernel
+### 5. DX7 — fixed-point kernel
 
-**Priority: low/medium, only if MSFA is the hot engine.**
+**Priority: low/medium, only if DX7 is the hot engine.**
 `FmOpKernel::compute()` / `compute_fb()` (`third_party/msfa/fm_op_kernel.cc`)
 do `((int64_t)y * gain) >> 24` per sample, and `Sin::lookup()`
 (`third_party/msfa/sin.h`) does another 64-bit multiply for delta
 interpolation. On Cortex-M7 `SMULL` is cheap, so this is unlikely to dominate,
-but if profiling shows the MSFA kernel at the top, consider a 32-bit path
+but if profiling shows the DX7 kernel at the top, consider a 32-bit path
 (`__SMMUL`/`__SMULWB`) or a non-delta sine LUT. `SIN_DELTA` doubles the LUT
 (8 KB) to save a subtraction; measure the trade-off.
 
 `Env::getsample()` is already block-rate (once per block per operator), and
-`msfaVoiceRender()` computes 64 samples at a time and outputs 32 per block.
+`dx7VoiceRender()` computes 64 samples at a time and outputs 32 per block.
 Both are reasonable.
 
 ### 6. Mixing loops
@@ -518,7 +518,7 @@ branch-hoisted and benefit from `-funroll-loops`; the Cortex-M7 has no NEON, so
    callback.
 3. Add early returns for `FILTER_OFF` / `FILTER2_OFF`.
 4. Measure I-cache pressure before restructuring `Voice::nextBlock()`.
-5. Only optimise the MSFA fixed-point kernel if it is the hot engine.
+5. Only optimise the DX7 fixed-point kernel if it is the hot engine.
 
 ### Also noticed (correctness, not performance)
 

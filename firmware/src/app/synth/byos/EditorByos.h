@@ -26,6 +26,7 @@ public:
     const char* getEngineName() const override;
     const struct EditorEditMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
+    void drawAlgorithm() override;
     void drawEditorButton(int button, const struct EditorEditMenu *editMenu,
         const struct EditorOneButton *page) override;
     void drawParameterName(int button, const struct RowEncoder &rowEncoder,

@@ -1,4 +1,7 @@
-# MSFA engine — design proposal
+# DX7 engine — design proposal
+
+> Historical design proposal. The firmware engine is now named **DX7**;
+> the vendored Dexed library remains `third_party/msfa/` with its `msfa_*` API.
 
 Status: proposal, not implemented.
 

@@ -8,7 +8,7 @@ for hardware see [hardware.md](hardware.md).
 
 | Path | Contents |
 |------|----------|
-| `firmware/` | Main synth firmware (PFM3 + MSFA engines, UI, MIDI, storage) |
+| `firmware/` | Main synth firmware (PFM3 + DX7 engines, UI, MIDI, storage) |
 | `preen_lib/` | Shared board/display/input/storage library, linked by firmware and bootloader |
 | `bootloader/` | Standalone USB-MSC / SD-card firmware update bootloader |
 | `third_party/` | Vendored HAL, CMSIS, USB, FatFs, SD, display, fonts, MSFA, MIDI helpers |
@@ -51,7 +51,7 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | File(s) | Contents |
 |---------|----------|
 | `Synth.*` | Top-level render: `buildNewSampleBlock()`, timbre mix, output dispatch |
-| `Timbre.*` | Per-timbre voice allocation, arpeggiator, FX2, MSFA glue |
+| `Timbre.*` | Per-timbre voice allocation, arpeggiator, FX2, DX7 glue |
 | `Voice.*` | Per-voice render for all PFM3 algorithms, FX1 |
 | `Osc.*` | Wavetable oscillator, wave tables, per-note state |
 | `Env.*` | PFM3 ADSR envelopes |
@@ -59,13 +59,13 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `Matrix.*` | Modulation matrix |
 | `MixerState.*`, `SynthState.*`, `Presets.*`, `Common.*` | Shared state, presets, DX7/algorithm constants |
 | `Pfm3Params.h`, `Pfm3Preset.h` | PFM3 parameter structs and on-flash preset layout |
-| `MidiControlChange.h`, `Pfm3ControlChange.h`, `MsfaControlChange.h` | Shared MIDI CC numbers and engine-specific CC numbers |
+| `MidiControlChange.h`, `Pfm3ControlChange.h`, `Dx7ControlChange.h` | Shared MIDI CC numbers and engine-specific CC numbers |
 | `SharedParams.h` | Timbre-wide Arp/FX parameter ids used by MIDI |
 | `Pfm3Midi.*` | Legacy PFM3 NRPN index ↔ flat parameter index translation |
 | `Pfm3ParameterRows.*` | PFM3 parameter display metadata indexed by row |
 | `FxBus.*` | Reverb / FX bus |
 | `SimpleEffect/` | Compressor, simple envelope/gain helpers |
-| `MsfaEngine.*`, `MsfaDebug.*` | Bridge to the MSFA (Dexed DX7) engine |
+| `Dx7Engine.*` | Bridge to the DX7 (Dexed) engine |
 | `byos/` | Example third engine: `ByosEngine`, `EditorByos`, params and README |
 | `SynthParamListener.*`, `SynthMenuListener.*`, `SynthStateAware.*` | Listener interfaces |
 
@@ -79,7 +79,7 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `EditorEngine.*` | Editor interface and shared page/menu helpers |
 | `EditorParamPage.*` | Generic menu/encoder page mechanics over `Pfm3Preset` |
 | `EditorPfm3.*` | PFM3 engine pages |
-| `EditorMsfa.*` | MSFA engine pages |
+| `EditorDx7.*` | DX7 engine pages |
 | `EditorCommon.*` | Shared Arp/Fx page |
 | `ScreenMenu.*` | Menu/file browser |
 | `ScreenSequencer.*` | Sequencer screen |
@@ -148,7 +148,7 @@ Vendored dependencies. Keep upstream headers/licences; see `third_party/NOTICE`.
 | `fatfs/` | FatFs filesystem |
 | `ili9341/` | ILI9341 display driver |
 | `fonts/` | Font tables |
-| `hexter/` | DX7 sysex unpacking used by MSFA |
+| `hexter/` | DX7 sysex unpacking used by DX7 |
 | `msfa/` | Dexed/MSFA DX7 engine (Apache-2.0) |
 | `mutable/` | Mutable Instruments MIDI-pal helpers (note stack, event scheduler) |
 
@@ -168,7 +168,7 @@ Vendored dependencies. Keep upstream headers/licences; see `third_party/NOTICE`.
 | `hardware.md` | MCU, audio, display, SD, buttons and MIDI reference |
 | `compilation.md` | Build details and CMake migration |
 | `improvements.md` | Known issues and planned work |
-| `msfa_engine.md` | MSFA engine integration |
+| `dx7_engine.md` | DX7 engine integration |
 | `dx7_algo_drawing.md` | DX7 algorithm diagram drawing |
 | `engine_voice_refactor.md` | Engine separation and dynamic voice allocation plan |
 | `stlink.md` | ST-LINK setup and troubleshooting |
@@ -190,8 +190,8 @@ bootloader links the USB MSC class.
 
 - **New PFM3 parameter**: `Pfm3Params.h` / `SynthState.h`, then the editor UI in
   `ScreenEditor.cpp`, and the DSP use in `Voice.cpp` / `Timbre.cpp`.
-- **New MSFA parameter**: `EditorMsfa.*` and the MSFA program layout
-  (see `doc/msfa_engine.md`).
+- **New DX7 parameter**: `EditorDx7.*` and the DX7 program layout
+  (see `doc/dx7_engine.md`).
 - **New screen/page**: add a `Screen*` class and wire it in `ScreenCoordinator`.
 - **New file type**: add a class under `firmware/src/app/storage/` and register
   it in `Storage`.

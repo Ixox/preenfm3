@@ -25,7 +25,7 @@ class Timbre;
 class Voice {
     friend class Timbre;
     friend class Preenfm3Engine;
-    friend class MsfaSynthEngine;
+    friend class Dx7SynthEngine;
     friend class ByosEngine;
 
 public:

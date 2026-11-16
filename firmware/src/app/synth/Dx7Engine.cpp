@@ -8,17 +8,16 @@
  */
 
 /*
- * MSFA engine state and adapters.
+ * DX7 engine state and adapters.
  *
- * The MSFA headers are only included here so their Lfo/Env classes do not
+ * The DX7 headers are only included here so their Lfo/Env classes do not
  * collide with the PFM3 classes in the rest of the firmware.
  */
 
 #include <new>
 
-#include "MsfaEngine.h"
-#include "MsfaParams.h"
-#include "MsfaDebug.h"
+#include "Dx7Engine.h"
+#include "Dx7Params.h"
 #include "controllers.h"
 #include "dx7note.h"
 #include "fm_core.h"
@@ -26,18 +25,18 @@
 #include "synth.h"
 #include "tuning.h"
 
-// MSFA's Q24 output is quieter than PFM3's. Apply a linear gain while
+// DX7's Q24 output is quieter than PFM3's. Apply a linear gain while
 // converting to float; the final mixer clamps before the DAC, so there is
-// headroom here. Override with -DMSFA_OUTPUT_GAIN=...
-#ifndef MSFA_OUTPUT_GAIN
-#define MSFA_OUTPUT_GAIN 2.0f
+// headroom here. Override with -DDX7_OUTPUT_GAIN=...
+#ifndef DX7_OUTPUT_GAIN
+#define DX7_OUTPUT_GAIN 2.0f
 #endif
 
-FmCore msfaCore;
+FmCore dx7Core;
 
-static TuningState *msfaTuning;
+static TuningState *dx7Tuning;
 
-struct MsfaTimbreState {
+struct Dx7TimbreState {
     Controllers controllers;
     Lfo lfo;
     int32_t lfoValue;
@@ -45,7 +44,7 @@ struct MsfaTimbreState {
     uint8_t blockPhase;
 };
 
-struct MsfaVoiceState {
+struct Dx7VoiceState {
     Dx7Note noteObj;
     int32_t buffer[N];
     uint8_t bufferPos;
@@ -53,41 +52,39 @@ struct MsfaVoiceState {
     bool released;
     uint8_t note;
     uint8_t velocity;
-    uint8_t debugBlocks;
 
-    MsfaVoiceState();
+    Dx7VoiceState();
 };
 
-alignas(MsfaVoiceState) static uint8_t msfaVoiceStorage[MAX_NUMBER_OF_VOICES][sizeof(MsfaVoiceState)]
+alignas(Dx7VoiceState) static uint8_t dx7VoiceStorage[MAX_NUMBER_OF_VOICES][sizeof(Dx7VoiceState)]
     __attribute__((section(".ram_d1")));
-alignas(MsfaTimbreState) static uint8_t msfaTimbreStorage[NUMBER_OF_TIMBRES][sizeof(MsfaTimbreState)]
+alignas(Dx7TimbreState) static uint8_t dx7TimbreStorage[NUMBER_OF_TIMBRES][sizeof(Dx7TimbreState)]
     __attribute__((section(".ram_d1")));
 
-MsfaVoiceState *msfaVoiceStates = reinterpret_cast<MsfaVoiceState *>(msfaVoiceStorage);
-MsfaTimbreState *msfaTimbreStates = reinterpret_cast<MsfaTimbreState *>(msfaTimbreStorage);
+Dx7VoiceState *dx7VoiceStates = reinterpret_cast<Dx7VoiceState *>(dx7VoiceStorage);
+Dx7TimbreState *dx7TimbreStates = reinterpret_cast<Dx7TimbreState *>(dx7TimbreStorage);
 
-MsfaVoiceState *getMsfaVoiceState(int index) {
-    return msfaVoiceStates + index;
+Dx7VoiceState *getDx7VoiceState(int index) {
+    return dx7VoiceStates + index;
 }
 
-MsfaTimbreState *getMsfaTimbreState(int index) {
-    return msfaTimbreStates + index;
+Dx7TimbreState *getDx7TimbreState(int index) {
+    return dx7TimbreStates + index;
 }
 
-MsfaVoiceState::MsfaVoiceState()
-    : noteObj(msfaTuning, nullptr),
+Dx7VoiceState::Dx7VoiceState()
+    : noteObj(dx7Tuning, nullptr),
       bufferPos(N),
       active(false),
       released(false),
       note(0),
-      velocity(0),
-      debugBlocks(0) {
+      velocity(0) {
     for (int i = 0; i < N; i++) {
         buffer[i] = 0;
     }
 }
 
-void msfaTimbreInit(MsfaTimbreState *state) {
+void dx7TimbreInit(Dx7TimbreState *state) {
     Controllers &controllers = state->controllers;
 
     controllers.pitch_cc = 0x2000;
@@ -107,7 +104,7 @@ void msfaTimbreInit(MsfaTimbreState *state) {
     controllers.masterTune = 0;
     controllers.mpeEnabled = false;
     controllers.mpePitchBendRange = 24;
-    controllers.core = &msfaCore;
+    controllers.core = &dx7Core;
     controllers.refresh();
 
     state->lfoValue = 1 << 23;
@@ -115,11 +112,11 @@ void msfaTimbreInit(MsfaTimbreState *state) {
     state->blockPhase = 0;
 }
 
-void msfaTimbreKeyDown(MsfaTimbreState *state) {
+void dx7TimbreKeyDown(Dx7TimbreState *state) {
     state->lfo.keydown();
 }
 
-void msfaTimbreNextBlock(MsfaTimbreState *state) {
+void dx7TimbreNextBlock(Dx7TimbreState *state) {
     if (state->blockPhase == 0) {
         state->lfoValue = state->lfo.getsample();
         state->lfoDelay = state->lfo.getdelay();
@@ -127,11 +124,11 @@ void msfaTimbreNextBlock(MsfaTimbreState *state) {
     state->blockPhase ^= 1;
 }
 
-void msfaTimbreLoadProgram(MsfaTimbreState *state, const uint8_t *program) {
+void dx7TimbreLoadProgram(Dx7TimbreState *state, const uint8_t *program) {
     state->lfo.reset(program + 137);
 }
 
-void msfaTimbreSetController(MsfaTimbreState *state, enum SourceEnum source, float value) {
+void dx7TimbreSetController(Dx7TimbreState *state, enum SourceEnum source, float value) {
     Controllers &controllers = state->controllers;
 
     switch (source) {
@@ -153,9 +150,9 @@ void msfaTimbreSetController(MsfaTimbreState *state, enum SourceEnum source, flo
     controllers.refresh();
 }
 
-void msfaVoiceStart(MsfaVoiceState *state, const uint8_t *program, uint8_t note,
-                    uint8_t velocity, uint8_t channel, MsfaTimbreState *ts) {
-    state->noteObj.tuning_state_ = msfaTuning;
+void dx7VoiceStart(Dx7VoiceState *state, const uint8_t *program, uint8_t note,
+                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts) {
+    state->noteObj.tuning_state_ = dx7Tuning;
     state->noteObj.init(program, note, velocity, channel, &ts->controllers);
 
     for (int i = 0; i < N; i++) {
@@ -166,15 +163,10 @@ void msfaVoiceStart(MsfaVoiceState *state, const uint8_t *program, uint8_t note,
     state->released = false;
     state->note = note;
     state->velocity = velocity;
-    state->debugBlocks = 0;
 
-    msfaDebugLog("S note=%d vel=%d play=%d fin=%d b0=%d ops=%02x alg=%d\n",
-        note, velocity, state->noteObj.isPlaying(), state->noteObj.isFinished(),
-        (int) state->noteObj.debugBasePitch(0), state->noteObj.debugOpSwitch(),
-        state->noteObj.debugAlgorithm());
 }
 
-void msfaVoiceKeyUp(MsfaVoiceState *state) {
+void dx7VoiceKeyUp(Dx7VoiceState *state) {
     if (state == nullptr || !state->active) {
         return;
     }
@@ -182,11 +174,11 @@ void msfaVoiceKeyUp(MsfaVoiceState *state) {
     state->released = true;
 }
 
-bool isMsfaVoiceActive(MsfaVoiceState *state) {
+bool isDx7VoiceActive(Dx7VoiceState *state) {
     return state != nullptr && state->active;
 }
 
-bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out) {
+bool dx7VoiceRender(Dx7VoiceState *state, Dx7TimbreState *ts, float *out) {
     if (state == nullptr || !state->active) {
         return false;
     }
@@ -203,20 +195,12 @@ bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out) {
     for (int i = 0; i < BLOCK_SIZE; i++) {
         int32_t val = state->buffer[state->bufferPos + i] >> 4;
         int32_t clip = val < -(1 << 24) ? -32768 : (val >= (1 << 24) ? 32767 : (val >> 9));
-        float f = (float) clip * (MSFA_OUTPUT_GAIN / 32768.0f);
+        float f = (float) clip * (DX7_OUTPUT_GAIN / 32768.0f);
         *out++ = f;
         *out++ = f;
     }
     state->bufferPos += BLOCK_SIZE;
 
-    if (state->debugBlocks < 4) {
-        msfaDebugLog("R note=%d b=%d play=%d fin=%d act=%d raw=%d out=%d eL=%d eO=%d st=%d dn=%d\n",
-            state->note, state->bufferPos, state->noteObj.isPlaying(), state->noteObj.isFinished(),
-            state->active, (int) raw0, (int) (out[-64] * 1000000.0f),
-            state->noteObj.debugEnvLevel(0), state->noteObj.debugEnvOutLevel(0),
-            state->noteObj.debugEnvStage(0), state->noteObj.debugEnvDown(0));
-        state->debugBlocks++;
-    }
 
     if (!state->noteObj.isPlaying() || (state->released && state->noteObj.isFinished())) {
         state->active = false;
@@ -225,7 +209,7 @@ bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out) {
     return true;
 }
 
-void msfaVoiceUpdateProgram(MsfaVoiceState *state, const uint8_t *program) {
+void dx7VoiceUpdateProgram(Dx7VoiceState *state, const uint8_t *program) {
     if (state == nullptr || !state->active) {
         return;
     }
@@ -234,19 +218,19 @@ void msfaVoiceUpdateProgram(MsfaVoiceState *state, const uint8_t *program) {
 
 // preenFM3: fast live-parameter update. Dx7Note::update() is still used for
 // note-on and full preset/engine/DX7 loads; this path avoids reloading all
-// six operators when only one MSFA parameter changes.
-void msfaVoiceUpdateParam(MsfaVoiceState *state, int paramId, int op) {
+// six operators when only one DX7 parameter changes.
+void dx7VoiceUpdateParam(Dx7VoiceState *state, int paramId, int op) {
     if (state == nullptr || !state->active) {
         return;
     }
-    if (paramId >= MSFA_EG_RATE_1 && paramId <= MSFA_DETUNE) {
+    if (paramId >= DX7_EG_RATE_1 && paramId <= DX7_DETUNE) {
         state->noteObj.updateOperator(op, state->velocity);
     } else {
         state->noteObj.updateGlobal();
     }
 }
 
-void msfaVoiceReset(MsfaVoiceState *state) {
+void dx7VoiceReset(Dx7VoiceState *state) {
     if (state == nullptr) {
         return;
     }
@@ -255,13 +239,12 @@ void msfaVoiceReset(MsfaVoiceState *state) {
     state->bufferPos = N;
     state->note = 0;
     state->velocity = 0;
-    state->debugBlocks = 0;
     for (int i = 0; i < N; i++) {
         state->buffer[i] = 0;
     }
 }
 
-void getMsfaEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, MsfaEnvelopeDisplay *env) {
+void getDx7EnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, Dx7EnvelopeDisplay *env) {
     const uint8_t *op = program + (5 - operatorNumber) * 21;
 
     // A DX7 rate is the time needed to sweep the full level range. Using that
@@ -284,15 +267,14 @@ void getMsfaEnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, Msfa
     }
 }
 
-void msfaEngineInit() {
-    msfaDebugInit();
-    msfaTuning = createStandardTuning();
+void dx7EngineInit() {
+    dx7Tuning = createStandardTuning();
 
     for (int i = 0; i < MAX_NUMBER_OF_VOICES; i++) {
-        new (&msfaVoiceStorage[i][0]) MsfaVoiceState();
+        new (&dx7VoiceStorage[i][0]) Dx7VoiceState();
     }
     for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
-        new (&msfaTimbreStorage[i][0]) MsfaTimbreState();
-        msfaTimbreInit(msfaTimbreStates + i);
+        new (&dx7TimbreStorage[i][0]) Dx7TimbreState();
+        dx7TimbreInit(dx7TimbreStates + i);
     }
 }

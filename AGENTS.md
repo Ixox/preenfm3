@@ -12,7 +12,7 @@ preenFM3 firmware for an STM32H753 (Cortex-M7, 480 MHz). C11 / C++11.
 - `hardware/` — PCB and mechanical files
 - `doc/` — hardware, compilation and design notes
 
-Default sound engine is **PFM3**. The MSFA (Dexed DX7) engine is an additional
+Default sound engine is **PFM3**. The DX7 (Dexed) engine is an additional
 engine, opt-in per timbre.
 
 ## Build and flash
@@ -60,19 +60,19 @@ st-flash --reset write build/firmware/p3_1_04.bin 0x08020000
 - TFT big font is fixed-width: parameter/button names longer than ~7
   characters collide. Keep names short.
 
-## MSFA engine (opt-in)
+## DX7 engine (opt-in)
 
-- Keep PFM3 as the default engine; MSFA is selected per timbre.
-- Do not add MSFA parameters to `Pfm3Preset`.
-- MSFA has no unison mode.
+- Keep PFM3 as the default engine; DX7 is selected per timbre.
+- Do not add DX7 parameters to `Pfm3Preset`.
+- DX7 has no unison mode.
 - DX7 program layout (156 bytes): operator block `(5 - operatorNumber) * 21`;
   rates at `[0..3]`, levels at `[4..7]`; global data from `[126]`; algorithm
   `[134]`; feedback `[135]`; operator on/off mask `[155]`.
 - Only DX7 algorithms 4 and 6 have multi-operator feedback loops; all others
   are self-feedback.
-- MSFA operators are all sine; only the global LFO has a waveform.
+- DX7 operators are all sine; only the global LFO has a waveform.
 - The DX7 envelope display maps levels linearly and derives each stage
-  duration from its rate only (see `msfaGetEnvelopeDisplay()`).
+  duration from its rate only (see `getDx7EnvelopeDisplay()`).
 - Vendored MSFA files stay Apache-2.0 and must keep their upstream headers.
 
 ## Documentation
@@ -82,7 +82,7 @@ st-flash --reset write build/firmware/p3_1_04.bin 0x08020000
 - `doc/hardware.md` — MCU, audio, display, SD, buttons and MIDI reference.
 - `doc/compilation.md` — build details and CMake migration.
 - `doc/improvements.md` — known issues and planned work.
-- Keep `doc/msfa_engine.md` up to date when changing MSFA behaviour.
+- Keep `doc/dx7_engine.md` up to date when changing DX7 behaviour.
 - Keep `doc/dx7_algo_drawing.md` in sync with algorithm-diagram changes.
 
 ## Git
