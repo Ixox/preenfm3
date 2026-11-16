@@ -22,6 +22,7 @@
 #include "Pfm3FlashFormat.h"
 #include "FileSystemUtils.h"
 #include "fatfs.h"
+#include "Pfm3Preset.h"
 
 #define ARRAY_SIZE(x)  ( sizeof(x) / sizeof((x)[0]) )
 
@@ -83,7 +84,7 @@ struct PFM3File {
 // Storage maping of the parameters is in Pfm3FlashFormat.h (FlashSynthParams).
 
 #define PFM3_PATCH_FLASH_SIZE sizeof(struct FlashSynthParams)
-#define PFM3_PATCH_SIZE sizeof(struct OneSynthParams)
+#define PFM3_PATCH_SIZE sizeof(struct Pfm3Preset)
 
 #define ALIGNED_PATCH_SIZE 1024
 #define ALIGNED_PATCH_ZERO ALIGNED_PATCH_SIZE-PFM3_PATCH_FLASH_SIZE
@@ -141,8 +142,8 @@ protected:
     void swapFiles(struct PFM3File *bankFiles, int i, int j);
     void sortFiles(struct PFM3File *bankFiles, int numberOfFiles);
 
-    void convertParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *memory, bool saveArp);
-    void convertFlashToParams(const struct FlashSynthParams *memory, struct OneSynthParams *params, bool loadArp);
+    void convertParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *memory, bool saveArp);
+    void convertFlashToParams(const struct FlashSynthParams *memory, struct Pfm3Preset *params, bool loadArp);
 
     int bankBaseLength(const char *bankName);
 

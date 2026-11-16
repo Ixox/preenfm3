@@ -650,7 +650,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             break;
         case CC_ENV_ATK_ALL_CARRIER:
         case CC_ENV_ATK_ALL_MODULATOR: {
-            int currentAlgo = (int) this->synthState_->params->engine1.algo;
+            int currentAlgo = (int) this->synthState_->pfm3Preset->engine1.algo;
             int type = midiEvent.value[0] == CC_ENV_ATK_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
             for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
                 if (algoOpInformation[currentAlgo][e] == type) {
@@ -671,7 +671,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             break;
         case CC_ENV_REL_ALL_MODULATOR:
         case CC_ENV_REL_ALL_CARRIER: {
-            int currentAlgo = (int) this->synthState_->params->engine1.algo;
+            int currentAlgo = (int) this->synthState_->pfm3Preset->engine1.algo;
             int type = midiEvent.value[0] == CC_ENV_REL_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
             for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
                 if (algoOpInformation[currentAlgo][e] == type) {
@@ -808,7 +808,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
 void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     struct MidiEvent cc;
 
-    OneSynthParams * paramsToSend = this->synth->getTimbre(timbre)->getParamRaw();
+    Pfm3Preset * paramsToSend = this->synth->getTimbre(timbre)->getPfm3Preset();
 
     cc.eventType = MIDI_CONTROL_CHANGE;
     // Si channel = ALL envoie sur 1

@@ -13,15 +13,17 @@
 #include <stddef.h>
 
 #include "Common.h"
+#include "Pfm3Params.h"
+#include "Pfm3Preset.h"
 
 /*
  * Runtime parameter split (migration step 6).
  *
- * `OneSynthParams` remains the on-flash PFM3 preset layout and must not
+ * `Pfm3Preset` remains the on-flash PFM3 preset layout and must not
  * change. These structs are the runtime owners: shared host parameters stay
  * in `Timbre`, PFM3 DSP parameters belong to `Preenfm3Engine`.
  *
- * Member names match `OneSynthParams` so serialization is a field-by-field
+ * Member names match `Pfm3Preset` so serialization is a field-by-field
  * copy in both directions.
  */
 struct TimbreSharedParams {
@@ -93,25 +95,10 @@ struct Pfm3TimbreParams {
     struct EnvelopeCurveParams env6Curve;
 };
 
-/*
- * Float offsets in the flat OneSynthParams layout.
- * Shared: [sharedBlockStart, sharedBlockEnd) (arp + effect1) and
- *         [effect2Start, presetNameStart) (effect2).
- * PFM3:   [0, sharedBlockStart) and [pfm3BlockBStart, effect2Start).
- */
-namespace TimbreParamLayout {
-    static const int sharedBlockStart = offsetof(OneSynthParams, engineArp1) / sizeof(float);
-    static const int sharedBlockEnd = offsetof(OneSynthParams, osc1) / sizeof(float);
-    static const int pfm3BlockBStart = offsetof(OneSynthParams, osc1) / sizeof(float);
-    static const int effect2Start = offsetof(OneSynthParams, effect2) / sizeof(float);
-    static const int presetNameStart = offsetof(OneSynthParams, presetName) / sizeof(float);
-    static const int sharedGap = sharedBlockEnd - sharedBlockStart;
-}
-
 static_assert(sizeof(float) == 4, "float must be 32-bit");
-static_assert(offsetof(Pfm3TimbreParams, osc1) / sizeof(float) == TimbreParamLayout::sharedBlockStart,
+static_assert(offsetof(Pfm3TimbreParams, osc1) / sizeof(float) == Pfm3PresetLayout::sharedBlockStart,
     "Pfm3TimbreParams layout changed");
-static_assert(offsetof(TimbreSharedParams, effect2) / sizeof(float) == TimbreParamLayout::sharedGap,
+static_assert(offsetof(TimbreSharedParams, effect2) / sizeof(float) == Pfm3PresetLayout::sharedGap,
     "TimbreSharedParams layout changed");
 
 #endif

@@ -24,7 +24,7 @@ static inline void copyFloat(float* source, float* dest, int n) {
  *    engine1.monoPoly has a new value : 2 for unison
  *
  *********************************************************/
-void pfm3ParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *flashMemory, bool saveArp) {
+void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *flashMemory, bool saveArp) {
     // Engines line
     copyFloat((float*) &params->engine1, (float*) &flashMemory->engine1, 4);
     copyFloat((float*) &params->engine2, (float*) &flashMemory->engine2, 4);
@@ -127,7 +127,7 @@ inline int iszero(void *ptr, int bytes) {
     return 1;
 }
 
-void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct OneSynthParams *params, bool loadArp) {
+void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Preset *params, bool loadArp) {
     // First engine line
     copyFloat((float*) &flashMemory->engine1, (float*) &params->engine1, 4);
     copyFloat((float*) &flashMemory->engine2, (float*) &params->engine2, 4);

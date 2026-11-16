@@ -15,6 +15,7 @@
 #include "Common.h"
 #include "PersistenceMagic.h"
 #include "TimbreParams.h"
+#include "Pfm3Preset.h"
 
 class Timbre;
 class Voice;
@@ -119,10 +120,12 @@ public:
     // Reload the engine after direct edits to getPatchMemory().
     virtual void patchMemoryChanged() {}
 
-    // Flat OneSynthParams mirror (PFM3 UI/storage layout). Engines that do not
-    // use the flat mirror keep the default no-op implementations.
-    virtual void serializeFlatParams(struct OneSynthParams &out) const {}
-    virtual void deserializeFlatParams(const struct OneSynthParams &in) {}
+    // Flat Pfm3Preset mirror (PFM3 UI/storage layout). Engines that do not
+    // use the mirror keep the default no-op implementations.
+    virtual void serializePfm3Preset(struct Pfm3Preset &out) const {}
+    virtual void deserializePfm3Preset(const struct Pfm3Preset &in) {}
+    // Does this engine use the shared Pfm3Preset mirror?
+    virtual bool usesPfm3PresetMirror() const { return false; }
 
     // Prepare a voice's FX matrix before rendering (once per block).
     virtual void prepareFxMatrix(Voice *voice) {}
@@ -135,7 +138,7 @@ public:
     virtual bool supportsDeferredSteal() const { return false; }
 
     // Accept a flat-parameter edit coming from MIDI for `row`.
-    // Rejecting rows also protects the shared OneSynthParams mirror
+    // Rejecting rows also protects the shared Pfm3Preset mirror
     // (the hidden PFM3 patch).
     virtual bool acceptsFlatParamFromMidi(int row) const { return true; }
 

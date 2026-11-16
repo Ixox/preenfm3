@@ -317,7 +317,7 @@ void ScreenEditor::displayPreset() {
     tft_->print((char) ('0' + currentTimbre_ + 1));
     tft_->print(' ');
     tft_->setCharColor(COLOR_WHITE);
-    tft_->print(synthState_->params->presetName);
+    tft_->print(synthState_->pfm3Preset->presetName);
     tft_->setCharColor(COLOR_YELLOW);
     if (presetModifed_[currentTimbre_]) {
         tft_->print('*');
@@ -337,10 +337,10 @@ void ScreenEditor::setPresetModified(int timbre, bool state) {
 
 void ScreenEditor::updateArpPattern(int currentRow, int encoder, int oldValue, int newValue) {
 
-    const int index = (int) synthState_->params->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
-    const arp_pattern_t user_pattern = synthState_->params->engineArpUserPatterns.patterns[index];
+    const int index = (int) synthState_->pfm3Preset->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    const arp_pattern_t user_pattern = synthState_->pfm3Preset->engineArpUserPatterns.patterns[index];
 
-    if (synthState_->params->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+    if (synthState_->pfm3Preset->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
         return;
     }
 
@@ -366,7 +366,7 @@ void ScreenEditor::updateArpPattern(int currentRow, int encoder, int oldValue, i
 void ScreenEditor::updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue) {
     int whichStepSeq = currentRow - ROW_LFOSEQ1;
 
-    StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&synthState_->params->lfoSteps1))[whichStepSeq];
+    StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&synthState_->pfm3Preset->lfoSteps1))[whichStepSeq];
 
     tft_->setCharBackgroundColor(COLOR_BLACK);
 

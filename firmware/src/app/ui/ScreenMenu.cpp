@@ -18,6 +18,7 @@
 #include "SynthState.h"
 #include "TftDisplay.h"
 #include "version.h"
+#include "Pfm3Preset.h"
 
 extern int getLength(const char *str);
 
@@ -182,11 +183,11 @@ void ScreenMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
                 if (changePresetSelect(&fullState->preenFMBankNumber, ticks, (int) fullState->currentMenuItem->maxValue - 1)) {
                     fullState->preenFMPresetNumber = 0;
                     fullState->preenFMBank = synthState_->getStorage()->getPatchBank()->getFile(fullState->preenFMBankNumber);
-                    synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->params);
+                    synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->pfm3Preset);
                 }
             } else if (encoder == 3) {
                 if (changePresetSelect(&fullState->preenFMPresetNumber, ticks, 127)) {
-                    synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->params);
+                    synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->pfm3Preset);
                 }
             }
             break;
@@ -196,11 +197,11 @@ void ScreenMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
                 if (changePresetSelect(&fullState->dx7BankNumber, ticks, (int) fullState->currentMenuItem->maxValue - 1)) {
                     fullState->preenFMBank = synthState_->getStorage()->getDX7SysexFile()->getFile(fullState->dx7BankNumber);
                     fullState->dx7PresetNumber = 0;
-                    synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->params);
+                    synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->pfm3Preset);
                 }
             } else if (encoder == 3) {
                 if (changePresetSelect(&fullState->dx7PresetNumber, ticks, 31)) {
-                    synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->params);
+                    synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->pfm3Preset);
                 }
             }
             break;
@@ -497,10 +498,10 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
                 for (length = 12; fullState->name[length - 1] == 0 || fullState->name[length - 1] == ' '; length--)
                     ;
                 for (int k = 0; k < length; k++) {
-                    synthState_->params->presetName[k] = fullState->name[k];
+                    synthState_->pfm3Preset->presetName[k] = fullState->name[k];
                 }
-                synthState_->params->presetName[length] = '\0';
-                synthState_->savePreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->params);
+                synthState_->pfm3Preset->presetName[length] = '\0';
+                synthState_->savePreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->pfm3Preset);
                 break;
             case MENU_MIXER_SAVE_ENTER_NAME:
                 // Let save the mixer !
@@ -640,14 +641,14 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
 
     switch (nextMenu->menuState) {
         case MENU_PRESET_LOAD_SELECT:
-            copySynthParams((char*) synthState_->params, (char*) &synthState_->backupParams);
+            copySynthParams((char*) synthState_->pfm3Preset, (char*) &synthState_->backupPfm3Preset);
             fullState->preenFMBank = synthState_->getStorage()->getPatchBank()->getFile(fullState->preenFMBankNumber);
-            synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->params);
+            synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->pfm3Preset);
             break;
         case MENU_PRESET_LOAD_SELECT_DX7_BANK:
-            copySynthParams((char*) synthState_->params, (char*) &synthState_->backupParams);
+            copySynthParams((char*) synthState_->pfm3Preset, (char*) &synthState_->backupPfm3Preset);
             fullState->preenFMBank = synthState_->getStorage()->getDX7SysexFile()->getFile(fullState->dx7BankNumber);
-            synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->params);
+            synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->pfm3Preset);
             break;
         case MENU_SD_RENAME_MIXER_SELECT_FILE:
         case MENU_MIXER_LOAD_SELECT:
@@ -665,7 +666,7 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
             fullState->preenFMSequence = synthState_->getStorage()->getSequenceBank()->getFile(fullState->preenFMSeqBankNumber);
             break;
         case MENU_PRESET_SAVE_ENTER_NAME:
-            copyAndTransformString(fullState->name, synthState_->params->presetName);
+            copyAndTransformString(fullState->name, synthState_->pfm3Preset->presetName);
             break;
         case MENU_MIXER_SAVE_ENTER_NAME:
             copyAndTransformString(fullState->name, synthState_->mixerState.mixName_);
@@ -698,7 +699,7 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
             }
             break;
         case MENU_PRESET_RANDOMIZER:
-            copySynthParams((char*) synthState_->params, (char*) &synthState_->backupParams);
+            copySynthParams((char*) synthState_->pfm3Preset, (char*) &synthState_->backupPfm3Preset);
             break;
         case MENU_SD_CREATE_PRESET_FILE:
             copyAndTransformString(fullState->name, "Bank");
@@ -759,7 +760,7 @@ const MenuItem* ScreenMenu::getMenuBack(int currentTimbre) {
             // Put back original preset
             synthState_->propagateNoteOff();
             synthState_->propagateBeforeNewParamsLoad(currentTimbre);
-            copySynthParams((char*) &synthState_->backupParams, (char*) synthState_->params);
+            copySynthParams((char*) &synthState_->backupPfm3Preset, (char*) synthState_->pfm3Preset);
             synthState_->propagateAfterNewParamsLoad(currentTimbre);
             break;
         case MENU_PRESET_LOAD_SELECT:
@@ -767,7 +768,7 @@ const MenuItem* ScreenMenu::getMenuBack(int currentTimbre) {
             synthState_->propagateNoteOff();
             synthState_->propagateBeforeNewParamsLoad(currentTimbre);
             // Put back original preset
-            copySynthParams((char*) &synthState_->backupParams, (char*) synthState_->params);
+            copySynthParams((char*) &synthState_->backupPfm3Preset, (char*) synthState_->pfm3Preset);
             synthState_->propagateAfterNewParamsLoad(currentTimbre);
             break;
         default:
@@ -818,7 +819,7 @@ int ScreenMenu::copyStringAt(char *dest, int offset, const char *source) {
 }
 
 void ScreenMenu::copySynthParams(char *source, char *dest) {
-    for (uint32_t k = 0; k < sizeof(struct OneSynthParams); k++) {
+    for (uint32_t k = 0; k < sizeof(struct Pfm3Preset); k++) {
         dest[k] = source[k];
     }
 }
@@ -848,7 +849,7 @@ void ScreenMenu::newMenuState(FullState *fullState) {
         case MENU_PRESET_RANDOMIZER:
             tft_->print(" ");
             tft_->setCharColor(COLOR_YELLOW);
-            tft_->print(synthState_->params->presetName);
+            tft_->print(synthState_->pfm3Preset->presetName);
             tft_->setCharColor(COLOR_RED);
             break;
 
@@ -1002,7 +1003,7 @@ void ScreenMenu::newMenuSelect(FullState *fullState) {
         case MENU_PRESET_LOAD_SELECT_DX7_BANK:
             displayBankSelect(fullState->dx7BankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY), fullState->preenFMBank->name);
             if (fullState->preenFMBank->fileType != FILE_EMPTY) {
-                displayPatchSelect(fullState->dx7PresetNumber, synthState_->params->presetName);
+                displayPatchSelect(fullState->dx7PresetNumber, synthState_->pfm3Preset->presetName);
             } else {
                 displayPatchSelect(0, 0);
             }
@@ -1010,7 +1011,7 @@ void ScreenMenu::newMenuSelect(FullState *fullState) {
         case MENU_PRESET_LOAD_SELECT:
             displayBankSelect(fullState->preenFMBankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY), fullState->preenFMBank->name);
             if (fullState->preenFMBank->fileType != FILE_EMPTY) {
-                displayPatchSelect(fullState->preenFMPresetNumber, synthState_->params->presetName);
+                displayPatchSelect(fullState->preenFMPresetNumber, synthState_->pfm3Preset->presetName);
             } else {
                 displayPatchSelect(0, 0);
             }

@@ -12,6 +12,7 @@
 #include "Timbre.h"
 #include "Voice.h"
 #include "VoicePool.h"
+#include "Pfm3Preset.h"
 
 /* Unsigned saturation, used by the PFM3 oscillator mix code. */
 #define __USAT(ARG1,ARG2) \
@@ -24,7 +25,7 @@
 
 static Pfm3TimbreContext pfm3Contexts[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
 Pfm3TimbreParams Preenfm3Engine::pfm3Params_[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
-OneSynthParams oneSynthParamsTmp __attribute__((section(".ram_d1")));
+Pfm3Preset pfm3PresetTmp __attribute__((section(".ram_d1")));
 
 float Preenfm3Engine::glidePhaseInc[13] = {
     1.0f/2.0f, 1.0f/5.0f, 1.0f/9.0f, 1.0f/15.0f, 1.0f/22.0f, 1.0f/35.0f, 1.0f/50.0f,
@@ -4643,10 +4644,10 @@ void Preenfm3Engine::paramChanged(int row, int encoder, float oldValue, float ne
 }
 
 void Preenfm3Engine::setParamValue(int index, float value) {
-    if (index < TimbreParamLayout::sharedBlockStart) {
+    if (index < Pfm3PresetLayout::sharedBlockStart) {
         ((float*) &pfm3Params())[index] = value;
-    } else if (index >= TimbreParamLayout::pfm3BlockBStart && index < TimbreParamLayout::effect2Start) {
-        ((float*) &pfm3Params())[index - TimbreParamLayout::sharedGap] = value;
+    } else if (index >= Pfm3PresetLayout::pfm3BlockBStart && index < Pfm3PresetLayout::effect2Start) {
+        ((float*) &pfm3Params())[index - Pfm3PresetLayout::sharedGap] = value;
     }
 }
 
@@ -4860,7 +4861,7 @@ uint32_t Preenfm3Engine::getStorageMagic() const {
 
 int Preenfm3Engine::getStorageNameOffset(uint32_t magic) const {
     if (magic == PRESET_VERSION2) {
-        return offsetof(OneSynthParams, presetName);
+        return offsetof(Pfm3Preset, presetName);
     }
     return offsetof(FlashSynthParams, presetName);
 }
@@ -4870,22 +4871,22 @@ const char* Preenfm3Engine::getStorageDefaultName() const {
 }
 
 uint32_t Preenfm3Engine::getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) {
-    timbre_->serializeParams(oneSynthParamsTmp);
-    pfm3ParamsToFlash(&oneSynthParamsTmp, (FlashSynthParams*) out, true);
+    timbre_->serializePfm3Preset(pfm3PresetTmp);
+    pfm3ParamsToFlash(&pfm3PresetTmp, (FlashSynthParams*) out, true);
     return sizeof(FlashSynthParams);
 }
 
 bool Preenfm3Engine::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
     if (magic == PRESET_VERSION2) {
-        memcpy(&oneSynthParamsTmp, in, sizeof(OneSynthParams));
+        memcpy(&pfm3PresetTmp, in, sizeof(Pfm3Preset));
     } else {
-        pfm3FlashToParams((const FlashSynthParams*) in, &oneSynthParamsTmp, true);
+        pfm3FlashToParams((const FlashSynthParams*) in, &pfm3PresetTmp, true);
     }
-    timbre_->applyFlatParams(oneSynthParamsTmp);
+    timbre_->applyPfm3Preset(pfm3PresetTmp);
     return true;
 }
 
-void Preenfm3Engine::serializeFlatParams(struct OneSynthParams &out) const {
+void Preenfm3Engine::serializePfm3Preset(struct Pfm3Preset &out) const {
     const Pfm3TimbreParams &pfm3 = pfm3Params();
 
     out.engine1 = pfm3.engine1;
@@ -4947,7 +4948,7 @@ void Preenfm3Engine::serializeFlatParams(struct OneSynthParams &out) const {
     out.env6Curve = pfm3.env6Curve;
 }
 
-void Preenfm3Engine::deserializeFlatParams(const struct OneSynthParams &in) {
+void Preenfm3Engine::deserializePfm3Preset(const struct Pfm3Preset &in) {
     Pfm3TimbreParams &pfm3 = pfm3Params();
 
     pfm3.engine1 = in.engine1;

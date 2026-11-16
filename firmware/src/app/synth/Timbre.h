@@ -24,6 +24,7 @@
 #include "MixerState.h"
 #include "note_stack.h"
 #include "event_scheduler.h"
+#include "Pfm3Preset.h"
 
 extern float panTable[];
 class Voice;
@@ -58,15 +59,18 @@ public:
     void setParamValue(int index, float oldValue, float newValue);
     void syncArpUserPatterns();
     void setStepSequencerSteps(int whichStepSeq);
+    void handleNullFlatParam(int row);
+    void resetPfm3PresetToDefault();
+    void setPresetNameChar(int index, char c);
     void engineParamChanged(int paramId, int context, float oldValue, float newValue);
-    void serializeParams(struct OneSynthParams &out) const;
-    void deserializeParams(const struct OneSynthParams &in);
+    void serializePfm3Preset(struct Pfm3Preset &out) const;
+    void deserializePfm3Preset(const struct Pfm3Preset &in);
     uint32_t getStorageMagic() const;
     uint32_t getStorageBlob(uint8_t *out, uint32_t maxSize);
     bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic);
     int getStorageNameOffset(uint32_t magic) const;
     const char* getStorageDefaultName(uint32_t magic) const;
-    void applyFlatParams(const struct OneSynthParams &flat);
+    void applyPfm3Preset(const struct Pfm3Preset &flat);
     void setSharedParams(const TimbreSharedParams &shared);
     void setNewEffectParam(int encoder);
     int getSeqStepValue(int whichStepSeq, int step);
@@ -185,8 +189,8 @@ public:
     void midiClockStart();
     void midiClockSongPositionStep(int songPosition);
 
-    struct OneSynthParams* getParamRaw() {
-        return &flatParams_;
+    struct Pfm3Preset* getPfm3Preset() {
+        return &pfm3Preset_;
     }
 
     TimbreSharedParams& sharedParams() {
@@ -228,7 +232,7 @@ public:
     }
 
     char* getPresetName() {
-        return flatParams_.presetName;
+        return pfm3Preset_.presetName;
     }
 
     float getNumberOfVoiceInverse() {
@@ -377,9 +381,9 @@ private:
     int8_t timbreNumber_;
     SynthEngineType engine_;
     SynthEngine *engineImpl_;
-    // Flat OneSynthParams mirror for the editor and storage.
+    // Flat Pfm3Preset mirror for the editor and storage.
     // The PFM3 DSP state is owned by Pfm3TimbreParams in Preenfm3Engine.
-    struct OneSynthParams flatParams_;
+    struct Pfm3Preset pfm3Preset_;
     // Engine-neutral per-timbre parameters: arpeggiator, FX1/FX2 rows and
     // preset name. Static because Timbre lives in DTCMRAM and this block is
     // too large to inline; the array itself is placed in .ram_d1.

@@ -18,6 +18,7 @@
 #include "PatchBank.h"
 #include "Timbre.h"
 #include <string.h>
+#include "Pfm3Preset.h"
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
 
@@ -137,10 +138,10 @@ void PatchBank::savePatch(const struct PFM3File *bank, int patchNumber, Timbre *
     save(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);
 }
 
-void PatchBank::copyNewPreset(struct OneSynthParams *params) {
+void PatchBank::copyNewPreset(struct Pfm3Preset *params) {
     char *source = (char*) &newPresetParams;
     char *dest = (char*) params;
-    for (uint32_t k = 0; k < sizeof(struct OneSynthParams); k++) {
+    for (uint32_t k = 0; k < sizeof(struct Pfm3Preset); k++) {
         dest[k] = source[k];
     }
 }

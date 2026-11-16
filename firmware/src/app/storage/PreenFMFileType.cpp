@@ -16,6 +16,7 @@
  */
 
 #include "PreenFMFileType.h"
+#include "Pfm3Preset.h"
 
 __attribute__((section(".ram_d2b"))) char storageBuffer[PROPERTY_FILE_SIZE];
 __attribute__((section(".ram_d2b"))) static FIL file;
@@ -293,11 +294,11 @@ void PreenFMFileType::sortFiles(struct PFM3File *bankFiles, int numberOfFiles) {
     }
 }
 
-void PreenFMFileType::convertParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *flashMemory, bool saveArp) {
+void PreenFMFileType::convertParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *flashMemory, bool saveArp) {
     pfm3ParamsToFlash(params, flashMemory, saveArp);
 }
 
-void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashMemory, struct OneSynthParams *params, bool loadArp) {
+void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Preset *params, bool loadArp) {
     pfm3FlashToParams(flashMemory, params, loadArp);
 }
 

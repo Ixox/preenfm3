@@ -17,6 +17,7 @@
 #include "Osc.h"
 #include "Env.h"
 #include "SynthEngine.h"
+#include "Pfm3Preset.h"
 
 class Timbre;
 class Voice;
@@ -73,8 +74,11 @@ public:
     void setParamValue(int index, float value) override;
     bool isUnisonMode() const override;
     void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) override;
-    void serializeFlatParams(struct OneSynthParams &out) const override;
-    void deserializeFlatParams(const struct OneSynthParams &in) override;
+    void serializePfm3Preset(struct Pfm3Preset &out) const override;
+    void deserializePfm3Preset(const struct Pfm3Preset &in) override;
+    bool usesPfm3PresetMirror() const override {
+        return true;
+    }
     void prepareFxMatrix(Voice *voice) override;
     void updateVoiceMatrix(Voice *voice, int note, int velocity) override;
 

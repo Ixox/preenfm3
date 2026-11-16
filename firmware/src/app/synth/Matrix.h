@@ -21,6 +21,7 @@
 #define MATRIX_SIZE 12
 
 #include "Common.h"
+#include "Pfm3Params.h"
 
 class Matrix {
     friend class Timbre;

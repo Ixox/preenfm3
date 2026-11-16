@@ -19,6 +19,7 @@
 #include "Synth.h"
 #include "Menu.h"
 #include "Sequencer.h"
+#include "Pfm3Preset.h"
 
 extern RNG_HandleTypeDef hrng;
 extern float noise[32];
@@ -46,9 +47,7 @@ float sqrt3(const float x)
 void Synth::init(SynthState *synthState) {
     voicePool_.init();
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        for (uint16_t k = 0; k < (sizeof(struct OneSynthParams) / sizeof(float)); k++) {
-            ((float*) timbres_[t].getParamRaw())[k] = ((float*) &preenMainPreset)[k];
-        }
+        timbres_[t].resetPfm3PresetToDefault();
         timbres_[t].initVoicePool(&voicePool_);
         timbres_[t].init(synthState, t);
         for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
@@ -480,7 +479,7 @@ void Synth::beforeNewParamsLoad(int timbre) {
         velocityBeforeNewParalsLoad_[k] = 0;
     }
 
-    if (this->synthState_->params->engineArp1.clock > 0) {
+    if (timbres_[timbre].sharedParams().engineArp1.clock > 0) {
         // Arpegiator : we store pressed key
         int numberOfPressedNote = timbres_[timbre].getNoteStack().size();
         for (int k = 0; k < numberOfPressedNote && k < NUMBER_OF_STORED_NOTES; k++) {
@@ -556,16 +555,10 @@ void Synth::afterNewMixerLoad() {
 void Synth::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue,
     float newValue) {
     if (param == NULL) {
-        if (currentRow == ROW_ARPEGGIATOR3) {
-            timbres_[timbre].syncArpUserPatterns();
-        } else if (currentRow == ROW_LFOSEQ1 || currentRow == ROW_LFOSEQ2) {
-            timbres_[timbre].setStepSequencerSteps(currentRow - ROW_LFOSEQ1);
-        }
+        timbres_[timbre].handleNullFlatParam(currentRow);
     } else {
         int index = currentRow * NUMBER_OF_ENCODERS_PFM2 + encoder;
-        if (index < TimbreParamLayout::presetNameStart) {
-            timbres_[timbre].setParamValue(index, oldValue, newValue);
-        }
+        timbres_[timbre].setParamValue(index, oldValue, newValue);
     }
 }
 
@@ -575,7 +568,7 @@ void Synth::newEngineParamValue(int timbre, int paramId, int context, float oldV
 
 // synth is the only one who knows timbres
 void Synth::newTimbre(int timbre) {
-    this->synthState_->setParamsAndTimbre(timbres_[timbre].getParamRaw(), timbre);
+    this->synthState_->setParamsAndTimbre(timbres_[timbre].getPfm3Preset(), timbre);
 }
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
@@ -663,7 +656,7 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
 
 
 void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
-    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, timbres_[timbre].getParamRaw());
+    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, timbres_[timbre].getPfm3Preset());
 }
 
 void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
@@ -672,7 +665,7 @@ void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue
     }
     struct ParameterDisplay *param = &(allParameterRows.row[row]->params[encoder]);
     int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
-    float oldValue = ((float*) this->timbres_[timbre].getParamRaw())[index];
+    float oldValue = ((float*) this->timbres_[timbre].getPfm3Preset())[index];
 
     if (newValue > param->maxValue) {
         // in v2, matrix target were removed so some values are > to max value but we need to accept it
@@ -690,7 +683,7 @@ void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue
     } else if (newValue < param->minValue) {
         newValue = param->minValue;
     }
-    ((float*) this->timbres_[timbre].getParamRaw())[index] = newValue;
+    ((float*) this->timbres_[timbre].getPfm3Preset())[index] = newValue;
 
     if (oldValue != newValue) {
         this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, row, encoder, param, oldValue, newValue);
@@ -764,7 +757,7 @@ void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int 
 }
 
 void Synth::setNewSymbolInPresetName(int timbre, int index, char newchar) {
-    this->timbres_[timbre].getParamRaw()->presetName[index] = newchar;
+    timbres_[timbre].setPresetNameChar(index, newchar);
 }
 
 void Synth::setCurrentInstrument(int value) {

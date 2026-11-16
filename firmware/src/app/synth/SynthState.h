@@ -25,6 +25,7 @@
 #include "Menu.h"
 #include "Storage.h"
 #include "MixerState.h"
+#include "Pfm3Preset.h"
 
 
 
@@ -575,17 +576,17 @@ public:
 
     void tempoClick();
 
-    void setParamsAndTimbre(struct OneSynthParams *newParams, int newCurrentTimbre);
+    void setParamsAndTimbre(struct Pfm3Preset *newParams, int newCurrentTimbre);
 
     bool getIsPlayingNote() {
         return isPlayingNote;
     }
-    void loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params);
-    void savePreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params);
+    void loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params);
+    void savePreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params);
     void loadNewPreset(int timbre);
-    void loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params);
+    void loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params);
     void loadMixer(PFM3File const *bank, int patchNumber);
-    void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct OneSynthParams* params);
+    void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset* params);
 
     bool newRandomizerValue(int encoder, int ticks);
     void randomizePreset();
@@ -603,8 +604,8 @@ public:
 
     bool scalaSettingsChanged(int timbre);
 
-    struct OneSynthParams *params;
-    struct OneSynthParams backupParams;
+    struct Pfm3Preset *pfm3Preset;
+    struct Pfm3Preset backupPfm3Preset;
     MixerState mixerState;
     struct FullState fullState;
     char stepSelect[2];

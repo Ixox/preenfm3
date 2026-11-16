@@ -59,7 +59,7 @@ void EditorParamPage::drawParameterName(int button, const struct RowEncoder &row
         switch (rowEncoder.row) {
         case ROW_EFFECT1:
             if (rowEncoder.encoder > 0) {
-                int effect = synthState_->params->effect1.type;
+                int effect = synthState_->pfm3Preset->effect1.type;
                 if (fx1RowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
                     tft_->print(fx1RowDisplay[effect].paramName[rowEncoder.encoder - 1]);
                 } else {
@@ -73,7 +73,7 @@ void EditorParamPage::drawParameterName(int button, const struct RowEncoder &row
             break;
         case ROW_EFFECT2:
             if (rowEncoder.encoder > 0) {
-                int effect = synthState_->params->effect2.type;
+                int effect = synthState_->pfm3Preset->effect2.type;
                 if (fx2RowDisplay[effect].paramName[rowEncoder.encoder - 1] != NULL) {
                     tft_->print(fx2RowDisplay[effect].paramName[rowEncoder.encoder - 1]);
                 } else {
@@ -112,7 +112,7 @@ void EditorParamPage::displayParamValue(int encoder, TFT_COLOR color) {
         }
 
         struct ParameterDisplay *param = &allParameterRows.row[row]->params[rowEncoder.encoder];
-        float newValue = ((float*) synthState_->params)[row * NUMBER_OF_ENCODERS_PFM2 + rowEncoder.encoder];
+        float newValue = ((float*) synthState_->pfm3Preset)[row * NUMBER_OF_ENCODERS_PFM2 + rowEncoder.encoder];
 
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
@@ -250,8 +250,8 @@ void EditorParamPage::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         param = &(allParameterRows.row[row]->params[encoder4]);
 
         // Block if necessary
-        if ((ticks > 0 && ((float*) synthState_->params)[num] > 99.95f)
-            || (ticks < 0 && ((float*) synthState_->params)[num] < 99.95f)) {
+        if ((ticks > 0 && ((float*) synthState_->pfm3Preset)[num] > 99.95f)
+            || (ticks < 0 && ((float*) synthState_->pfm3Preset)[num] < 99.95f)) {
             return;
         }
 
@@ -267,14 +267,14 @@ void EditorParamPage::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
                 freqToSet = 100.0f;
             }
         }
-        lfoFreqPreviousValue[lfoButtonState] = ((float*) synthState_->params)[num];
+        lfoFreqPreviousValue[lfoButtonState] = ((float*) synthState_->pfm3Preset)[num];
 
         if (ticks > 0) {
             ticks = 20;
-            ((float*) synthState_->params)[num] = freqToSet - .1f * ticks;
+            ((float*) synthState_->pfm3Preset)[num] = freqToSet - .1f * ticks;
         } else {
             ticks = - 1000;
-            ((float*) synthState_->params)[num] = freqToSet - .1f * ticks;
+            ((float*) synthState_->pfm3Preset)[num] = freqToSet - .1f * ticks;
         }
     } else  if (unlikely(encoder4 == ENCODER_MODULATOR_SYNC_STEPS)) {
         // Simulate we're Osc freq
@@ -286,8 +286,8 @@ void EditorParamPage::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         param = &(allParameterRows.row[row]->params[encoder4]);
 
         // Block if necessary
-        if ((ticks > 0 && ((float*) synthState_->params)[num] > 240.5f)
-            || (ticks < 0 && ((float*) synthState_->params)[num] < 240.5f)) {
+        if ((ticks > 0 && ((float*) synthState_->pfm3Preset)[num] > 240.5f)
+            || (ticks < 0 && ((float*) synthState_->pfm3Preset)[num] < 240.5f)) {
             return;
         }
 
@@ -303,14 +303,14 @@ void EditorParamPage::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
                 bpmToSet = 241.0f;
             }
         }
-        lfoFreqPreviousValue[3 + stepButtonState] = ((float*) synthState_->params)[num];
+        lfoFreqPreviousValue[3 + stepButtonState] = ((float*) synthState_->pfm3Preset)[num];
 
         if (ticks > 0) {
             ticks = 50;
-            ((float*) synthState_->params)[num] = bpmToSet -  ticks;
+            ((float*) synthState_->pfm3Preset)[num] = bpmToSet -  ticks;
         } else {
             ticks = -240;
-            ((float*) synthState_->params)[num] = bpmToSet -  ticks;
+            ((float*) synthState_->pfm3Preset)[num] = bpmToSet -  ticks;
         }
     } else {
         num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
@@ -333,7 +333,7 @@ void EditorParamPage::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
             return;
         }
 
-        float &value = ((float*) synthState_->params)[num];
+        float &value = ((float*) synthState_->pfm3Preset)[num];
         oldValue = value;
 
         float inc = param->incValue;
@@ -356,7 +356,7 @@ void EditorParamPage::encoderTurnedPfm2(int row, int encoder4, int ticks, bool s
         }
         value = newValue;
     } else {
-        float *value = &((float*) synthState_->params)[num];
+        float *value = &((float*) synthState_->pfm3Preset)[num];
         newValue = oldValue = (*value);
 
         // Must use newValue (int) so that the minValue comparaison works
@@ -517,7 +517,7 @@ void EditorParamPage::updateEncoderValueWithoutCursor(int row, int encoder, Para
     case DISPLAY_TYPE_FLOAT_OSC_FREQUENCY: {
         // Hack... to deal with the special case of the fixed frequency.....
         int oRow = row - ROW_OSC_FIRST;
-        OscillatorParams *oParam = (OscillatorParams*) &synthState_->params->osc1;
+        OscillatorParams *oParam = (OscillatorParams*) &synthState_->pfm3Preset->osc1;
         OscFrequencyType ft = (OscFrequencyType) oParam[oRow].frequencyType;
 
         if (ft == OSC_FT_FIXE) {
@@ -551,7 +551,7 @@ void EditorParamPage::updateEncoderValueWithoutCursor(int row, int encoder, Para
         // Display the steps only once
         if (encoder == 2) {
             int whichStepSeq = row - ROW_LFOSEQ1;
-            StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&synthState_->params->lfoSteps1))[whichStepSeq];
+            StepSequencerSteps *seqSteps = &((StepSequencerSteps*) (&synthState_->pfm3Preset->lfoSteps1))[whichStepSeq];
 
             tft_->setCharBackgroundColor(COLOR_BLACK);
             for (int k = 0; k < 16; k++) {
@@ -571,12 +571,12 @@ void EditorParamPage::updateEncoderValueWithoutCursor(int row, int encoder, Para
         // Display the steps only once
         if (encoder == 0) {
 
-            const int index = (int) synthState_->params->engineArp2.pattern;
+            const int index = (int) synthState_->pfm3Preset->engineArp2.pattern;
             arp_pattern_t user_pattern;
             bool editable = false;
 
-            if (synthState_->params->engineArp2.pattern >= ARPEGGIATOR_PRESET_PATTERN_COUNT) {
-                user_pattern = synthState_->params->engineArpUserPatterns.patterns[index
+            if (synthState_->pfm3Preset->engineArp2.pattern >= ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+                user_pattern = synthState_->pfm3Preset->engineArpUserPatterns.patterns[index
                     - ARPEGGIATOR_PRESET_PATTERN_COUNT];
                 editable = true;
             } else {

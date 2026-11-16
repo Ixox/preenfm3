@@ -21,6 +21,7 @@
 #include "PreenFMFileType.h"
 #include "Common.h"
 #include "PersistenceMagic.h"
+#include "Pfm3Preset.h"
 
 class Timbre;
 
@@ -40,8 +41,8 @@ public:
     bool loadPatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre);
     const char* loadPatchName(const struct PFM3File *bank, int patchNumber);
 
-    bool decodeBufferAndApplyPreset(uint8_t *buffer, struct OneSynthParams *params);
-    void copyNewPreset(struct OneSynthParams *params);
+    bool decodeBufferAndApplyPreset(uint8_t *buffer, struct Pfm3Preset *params);
+    void copyNewPreset(struct Pfm3Preset *params);
 
 protected:
     const char* getFolderName();

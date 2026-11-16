@@ -119,7 +119,7 @@ void SynthState::init(ScreenMixer* displayMixer, ScreenEditor* displayEditor, Sc
 
 void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encoder6, int ticks) {
     int whichStepSeq = row - ROW_LFOSEQ1;
-    StepSequencerSteps * seqSteps = &((StepSequencerSteps *) (&params->lfoSteps1))[whichStepSeq];
+    StepSequencerSteps * seqSteps = &((StepSequencerSteps *) (&pfm3Preset->lfoSteps1))[whichStepSeq];
 
     if (encoder6 == 3) {
         int oldPos = stepSelect[whichStepSeq];
@@ -171,10 +171,10 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
 
     } else if (encoder == 1) {
         // Change value(s)
-        if (params->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+        if (pfm3Preset->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
             return;
         }
-        arp_pattern_t pattern = params->engineArpUserPatterns.patterns[(int) params->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT];
+        arp_pattern_t pattern = pfm3Preset->engineArpUserPatterns.patterns[(int) pfm3Preset->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT];
         const uint16_t oldMask = ARP_PATTERN_GETMASK(pattern);
         uint16_t newMask = oldMask;
 
@@ -198,7 +198,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
 
         if (oldMask != newMask) {
             ARP_PATTERN_SETMASK(pattern, newMask);
-            params->engineArpUserPatterns.patterns[(int) params->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
+            pfm3Preset->engineArpUserPatterns.patterns[(int) pfm3Preset->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
             propagateNewPfm3ParamValue(currentTimbre, row, encoder, (ParameterDisplay*) NULL, oldMask, newMask);
         }
     }
@@ -368,12 +368,12 @@ void SynthState::loadNewPreset(int timbre) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
-    storage->getPatchBank()->copyNewPreset(params);
+    storage->getPatchBank()->copyNewPreset(pfm3Preset);
     propagateAfterNewParamsLoad(timbre);
     restoreTestNote();
 }
 
-void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params) {
+void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
@@ -388,11 +388,11 @@ void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, s
     restoreTestNote();
 }
 
-void SynthState::savePreset(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params) {
+void SynthState::savePreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
     storage->getPatchBank()->savePatch(bank, patchNumber, &timbres[timbre]);
 }
 
-void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct OneSynthParams* params) {
+void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
@@ -421,7 +421,7 @@ void SynthState::loadMixer(PFM3File const *bank, int patchNumber) {
     propagateAfterNewMixerLoad();
 }
 
-void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct OneSynthParams *params) {
+void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset *params) {
     switch (bank) {
         case 0: {
             PFM3File const *bank = storage->getPatchBank()->getFile(bankLSB);
@@ -596,8 +596,8 @@ void SynthState::tempoClick() {
     }
 }
 
-void SynthState::setParamsAndTimbre(struct OneSynthParams *newParams, int newCurrentTimbre) {
-    this->params = newParams;
+void SynthState::setParamsAndTimbre(struct Pfm3Preset *newParams, int newCurrentTimbre) {
+    this->pfm3Preset = newParams;
     this->currentTimbre = newCurrentTimbre;
 }
 
@@ -694,27 +694,27 @@ void SynthState::randomizePreset() {
 
     // general
 
-    params->engine1.velocity = 8;
+    pfm3Preset->engine1.velocity = 8;
 
     if (operatorRandom > 0) {
-        params->engineMix1.mixOsc1 = getRandomFloat(0.6f, 1.0f);
-        params->engineMix1.mixOsc2 = getRandomFloat(0.6f, 1.0f);
-        params->engineMix2.mixOsc3 = getRandomFloat(0.6f, 1.0f);
-        params->engineMix2.mixOsc4 = getRandomFloat(0.6f, 1.0f);
-        params->engineMix3.mixOsc5 = getRandomFloat(0.6f, 1.0f);
-        params->engineMix3.mixOsc6 = getRandomFloat(0.6f, 1.0f);
+        pfm3Preset->engineMix1.mixOsc1 = getRandomFloat(0.6f, 1.0f);
+        pfm3Preset->engineMix1.mixOsc2 = getRandomFloat(0.6f, 1.0f);
+        pfm3Preset->engineMix2.mixOsc3 = getRandomFloat(0.6f, 1.0f);
+        pfm3Preset->engineMix2.mixOsc4 = getRandomFloat(0.6f, 1.0f);
+        pfm3Preset->engineMix3.mixOsc5 = getRandomFloat(0.6f, 1.0f);
+        pfm3Preset->engineMix3.mixOsc6 = getRandomFloat(0.6f, 1.0f);
 
-        params->engineMix1.panOsc1 = 0.0;
-        params->engineMix1.panOsc2 = getRandomFloat(-0.3f, 0.3f);
-        params->engineMix2.panOsc3 = getRandomFloat(-0.3f, 0.3f);
-        params->engineMix2.panOsc4 = getRandomFloat(-0.5f, 0.5f);
-        params->engineMix3.panOsc5 = getRandomFloat(-0.5f, 0.5f);
-        params->engineMix3.panOsc6 = getRandomFloat(-0.7f, 0.7f);
+        pfm3Preset->engineMix1.panOsc1 = 0.0;
+        pfm3Preset->engineMix1.panOsc2 = getRandomFloat(-0.3f, 0.3f);
+        pfm3Preset->engineMix2.panOsc3 = getRandomFloat(-0.3f, 0.3f);
+        pfm3Preset->engineMix2.panOsc4 = getRandomFloat(-0.5f, 0.5f);
+        pfm3Preset->engineMix3.panOsc5 = getRandomFloat(-0.5f, 0.5f);
+        pfm3Preset->engineMix3.panOsc6 = getRandomFloat(-0.7f, 0.7f);
 
-        params->engine1.algo = getRandomInt(ALGO_END);
+        pfm3Preset->engine1.algo = getRandomInt(ALGO_END);
 
         for (int o = 0; o < 6; o++) {
-            struct OscillatorParams* currentOsc = &((struct OscillatorParams*) &params->osc1)[o];
+            struct OscillatorParams* currentOsc = &((struct OscillatorParams*) &pfm3Preset->osc1)[o];
             currentOsc->shape = getRandomShape(operatorRandom);
             currentOsc->frequencyMul = getRandomFrequency(operatorRandom);
             currentOsc->frequencyType = getRandomFrequencyType(operatorRandom);
@@ -722,21 +722,21 @@ void SynthState::randomizePreset() {
         }
 
         // FX
-        params->effect1.param1 = getRandomFloat(0.2f, 0.8f);
-        params->effect1.param2 = getRandomFloat(0.2f, 0.8f);
+        pfm3Preset->effect1.param1 = getRandomFloat(0.2f, 0.8f);
+        pfm3Preset->effect1.param2 = getRandomFloat(0.2f, 0.8f);
         int effect = getRandomInt(15);
         if (effect == 1 || effect > 6) {
-            params->effect1.param3 = 1.0;
-            params->effect1.type = 0;
+            pfm3Preset->effect1.param3 = 1.0;
+            pfm3Preset->effect1.type = 0;
         } else {
-            params->effect1.param3 = 0.6;
-            params->effect1.type = effect;
+            pfm3Preset->effect1.param3 = 0.6;
+            pfm3Preset->effect1.type = effect;
         }
     }
 
     for (int e = 0; e < 6; e++) {
-        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*) &params->env1Time)[e * 2];
-        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*) &params->env1Level)[e * 2];
+        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*) &pfm3Preset->env1Time)[e * 2];
+        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*) &pfm3Preset->env1Level)[e * 2];
 
         switch (envelopeTypeRandom) {
         case 1:
@@ -778,9 +778,9 @@ void SynthState::randomizePreset() {
     }
 
     if (imRandom > 0) {
-        struct EngineIm1* im1 = (struct EngineIm1*) &params->engineIm1;
-        struct EngineIm2* im2 = (struct EngineIm2*) &params->engineIm2;
-        struct EngineIm3* im3 = (struct EngineIm3*) &params->engineIm3;
+        struct EngineIm1* im1 = (struct EngineIm1*) &pfm3Preset->engineIm1;
+        struct EngineIm2* im2 = (struct EngineIm2*) &pfm3Preset->engineIm2;
+        struct EngineIm3* im3 = (struct EngineIm3*) &pfm3Preset->engineIm3;
 
         float min = 0;
         float max = 0;
@@ -821,44 +821,44 @@ void SynthState::randomizePreset() {
 
     if (modulationRandom > 0) {
 
-        params->matrixRowState1.source = MATRIX_SOURCE_LFO1;
-        params->matrixRowState2.source = MATRIX_SOURCE_LFO1;
-        params->matrixRowState3.source = MATRIX_SOURCE_LFO2;
-        params->matrixRowState4.source = MATRIX_SOURCE_LFO2;
-        params->matrixRowState5.source = MATRIX_SOURCE_LFO3;
-        params->matrixRowState6.source = MATRIX_SOURCE_LFOENV1;
-        params->matrixRowState7.source = MATRIX_SOURCE_LFOENV2;
-        params->matrixRowState8.source = MATRIX_SOURCE_LFOSEQ1;
-        params->matrixRowState9.source = MATRIX_SOURCE_LFOSEQ2;
+        pfm3Preset->matrixRowState1.source = MATRIX_SOURCE_LFO1;
+        pfm3Preset->matrixRowState2.source = MATRIX_SOURCE_LFO1;
+        pfm3Preset->matrixRowState3.source = MATRIX_SOURCE_LFO2;
+        pfm3Preset->matrixRowState4.source = MATRIX_SOURCE_LFO2;
+        pfm3Preset->matrixRowState5.source = MATRIX_SOURCE_LFO3;
+        pfm3Preset->matrixRowState6.source = MATRIX_SOURCE_LFOENV1;
+        pfm3Preset->matrixRowState7.source = MATRIX_SOURCE_LFOENV2;
+        pfm3Preset->matrixRowState8.source = MATRIX_SOURCE_LFOSEQ1;
+        pfm3Preset->matrixRowState9.source = MATRIX_SOURCE_LFOSEQ2;
 
-        params->matrixRowState10.source = MATRIX_SOURCE_MODWHEEL;
-        params->matrixRowState10.mul = 2.0f;
-        params->matrixRowState10.dest1 = INDEX_ALL_MODULATION;
+        pfm3Preset->matrixRowState10.source = MATRIX_SOURCE_MODWHEEL;
+        pfm3Preset->matrixRowState10.mul = 2.0f;
+        pfm3Preset->matrixRowState10.dest1 = INDEX_ALL_MODULATION;
 
-        params->matrixRowState11.source = MATRIX_SOURCE_PITCHBEND;
-        params->matrixRowState11.mul = 1.0f;
-        params->matrixRowState11.dest1 = ALL_OSC_FREQ;
+        pfm3Preset->matrixRowState11.source = MATRIX_SOURCE_PITCHBEND;
+        pfm3Preset->matrixRowState11.mul = 1.0f;
+        pfm3Preset->matrixRowState11.dest1 = ALL_OSC_FREQ;
 
-        params->matrixRowState12.source = MATRIX_SOURCE_AFTERTOUCH;
-        params->matrixRowState12.mul = 1.0f;
-        params->matrixRowState12.dest1 = INDEX_MODULATION1;
+        pfm3Preset->matrixRowState12.source = MATRIX_SOURCE_AFTERTOUCH;
+        pfm3Preset->matrixRowState12.mul = 1.0f;
+        pfm3Preset->matrixRowState12.dest1 = INDEX_MODULATION1;
 
         for (int m = 1; m <= 9; m++) {
-            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &params->matrixRowState1)[m - 1];
+            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset->matrixRowState1)[m - 1];
             matrixRow->mul = 0;
             matrixRow->dest1 = 0;
         }
 
         float dest[] = { INDEX_ALL_MODULATION, OSC1_FREQ, ALL_PAN, OSC2_FREQ, INDEX_MODULATION1, PAN_OSC1, INDEX_ALL_MODULATION };
         for (int i = 0; i < 2; i++) {
-            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &params->matrixRowState1)[getRandomInt(10)];
+            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset->matrixRowState1)[getRandomInt(10)];
             matrixRow->mul = getRandomFloat(0.2f, 3.0f);
             matrixRow->dest1 = dest[getRandomInt(7)];
         }
 
         if (modulationRandom >= 2) {
             for (int i = 0; i < 3; i++) {
-                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &params->matrixRowState1)[getRandomInt(10)];
+                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset->matrixRowState1)[getRandomInt(10)];
                 matrixRow->mul = getRandomFloat(1.0f, 3.0f);
                 matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
             }
@@ -866,7 +866,7 @@ void SynthState::randomizePreset() {
 
         if (modulationRandom >= 3) {
             for (int i = 0; i < 6; i++) {
-                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &params->matrixRowState1)[getRandomInt(10)];
+                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset->matrixRowState1)[getRandomInt(10)];
                 float mm = getRandomFloat(2.0f, 5.0f);
                 matrixRow->mul = getRandomFloat(-mm, mm);
                 matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
@@ -874,7 +874,7 @@ void SynthState::randomizePreset() {
         }
 
         for (int o = 0; o < 3; o++) {
-            struct LfoParams* osc = &((struct LfoParams*) &params->lfoOsc1)[o];
+            struct LfoParams* osc = &((struct LfoParams*) &pfm3Preset->lfoOsc1)[o];
             osc->shape = getRandomInt(5);
             osc->freq = getRandomFloat(0.2, 3 + modulationRandom * 2);
             if (getRandomInt(4) > 1) {
@@ -890,24 +890,24 @@ void SynthState::randomizePreset() {
             }
         }
         for (int e = 0; e < 2; e++) {
-            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*) &params->lfoEnv1)[e];
+            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*) &pfm3Preset->lfoEnv1)[e];
             env->attack = getRandomFloat(0.05f, 1.0f);
             env->decay = getRandomFloat(0.05f, 1.0f);
             env->sustain = getRandomFloat(0.05f, 1.0f);
             if (e == 0) {
                 env->release = getRandomFloat(0.05f, 1.0f);
             } else {
-                params->lfoEnv2.loop = getRandomInt(2) + 1;
+                pfm3Preset->lfoEnv2.loop = getRandomInt(2) + 1;
             }
         }
 
         int bpm = getRandomInt(120) + 60;
         for (int s = 0; s < 2; s++) {
-            struct StepSequencerParams* stepSeq = &((struct StepSequencerParams*) &params->lfoSeq1)[s];
+            struct StepSequencerParams* stepSeq = &((struct StepSequencerParams*) &pfm3Preset->lfoSeq1)[s];
             stepSeq->bpm = bpm;
             stepSeq->gate = getRandomFloat(0.25, 1);
 
-            struct StepSequencerSteps* steps = &((struct StepSequencerSteps*) &params->lfoSteps1)[s];
+            struct StepSequencerSteps* steps = &((struct StepSequencerSteps*) &pfm3Preset->lfoSteps1)[s];
             for (int k = 0; k < 16; k++) {
                 if ((k % 4) == 0) {
                     steps->steps[k] = getRandomInt(5) + 11;
@@ -928,7 +928,7 @@ char* SynthState::getTimbreName(int t) {
 }
 
 uint8_t SynthState::getTimbrePlayMode(int t) {
-    return timbres[t].getParamRaw()->engine1.playMode;
+    return timbres[t].getPfm3Preset()->engine1.playMode;
 }
 
 

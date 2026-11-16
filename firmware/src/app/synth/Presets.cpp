@@ -17,8 +17,9 @@
 
 #include "Common.h"
 #include "SynthState.h"
+#include "Pfm3Preset.h"
 
-const struct OneSynthParams defaultPreset  = {
+const struct Pfm3Preset defaultPreset  = {
         // Engine 1
         { ALGO7, 14, 1, 4} ,
         // Modulation
@@ -101,7 +102,7 @@ const struct OneSynthParams defaultPreset  = {
         "Default"
 };
 
-const struct OneSynthParams preenMainPreset  = {
+const struct Pfm3Preset preenMainPreset  = {
         // Engine 1
         { ALGO1, 0, 1, 4} ,
         // Modulation
@@ -190,7 +191,7 @@ const struct OneSynthParams preenMainPreset  = {
         "Sound"
 };
 
-const struct OneSynthParams newPresetParams  = {
+const struct Pfm3Preset newPresetParams  = {
         { ALGO1, 8, 1, 4} ,
         // Modulation
         { 0, 0, 0.0, 0 },

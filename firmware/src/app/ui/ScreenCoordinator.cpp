@@ -376,7 +376,7 @@ void ScreenCoordinator::checkPresetModified(int timbre) {
     if (!editor_->isPresetModifed(timbre)) {
         editor_->setPresetModified(timbre, true);
         if (this->synthState_->fullState.synthMode == SYNTH_MODE_EDITOR && timbre == currentTimbre_) {
-            int length = getLength(this->synthState_->params->presetName);
+            int length = getLength(this->synthState_->pfm3Preset->presetName);
             tft_->setCursor(3 + length, 0);
             tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
             tft_->print('*');

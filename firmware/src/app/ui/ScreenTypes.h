@@ -21,6 +21,7 @@
 
 
 #include "Common.h"
+#include "Pfm3Params.h"
 
 
 extern const char* lfoSeqMidiClock[];

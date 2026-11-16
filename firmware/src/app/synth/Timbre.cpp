@@ -275,7 +275,7 @@ void Timbre::init(SynthState *synthState, int timbreNumber) {
 
     SynthEngineFactory::init(this, synthState);
     engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
-    deserializeParams(flatParams_);
+    deserializePfm3Preset(pfm3Preset_);
 
     for (int s = 0; s < 2; s++) {
         for (int n = 0; n < 128; n++) {
@@ -314,7 +314,9 @@ void Timbre::setEngine(SynthEngineType engine) {
     engine_ = engine;
     engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
     // Keep PFM3 compatible with a DX7 patch converted into the flat mirror.
-    deserializeParams(flatParams_);
+    if (engineImpl_->usesPfm3PresetMirror()) {
+        deserializePfm3Preset(pfm3Preset_);
+    }
     engineImpl_->afterNewParamsLoad();
 }
 
@@ -2503,7 +2505,9 @@ void Timbre::gateFx() {
 
 void Timbre::afterNewParamsLoad() {
 
-    deserializeParams(flatParams_);
+    if (engineImpl_->usesPfm3PresetMirror()) {
+        deserializePfm3Preset(pfm3Preset_);
+    }
     engineImpl_->afterNewParamsLoad();
 
     resetArpeggiator();
@@ -2524,15 +2528,18 @@ void Timbre::resetArpeggiator() {
 }
 
 void Timbre::setParamValue(int index, float oldValue, float newValue) {
+    if (index >= Pfm3PresetLayout::presetNameStart) {
+        return;
+    }
     int row = index / NUMBER_OF_ENCODERS_PFM2;
     int encoder = index % NUMBER_OF_ENCODERS_PFM2;
 
-    ((float*) &flatParams_)[index] = newValue;
+    ((float*) &pfm3Preset_)[index] = newValue;
 
-    if (index >= TimbreParamLayout::sharedBlockStart && index < TimbreParamLayout::sharedBlockEnd) {
-        ((float*) &sharedParams())[index - TimbreParamLayout::sharedBlockStart] = newValue;
-    } else if (index >= TimbreParamLayout::effect2Start && index < TimbreParamLayout::presetNameStart) {
-        ((float*) &sharedParams())[index - TimbreParamLayout::effect2Start + TimbreParamLayout::sharedGap] = newValue;
+    if (index >= Pfm3PresetLayout::sharedBlockStart && index < Pfm3PresetLayout::sharedBlockEnd) {
+        ((float*) &sharedParams())[index - Pfm3PresetLayout::sharedBlockStart] = newValue;
+    } else if (index >= Pfm3PresetLayout::effect2Start && index < Pfm3PresetLayout::presetNameStart) {
+        ((float*) &sharedParams())[index - Pfm3PresetLayout::effect2Start + Pfm3PresetLayout::sharedGap] = newValue;
     } else {
         engineImpl_->setParamValue(index, newValue);
     }
@@ -2568,7 +2575,7 @@ void Timbre::setParamValue(int index, float oldValue, float newValue) {
 }
 
 void Timbre::syncArpUserPatterns() {
-    sharedParams().engineArpUserPatterns = flatParams_.engineArpUserPatterns;
+    sharedParams().engineArpUserPatterns = pfm3Preset_.engineArpUserPatterns;
 }
 
 void Timbre::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
@@ -2577,10 +2584,27 @@ void Timbre::engineParamChanged(int paramId, int context, float oldValue, float 
 
 void Timbre::setStepSequencerSteps(int whichStepSeq) {
     if (whichStepSeq == 0) {
-        engineImpl_->setStepSequencerSteps(0, flatParams_.lfoSteps1);
+        engineImpl_->setStepSequencerSteps(0, pfm3Preset_.lfoSteps1);
     } else {
-        engineImpl_->setStepSequencerSteps(1, flatParams_.lfoSteps2);
+        engineImpl_->setStepSequencerSteps(1, pfm3Preset_.lfoSteps2);
     }
+}
+
+void Timbre::handleNullFlatParam(int row) {
+    if (row == ROW_ARPEGGIATOR3) {
+        syncArpUserPatterns();
+    } else if ((row == ROW_LFOSEQ1 || row == ROW_LFOSEQ2) && engineImpl_->supportsStepSequencer()) {
+        setStepSequencerSteps(row - ROW_LFOSEQ1);
+    }
+}
+
+void Timbre::resetPfm3PresetToDefault() {
+    pfm3Preset_ = preenMainPreset;
+}
+
+void Timbre::setPresetNameChar(int index, char c) {
+    sharedParams().presetName[index] = c;
+    pfm3Preset_.presetName[index] = c;
 }
 
 uint32_t Timbre::getStorageMagic() const {
@@ -2612,23 +2636,23 @@ const char* Timbre::getStorageDefaultName(uint32_t magic) const {
     return engine != nullptr ? engine->getStorageDefaultName() : nullptr;
 }
 
-void Timbre::applyFlatParams(const struct OneSynthParams &flat) {
-    flatParams_ = flat;
-    deserializeParams(flat);
+void Timbre::applyPfm3Preset(const struct Pfm3Preset &flat) {
+    pfm3Preset_ = flat;
+    deserializePfm3Preset(flat);
 }
 
 void Timbre::setSharedParams(const TimbreSharedParams &shared) {
     sharedParams() = shared;
-    flatParams_.engineArp1 = shared.engineArp1;
-    flatParams_.engineArp2 = shared.engineArp2;
-    flatParams_.engineArpUserPatterns = shared.engineArpUserPatterns;
-    flatParams_.effect1 = shared.effect1;
-    flatParams_.effect2 = shared.effect2;
-    memcpy(flatParams_.presetName, shared.presetName, sizeof(flatParams_.presetName));
+    pfm3Preset_.engineArp1 = shared.engineArp1;
+    pfm3Preset_.engineArp2 = shared.engineArp2;
+    pfm3Preset_.engineArpUserPatterns = shared.engineArpUserPatterns;
+    pfm3Preset_.effect1 = shared.effect1;
+    pfm3Preset_.effect2 = shared.effect2;
+    memcpy(pfm3Preset_.presetName, shared.presetName, sizeof(pfm3Preset_.presetName));
 }
 
-void Timbre::serializeParams(struct OneSynthParams &out) const {
-    engineImpl_->serializeFlatParams(out);
+void Timbre::serializePfm3Preset(struct Pfm3Preset &out) const {
+    engineImpl_->serializePfm3Preset(out);
 
     out.engineArp1 = sharedParams().engineArp1;
     out.engineArp2 = sharedParams().engineArp2;
@@ -2638,8 +2662,8 @@ void Timbre::serializeParams(struct OneSynthParams &out) const {
     memcpy(out.presetName, sharedParams().presetName, sizeof(out.presetName));
 }
 
-void Timbre::deserializeParams(const struct OneSynthParams &in) {
-    engineImpl_->deserializeFlatParams(in);
+void Timbre::deserializePfm3Preset(const struct Pfm3Preset &in) {
+    engineImpl_->deserializePfm3Preset(in);
 
     sharedParams().engineArp1 = in.engineArp1;
     sharedParams().engineArp2 = in.engineArp2;
@@ -2652,18 +2676,18 @@ void Timbre::deserializeParams(const struct OneSynthParams &in) {
 int Timbre::getSeqStepValue(int whichStepSeq, int step) {
 
     if (whichStepSeq == 0) {
-        return flatParams_.lfoSteps1.steps[step];
+        return pfm3Preset_.lfoSteps1.steps[step];
     } else {
-        return flatParams_.lfoSteps2.steps[step];
+        return pfm3Preset_.lfoSteps2.steps[step];
     }
 }
 
 void Timbre::setSeqStepValue(int whichStepSeq, int step, int value) {
 
     if (whichStepSeq == 0) {
-        flatParams_.lfoSteps1.steps[step] = value;
+        pfm3Preset_.lfoSteps1.steps[step] = value;
     } else {
-        flatParams_.lfoSteps2.steps[step] = value;
+        pfm3Preset_.lfoSteps2.steps[step] = value;
     }
 }
 

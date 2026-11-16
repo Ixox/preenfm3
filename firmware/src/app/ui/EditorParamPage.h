@@ -24,7 +24,7 @@
 #include "EditorEngine.h"
 
 /*
- * Generic menu/encoder page mechanics over the flat OneSynthParams model.
+ * Generic menu/encoder page mechanics over the flat Pfm3Preset model.
  * Used by the PFM3 editor and by the shared Arp/Fx page. Engine-specific
  * pages override the drawing/editing hooks they need.
  */

@@ -11,6 +11,7 @@
 #define PFM3_FLASH_FORMAT_H_
 
 #include "Common.h"
+#include "Pfm3Preset.h"
 
 // Storage mapping of the PFM3 parameters (legacy on-flash layout).
 struct FlashSynthParams {
@@ -75,7 +76,7 @@ struct FlashSynthParams {
     struct EffectRowParams effect2;
 };
 
-void pfm3ParamsToFlash(const struct OneSynthParams *params, struct FlashSynthParams *flashMemory, bool saveArp);
-void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct OneSynthParams *params, bool loadArp);
+void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *flashMemory, bool saveArp);
+void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Preset *params, bool loadArp);
 
 #endif
