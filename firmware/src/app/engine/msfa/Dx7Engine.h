@@ -35,9 +35,6 @@ struct Dx7EnvelopeDisplay {
     float level[4];
 };
 
-extern Dx7VoiceState* dx7VoiceStates;
-extern Dx7TimbreState* dx7TimbreStates;
-
 Dx7VoiceState* getDx7VoiceState(int index);
 Dx7TimbreState* getDx7TimbreState(int index);
 

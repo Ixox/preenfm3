@@ -14,8 +14,6 @@
  * collide with the PFM3 classes in the rest of the firmware.
  */
 
-#include <new>
-
 #include "Dx7Engine.h"
 #include "Dx7Params.h"
 #include "controllers.h"
@@ -56,11 +54,8 @@ struct Dx7VoiceState {
     Dx7VoiceState();
 };
 
-alignas(Dx7VoiceState) static uint8_t dx7VoiceStorage[MAX_NUMBER_OF_VOICES][sizeof(Dx7VoiceState)] __attribute__((section(".ram_d1")));
-alignas(Dx7TimbreState) static uint8_t dx7TimbreStorage[NUMBER_OF_TIMBRES][sizeof(Dx7TimbreState)] __attribute__((section(".ram_d1")));
-
-Dx7VoiceState* dx7VoiceStates = reinterpret_cast<Dx7VoiceState*>(dx7VoiceStorage);
-Dx7TimbreState* dx7TimbreStates = reinterpret_cast<Dx7TimbreState*>(dx7TimbreStorage);
+static Dx7VoiceState dx7VoiceStates[MAX_NUMBER_OF_VOICES] __attribute__((section(".ram_d1")));
+static Dx7TimbreState dx7TimbreStates[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
 
 Dx7VoiceState* getDx7VoiceState(int index) {
     return dx7VoiceStates + index;
@@ -268,11 +263,7 @@ void getDx7EnvelopeDisplay(const uint8_t* program, uint8_t operatorNumber, Dx7En
 void dx7EngineInit() {
     dx7Tuning = createStandardTuning();
 
-    for (int i = 0; i < MAX_NUMBER_OF_VOICES; i++) {
-        new (&dx7VoiceStorage[i][0]) Dx7VoiceState();
-    }
     for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
-        new (&dx7TimbreStorage[i][0]) Dx7TimbreState();
         dx7TimbreInit(dx7TimbreStates + i);
     }
 }
