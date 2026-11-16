@@ -92,7 +92,7 @@ void ScreenEditor::newTimbre(int timbre) {
 
 void ScreenEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
     ParameterDisplay *param, float oldValue, float newValue) {
-    if (isMsfaTimbre()) {
+    if (isMsfaTimbre() && synthState_->fullState.mainPage >= 0 && synthState_->fullState.mainPage <= 1) {
         msfaEditor_->newParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
     } else {
         pfm3Editor_->newParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);

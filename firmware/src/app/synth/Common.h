@@ -289,6 +289,8 @@ enum {
     PLAY_MODE_UNISON
 };
 
+#define MAX_UNISON_VOICES 7
+
 struct Engine1Params {
     float algo;
     float velocity;

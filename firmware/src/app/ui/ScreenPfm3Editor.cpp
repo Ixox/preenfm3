@@ -3578,9 +3578,15 @@ void ScreenPfm3Editor::updateEncoderValueWithoutCursor(int row, int encoder, Par
             } else {
                 tft_->setCharColor(COLOR_GRAY);
             }
+            int displayedVoices = numberOfVoices;
+            if (newValue == PLAY_MODE_UNISON && displayedVoices > MAX_UNISON_VOICES) {
+                displayedVoices = MAX_UNISON_VOICES;
+            }
             tft_->print("(");
-            tft_->print(numberOfVoices);
+            tft_->print(displayedVoices);
             tft_->print(')');
+            // Clear the last character left by a longer previous value.
+            tft_->print(' ');
         }
         break;
     case DISPLAY_TYPE_FLOAT_LFO_FREQUENCY:

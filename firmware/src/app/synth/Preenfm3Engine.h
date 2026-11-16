@@ -12,6 +12,8 @@
 
 #include "Common.h"
 #include "Lfo.h"
+#include "Osc.h"
+#include "Env.h"
 #include "SynthEngine.h"
 
 class Timbre;
@@ -43,7 +45,7 @@ class Preenfm3Engine : public SynthEngine {
 public:
     Preenfm3Engine() : timbre_(nullptr) {}
 
-    void init(Timbre *timbre) override;
+    void init(Timbre *timbre, SynthState *synthState) override;
     void afterNewParamsLoad() override;
     void bindVoice(Voice *voice) override;
     void noteOn(char note, char velocity) override;
@@ -53,13 +55,50 @@ public:
     void glide() override;
     void gateFx() override;
 
+    void setMatrixSource(SourceEnum source, float value) override;
+    void setMatrixSourceMPE(uint8_t channel, SourceEnum source, float value) override;
+    void resetMatrixDestination(float oldValue) override;
+    void setMatrixPolyAfterTouch(uint8_t note, float value) override;
+    void noteOnMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
+    void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
+    void newParamValue(int row, int encoder) override;
+    void prepareFxMatrix(Voice *voice) override;
+    void updateVoiceMatrix(Voice *voice, int note, int velocity) override;
+
+    void lfoValueChange(int row, int encoder, float value) override;
+    void updateMidiNoteScale(int scale) override;
+    void verifyLfoUsed(int encoder, float oldValue, float newValue) override;
+    bool isLfoUsed(int lfo) override;
+    void midiClockContinue(int songPosition) override;
+    void midiClockStart() override;
+    void midiClockSongPositionStep(int songPosition) override;
+    float getMatrixDestination(int destination) override;
+    bool supportsDeferredSteal() const override {
+        return true;
+    }
+
+    Osc& osc(int index) {
+        return osc_[index];
+    }
+    Env& env(int index) {
+        return env_[index];
+    }
+
     void refreshContext();
 
 private:
     void initContext();
+    void initOscEnv(SynthState *synthState);
+    void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
 
     Timbre *timbre_;
     Pfm3TimbreContext *context_;
+    Osc osc_[6];
+    Env env_[6];
+    int lfoUSed_[NUMBER_OF_LFO];
+    bool recomputeNext_;
+    float currentGate_;
+    static const float unisonPhase[MAX_UNISON_VOICES];
 };
 
 #endif

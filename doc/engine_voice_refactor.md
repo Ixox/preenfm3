@@ -125,7 +125,7 @@ Shared (stays with the timbre host):
   `mpeSetting_`
 - arpeggiator and clock fields, MIDI note stack
 - FX state: delay buffers, filters, granulator
-- shared parameters: `engineArp*`, `effect1/2`, `performance`, preset name
+- shared parameters: `engineArp*`, `effect1/2`, preset name
 
 Important: the PFM3 `Lfo*` and `Matrix` instances live in `Voice`
 (`Voice::lfoOsc[]`, `lfoEnv[]`, `lfoEnv2[]`, `lfoStepSeq[]`, `matrix`), not in
@@ -250,13 +250,17 @@ struct Pfm3VoiceState {
     LfoStepSeq lfoStepSeq[NUMBER_OF_LFO_STEP];
     OscState oscState[6];
     EnvData envState[6];
-    // filter/effect per-voice state
 };
 
 struct MsfaVoiceState {
     // Dx7Note + MSFA per-voice state
 };
 ```
+
+Implementation note: `Pfm3VoiceState` lives in `Pfm3VoiceState.h` and is a
+member of `Voice` (`pfm3State_`). The per-voice filter/effect state stays in
+`Voice` because `fxAfterBlock()` is shared with MSFA. `Voice::engine` is not
+added yet; binding goes through `currentTimbre` until step 4.
 
 Storage differs by engine because of RAM:
 
@@ -411,18 +415,19 @@ MPE stays instrument-1 only.
 
 ### 3.10 Unison
 
-`PLAY_MODE_UNISON` remains the mode; the width is `maxVoices_`.
+`PLAY_MODE_UNISON` remains the mode; the width is `min(maxVoices_, 7)`.
 
-- `allocateUnison()` claims exactly `maxVoices_` voices atomically.
+- `allocateUnison()` claims exactly that width atomically; active voices above
+  it are trimmed first.
 - If the full width cannot be claimed, skip the note instead of playing a
   narrower group.
-- `numberOfVoiceInverse_` is `1 / maxVoices_` while the group is active.
+- `numberOfVoiceInverse_` is `1 / width` while the group is active.
 - `voicesNextBlock()` accumulates the active group into voice 0;
   `voicesToTimbre()` copies only voice 0.
 - Lowering `maxVoices_` below the active group kills the excess voices.
 
 No new `Unis*` play-mode values and no preset change; the width comes from the
-mixer `numberOfVoices` setting.
+mixer `numberOfVoices` setting, capped at 7.
 
 ## 4. What moves where
 
@@ -462,7 +467,10 @@ Shared, stays in `Synth`/`Timbre`:
 - MIDI, presets, CPU meter, oscilloscope note info.
 - `Timbre::lowerNote_` / `lowerNoteReleased_` (shared with MSFA);
   `lowerNoteFrequency` is PFM3-only.
-- Shared parameters: arp, FX, performance, preset name.
+- Shared parameters: arp, FX, preset name.
+- PFM3 parameters: `performance1` (exposed as the Perf1..Perf4 matrix
+  sources), `engine1/2`, `engineIm*`, `engineMix*`, oscillators, envelopes,
+  matrix rows, LFOs, step sequencers and MIDI note curves.
 
 ## 5. Parameters, presets and UI
 
@@ -470,7 +478,8 @@ Shared, stays in `Synth`/`Timbre`:
 - During steps 1–5, `Timbre::params_` stays where it is; `Preenfm3Engine` holds
   a reference/pointer to it. The parameter split happens in step 6.
 - Split the parameter block conceptually into shared timbre parameters (arp, FX,
-  performance, preset name) and PFM3 DSP parameters owned by `Preenfm3Engine`.
+  preset name) and PFM3 DSP parameters owned by `Preenfm3Engine` (including
+  `performance1`, which feeds the Perf1..Perf4 matrix sources).
 - MSFA keeps its own program blob.
 - Engine-specific parameters live with the engine, not in the shared block.
 - A generic engine-editor interface already exists (`EngineEditor`); the engine
@@ -497,9 +506,11 @@ The two refactorings are interleaved so `Voice` binding is written once.
    value path. Remove `rebuidVoiceAllTimbre()`, `getFreeVoice()` and
    `getNumberOfFreeVoicesForThisTimbre()`.
 
-4. **Put MSFA behind the same interface.**
-   Move MSFA state and methods into `MsfaEngine`, remove MSFA branches from
-   `Timbre`/`Voice`, and use the same allocator/binding path.
+4. **Put both engines' state behind the interface.**
+   First move the PFM3 timbre DSP objects (`Timbre::osc1_..osc6_`,
+   `Timbre::env1_..env6_`) and their initialization into `Preenfm3Engine`.
+   Then move MSFA state and methods into `MsfaEngine`, remove the MSFA branches
+   from `Timbre`/`Voice`, and use the same allocator/binding path.
 
 5. **Remove the static reservation and engine branches.**
    Delete the fixed `voiceNumber_` mapping and the remaining
@@ -509,6 +520,39 @@ The two refactorings are interleaved so `Voice` binding is written once.
 6. **Move parameters, persistence and editor data behind the interface.**
    Keep the PFM3 preset layout compatible; route engine-specific parameter
    access through the engine.
+
+   - **6a — Classify parameters.** Shared (`Timbre`): `engineArp1/2`,
+     `engineArpUserPatterns`, `effect1`, `effect2`, `presetName`. PFM3
+     (`Preenfm3Engine`): `engine1/2`, `engineIm1..3`, `engineMix1..3`,
+     `osc1..6`, `env1..6` time/level/curve, `matrixRowState1..12`,
+     `lfoOsc1..3`, `lfoPhases`, `lfoEnv1/2`, `lfoSeq1/2`, `lfoSteps1/2`,
+     `midiNote1/2Curve`, and `performance1` (the Perf1..Perf4 matrix
+     sources). MSFA keeps its own `program_[156]` blob.
+
+   - **6b — Split the runtime storage.** Add `TimbreSharedParams` in `Timbre`
+     and `Pfm3TimbreParams` in `Preenfm3Engine`. Keep `OneSynthParams` only as
+     the on-flash PFM3 layout. Add `serialize()` / `deserialize()` and
+     `getParamValue(flatIndex)` / `setParamValue(flatIndex, value)`.
+
+   - **6c — Route editor and MIDI access.** `setNewValue()` writes the owner
+     through `setParamValue()`. Shared rows (Arp/Fx) stay on `Timbre`; PFM3
+     rows go to `Preenfm3Engine`. The MSFA editor keeps writing its own
+     program blob. Ignore the PFM3 CC/NRPN maps for MSFA timbres.
+
+   - **6d — Update persistence.** `PatchBank`, `MixerBank` and `SynthState`
+     keep using `OneSynthParams`; load calls `deserialize()`, save calls
+     `serialize()`. No PFM3 flash-format change; the MSFA preset/mixer layout
+     is unchanged.
+
+   - **6e — Update the PFM3 engine context.** `initOscEnv()` and
+     `refreshContext()` read `Pfm3TimbreParams`.
+     `Timbre::afterNewParamsLoad()` resets shared and engine state.
+
+   - **6f — Test.** PFM3 preset/mixer round-trip, randomizer, editor on both
+     engines, MIDI CC/NRPN, MSFA patch load, cross-engine switching.
+
+   Open: keep a `OneSynthParams` mirror in `SynthState` for the editor/MIDI,
+   or rewrite all flat accesses through `getParamValue()` / `setParamValue()`.
 
 7. **Add a third engine to validate the structure.**
 
@@ -522,7 +566,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
 - Old mixer banks load with `numberOfVoices` as maxima.
 - Mixed engines: PFM3 and MSFA timbres competing for the same 16 voices.
 - Poly, mono, unison, glide, hold pedal.
-- Unison width equals `maxVoices_` (3/5/8/16); insufficient voices follow the
+- Unison width equals `min(maxVoices_, 7)` (up to 7); insufficient voices follow the
   steal/skip policy; `numberOfVoiceInverse_` matches the width.
 - Lowering `maxVoices_` while a unison note plays kills the excess voices.
 - Unison width persistence through mixer bank save/load.
@@ -536,7 +580,8 @@ The two refactorings are interleaved so `Voice` binding is written once.
 - Arpeggiator patterns, latch and hold.
 - Voice stealing: same timbre, cross-timbre, released voices, playing voices.
 - Cross-timbre steal ordering: the quick release is rendered entirely by the
-  old timbre; ownership/binding changes only in `endNoteOrBeginNextOne()`.
+  old timbre; ownership/binding changes only in
+  `Synth::processPendingTransfers()` at block end.
 - No clicks/pops and no wrong-timbre tail when a voice is rebound.
 - Note-off during the deferred quick release for both the old and pending note.
 - Mixer save/load, preset load, boot defaults.
@@ -566,7 +611,7 @@ The two refactorings are interleaved so `Voice` binding is written once.
 4. Stealing order: same-note retrigger > global free > global idle > oldest
    globally released > oldest playing other timbre (while below max) > oldest
    playing same timbre > oldest playing globally.
-5. Unison width is always `maxVoices_`; skip the note if the full width cannot
+5. Unison width is `min(maxVoices_, 7)`; skip the note if the full width cannot
    be claimed.
 6. No minimum guaranteed voice count.
 7. `VoicePool` is a separate class owned by `Synth`.

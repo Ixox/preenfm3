@@ -588,31 +588,31 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
         case ROW_ARPEGGIATOR3:
             break;
         case ROW_EFFECT1:
-            timbres_[timbre].setNewEffecParam(encoder);
+            timbres_[timbre].setNewEffectParam(encoder);
             break;
         case ROW_ENV1_TIME:
         case ROW_ENV1_LEVEL:
-            timbres_[timbre].env1_.reloadADSR(encoder);
+            timbres_[timbre].getEnv(0).reloadADSR(encoder);
             break;
         case ROW_ENV2_TIME:
         case ROW_ENV2_LEVEL:
-            timbres_[timbre].env2_.reloadADSR(encoder);
+            timbres_[timbre].getEnv(1).reloadADSR(encoder);
             break;
         case ROW_ENV3_TIME:
         case ROW_ENV3_LEVEL:
-            timbres_[timbre].env3_.reloadADSR(encoder);
+            timbres_[timbre].getEnv(2).reloadADSR(encoder);
             break;
         case ROW_ENV4_TIME:
         case ROW_ENV4_LEVEL:
-            timbres_[timbre].env4_.reloadADSR(encoder);
+            timbres_[timbre].getEnv(3).reloadADSR(encoder);
             break;
         case ROW_ENV5_TIME:
         case ROW_ENV5_LEVEL:
-            timbres_[timbre].env5_.reloadADSR(encoder);
+            timbres_[timbre].getEnv(4).reloadADSR(encoder);
             break;
         case ROW_ENV6_TIME:
         case ROW_ENV6_LEVEL:
-            timbres_[timbre].env6_.reloadADSR(encoder);
+            timbres_[timbre].getEnv(5).reloadADSR(encoder);
             break;
         case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
             timbres_[timbre].verifyLfoUsed(encoder, oldValue, newValue);
@@ -637,22 +637,22 @@ void Synth::newParamValue(int timbre, int currentRow, int encoder, ParameterDisp
             timbres_[timbre].updateMidiNoteScale(1);
             break;
         case ROW_ENV1_CURVE:
-            timbres_[timbre].env1_.applyCurves();
+            timbres_[timbre].getEnv(0).applyCurves();
             break;
         case ROW_ENV2_CURVE:
-            timbres_[timbre].env2_.applyCurves();
+            timbres_[timbre].getEnv(1).applyCurves();
             break;
         case ROW_ENV3_CURVE:
-            timbres_[timbre].env3_.applyCurves();
+            timbres_[timbre].getEnv(2).applyCurves();
             break;
         case ROW_ENV4_CURVE:
-            timbres_[timbre].env4_.applyCurves();
+            timbres_[timbre].getEnv(3).applyCurves();
             break;
         case ROW_ENV5_CURVE:
-            timbres_[timbre].env5_.applyCurves();
+            timbres_[timbre].getEnv(4).applyCurves();
             break;
         case ROW_ENV6_CURVE:
-            timbres_[timbre].env6_.applyCurves();
+            timbres_[timbre].getEnv(5).applyCurves();
             break;
 
     }

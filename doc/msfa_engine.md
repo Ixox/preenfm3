@@ -1412,3 +1412,8 @@ If sysex bank loading is required:
    receives pitch bend, mod wheel, channel aftertouch and breath through
    `msfaTimbreSetController()`; a dedicated MSFA CC/NRPN map can be added
    later. See [MIDI](#8-midi).
+
+## TODO
+
+- Should loading a DX7 (MSFA) preset reset the arpeggiator and FX?
+- Should the arpeggiator and FX be saved with the preset?

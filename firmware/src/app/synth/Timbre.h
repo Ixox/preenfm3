@@ -48,6 +48,8 @@ struct MsfaTimbreState;
 class Timbre {
     friend class Synth;
     friend class Voice;
+    friend class MsfaSynthEngine;
+    friend class Preenfm3Engine;
 public:
     Timbre();
     virtual ~Timbre();
@@ -63,12 +65,9 @@ public:
     void gateFx();
 
     // PFM3 implementations called by Preenfm3Engine.
-    void pfm3PrepareMatrixForNewBlock();
-    void pfm3Glide();
-    void pfm3GateFx();
     void afterNewParamsLoad();
     void setNewValue(int index, struct ParameterDisplay *param, float newValue);
-    void setNewEffecParam(int encoder);
+    void setNewEffectParam(int encoder);
     int getSeqStepValue(int whichStepSeq, int step);
     void setSeqStepValue(int whichStepSeq, int step, int value);
     // Arpegiator
@@ -97,24 +96,28 @@ public:
         return timbreNumber_;
     }
 
-    void loadMsfaPackedPatch(const uint8_t *packedPatch);
-    void loadMsfaProgram(const uint8_t *program);
+    bool supportsDeferredSteal() const {
+        return engineImpl_->supportsDeferredSteal();
+    }
+
+    void loadMsfaPackedPatch(const uint8_t *packedPatch) {
+        msfaEngine_.loadMsfaPackedPatch(packedPatch);
+    }
+    void loadMsfaProgram(const uint8_t *program) {
+        msfaEngine_.loadMsfaProgram(program);
+    }
     const uint8_t* getMsfaProgram() const {
-        return msfaProgram_[timbreNumber_];
+        return msfaEngine_.getMsfaProgram();
     }
     uint8_t* getMsfaProgramMutable() {
-        return msfaProgram_[timbreNumber_];
+        return msfaEngine_.getMsfaProgramMutable();
     }
-    static uint8_t* getMsfaProgramBuffer(int timbre) {
-        return msfaProgram_[timbre];
+    void msfaAfterNewParamsLoad() {
+        msfaEngine_.afterNewParamsLoad();
     }
 
     void noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity);
     void noteOffMPE(uint8_t channel, uint8_t note, uint8_t velocityOff);
-
-    void preenNoteOn(char note, char velocity);
-    void preenNoteOnUpdateMatrix(int voiceToUse, int note, int velocity);
-    void preenNoteOff(char note);
 
     inline void engineNoteOn(char note, char velocity) {
         engineImpl_->noteOn(note, velocity);
@@ -124,18 +127,12 @@ public:
         engineImpl_->noteOff(note);
     }
 
-    uint8_t pfm3VoicesNextBlock();
-    uint8_t msfaVoicesNextBlock();
-    void msfaNoteOn(char note, char velocity);
-    void msfaNoteOff(char note);
-    void pfm3AfterNewParamsLoad();
-    void msfaAfterNewParamsLoad();
-
     void initVoicePool(VoicePool *pool) {
         voicePool_ = pool;
     }
 
     void numberOfVoicesChanged(uint8_t newNumberOfVoices);
+    void trimActiveVoices(int count);
 
     int getMaxVoices() const {
         return maxVoices_;
@@ -168,6 +165,17 @@ public:
         return &params_;
     }
 
+    Osc& getOsc(int index) {
+        return pfm3Engine_.osc(index);
+    }
+    Env& getEnv(int index) {
+        return pfm3Engine_.env(index);
+    }
+
+    void updateVoiceMatrix(Voice *voice, int note, int velocity) {
+        engineImpl_->updateVoiceMatrix(voice, note, velocity);
+    }
+
     float* getSampleBlock() {
         return sampleBlock_;
     }
@@ -184,7 +192,7 @@ public:
 
     // Do matrix use LFO
     bool isLfoUsed(int lfo) {
-        return lfoUSed_[lfo] > 0;
+        return engineImpl_->isLfoUsed(lfo);
     }
 
     uint8_t getLowerNote() {
@@ -338,9 +346,6 @@ private:
     SynthEngine *engineImpl_;
     Preenfm3Engine pfm3Engine_;
     MsfaSynthEngine msfaEngine_;
-    MsfaTimbreState *msfaState_;
-    static uint8_t msfaPackedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE];
-    static uint8_t msfaProgram_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE];
     struct OneSynthParams params_;
     struct MixerState *mixerState_;
     float sampleBlock_[BLOCK_SIZE * 2];
@@ -358,25 +363,6 @@ private:
     bool holdPedal_;
     int8_t lastPlayedNote_;
 
-    // 6 oscillators Max
-    Osc osc1_;
-    Osc osc2_;
-    Osc osc3_;
-    Osc osc4_;
-    Osc osc5_;
-    Osc osc6_;
-
-    // And their 6 envelopes
-    Env env1_;
-    Env env2_;
-    Env env3_;
-    Env env4_;
-    Env env5_;
-    Env env6_;
-
-    // Must recompute LFO steps ?
-    bool recomputeNext_;
-    float currentGate_;
     // Arpeggiator
 
     // TO REFACTOR
@@ -400,16 +386,11 @@ private:
     uint8_t ignore_note_off_messages_;
     uint8_t recording_;
 
-    // lfoUsed
-    uint8_t lfoUSed_[NUMBER_OF_LFO];
     uint8_t lowerNote_;
     float lowerNoteFrequency;
     bool lowerNoteReleased_;
     // static
     static uint32_t voiceIndex_;
-
-    // Unison phase
-    static float unisonPhase[14];
 
     uint8_t mpeSetting_;
 

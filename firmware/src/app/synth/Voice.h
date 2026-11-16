@@ -19,6 +19,7 @@
 #define VOICE_H_
 
 #include "Timbre.h"
+#include "Pfm3VoiceState.h"
 #include "Env.h"
 #include "Osc.h"
 
@@ -42,6 +43,7 @@ struct MsfaTimbreState;
 
 class Voice {
     friend class Timbre;
+    friend class Preenfm3Engine;
 
 public:
     Voice();
@@ -134,44 +136,44 @@ public:
         int numberOfIMs = algoInformation[(int) (currentTimbre->getParamRaw()->engine1.algo)].im;
 
         // Feedback range is [0:1] compared to [0:16] of other modulation, let's divide the modulation impact by 16 (* 0.0625)
-        feedbackModulation = currentTimbre->getParamRaw()->engineIm3.modulationIndex6 + this->velIm6
-            + matrix.getDestination(MTX_DEST_FEEDBACK) * 0.0625f;
-        if (unlikely(feedbackModulation < 0.0f)) {
-            feedbackModulation = 0.0f;
-        } else if (unlikely(feedbackModulation > 1.0f)) {
-            feedbackModulation = 1.0f;
+        pfm3State_.feedbackModulation = currentTimbre->getParamRaw()->engineIm3.modulationIndex6 + this->pfm3State_.velIm6
+            + pfm3State_.matrix.getDestination(MTX_DEST_FEEDBACK) * 0.0625f;
+        if (unlikely(pfm3State_.feedbackModulation < 0.0f)) {
+            pfm3State_.feedbackModulation = 0.0f;
+        } else if (unlikely(pfm3State_.feedbackModulation > 1.0f)) {
+            pfm3State_.feedbackModulation = 1.0f;
         }
 
-        modulationIndex1 = currentTimbre->getParamRaw()->engineIm1.modulationIndex1 + matrix.getDestination(INDEX_MODULATION1)
-            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm1;
-        if (unlikely(modulationIndex1 < 0.0f)) {
-            modulationIndex1 = 0.0f;
+        pfm3State_.modulationIndex1 = currentTimbre->getParamRaw()->engineIm1.modulationIndex1 + pfm3State_.matrix.getDestination(INDEX_MODULATION1)
+            + pfm3State_.matrix.getDestination(INDEX_ALL_MODULATION) + this->pfm3State_.velIm1;
+        if (unlikely(pfm3State_.modulationIndex1 < 0.0f)) {
+            pfm3State_.modulationIndex1 = 0.0f;
         }
-        modulationIndex2 = currentTimbre->getParamRaw()->engineIm1.modulationIndex2 + matrix.getDestination(INDEX_MODULATION2)
-            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm2;
-        if (unlikely(modulationIndex2 < 0.0f)) {
-            modulationIndex2 = 0.0f;
+        pfm3State_.modulationIndex2 = currentTimbre->getParamRaw()->engineIm1.modulationIndex2 + pfm3State_.matrix.getDestination(INDEX_MODULATION2)
+            + pfm3State_.matrix.getDestination(INDEX_ALL_MODULATION) + this->pfm3State_.velIm2;
+        if (unlikely(pfm3State_.modulationIndex2 < 0.0f)) {
+            pfm3State_.modulationIndex2 = 0.0f;
         }
 
-        modulationIndex3 = currentTimbre->getParamRaw()->engineIm2.modulationIndex3 + matrix.getDestination(INDEX_MODULATION3)
-            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm3;
-        if (unlikely(modulationIndex3 < 0.0f)) {
-            modulationIndex3 = 0.0f;
+        pfm3State_.modulationIndex3 = currentTimbre->getParamRaw()->engineIm2.modulationIndex3 + pfm3State_.matrix.getDestination(INDEX_MODULATION3)
+            + pfm3State_.matrix.getDestination(INDEX_ALL_MODULATION) + this->pfm3State_.velIm3;
+        if (unlikely(pfm3State_.modulationIndex3 < 0.0f)) {
+            pfm3State_.modulationIndex3 = 0.0f;
         }
 
         if (likely(numberOfIMs < 3)) {
             return;
         }
 
-        modulationIndex4 = currentTimbre->getParamRaw()->engineIm2.modulationIndex4 + matrix.getDestination(INDEX_MODULATION4)
-            + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm4;
-        if (unlikely(modulationIndex4 < 0.0f)) {
-            modulationIndex4 = 0.0f;
+        pfm3State_.modulationIndex4 = currentTimbre->getParamRaw()->engineIm2.modulationIndex4 + pfm3State_.matrix.getDestination(INDEX_MODULATION4)
+            + pfm3State_.matrix.getDestination(INDEX_ALL_MODULATION) + this->pfm3State_.velIm4;
+        if (unlikely(pfm3State_.modulationIndex4 < 0.0f)) {
+            pfm3State_.modulationIndex4 = 0.0f;
         }
 
-        modulationIndex5 = currentTimbre->getParamRaw()->engineIm3.modulationIndex5 + matrix.getDestination(INDEX_ALL_MODULATION) + this->velIm5;
-        if (unlikely(modulationIndex5 < 0.0f)) {
-            modulationIndex5 = 0.0f;
+        pfm3State_.modulationIndex5 = currentTimbre->getParamRaw()->engineIm3.modulationIndex5 + pfm3State_.matrix.getDestination(INDEX_ALL_MODULATION) + this->pfm3State_.velIm5;
+        if (unlikely(pfm3State_.modulationIndex5 < 0.0f)) {
+            pfm3State_.modulationIndex5 = 0.0f;
         }
     }
 
@@ -183,98 +185,98 @@ public:
         bool notMPE = currentTimbre->timbreNumber_ != 0 || currentTimbre->getMPESetting() == 0;
 
 
-        mix1 = currentTimbre->getParamRaw()->engineMix1.mixOsc1 + matrix.getDestination(MIX_OSC1) + matrix.getDestination(ALL_MIX);
-        // Optimization to check mix1 is between 0 and 1
+        pfm3State_.mix1 = currentTimbre->getParamRaw()->engineMix1.mixOsc1 + pfm3State_.matrix.getDestination(MIX_OSC1) + pfm3State_.matrix.getDestination(ALL_MIX);
+        // Optimization to check pfm3State_.mix1 is between 0 and 1
         if (likely(notMPE)) {
-            mix1 = __USAT((int)(mix1 * 65536) , 16) * inv65535;
+            pfm3State_.mix1 = __USAT((int)(pfm3State_.mix1 * 65536) , 16) * inv65535;
         } else {
-            mix1 = __USAT((int)((mix1 * .05 + mix1Previous * .95) * 65536) , 16) * inv65535;
-            mix1Previous = mix1;
+            pfm3State_.mix1 = __USAT((int)((pfm3State_.mix1 * .05 + pfm3State_.mix1Previous * .95) * 65536) , 16) * inv65535;
+            pfm3State_.mix1Previous = pfm3State_.mix1;
         }
-        float pan1 = currentTimbre->getParamRaw()->engineMix1.panOsc1 + matrix.getDestination(PAN_OSC1) + matrix.getDestination(ALL_PAN) + 1.0f;
+        float pan1 = currentTimbre->getParamRaw()->engineMix1.panOsc1 + pfm3State_.matrix.getDestination(PAN_OSC1) + pfm3State_.matrix.getDestination(ALL_PAN) + 1.0f;
         // pan1 is between -1 and 1 : Scale from 0.0 to 256
         pan = __USAT((int )(pan1 * 128), 8);
-        pan1Left = panTable[pan] * .05f + pan1Left * .95f;
-        pan1Right = panTable[256 - pan] * .05f + pan1Right * .95f;
+        pfm3State_.pan1Left = panTable[pan] * .05f + pfm3State_.pan1Left * .95f;
+        pfm3State_.pan1Right = panTable[256 - pan] * .05f + pfm3State_.pan1Right * .95f;
 
         if (unlikely(numberOfMix == 1)) {
             return;
         }
 
-        mix2 = currentTimbre->getParamRaw()->engineMix1.mixOsc2 + matrix.getDestination(MIX_OSC2) + matrix.getDestination(ALL_MIX);
+        pfm3State_.mix2 = currentTimbre->getParamRaw()->engineMix1.mixOsc2 + pfm3State_.matrix.getDestination(MIX_OSC2) + pfm3State_.matrix.getDestination(ALL_MIX);
         if (likely(notMPE)) {
-            mix2 = __USAT((int)(mix2 * 65535) , 16) * inv65535;
+            pfm3State_.mix2 = __USAT((int)(pfm3State_.mix2 * 65535) , 16) * inv65535;
         } else {
-            mix2 = __USAT((int)((mix2 * .05 + mix2Previous * .95) * 65535) , 16) * inv65535;
-            mix2Previous = mix2;
+            pfm3State_.mix2 = __USAT((int)((pfm3State_.mix2 * .05 + pfm3State_.mix2Previous * .95) * 65535) , 16) * inv65535;
+            pfm3State_.mix2Previous = pfm3State_.mix2;
         }
-        float pan2 = currentTimbre->getParamRaw()->engineMix1.panOsc2 + matrix.getDestination(PAN_OSC2) + matrix.getDestination(ALL_PAN) + 1.0f;
+        float pan2 = currentTimbre->getParamRaw()->engineMix1.panOsc2 + pfm3State_.matrix.getDestination(PAN_OSC2) + pfm3State_.matrix.getDestination(ALL_PAN) + 1.0f;
         pan = __USAT((int )(pan2 * 128), 8);
-        pan2Left = panTable[pan] * .05f + pan2Left * .95f;
-        pan2Right = panTable[256 - pan] * .05f + pan2Right * .95f;
+        pfm3State_.pan2Left = panTable[pan] * .05f + pfm3State_.pan2Left * .95f;
+        pfm3State_.pan2Right = panTable[256 - pan] * .05f + pfm3State_.pan2Right * .95f;
 
         if (unlikely(numberOfMix == 2)) {
             return;
         }
 
-        mix3 = currentTimbre->getParamRaw()->engineMix2.mixOsc3 + matrix.getDestination(MIX_OSC3) + matrix.getDestination(ALL_MIX);
+        pfm3State_.mix3 = currentTimbre->getParamRaw()->engineMix2.mixOsc3 + pfm3State_.matrix.getDestination(MIX_OSC3) + pfm3State_.matrix.getDestination(ALL_MIX);
         if (likely(notMPE)) {
-            mix3 = __USAT((int)(mix3 * 65535) , 16) * inv65535;
+            pfm3State_.mix3 = __USAT((int)(pfm3State_.mix3 * 65535) , 16) * inv65535;
         } else {
-            mix3 = __USAT((int)((mix3 * .05 + mix3Previous * .95) * 65535) , 16) * inv65535;
-            mix3Previous = mix3;
+            pfm3State_.mix3 = __USAT((int)((pfm3State_.mix3 * .05 + pfm3State_.mix3Previous * .95) * 65535) , 16) * inv65535;
+            pfm3State_.mix3Previous = pfm3State_.mix3;
         }
-        float pan3 = currentTimbre->getParamRaw()->engineMix2.panOsc3 + matrix.getDestination(PAN_OSC3) + matrix.getDestination(ALL_PAN) + 1.0f;
+        float pan3 = currentTimbre->getParamRaw()->engineMix2.panOsc3 + pfm3State_.matrix.getDestination(PAN_OSC3) + pfm3State_.matrix.getDestination(ALL_PAN) + 1.0f;
         pan = __USAT((int )(pan3 * 128), 8);
-        pan3Left = panTable[pan] * .05f + pan3Left * .95f;
-        pan3Right = panTable[256 - pan] * .05f + pan3Right * .95f;
+        pfm3State_.pan3Left = panTable[pan] * .05f + pfm3State_.pan3Left * .95f;
+        pfm3State_.pan3Right = panTable[256 - pan] * .05f + pfm3State_.pan3Right * .95f;
 
         if (numberOfMix == 3) {
             return;
         }
 
-        // No matrix for mix4 and pan4
-        mix4 = currentTimbre->getParamRaw()->engineMix2.mixOsc4 + matrix.getDestination(MIX_OSC4) + matrix.getDestination(ALL_MIX);
+        // No matrix for pfm3State_.mix4 and pan4
+        pfm3State_.mix4 = currentTimbre->getParamRaw()->engineMix2.mixOsc4 + pfm3State_.matrix.getDestination(MIX_OSC4) + pfm3State_.matrix.getDestination(ALL_MIX);
         if (likely(notMPE)) {
-            mix4 = __USAT((int)(mix4 * 65535) , 16) * inv65535;
+            pfm3State_.mix4 = __USAT((int)(pfm3State_.mix4 * 65535) , 16) * inv65535;
         } else {
-            mix4 = __USAT((int)((mix4 * .05 + mix4Previous * .95) * 65535) , 16) * inv65535;
-            mix4Previous = mix4;
+            pfm3State_.mix4 = __USAT((int)((pfm3State_.mix4 * .05 + pfm3State_.mix4Previous * .95) * 65535) , 16) * inv65535;
+            pfm3State_.mix4Previous = pfm3State_.mix4;
         }
-        float pan4 = currentTimbre->getParamRaw()->engineMix2.panOsc4 + matrix.getDestination(PAN_OSC4) + matrix.getDestination(ALL_PAN) + 1.0f;
+        float pan4 = currentTimbre->getParamRaw()->engineMix2.panOsc4 + pfm3State_.matrix.getDestination(PAN_OSC4) + pfm3State_.matrix.getDestination(ALL_PAN) + 1.0f;
         pan = __USAT((int )(pan4 * 128), 8);
-        pan4Left = panTable[pan] * .05f + pan4Left * .95f;
-        pan4Right = panTable[256 - pan] * .05f + pan4Right * .95f;
+        pfm3State_.pan4Left = panTable[pan] * .05f + pfm3State_.pan4Left * .95f;
+        pfm3State_.pan4Right = panTable[256 - pan] * .05f + pfm3State_.pan4Right * .95f;
 
         if (numberOfMix == 4) {
             return;
         }
 
-        mix5 = currentTimbre->getParamRaw()->engineMix3.mixOsc5 + matrix.getDestination(ALL_MIX);
+        pfm3State_.mix5 = currentTimbre->getParamRaw()->engineMix3.mixOsc5 + pfm3State_.matrix.getDestination(ALL_MIX);
         if (likely(notMPE)) {
-            mix5 = __USAT((int)(mix5 * 65535) , 16) * inv65535;
+            pfm3State_.mix5 = __USAT((int)(pfm3State_.mix5 * 65535) , 16) * inv65535;
         } else {
-            mix5 = __USAT((int)((mix5 * .05 + mix5Previous * .95) * 65535) , 16) * inv65535;
-            mix5Previous = mix5;
+            pfm3State_.mix5 = __USAT((int)((pfm3State_.mix5 * .05 + pfm3State_.mix5Previous * .95) * 65535) , 16) * inv65535;
+            pfm3State_.mix5Previous = pfm3State_.mix5;
         }
 
-        float pan5 = currentTimbre->getParamRaw()->engineMix3.panOsc5 + matrix.getDestination(ALL_PAN) + 1.0f;
+        float pan5 = currentTimbre->getParamRaw()->engineMix3.panOsc5 + pfm3State_.matrix.getDestination(ALL_PAN) + 1.0f;
         pan = __USAT((int )(pan5 * 128), 8);
-        pan5Left = panTable[pan] * .05f + pan5Left * .95f;
-        pan5Right = panTable[256 - pan] * .05f + pan5Right * .95f;
+        pfm3State_.pan5Left = panTable[pan] * .05f + pfm3State_.pan5Left * .95f;
+        pfm3State_.pan5Right = panTable[256 - pan] * .05f + pfm3State_.pan5Right * .95f;
 
-        mix6 = currentTimbre->getParamRaw()->engineMix3.mixOsc6 + matrix.getDestination(ALL_MIX);
+        pfm3State_.mix6 = currentTimbre->getParamRaw()->engineMix3.mixOsc6 + pfm3State_.matrix.getDestination(ALL_MIX);
         if (likely(notMPE)) {
-            mix6 = __USAT((int)(mix6 * 65535) , 16) * inv65535;
+            pfm3State_.mix6 = __USAT((int)(pfm3State_.mix6 * 65535) , 16) * inv65535;
         } else {
-            mix6 = __USAT((int)((mix6 * .05 + mix6Previous * .95) * 65535) , 16) * inv65535;
-            mix6Previous = mix6;
+            pfm3State_.mix6 = __USAT((int)((pfm3State_.mix6 * .05 + pfm3State_.mix6Previous * .95) * 65535) , 16) * inv65535;
+            pfm3State_.mix6Previous = pfm3State_.mix6;
         }
 
-        float pan6 = currentTimbre->getParamRaw()->engineMix3.panOsc6 + matrix.getDestination(ALL_PAN) + 1.0f;
+        float pan6 = currentTimbre->getParamRaw()->engineMix3.panOsc6 + pfm3State_.matrix.getDestination(ALL_PAN) + 1.0f;
         pan = __USAT((int )(pan6 * 128), 8);
-        pan6Left = panTable[pan] * .05f + pan6Left * .95f;
-        pan6Right = panTable[256 - pan] * .05f + pan6Right * .95f;
+        pfm3State_.pan6Left = panTable[pan] * .05f + pfm3State_.pan6Left * .95f;
+        pfm3State_.pan6Right = panTable[256 - pan] * .05f + pfm3State_.pan6Right * .95f;
     }
 
     void midiClockSongPositionStep(int songPosition, bool recomputeNext);
@@ -283,84 +285,80 @@ public:
 
     void lfoNoteOn() {
         if (likely(currentTimbre->isLfoUsed(0))) {
-            lfoOsc[0].noteOn();
+            pfm3State_.lfoOsc[0].noteOn();
         }
         if (likely(currentTimbre->isLfoUsed(1))) {
-            lfoOsc[1].noteOn();
+            pfm3State_.lfoOsc[1].noteOn();
         }
         if (likely(currentTimbre->isLfoUsed(2))) {
-            lfoOsc[2].noteOn();
+            pfm3State_.lfoOsc[2].noteOn();
         }
         if (likely(currentTimbre->isLfoUsed(3))) {
-            lfoEnv[0].noteOn();
+            pfm3State_.lfoEnv[0].noteOn();
         }
         if (likely(currentTimbre->isLfoUsed(4))) {
-            lfoEnv2[0].noteOn();
+            pfm3State_.lfoEnv2[0].noteOn();
         }
         if (likely(currentTimbre->isLfoUsed(5))) {
-            lfoStepSeq[0].noteOn();
+            pfm3State_.lfoStepSeq[0].noteOn();
         }
         if (likely(currentTimbre->isLfoUsed(6))) {
-            lfoStepSeq[1].noteOn();
+            pfm3State_.lfoStepSeq[1].noteOn();
         }
     }
 
     void lfoNoteOff() {
         if (likely(currentTimbre->isLfoUsed(0))) {
-            lfoOsc[0].noteOff();
+            pfm3State_.lfoOsc[0].noteOff();
         }
         if (likely(currentTimbre->isLfoUsed(1))) {
-            lfoOsc[1].noteOff();
+            pfm3State_.lfoOsc[1].noteOff();
         }
         if (likely(currentTimbre->isLfoUsed(2))) {
-            lfoOsc[2].noteOff();
+            pfm3State_.lfoOsc[2].noteOff();
         }
         if (likely(currentTimbre->isLfoUsed(3))) {
-            lfoEnv[0].noteOff();
+            pfm3State_.lfoEnv[0].noteOff();
         }
         if (likely(currentTimbre->isLfoUsed(4))) {
-            lfoEnv2[0].noteOff();
+            pfm3State_.lfoEnv2[0].noteOff();
         }
         if (likely(currentTimbre->isLfoUsed(5))) {
-            lfoStepSeq[0].noteOff();
+            pfm3State_.lfoStepSeq[0].noteOff();
         }
         if (likely(currentTimbre->isLfoUsed(6))) {
-            lfoStepSeq[1].noteOff();
+            pfm3State_.lfoStepSeq[1].noteOff();
         }
     }
 
     void prepareMatrixForNewBlock() {
-        if (unlikely(currentTimbre != nullptr && currentTimbre->getEngine() == SYNTH_ENGINE_MSFA)) {
-            return;
-        }
-
         // first 3 LFO can be free running
         if (likely(currentTimbre->isLfoUsed(0))) {
-            this->lfoOsc[0].nextValueInMatrix();
+            this->pfm3State_.lfoOsc[0].nextValueInMatrix();
         }
         if (likely(currentTimbre->isLfoUsed(1))) {
-            this->lfoOsc[1].nextValueInMatrix();
+            this->pfm3State_.lfoOsc[1].nextValueInMatrix();
         }
         if (likely(currentTimbre->isLfoUsed(2))) {
-            this->lfoOsc[2].nextValueInMatrix();
+            this->pfm3State_.lfoOsc[2].nextValueInMatrix();
         }
 
         // Only compute the rest if playing
         if (likely(isPlaying())) {
             if (likely(currentTimbre->isLfoUsed(3))) {
-                this->lfoEnv[0].nextValueInMatrix();
+                this->pfm3State_.lfoEnv[0].nextValueInMatrix();
             }
             if (likely(currentTimbre->isLfoUsed(4))) {
-                this->lfoEnv2[0].nextValueInMatrix();
+                this->pfm3State_.lfoEnv2[0].nextValueInMatrix();
             }
             if (likely(currentTimbre->isLfoUsed(5))) {
-                this->lfoStepSeq[0].nextValueInMatrix();
+                this->pfm3State_.lfoStepSeq[0].nextValueInMatrix();
             }
             if (likely(currentTimbre->isLfoUsed(6))) {
-                this->lfoStepSeq[1].nextValueInMatrix();
+                this->pfm3State_.lfoStepSeq[1].nextValueInMatrix();
             }
 
-            this->matrix.computeAllDestinations();
+            this->pfm3State_.matrix.computeAllDestinations();
             updateAllModulationIndexes();
         }
     }
@@ -368,13 +366,13 @@ public:
     void afterNewParamsLoad() {
         resetMatrix();
         for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
-            this->lfoOsc[0].valueChanged(j);
-            this->lfoOsc[1].valueChanged(j);
-            this->lfoOsc[2].valueChanged(j);
-            this->lfoEnv[0].valueChanged(j);
-            this->lfoEnv2[0].valueChanged(j);
-            this->lfoStepSeq[0].valueChanged(j);
-            this->lfoStepSeq[1].valueChanged(j);
+            this->pfm3State_.lfoOsc[0].valueChanged(j);
+            this->pfm3State_.lfoOsc[1].valueChanged(j);
+            this->pfm3State_.lfoOsc[2].valueChanged(j);
+            this->pfm3State_.lfoEnv[0].valueChanged(j);
+            this->pfm3State_.lfoEnv2[0].valueChanged(j);
+            this->pfm3State_.lfoStepSeq[0].valueChanged(j);
+            this->pfm3State_.lfoStepSeq[1].valueChanged(j);
 
         }
         v0L = v1L = 0.0f;
@@ -382,8 +380,8 @@ public:
     }
 
     void resetMatrix() {
-        this->matrix.resetSources();
-        this->matrix.resetAllDestination();
+        this->pfm3State_.matrix.resetSources();
+        this->pfm3State_.matrix.resetAllDestination();
     }
 
     void lfoValueChange(int currentRow, int encoder, float newValue) {
@@ -391,23 +389,27 @@ public:
             case ROW_LFOOSC1:
             case ROW_LFOOSC2:
             case ROW_LFOOSC3:
-                lfoOsc[currentRow - ROW_LFOOSC1].valueChanged(encoder);
+                pfm3State_.lfoOsc[currentRow - ROW_LFOOSC1].valueChanged(encoder);
                 break;
             case ROW_LFOENV1:
-                lfoEnv[0].valueChanged(encoder);
+                pfm3State_.lfoEnv[0].valueChanged(encoder);
                 break;
             case ROW_LFOENV2:
-                lfoEnv2[0].valueChanged(encoder);
+                pfm3State_.lfoEnv2[0].valueChanged(encoder);
                 break;
             case ROW_LFOSEQ1:
             case ROW_LFOSEQ2:
-                lfoStepSeq[currentRow - ROW_LFOSEQ1].valueChanged(encoder);
+                pfm3State_.lfoStepSeq[currentRow - ROW_LFOSEQ1].valueChanged(encoder);
                 break;
         }
     }
 
     float* const getSampleBlock() {
         return sampleBlock;
+    }
+
+    Pfm3VoiceState* getPfm3State() {
+        return &pfm3State_;
     }
 
     bool isNewGlide() {
@@ -418,6 +420,9 @@ private:
     // private function for BP filter
     void recomputeBPValues(float q, float fSquare);
 
+    // PFM3 per-voice DSP state
+    Pfm3VoiceState pfm3State_;
+
     // voice status
     bool released;
     bool playing;
@@ -427,27 +432,7 @@ private:
     char midiVelocity;
     float noteFrequency;
     float velocity;
-    float velIm1, velIm2, velIm3, velIm4, velIm5, velIm6;
     bool newNotePlayed;
-    //
-    float freqAi, freqAo;
-    float freqBi, freqBo;
-    // Harm freq shifting
-    float freqHarm, targetFreqHarm;
-
-    EnvData envState1_;
-    EnvData envState2_;
-    EnvData envState3_;
-    EnvData envState4_;
-    EnvData envState5_;
-    EnvData envState6_;
-
-    OscState oscState1_;
-    OscState oscState2_;
-    OscState oscState3_;
-    OscState oscState4_;
-    OscState oscState5_;
-    OscState oscState6_;
 
     bool holdedByPedal;
     // Fixing the "plop" when all notes are buisy...
@@ -457,8 +442,6 @@ private:
     float pendingNoteFrequency;
     unsigned int nextIndex;
     float phase_;
-    
-    float prevPhase;
 
     // Gliding ?
     bool gliding;
@@ -471,15 +454,6 @@ private:
     // Used when note Off is received during Quick Release
     uint8_t noteAlreadyFinished;
 
-
-    // env Value
-    float env1ValueMem;
-    float env2ValueMem;
-    float env3ValueMem;
-    float env4ValueMem;
-    float env5ValueMem;
-    float env6ValueMem;
-
     Timbre *currentTimbre;
     Timbre *pendingTimbre_;
     bool transferReady_;
@@ -487,22 +461,6 @@ private:
 
     // glide phase increment
     static float glidePhaseInc[13];
-
-    // Matrix....
-    Matrix matrix;
-
-    // optimization
-    float modulationIndex1, modulationIndex2, modulationIndex3, modulationIndex4, modulationIndex5;
-    float feedbackModulation, fdbLastValue[3];
-    float mix1, mix2, mix3, mix4, mix5, mix6;
-    float mix1Previous, mix2Previous, mix3Previous, mix4Previous, mix5Previous, mix6Previous;
-    float pan1Left, pan2Left, pan3Left, pan4Left, pan5Left, pan6Left;
-    float pan1Right, pan2Right, pan3Right, pan4Right, pan5Right, pan6Right;
-    //
-    LfoOsc lfoOsc[NUMBER_OF_LFO_OSC];
-    LfoEnv lfoEnv[NUMBER_OF_LFO_ENV];
-    LfoEnv2 lfoEnv2[NUMBER_OF_LFO_ENV2];
-    LfoStepSeq lfoStepSeq[NUMBER_OF_LFO_STEP];
 
     // preenfm3
     // Voice needs their own sample block to apply effects
