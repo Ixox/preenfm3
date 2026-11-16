@@ -52,7 +52,6 @@ This document describes key hardware subsystems in the preenFM3 open-source synt
   - [HC165 Shift Register Chain](#hc165-shift-register-chain)
   - [Encoder Decoding](#encoder-decoding)
   - [Button Gestures](#button-gestures)
-  - [MIDI Controller Mode](#midi-controller-mode)
 - [MIDI](#midi)
   - [DIN MIDI (USART1)](#din-midi-usart1)
   - [USB MIDI](#usb-midi)
@@ -801,24 +800,6 @@ Button handling is in `Encoders::checkStatus()` (`Encoders.cpp:187-228`):
 - **Long press:** held for more than 350 scan ticks (~700 ms).
 - **Two-button press:** second button pressed while the first is still held.
 - `buttonUsedFromSomethingElse_` prevents a button from also producing a click or long-press after it has been consumed by another gesture.
-
-`checkStatusUpDown()` is the alternate mode used by the MIDI-controller UI; it emits `ENCODER_BUTTON_DOWN` / `ENCODER_BUTTON_UP` instead of click/long-press events.
-
-### MIDI Controller Mode
-
-The normal synth UI can switch to a dedicated MIDI-controller UI. The transition is triggered by the `BUTTON_PFM3_MENU` + `BUTTON_PFM3_SEQUENCER` combination (`firmware/Src/synth/SynthState.cpp:238`) and handled by `preenfm3SwitchToMidiController()` (`firmware/Src/MidiController/preenfm3MidiController.cpp:128-138`).
-
-`midiControllerMode` values:
-
-| Value | Meaning |
-|-------|---------|
-| 0 | Normal preenFM3 synth |
-| 1 | MIDI controller UI |
-| 2 | Transition / reinitialization |
-
-`SysTick_Handler()` dispatches to `preenfm3Tic()` or `preenfm3MidiControllerTic()` (`firmware/Src/stm32h7xx_it.c:206-212`), and `main()` dispatches to `preenfm3Loop()` or `preenfm3MidiControllerLoop()` (`firmware/Src/main.c:184-194`). `preenfm3ExitMidiController()` reverses the transition and restores the synth listener (`preenfm3.cpp:556-567`).
-
-`isButton1Pressed()` reads button 0 (bit 22) through the HC165 chain (`preenfm3.cpp:548-552`); the old boot-time check in `main.c:167-169` is commented out.
 
 ---
 

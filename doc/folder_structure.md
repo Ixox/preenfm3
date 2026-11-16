@@ -38,7 +38,6 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `src/app/synth/` | Sound engine and per-voice DSP |
 | `src/app/ui/` | Display screens and the firmware TFT extensions |
 | `src/app/midi/` | MIDI decoder and sequencer |
-| `src/app/midi_controller/` | Alternate MIDI-controller UI |
 | `src/app/storage/` | Presets, mixer banks, sequences, config, DX7 sysex, user waves |
 | `src/platform/clock/` | DWT cycle counter / CPU-usage helper (`dwt.h`) |
 | `src/platform/cubemx/` | CubeMX glue: `main.h`, HAL MSP, interrupts, USB, startup |
@@ -67,6 +66,7 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `FxBus.*` | Reverb / FX bus |
 | `SimpleEffect/` | Compressor, simple envelope/gain helpers |
 | `MsfaEngine.*`, `MsfaDebug.*` | Bridge to the MSFA (Dexed DX7) engine |
+| `byos/` | Example third engine: `ByosEngine`, `EditorByos`, params and README |
 | `SynthParamListener.*`, `SynthMenuListener.*`, `SynthStateAware.*` | Listener interfaces |
 
 ### `firmware/src/app/ui/`
@@ -86,13 +86,12 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `FirmwareTftDisplay.*` | Oscilloscope background / firmware-specific TFT actions |
 | `ScreenTypes.h`, `Menu.*`, `VisualInfo.h` | Shared UI types |
 
-### `firmware/src/app/midi/` and `midi_controller/`
+### `firmware/src/app/midi/`
 
 | Path | Contents |
 |------|----------|
 | `midi/MidiDecoder.*` | DIN/USB MIDI parser, channel routing, MPE, sysex, async actions |
 | `midi/Sequencer.*` | Step sequencer and playback |
-| `midi_controller/` | Alternate MIDI-controller UI and its file/state handling |
 
 ### `firmware/src/app/storage/`
 

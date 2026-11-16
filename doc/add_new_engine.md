@@ -1,7 +1,8 @@
 # Adding a new engine
 
 This is the short checklist for adding an engine beside PFM3 and MSFA.
-The examples use **NewEngine**.
+The examples use **NewEngine**. A complete working third engine lives in
+`firmware/src/app/synth/byos/` (see its `README.md`).
 
 An engine has two sides:
 
@@ -45,6 +46,32 @@ from `bindVoice()`, like `Pfm3VoiceState` / the MSFA voice state.
 If the engine does not use the flat `Pfm3Preset` model, also check
 `Timbre::setEngine()`: it currently calls `deserializePfm3Preset(pfm3Preset_)` and
 `afterNewParamsLoad()`.
+
+## Arp/Fx (shared)
+
+Arp, FX1 and FX2 are timbre-wide, not engine features. They live in
+`TimbreSharedParams` and are edited by the shared `EditorCommon` page.
+
+If the engine should expose them:
+
+- In the editor, return `COMMON_PAGE_ARP_FX` from `getCommonPage(page)` for the
+  main page that should host the shared page (see Editor below).
+- In `voicesNextBlock()`, after rendering each voice, call
+  `voice->fxAfterBlock(matrixFilterFrequency, matrixFilterParam2,
+  matrixFilterAmp)`. Use `0.0f, 0.0f, 0.0f` when the engine has no per-voice
+  matrix filter modulation (like MSFA/BYOS). FX1 keeps per-voice state and must
+  run before `Timbre::voicesToTimbre()` sums the voices.
+- FX2 and the global reverb/FX bus need nothing: `Synth::buildNewSampleBlock()`
+  calls `Timbre::applyTimbreFx()` and `FxBus` for every engine.
+- In `getStorageBlob()` / `loadStorageBlob()`, include the `TimbreSharedParams`
+  argument (`shared`) in the blob and restore it with
+  `Timbre::setSharedParams()`. This keeps Arp/Fx when a preset/mixer is saved
+  and loaded, or when the timbre switches engine.
+
+Only call `voice->fxAfterBlock()` if you implement the Arp/Fx page. Without
+that page the shared FX type stays `None` for the engine, so the call is
+useless work. The `TimbreSharedParams` block should still be stored/restored:
+it is shared timbre state and can also come from MIDI or from another engine.
 
 ## MIDI
 
@@ -151,8 +178,11 @@ Optional hooks:
 
 - `drawAlgorithm()`, `drawPageHeader()`, `preparePage()`
 - `newEngineParamValue()` for engine-specific param feedback
-- `getCommonPage(page)` to reuse the shared Arp/Fx page
-  (`COMMON_PAGE_ARP_FX`)
+- `getCommonPage(page)` to expose the shared Arp/Fx page as a main-menu
+  button. Return `COMMON_PAGE_ARP_FX` for the page index that should host it
+  (for example `1` for the second main button); `ScreenEditor` then uses the
+  shared `EditorCommon` editor (`Arp`, `Fx1`, `Fx2`). Only add this if the
+  engine also calls `voice->fxAfterBlock()` (see "Arp/Fx (shared)").
 - `buttonLongPressed()`, `newTimbre()`
 
 If the engine reuses the flat `Pfm3Preset` layout, derive from

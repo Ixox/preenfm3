@@ -282,7 +282,6 @@ firmware/
       midi/
       ui/                 # Screen*, Menu
       storage/            # filesystem/
-      midi_controller/    # alternate controller UI
     platform/
       cubemx/             # CubeMX-generated init/USB glue
       clock/
