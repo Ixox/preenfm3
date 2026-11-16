@@ -50,7 +50,8 @@ void dx7TimbreLoadProgram(Dx7TimbreState *state, const uint8_t *program);
 void dx7TimbreSetController(Dx7TimbreState *state, enum SourceEnum source, float value);
 
 void dx7VoiceStart(Dx7VoiceState *state, const uint8_t *program, uint8_t note,
-                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts);
+                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts,
+                    bool voiceStolen);
 void dx7VoiceKeyUp(Dx7VoiceState *state);
 bool isDx7VoiceActive(Dx7VoiceState *state);
 bool dx7VoiceRender(Dx7VoiceState *state, Dx7TimbreState *ts, float *out);

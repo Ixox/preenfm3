@@ -151,9 +151,16 @@ void dx7TimbreSetController(Dx7TimbreState *state, enum SourceEnum source, float
 }
 
 void dx7VoiceStart(Dx7VoiceState *state, const uint8_t *program, uint8_t note,
-                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts) {
+                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts,
+                    bool voiceStolen) {
     state->noteObj.tuning_state_ = dx7Tuning;
     state->noteObj.init(program, note, velocity, channel, &ts->controllers);
+
+    // Oscillator key sync (program byte 136). Do not sync a stolen voice:
+    // restarting its phases would click. Dexed does the same.
+    if (program[136] != 0 && !voiceStolen) {
+        state->noteObj.oscSync();
+    }
 
     for (int i = 0; i < N; i++) {
         state->buffer[i] = 0;
@@ -224,7 +231,9 @@ void dx7VoiceUpdateParam(Dx7VoiceState *state, int paramId, int op) {
         return;
     }
     if (paramId >= DX7_EG_RATE_1 && paramId <= DX7_DETUNE) {
-        state->noteObj.updateOperator(op, state->velocity);
+        // Editor operator 0 is OP1; Dx7Note indexes patch blocks 0..5 with
+        // 0 = OP6, so reverse the operator number.
+        state->noteObj.updateOperator(5 - op, state->velocity);
     } else {
         state->noteObj.updateGlobal();
     }

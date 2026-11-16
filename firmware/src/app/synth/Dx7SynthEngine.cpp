@@ -194,8 +194,10 @@ void Dx7SynthEngine::noteOffVoiceQuick(Voice *voice) {
 }
 
 void Dx7SynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index) {
-    voice->resetVoiceState();
     Dx7VoiceState *state = getDx7VoiceState(voice->slot());
+    bool voiceStolen = isDx7VoiceActive(state);
+
+    voice->resetVoiceState();
     dx7VoiceReset(state);
 
     voice->note = note;
@@ -206,8 +208,17 @@ void Dx7SynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t no
     voice->isFullOfZero = false;
     voice->holdedByPedal = false;
 
-    dx7VoiceStart(state, program, note, velocity, 1, dx7State_);
+    // The DX7 program carries a voice transpose (24 = no transposition).
+    // Keep voice->note raw for note-off matching; the DX7 voice uses the
+    // transposed note.
+    int transposedNote = (int) note + (int) program[144] - 24;
+    if (transposedNote < 0) {
+        transposedNote = 0;
+    } else if (transposedNote > 127) {
+        transposedNote = 127;
+    }
 
+    dx7VoiceStart(state, program, (uint8_t) transposedNote, velocity, 1, dx7State_, voiceStolen);
 }
 
 void Dx7SynthEngine::updateVoiceProgram(Voice *voice, const uint8_t *program) {
