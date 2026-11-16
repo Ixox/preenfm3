@@ -35,6 +35,9 @@ public:
     void setMixerState(MixerState* mixerState);
     void setSequencer(Sequencer* sequencer);
     void setScalaFile(ScalaFile* scalaFile);
+    void setMsfaProgram(int timbre, uint8_t* program) {
+        msfaProgram[timbre] = program;
+    }
 
     bool saveDefaultMixer();
     bool loadDefaultMixer();
@@ -49,6 +52,7 @@ protected:
     const char* getFolderName();
 	bool isCorrectFile(char *name, int size);
     struct OneSynthParams* timbre[NUMBER_OF_TIMBRES];
+    uint8_t* msfaProgram[NUMBER_OF_TIMBRES];
     bool saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerStateToSave);
     bool loadMixerData(FIL* file, uint8_t mixerNumber);
 

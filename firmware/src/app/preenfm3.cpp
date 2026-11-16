@@ -472,6 +472,10 @@ void dependencyInjection() {
     sdCard.getMixerBank()->setSequencer(&sequencer);
     sdCard.getSequenceBank()->setSequencer(&sequencer);
 
+    for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
+        sdCard.getMixerBank()->setMsfaProgram(t, Timbre::getMsfaProgramBuffer(t));
+    }
+
     // Load preferences
     sdCard.getConfigurationFile()->loadConfig(synthState.fullState.midiConfigValue);
     sdCard.getMixerBank()->loadDefaultMixer();

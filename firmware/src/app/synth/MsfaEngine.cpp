@@ -16,6 +16,13 @@
 #include "synth.h"
 #include "tuning.h"
 
+// MSFA's Q24 output is quieter than PFM3's. Apply a linear gain while
+// converting to float; the final mixer clamps before the DAC, so there is
+// headroom here. Override with -DMSFA_OUTPUT_GAIN=...
+#ifndef MSFA_OUTPUT_GAIN
+#define MSFA_OUTPUT_GAIN 2.0f
+#endif
+
 FmCore msfaCore;
 
 static std::shared_ptr<TuningState> msfaTuning;
@@ -186,7 +193,7 @@ bool msfaVoiceRender(MsfaVoiceState *state, MsfaTimbreState *ts, float *out) {
     for (int i = 0; i < BLOCK_SIZE; i++) {
         int32_t val = state->buffer[state->bufferPos + i] >> 4;
         int32_t clip = val < -(1 << 24) ? -32768 : (val >= (1 << 24) ? 32767 : (val >> 9));
-        float f = (float) clip * (1.0f / 32768.0f);
+        float f = (float) clip * (MSFA_OUTPUT_GAIN / 32768.0f);
         *out++ = f;
         *out++ = f;
     }

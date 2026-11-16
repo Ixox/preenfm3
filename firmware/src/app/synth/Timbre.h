@@ -86,8 +86,15 @@ public:
     }
 
     void loadMsfaPackedPatch(const uint8_t *packedPatch);
+    void loadMsfaProgram(const uint8_t *program);
     const uint8_t* getMsfaProgram() const {
         return msfaProgram_[timbreNumber_];
+    }
+    uint8_t* getMsfaProgramMutable() {
+        return msfaProgram_[timbreNumber_];
+    }
+    static uint8_t* getMsfaProgramBuffer(int timbre) {
+        return msfaProgram_[timbre];
     }
 
     void noteOnMPE(uint8_t channel, uint8_t note, uint8_t velocity);
