@@ -598,6 +598,26 @@ void TftDisplay::tic(bool checkDisplayPower) {
         currentAction.actionType = TFT_DRAW_ALGO;
         currentAction.param3 = 3;
         break;
+    case TFT_HIGHLIGHT_ALGO_FEEDBACK:
+        this->tftAlgo->setFGBufferAdress(fgAlgo);
+        this->tftAlgo->highlightFeedback(true, currentAction.param4, currentAction.param5);
+
+        // Switch to draw_algo step 2
+        // To copy ALGO to TFT
+        fgAlgoDirty = true;
+        currentAction.actionType = TFT_DRAW_ALGO;
+        currentAction.param3 = 3;
+        break;
+    case TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK:
+        this->tftAlgo->setFGBufferAdress(fgAlgo);
+        this->tftAlgo->highlightFeedback(false, currentAction.param4, currentAction.param5);
+
+        // Switch to draw_algo step 2
+        // To copy ALGO to TFT
+        fgAlgoDirty = true;
+        currentAction.actionType = TFT_DRAW_ALGO;
+        currentAction.param3 = 3;
+        break;
     case TFT_DRAW_FILL_AREA:
         // Fill area of tftMemory defined by params
         if (PFM_IS_DMA2D_READY()) {
@@ -1061,6 +1081,10 @@ void TftDisplay::drawDx7Algo(int algo) {
     tftActions.insert(newAction);
 }
 
+bool TftDisplay::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
+    return tftAlgo->getDx7Feedback(algo, opSource, opDest);
+}
+
 void TftDisplay::clearAlgoFG() {
     TFTAction newAction;
     newAction.actionType = TFT_CLEAR_ALGO_FG;
@@ -1096,6 +1120,26 @@ void TftDisplay::highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 void TftDisplay::eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
     TFTAction newAction;
     newAction.actionType = TFT_ERASE_HIGHTLIGHT_ALGO_IM;
+    newAction.param1 = imNum;
+    newAction.param3 = 0;
+    newAction.param4 = opSource;
+    newAction.param5 = opDest;
+    tftActions.insert(newAction);
+}
+
+void TftDisplay::highlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
+    TFTAction newAction;
+    newAction.actionType = TFT_HIGHLIGHT_ALGO_FEEDBACK;
+    newAction.param1 = imNum;
+    newAction.param3 = 0;
+    newAction.param4 = opSource;
+    newAction.param5 = opDest;
+    tftActions.insert(newAction);
+}
+
+void TftDisplay::eraseHighlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest) {
+    TFTAction newAction;
+    newAction.actionType = TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK;
     newAction.param1 = imNum;
     newAction.param3 = 0;
     newAction.param4 = opSource;

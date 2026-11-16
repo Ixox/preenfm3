@@ -53,7 +53,9 @@ enum {
     TFT_RESTART_REFRESH,
     TFT_PAUSE_REFRESH,
     TFT_WAITCYCLE,
-    TFT_STANDARD_LAST_ACTION = TFT_WAITCYCLE
+    TFT_STANDARD_LAST_ACTION = TFT_WAITCYCLE,
+    TFT_HIGHLIGHT_ALGO_FEEDBACK,
+    TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK
 };
 
 
@@ -102,7 +104,7 @@ enum TFTActionType {
 };
 
 struct TFTAction {
-    uint8_t actionType :4;
+    uint8_t actionType;
     uint8_t param1;
     uint16_t param2;
     uint8_t param3;
@@ -174,10 +176,13 @@ public:
 
     void drawAlgo(int algo);
     void drawDx7Algo(int algo);
+    bool getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest);
     void highlightOperator(int op);
     void eraseHighlightOperator(int op);
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void eraseHighlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
+    void highlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest);
+    void eraseHighlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void clearAlgoFG();
     void setCursoraddXY(uint8_t x, uint16_t y) {
         cursorX +=x;

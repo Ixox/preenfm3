@@ -37,6 +37,7 @@ enum {
     IMSYNC,         // IMSYNC, im, sourceOp, destOp   (purple line)
     MIX,            // MIX, op                        (marks carrier)
     OPERATORSYNC,   // OPERATORSYNC, op, position
+    FEEDBACK,       // FEEDBACK, im, sourceOp, destOp (multi-op loop)
     END,
 };
 ```
@@ -48,8 +49,9 @@ Semantics (`preen_lib/src/display/TftAlgo.cpp`):
 | `MIX, op` | Marks operator `op` as a carrier. Must appear before its `OPERATOR`. Carriers are drawn cyan. |
 | `OPERATOR, op, pos` | Draws the operator box at grid position `pos`; stores `operatorPosition_[op-1] = pos`. Modulators are blue. |
 | `OPERATORSYNC, op, pos` | Same as `OPERATOR` but marks it purple. |
-| `IM, im, src, dst` | Red line from `src` to `dst`. If `src == dst`, draws the feedback loop. |
+| `IM, im, src, dst` | Red line from `src` to `dst`. |
 | `IMSYNC, im, src, dst` | Same but purple. |
+| `FEEDBACK, im, src, dst` | Feedback loop from `src` (bottom) to `dst` (top), drawn right/up/left/down. `src == dst` gives the single-operator loop; `src != dst` spans several operators. |
 
 Operator numbers in the stream are **1-based**. `drawOperator()` uses
 `operatorPosition_[op-1]`, while `highlightOperator()` uses
@@ -120,6 +122,12 @@ Carrier test: `FmCore::isCarrier()` (`fm_core.cc:138`) returns true when
 Feedback: `(flags & 0xc0) == 0xc0` on an operator (see `FmCore::render()`,
 `fm_core.cc:114`).
 
+For DX7 algorithms 4 and 6 the feedback loop spans several operators: an
+additional operator carries `FB_OUT` without `FB_IN` and marks the loop
+source (`OP4` for algo 4, `OP5` for algo 6). All feedback loops are drawn
+with `FEEDBACK, im, source, destination`; single-operator feedback uses
+`source == destination`.
+
 ### Operator numbering
 
 `FmCore::render()` iterates `op = 0..5` in that order. For DX7 algorithm 1:
@@ -150,7 +158,7 @@ For each op `i` with `outbus = flags & 3`:
   `inbus = (flags >> 4) & 3 == outbus` is modulated by it → draw `IM` from
   `i` to `k`.
 - `outbus == 0` and `OUT_BUS_ADD` set: op `i` is a carrier → `MIX`.
-- `(flags & 0xc0) == 0xc0`: op `i` has feedback → `IM` with `src == dst`.
+- `(flags & 0xc0) == 0xc0`: op `i` has feedback → `FEEDBACK` with `src == dst`.
 
 This gives connections, carriers and feedback without a second table. What it
 does **not** give is screen positions, which is the missing piece.
@@ -188,8 +196,10 @@ does **not** give is screen positions, which is the missing piece.
    the DX7 table stores positions with DX7 operator numbers `1..6`
    (`operatorPosition_[op-1]`).
 
-6. **Feedback/IM colour**: use `IM` for modulator→carrier and `IM` with
-   `src == dst` for feedback. `IMSYNC` (purple) is a PFM3-specific sync
+6. **Feedback/IM colour**: use `IM` for modulator→carrier and
+   `FEEDBACK, im, src, dst` for all feedback loops (`src == dst` for
+   single-operator feedback; `src != dst` for multi-operator loops such as
+   DX7 algorithms 4 and 6). `IMSYNC` (purple) is a PFM3-specific sync
    concept; DX7 has no equivalent.
 
 ## 5. Reusing PFM3 layouts (DX7 ↔ PFM3 equivalents)

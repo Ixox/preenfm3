@@ -41,6 +41,8 @@ public:
     void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
     void encoderTurned(int encoder6, int ticks);
+    void newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+        ParameterDisplay *param, float oldValue, float newValue);
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void buttonPressed(int button);
     void buttonLongPressed(int instrument, int button);
@@ -60,6 +62,11 @@ private:
     SynthState *synthState_;
     FirmwareTftDisplay *tft_;
     uint8_t valueChangedCounter_[6];
+    uint8_t operatorChangedCounter_[6];
+    uint8_t feedbackChangedCounter_;
+    uint8_t highlightedOperator_[6];
+    uint8_t feedbackSource_;
+    uint8_t feedbackDest_;
     uint8_t copyOperator_[21];
     bool copyOperatorValid_;
 };

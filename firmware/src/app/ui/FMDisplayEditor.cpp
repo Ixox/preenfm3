@@ -3076,6 +3076,7 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
     ParameterDisplay *param, float oldValue, float newValue) {
 
     if (isMsfaTimbre()) {
+        msfaEditor_->newParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
         return;
     }
 
@@ -3193,7 +3194,11 @@ void FMDisplayEditor::newParamValue(int &refreshStatus, int timbre, int currentR
                 return;
             }
             struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][encoder6];
-            tft_->highlightIM(encoder6, im.source, im.destination);
+            if (im.source != im.destination) {
+                tft_->highlightIM(encoder6, im.source, im.destination);
+            } else {
+                tft_->highlightFeedback(encoder6, im.source, im.destination);
+            }
             imChangedCounter_[encoder6] = 4;
             break;
         }
@@ -3583,7 +3588,11 @@ void FMDisplayEditor::tempoClick() {
                 imChangedCounter_[e]--;
                 if (imChangedCounter_[e] == 0) {
                     struct ModulationIndex im = modulationIndex[(int) synthState_->params->engine1.algo][e];
-                    tft_->eraseHighlightIM(e, im.source, im.destination);
+                    if (im.source != im.destination) {
+                        tft_->eraseHighlightIM(e, im.source, im.destination);
+                    } else {
+                        tft_->eraseHighlightFeedback(e, im.source, im.destination);
+                    }
                 }
             }
             if (mixChangedCounter_[e] > 0) {

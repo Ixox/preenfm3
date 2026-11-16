@@ -32,6 +32,7 @@ enum {
 	IMSYNC,
 	MIX,
 	OPERATORSYNC,
+	FEEDBACK,
 	END,
 };
 
@@ -52,7 +53,9 @@ public:
 	void setFGBufferAdress(uint8_t *bufferAdress);
 	void drawAlgo(int algo);
 	void drawDx7Algo(int algo);
+	bool getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest);
 	void highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest);
+    void highlightFeedback(bool draw, uint8_t opSource, uint8_t opDest);
     void highlightOperator(bool draw, uint8_t opNum);
     const uint8_t* getDigitBits(uint8_t digit);
 
@@ -63,6 +66,7 @@ private:
 	void drawNumber(int x, int y, int digit);
 	void drawOperator(uint8_t opNum, uint8_t opPosition);
 	void drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest);
+	void drawFeedback(uint8_t mode, uint8_t opSource, uint8_t opDest);
 	void drawMix(uint8_t imNum);
 
 	uint8_t operatorPosition_[6];

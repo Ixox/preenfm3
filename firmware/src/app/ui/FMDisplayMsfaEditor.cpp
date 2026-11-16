@@ -430,8 +430,13 @@ FMDisplayMsfaEditor::FMDisplayMsfaEditor() {
     synthState_ = nullptr;
     tft_ = nullptr;
     copyOperatorValid_ = false;
+    feedbackChangedCounter_ = 0;
+    feedbackSource_ = 0;
+    feedbackDest_ = 0;
     for (int i = 0; i < 6; i++) {
         valueChangedCounter_[i] = 0;
+        operatorChangedCounter_[i] = 0;
+        highlightedOperator_[i] = 0;
     }
 }
 
@@ -674,6 +679,10 @@ void FMDisplayMsfaEditor::encoderTurned(int encoder6, int ticks) {
 
     setParamValue(rowEncoder.row, (uint8_t) newValue);
     applyProgramChange();
+
+    int refreshStatus = 0;
+    newParamValue(refreshStatus, currentTimbre(), rowEncoder.row, encoder6, nullptr, oldValue, newValue);
+
     if (rowEncoder.row == MSFA_ALGORITHM) {
         tft_->drawDx7Algo(newValue);
     }
@@ -683,6 +692,32 @@ void FMDisplayMsfaEditor::encoderTurned(int encoder6, int ticks) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_YELLOW);
     displayParamValue(encoder6, COLOR_YELLOW);
+}
+
+void FMDisplayMsfaEditor::newParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+    ParameterDisplay *param, float oldValue, float newValue) {
+    // MSFA parameter changes come from encoderTurned with param == nullptr.
+    // PFM3 rows (Arp/Fx/Perf) also reach this function through FMDisplayEditor.
+    if (param != nullptr || currentRow <= MSFA_NONE || currentRow >= MSFA_PARAM_COUNT) {
+        return;
+    }
+
+    if (currentRow == MSFA_FEEDBACK) {
+        uint8_t source = 0;
+        uint8_t dest = 0;
+        if (tft_->getDx7Feedback(this->timbre()->getMsfaProgram()[134], source, dest)) {
+            tft_->highlightFeedback(encoder, source, dest);
+            feedbackChangedCounter_ = 4;
+            feedbackSource_ = source;
+            feedbackDest_ = dest;
+        }
+    } else if (msfaParams[currentRow].kind == MSFA_KIND_OPERATOR
+            || msfaParams[currentRow].kind == MSFA_KIND_OP_ENABLED) {
+        uint8_t op = synthState_->fullState.operatorNumber;
+        tft_->highlightOperator(op);
+        operatorChangedCounter_[encoder] = 4;
+        highlightedOperator_[encoder] = op;
+    }
 }
 
 void FMDisplayMsfaEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
@@ -772,6 +807,18 @@ void FMDisplayMsfaEditor::tempoClick() {
                 tft_->setCharBackgroundColor(COLOR_BLACK);
                 displayParamValue(e, COLOR_WHITE);
             }
+        }
+        if (operatorChangedCounter_[e] > 0) {
+            operatorChangedCounter_[e]--;
+            if (operatorChangedCounter_[e] == 0) {
+                tft_->eraseHighlightOperator(highlightedOperator_[e]);
+            }
+        }
+    }
+    if (feedbackChangedCounter_ > 0) {
+        feedbackChangedCounter_--;
+        if (feedbackChangedCounter_ == 0) {
+            tft_->eraseHighlightFeedback(0, feedbackSource_, feedbackDest_);
         }
     }
 }

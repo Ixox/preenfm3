@@ -37,8 +37,14 @@ void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 void TftAlgo::drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 }
 
+void TftAlgo::drawFeedback(uint8_t mode, uint8_t opSource, uint8_t opDest) {
+}
+
 // Draw the IM on
 void TftAlgo::highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
+}
+
+void TftAlgo::highlightFeedback(bool draw, uint8_t opSource, uint8_t opDest) {
 }
 
 void TftAlgo::drawMix(uint8_t imNum) {
@@ -48,6 +54,10 @@ void TftAlgo::drawAlgo(int algo) {
 }
 
 void TftAlgo::drawDx7Algo(int algo) {
+}
+
+bool TftAlgo::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
+    return false;
 }
 
 void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {

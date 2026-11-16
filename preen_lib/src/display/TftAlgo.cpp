@@ -102,7 +102,7 @@ const uint8_t algo1[] = {
     IM, 1, 2, 1,
     IM, 2, 3, 1,
     IM, 3, 3, 2,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -114,7 +114,7 @@ const uint8_t algo2[] = {
     OPERATOR, 3, 5,
     IM, 1, 3, 1,
     IM, 2, 3, 2,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -129,7 +129,7 @@ const uint8_t algo3[] = {
     IM, 2, 3, 1,
     IM, 3, 4, 1,
     IM, 4, 3, 4,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -144,7 +144,7 @@ const uint8_t algo4[] = {
     IM, 2, 4, 2,
     IM, 3, 3, 2,
     IM, 4, 4, 3,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -159,7 +159,7 @@ const uint8_t algo5[] = {
     IM, 3, 4, 3,
     IM, 4, 4, 2,
     IM, 4, 4, 2,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -174,7 +174,7 @@ const uint8_t algo6[] = {
     IM, 1, 4, 1,
     IM, 2, 4, 2,
     IM, 3, 4, 3,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -192,7 +192,7 @@ const uint8_t algo7[] = {
     IM, 2, 4, 3,
     IM, 3, 6, 5,
     IM, 4, 4, 6,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -209,7 +209,7 @@ const uint8_t algo8[] = {
     IM, 2, 3, 1,
     IM, 3, 4, 1,
     IM, 4, 6, 5,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -226,7 +226,7 @@ const uint8_t algo9[] = {
     IM, 2, 3, 1,
     IM, 3, 5, 4,
     IM, 4, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -243,7 +243,7 @@ const uint8_t algo10[] = {
     IM, 2, 4, 3,
     IM, 3, 5, 4,
     IM, 4, 6, 5,
-    IM, 6, 2, 2,
+    FEEDBACK, 6, 2, 2,
     END,
 };
 
@@ -260,7 +260,7 @@ const uint8_t algo11[] = {
     IM, 2, 3, 2,
     IM, 3, 5, 4,
     IM, 4, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -277,7 +277,7 @@ const uint8_t algo12[] = {
     IM, 1, 2, 1,
     IM, 2, 4, 3,
     IM, 3, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -294,7 +294,7 @@ const uint8_t algo13[] = {
     IM, 2, 4, 3,
     IM, 3, 5, 3,
     IM, 4, 6, 5,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -311,7 +311,7 @@ const uint8_t algo14[] = {
     IM, 2, 3, 2,
     IM, 3, 5, 4,
     IM, 4, 6, 4,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -328,7 +328,7 @@ const uint8_t algo15[] = {
     IM, 2, 4, 3,
     IM, 3, 5, 3,
     IM, 4, 6, 3,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -345,7 +345,7 @@ const uint8_t algo16[] = {
     IM, 2, 4, 3,
     IM, 3, 5, 4,
     IM, 4, 6, 4,
-    IM, 6, 2, 2,
+    FEEDBACK, 6, 2, 2,
     END,
 };
 
@@ -362,7 +362,7 @@ const uint8_t algo17[] = {
     IM, 3, 4, 3,
     IM, 4, 5, 1,
     IM, 5, 6, 5,
-    IM, 6, 2, 2,
+    FEEDBACK, 6, 2, 2,
     END,
 };
 
@@ -379,7 +379,7 @@ const uint8_t algo18[] = {
     IM, 3, 4, 1,
     IM, 4, 5, 4,
     IM, 5, 6, 5,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -397,7 +397,7 @@ const uint8_t algo19[] = {
     IM, 2, 3, 2,
     IM, 3, 6, 4,
     IM, 4, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -415,7 +415,7 @@ const uint8_t algo20[] = {
     IM, 2, 3, 2,
     IM, 3, 5, 4,
     IM, 4, 6, 4,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -434,7 +434,7 @@ const uint8_t algo21[] = {
     IM, 2, 3, 2,
     IM, 3, 6, 4,
     IM, 4, 6, 5,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -453,7 +453,7 @@ const uint8_t algo22[] = {
     IM, 2, 6, 3,
     IM, 3, 6, 4,
     IM, 4, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -472,7 +472,7 @@ const uint8_t algo23[] = {
     IM, 1, 6, 3,
     IM, 2, 6, 4,
     IM, 3, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -489,7 +489,7 @@ const uint8_t algo24[] = {
     IM, 1, 2, 1,
     IM, 2, 4, 3,
     IM, 3, 5, 4,
-    IM, 6, 5, 5,
+    FEEDBACK, 6, 5, 5,
     END,
 };
 
@@ -506,7 +506,7 @@ const uint8_t algo25[] = {
     OPERATOR, 6, 6,
     IM, 1, 4, 3,
     IM, 2, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -523,7 +523,7 @@ const uint8_t algo26[] = {
     OPERATOR, 6, 12,
     IM, 1, 4, 3,
     IM, 2, 5, 4,
-    IM, 6, 5, 5,
+    FEEDBACK, 6, 5, 5,
     END,
 };
 
@@ -540,7 +540,7 @@ const uint8_t algo27[] = {
     OPERATOR, 4, 10,
     OPERATOR, 5, 11,
     OPERATOR, 6, 12,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -557,7 +557,7 @@ const uint8_t algo28[] = {
     OPERATOR, 5, 11,
     OPERATOR, 6, 8,
     IM, 1, 6, 5,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -571,7 +571,7 @@ const uint8_t algo29[] = {
     IMSYNC, 1, 3, 1,
     IM, 2, 4, 2,
     IM, 3, 4, 3,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -586,7 +586,7 @@ const uint8_t algo30[] = {
     IMSYNC, 2, 3, 2,
     IM, 3, 4, 1,
     IM, 4, 4, 2,
-    IM, 6, 4, 4,
+    FEEDBACK, 6, 4, 4,
     END,
 };
 
@@ -614,7 +614,7 @@ const uint8_t algo32[] = {
     IM, 2, 3, 1,
     IMSYNC, 3, 4, 1,
     IM, 4, 3, 4,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -631,7 +631,7 @@ const uint8_t dx7algo1[] = {
     IM, 2, 5, 4,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -648,7 +648,7 @@ const uint8_t dx7algo2[] = {
     IM, 2, 5, 4,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 2, 2,
+    FEEDBACK, 5, 2, 2,
     END,
 };
 
@@ -665,7 +665,7 @@ const uint8_t dx7algo3[] = {
     IM, 2, 5, 4,
     IM, 3, 3, 2,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -682,7 +682,7 @@ const uint8_t dx7algo4[] = {
     IM, 2, 5, 4,
     IM, 3, 3, 2,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 4, 6,
     END,
 };
 
@@ -690,16 +690,16 @@ const uint8_t dx7algo5[] = {
     MIX, 5,
     MIX, 3,
     MIX, 1,
-    OPERATOR, 1, 4,
-    OPERATOR, 2, 1,
-    OPERATOR, 3, 5,
-    OPERATOR, 4, 2,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 3,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 4,
+    OPERATOR, 3, 11,
+    OPERATOR, 4, 5,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 6,
     IM, 1, 6, 5,
     IM, 2, 4, 3,
     IM, 3, 2, 1,
-    IM, 4, 6, 6,
+    FEEDBACK, 4, 6, 6,
     END,
 };
 
@@ -707,16 +707,16 @@ const uint8_t dx7algo6[] = {
     MIX, 5,
     MIX, 3,
     MIX, 1,
-    OPERATOR, 1, 4,
-    OPERATOR, 2, 1,
-    OPERATOR, 3, 5,
-    OPERATOR, 4, 2,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 3,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 4,
+    OPERATOR, 3, 11,
+    OPERATOR, 4, 5,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 6,
     IM, 1, 6, 5,
     IM, 2, 4, 3,
     IM, 3, 2, 1,
-    IM, 4, 6, 6,
+    FEEDBACK, 4, 5, 6,
     END,
 };
 
@@ -733,7 +733,7 @@ const uint8_t dx7algo7[] = {
     IM, 2, 5, 3,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -750,7 +750,7 @@ const uint8_t dx7algo8[] = {
     IM, 2, 5, 3,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 4, 4,
+    FEEDBACK, 5, 4, 4,
     END,
 };
 
@@ -767,7 +767,7 @@ const uint8_t dx7algo9[] = {
     IM, 2, 5, 3,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 2, 2,
+    FEEDBACK, 5, 2, 2,
     END,
 };
 
@@ -784,7 +784,7 @@ const uint8_t dx7algo10[] = {
     IM, 2, 5, 4,
     IM, 3, 3, 2,
     IM, 4, 2, 1,
-    IM, 5, 3, 3,
+    FEEDBACK, 5, 3, 3,
     END,
 };
 
@@ -801,7 +801,7 @@ const uint8_t dx7algo11[] = {
     IM, 2, 5, 4,
     IM, 3, 3, 2,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -818,7 +818,7 @@ const uint8_t dx7algo12[] = {
     IM, 2, 5, 3,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 2, 2,
+    FEEDBACK, 5, 2, 2,
     END,
 };
 
@@ -835,7 +835,7 @@ const uint8_t dx7algo13[] = {
     IM, 2, 5, 3,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -852,7 +852,7 @@ const uint8_t dx7algo14[] = {
     IM, 2, 5, 4,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -869,7 +869,7 @@ const uint8_t dx7algo15[] = {
     IM, 2, 5, 4,
     IM, 3, 4, 3,
     IM, 4, 2, 1,
-    IM, 5, 2, 2,
+    FEEDBACK, 5, 2, 2,
     END,
 };
 
@@ -886,7 +886,7 @@ const uint8_t dx7algo16[] = {
     IM, 3, 5, 1,
     IM, 4, 3, 1,
     IM, 5, 2, 1,
-    IM, 6, 6, 6,
+    FEEDBACK, 6, 6, 6,
     END,
 };
 
@@ -903,7 +903,7 @@ const uint8_t dx7algo17[] = {
     IM, 3, 5, 1,
     IM, 4, 3, 1,
     IM, 5, 2, 1,
-    IM, 6, 2, 2,
+    FEEDBACK, 6, 2, 2,
     END,
 };
 
@@ -920,7 +920,7 @@ const uint8_t dx7algo18[] = {
     IM, 3, 4, 1,
     IM, 4, 3, 1,
     IM, 5, 2, 1,
-    IM, 6, 3, 3,
+    FEEDBACK, 6, 3, 3,
     END,
 };
 
@@ -928,17 +928,17 @@ const uint8_t dx7algo19[] = {
     MIX, 5,
     MIX, 4,
     MIX, 1,
-    OPERATOR, 1, 4,
-    OPERATOR, 2, 2,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 4,
     OPERATOR, 3, 1,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 3,
+    OPERATOR, 4, 11,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 6,
     IM, 1, 6, 5,
     IM, 2, 6, 4,
     IM, 3, 3, 2,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -946,17 +946,17 @@ const uint8_t dx7algo20[] = {
     MIX, 4,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 4,
-    OPERATOR, 2, 5,
-    OPERATOR, 3, 1,
-    OPERATOR, 4, 6,
-    OPERATOR, 5, 2,
-    OPERATOR, 6, 3,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 11,
+    OPERATOR, 3, 4,
+    OPERATOR, 4, 12,
+    OPERATOR, 5, 5,
+    OPERATOR, 6, 6,
     IM, 1, 6, 4,
     IM, 2, 5, 4,
     IM, 3, 3, 2,
     IM, 4, 3, 1,
-    IM, 5, 3, 3,
+    FEEDBACK, 5, 3, 3,
     END,
 };
 
@@ -965,17 +965,17 @@ const uint8_t dx7algo21[] = {
     MIX, 4,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 3,
-    OPERATOR, 2, 4,
-    OPERATOR, 3, 1,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 2,
+    OPERATOR, 1, 4,
+    OPERATOR, 2, 6,
+    OPERATOR, 3, 2,
+    OPERATOR, 4, 10,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 8,
     IM, 1, 6, 5,
     IM, 2, 6, 4,
     IM, 3, 3, 2,
     IM, 4, 3, 1,
-    IM, 5, 3, 3,
+    FEEDBACK, 5, 3, 3,
     END,
 };
 
@@ -984,17 +984,17 @@ const uint8_t dx7algo22[] = {
     MIX, 4,
     MIX, 3,
     MIX, 1,
-    OPERATOR, 1, 3,
+    OPERATOR, 1, 4,
     OPERATOR, 2, 1,
-    OPERATOR, 3, 4,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 2,
+    OPERATOR, 3, 10,
+    OPERATOR, 4, 11,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 8,
     IM, 1, 6, 5,
     IM, 2, 6, 4,
     IM, 3, 6, 3,
     IM, 4, 2, 1,
-    IM, 5, 6, 6,
+    FEEDBACK, 5, 6, 6,
     END,
 };
 
@@ -1003,16 +1003,16 @@ const uint8_t dx7algo23[] = {
     MIX, 4,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 3,
-    OPERATOR, 2, 4,
-    OPERATOR, 3, 1,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 2,
+    OPERATOR, 1, 4,
+    OPERATOR, 2, 6,
+    OPERATOR, 3, 3,
+    OPERATOR, 4, 10,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 8,
     IM, 1, 6, 5,
     IM, 2, 6, 4,
     IM, 3, 3, 2,
-    IM, 4, 6, 6,
+    FEEDBACK, 4, 6, 6,
     END,
 };
 
@@ -1022,16 +1022,16 @@ const uint8_t dx7algo24[] = {
     MIX, 3,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 2,
-    OPERATOR, 2, 3,
-    OPERATOR, 3, 4,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 1,
+    OPERATOR, 1, 1,
+    OPERATOR, 2, 2,
+    OPERATOR, 3, 10,
+    OPERATOR, 4, 11,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 8,
     IM, 1, 6, 5,
     IM, 2, 6, 4,
     IM, 3, 6, 3,
-    IM, 4, 6, 6,
+    FEEDBACK, 4, 6, 6,
     END,
 };
 
@@ -1041,15 +1041,15 @@ const uint8_t dx7algo25[] = {
     MIX, 3,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 2,
-    OPERATOR, 2, 3,
-    OPERATOR, 3, 4,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 1,
+    OPERATOR, 1, 1,
+    OPERATOR, 2, 2,
+    OPERATOR, 3, 3,
+    OPERATOR, 4, 10,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 8,
     IM, 1, 6, 5,
     IM, 2, 6, 4,
-    IM, 3, 6, 6,
+    FEEDBACK, 3, 6, 6,
     END,
 };
 
@@ -1058,15 +1058,15 @@ const uint8_t dx7algo26[] = {
     MIX, 2,
     MIX, 1,
     OPERATOR, 1, 4,
-    OPERATOR, 2, 5,
-    OPERATOR, 3, 1,
-    OPERATOR, 4, 6,
-    OPERATOR, 5, 2,
-    OPERATOR, 6, 3,
+    OPERATOR, 2, 6,
+    OPERATOR, 3, 3,
+    OPERATOR, 4, 11,
+    OPERATOR, 5, 7,
+    OPERATOR, 6, 9,
     IM, 1, 6, 4,
     IM, 2, 5, 4,
     IM, 3, 3, 2,
-    IM, 4, 6, 6,
+    FEEDBACK, 4, 6, 6,
     END,
 };
 
@@ -1075,15 +1075,15 @@ const uint8_t dx7algo27[] = {
     MIX, 2,
     MIX, 1,
     OPERATOR, 1, 4,
-    OPERATOR, 2, 5,
-    OPERATOR, 3, 1,
-    OPERATOR, 4, 6,
-    OPERATOR, 5, 2,
-    OPERATOR, 6, 3,
+    OPERATOR, 2, 6,
+    OPERATOR, 3, 3,
+    OPERATOR, 4, 11,
+    OPERATOR, 5, 7,
+    OPERATOR, 6, 9,
     IM, 1, 6, 4,
     IM, 2, 5, 4,
     IM, 3, 3, 2,
-    IM, 4, 3, 3,
+    FEEDBACK, 4, 3, 3,
     END,
 };
 
@@ -1091,16 +1091,16 @@ const uint8_t dx7algo28[] = {
     MIX, 6,
     MIX, 3,
     MIX, 1,
-    OPERATOR, 1, 4,
-    OPERATOR, 2, 2,
-    OPERATOR, 3, 5,
-    OPERATOR, 4, 3,
-    OPERATOR, 5, 1,
-    OPERATOR, 6, 6,
+    OPERATOR, 1, 10,
+    OPERATOR, 2, 4,
+    OPERATOR, 3, 11,
+    OPERATOR, 4, 5,
+    OPERATOR, 5, 2,
+    OPERATOR, 6, 12,
     IM, 1, 5, 4,
     IM, 2, 4, 3,
     IM, 3, 2, 1,
-    IM, 4, 5, 5,
+    FEEDBACK, 4, 5, 5,
     END,
 };
 
@@ -1109,15 +1109,15 @@ const uint8_t dx7algo29[] = {
     MIX, 3,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 3,
-    OPERATOR, 2, 4,
-    OPERATOR, 3, 5,
-    OPERATOR, 4, 1,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 2,
+    OPERATOR, 1, 1,
+    OPERATOR, 2, 3,
+    OPERATOR, 3, 10,
+    OPERATOR, 4, 7,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 9,
     IM, 1, 6, 5,
     IM, 2, 4, 3,
-    IM, 3, 6, 6,
+    FEEDBACK, 3, 6, 6,
     END,
 };
 
@@ -1126,15 +1126,15 @@ const uint8_t dx7algo30[] = {
     MIX, 3,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 3,
-    OPERATOR, 2, 4,
-    OPERATOR, 3, 5,
-    OPERATOR, 4, 2,
-    OPERATOR, 5, 1,
-    OPERATOR, 6, 6,
+    OPERATOR, 1, 1,
+    OPERATOR, 2, 2,
+    OPERATOR, 3, 11,
+    OPERATOR, 4, 8,
+    OPERATOR, 5, 5,
+    OPERATOR, 6, 3,
     IM, 1, 5, 4,
     IM, 2, 4, 3,
-    IM, 3, 5, 5,
+    FEEDBACK, 3, 5, 5,
     END,
 };
 
@@ -1144,14 +1144,14 @@ const uint8_t dx7algo31[] = {
     MIX, 3,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 2,
-    OPERATOR, 2, 3,
-    OPERATOR, 3, 4,
-    OPERATOR, 4, 5,
-    OPERATOR, 5, 6,
-    OPERATOR, 6, 1,
+    OPERATOR, 1, 1,
+    OPERATOR, 2, 2,
+    OPERATOR, 3, 3,
+    OPERATOR, 4, 10,
+    OPERATOR, 5, 12,
+    OPERATOR, 6, 9,
     IM, 1, 6, 5,
-    IM, 2, 6, 6,
+    FEEDBACK, 2, 6, 6,
     END,
 };
 
@@ -1162,13 +1162,13 @@ const uint8_t dx7algo32[] = {
     MIX, 3,
     MIX, 2,
     MIX, 1,
-    OPERATOR, 1, 1,
-    OPERATOR, 2, 2,
-    OPERATOR, 3, 3,
-    OPERATOR, 4, 4,
-    OPERATOR, 5, 5,
-    OPERATOR, 6, 6,
-    IM, 1, 6, 6,
+    OPERATOR, 1, 4,
+    OPERATOR, 2, 5,
+    OPERATOR, 3, 6,
+    OPERATOR, 4, 10,
+    OPERATOR, 5, 11,
+    OPERATOR, 6, 12,
+    FEEDBACK, 1, 6, 6,
     END,
 };
 
@@ -1214,6 +1214,7 @@ TftAlgo::TftAlgo() {
                     break;
                 case IM:
                 case IMSYNC:
+                case FEEDBACK:
                     modulationIndex[a][algoInfo[idx] - 1].source = algoInfo[idx + 1];
                     modulationIndex[a][algoInfo[idx] - 1].destination = algoInfo[idx + 2];
                     idx += 3;
@@ -1394,29 +1395,33 @@ void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
 
 void TftAlgo::drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 
-    if (opSource != opDest) {
-        int xSource = GETX1(operatorPosition_[opSource-1]) + 8;
-        int ySource = GETY1(operatorPosition_[opSource-1]) + 17;
+    int xSource = GETX1(operatorPosition_[opSource-1]) + 8;
+    int ySource = GETY1(operatorPosition_[opSource-1]) + 17;
 
-        int xDest = GETX1(operatorPosition_[opDest-1]) + 8;
-        int yDest = GETY1(operatorPosition_[opDest-1]) - 1;
+    int xDest = GETX1(operatorPosition_[opDest-1]) + 8;
+    int yDest = GETY1(operatorPosition_[opDest-1]) - 1;
 
-        drawLine(mode, xSource, ySource, xDest, yDest);
-    } else {
-        // Feedback
-        int x = GETX1(operatorPosition_[opSource-1]) + 8;
-        int y = GETY1(operatorPosition_[opSource-1]) + 8;
-
-        drawLine(mode, x + 8, y, x + 10, y);
-        drawLine(mode, x + 10, y, x + 10, y - 10);
-        drawLine(mode, x + 10, y - 10, x, y - 10);
-        drawLine(mode, x, y - 10, x, y - 8);
-    }
+    drawLine(mode, xSource, ySource, xDest, yDest);
 }
 
 // Draw the IM on
 void TftAlgo::highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
     drawIM(draw ? 2 : 3, imNum, opSource, opDest);
+}
+
+void TftAlgo::drawFeedback(uint8_t mode, uint8_t opSource, uint8_t opDest) {
+    int x = GETX1(operatorPosition_[opSource - 1]) + 8;
+    int ySource = GETY1(operatorPosition_[opSource - 1]) + 8;
+    int yDest = GETY1(operatorPosition_[opDest - 1]);
+
+    drawLine(mode, x + 8, ySource, x + 10, ySource);
+    drawLine(mode, x + 10, ySource, x + 10, yDest - 2);
+    drawLine(mode, x + 10, yDest - 2, x, yDest - 2);
+    drawLine(mode, x, yDest - 2, x, yDest);
+}
+
+void TftAlgo::highlightFeedback(bool draw, uint8_t opSource, uint8_t opDest) {
+    drawFeedback(draw ? 2 : 3, opSource, opDest);
 }
 
 void TftAlgo::drawMix(uint8_t imNum) {
@@ -1432,6 +1437,32 @@ void TftAlgo::drawAlgo(int algo) {
 void TftAlgo::drawDx7Algo(int algo) {
     algo = algo % NUMBER_OF_DX7_ALGOS;
     drawAlgoFromTable(dx7Algos[algo]);
+}
+
+bool TftAlgo::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
+    algo = algo % NUMBER_OF_DX7_ALGOS;
+    const uint8_t *algoInfo = dx7Algos[algo];
+    int idx = 0;
+    while (algoInfo[idx] != END) {
+        switch (algoInfo[idx++]) {
+            case OPERATORSYNC:
+            case OPERATOR:
+                idx += 2;
+                break;
+            case IM:
+            case IMSYNC:
+                idx += 3;
+                break;
+            case FEEDBACK:
+                opSource = algoInfo[idx + 1];
+                opDest = algoInfo[idx + 2];
+                return true;
+            case MIX:
+                idx++;
+                break;
+        }
+    }
+    return false;
 }
 
 void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
@@ -1466,6 +1497,13 @@ void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
                 drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
                 idx += 3;
                 break;
+            case FEEDBACK:
+                imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+                imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
+                setColor(RGB565_RED);
+                drawFeedback(1, algoInfo[idx + 1], algoInfo[idx + 2]);
+                idx += 3;
+                break;
             case MIX:
                 operatorMix_[algoInfo[idx] - 1] = MIX;
                 drawMix(algoInfo[idx++]);
@@ -1487,6 +1525,7 @@ void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
                 break;
             case IM:
             case IMSYNC:
+            case FEEDBACK:
                 idx += 3;
                 break;
             case MIX:
