@@ -20,6 +20,7 @@
 #include <string.h>
 #include "Timbre.h"
 #include "SynthState.h"
+#include "Pfm3ParameterRows.h"
 #include "MidiControlChange.h"
 #include "SynthEngineFactory.h"
 #include "VoicePool.h"

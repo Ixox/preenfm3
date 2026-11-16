@@ -22,6 +22,7 @@
 #include "ScreenEditor.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
+#include "Pfm3ParameterRows.h"
 #include "preenfm3.h"
 
 EditorParamPage::EditorParamPage() {

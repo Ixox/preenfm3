@@ -10,6 +10,7 @@
 #include "Preenfm3Engine.h"
 #include "Pfm3FlashFormat.h"
 #include "SynthState.h"
+#include "Pfm3ParameterRows.h"
 #include "MidiControlChange.h"
 #include "Pfm3ControlChange.h"
 #include "Pfm3Midi.h"

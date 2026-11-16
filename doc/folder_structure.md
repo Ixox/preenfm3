@@ -63,6 +63,7 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | `MidiControlChange.h`, `Pfm3ControlChange.h`, `MsfaControlChange.h` | Shared MIDI CC numbers and engine-specific CC numbers |
 | `SharedParams.h` | Timbre-wide Arp/FX parameter ids used by MIDI |
 | `Pfm3Midi.*` | Legacy PFM3 NRPN index ↔ flat parameter index translation |
+| `Pfm3ParameterRows.*` | PFM3 parameter display metadata indexed by row |
 | `FxBus.*` | Reverb / FX bus |
 | `SimpleEffect/` | Compressor, simple envelope/gain helpers |
 | `MsfaEngine.*`, `MsfaDebug.*` | Bridge to the MSFA (Dexed DX7) engine |

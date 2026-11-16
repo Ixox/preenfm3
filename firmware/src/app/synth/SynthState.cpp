@@ -21,6 +21,7 @@
 #include "ScreenEditor.h"
 #include "ScreenSequencer.h"
 #include "SynthState.h"
+#include "Pfm3ParameterRows.h"
 #include "Hexter.h"
 #include "Timbre.h"
 #include "Synth.h"

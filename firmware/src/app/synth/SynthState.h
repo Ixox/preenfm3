@@ -657,7 +657,6 @@ private:
 };
 
 // Global structure used all over the code
-extern struct AllParameterRowsDisplay allParameterRows;
 extern struct FilterRowDisplay fx1RowDisplay[];
 extern struct FilterRowDisplay fx2RowDisplay[];
 

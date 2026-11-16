@@ -22,6 +22,7 @@
 #include "ScreenEditor.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
+#include "Pfm3ParameterRows.h"
 #include "Timbre.h"
 #include "Pfm3Preset.h"
 
@@ -1863,73 +1864,6 @@ struct ParameterRowDisplay dummyParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-
-struct AllParameterRowsDisplay allParameterRows = {
-    {
-        &engine1ParameterRow,
-        &engineIM1ParameterRow,
-        &engineIM2ParameterRow,
-        &engineIM3ParameterRow,
-        &engineMix1ParameterRow,
-        &engineMix2ParameterRow,
-        &engineMix3ParameterRow,
-        &engineArp1ParameterRow,
-        &engineArp2ParameterRow,
-        &engineArpPatternRow,
-        &fx1ParameterRow,
-        &oscParameterRow,
-        &oscParameterRow,
-        &oscParameterRow,
-        &oscParameterRow,
-        &oscParameterRow,
-        &oscParameterRow,
-        &envParameterTime,
-        &envParameterTime,
-        &envParameterTime,
-        &envParameterTime,
-        &envParameterTime,
-        &envParameterTime,
-        &envParameterLevel,
-        &envParameterLevel,
-        &envParameterLevel,
-        &envParameterLevel,
-        &envParameterLevel,
-        &envParameterLevel,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &matrixParameterRow,
-        &performanceParameterRow1,
-        &lfoParameterRow,
-        &lfoParameterRow,
-        &lfoParameterRow,
-        &lfoPhaseParameterRow,
-        &lfoEnvParameterRow,
-        &lfoEnv2ParameterRow,
-        &lfoStepParameterRow,
-        &lfoStepParameterRow,
-        &midiNote1ParameterRow,
-        &midiNote2ParameterRow,
-        &dummyParameterRow,
-        &dummyParameterRow,
-        &engine2ParameterRow,
-        &engineCurveParameterRow,
-        &engineCurveParameterRow,
-        &engineCurveParameterRow,
-        &engineCurveParameterRow,
-        &engineCurveParameterRow,
-        &engineCurveParameterRow,
-        &fx2ParameterRow
-
-} };
 
 // =================================================
 // constant for pfm3 editor
