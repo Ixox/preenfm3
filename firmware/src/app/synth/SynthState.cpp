@@ -406,6 +406,11 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber,
         mixerState.instrumentState_[timbre].engine = SYNTH_ENGINE_DX7;
         timbres[timbre].setEngine(SYNTH_ENGINE_DX7);
 
+        // A DX7 sysex carries no arpeggiator/FX settings. Reset the shared
+        // params (and the PFM3 mirror) so the new instrument does not inherit
+        // the previous instrument's FX/arp.
+        timbres[timbre].applyPfm3Preset(preenMainPreset);
+
         timbres[timbre].loadDx7Patch(packed);
         // Keep PFM3 params in sync for display/backward compatibility.
         hexter->loadHexterPatch(packed, params);
