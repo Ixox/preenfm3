@@ -17,37 +17,27 @@
 #ifndef MIDI_SEQUENCER_H_
 #define MIDI_SEQUENCER_H_
 
-
-#include <stdint.h>
 #include "Common.h"
+#include <stdint.h>
 
 class Synth;
 class ScreenSequencer;
 
-#define SEQ_ACTION_SIZE 2048
+#define SEQ_ACTION_SIZE          2048
 #define NUMBER_OF_STEP_SEQUENCES 12
 
-#define SEQ_ACTION_SIZE_INV (1.0f/(float)SEQ_ACTION_SIZE)
-#define SEQ_LAST_ACTION_INDEX SEQ_LAST_ACTION_SIZE-1
+#define SEQ_ACTION_SIZE_INV   (1.0f / (float)SEQ_ACTION_SIZE)
+#define SEQ_LAST_ACTION_INDEX SEQ_LAST_ACTION_SIZE - 1
 
 #define BITS_PER_BEAT 8
-#define MAX_PER_BEAT (0xff)
-#define MAX_TIME (0xfff)
+#define MAX_PER_BEAT  (0xff)
+#define MAX_TIME      (0xfff)
 
-enum SEQ_VERSION {
-    SEQ_VERSION1 = 1,
-    SEQ_VERSION2
-};
+enum SEQ_VERSION { SEQ_VERSION1 = 1, SEQ_VERSION2 };
 
 #define SEQ_CURRENT_VERSION SEQ_VERSION2
 
-enum SeqMidiActionType {
-    SEQ_ACTION_NONE = 0,
-    SEQ_ACTION_NOTE,
-    SEQ_ACTION_CC,
-    SEQ_ACTION_CLEAR
-};
-
+enum SeqMidiActionType { SEQ_ACTION_NONE = 0, SEQ_ACTION_NOTE, SEQ_ACTION_CC, SEQ_ACTION_CLEAR };
 
 struct SeqMidiAction {
     uint16_t when; // 2 bits measure + 2 bits beat + 8 bits
@@ -69,7 +59,6 @@ union StepSeqValue {
     uint16_t unique;
 };
 
-
 class Sequencer {
 public:
     Sequencer();
@@ -77,13 +66,15 @@ public:
     void setSynth(Synth* synth);
     void setDisplaySequencer(ScreenSequencer* displaySequencer);
 
-    void getFullState(uint8_t* buffer, uint32_t *size);
-    void getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seqNumber);
+    void getFullState(uint8_t* buffer, uint32_t* size);
+    void getFullDefaultState(uint8_t* buffer, uint32_t* size, uint8_t seqNumber);
     void setFullState(uint8_t* buffer);
 
     void setTempo(float newTempo);
 
-    bool isRunning() { return running_; }
+    bool isRunning() {
+        return running_;
+    }
     void start();
     void stop();
 
@@ -135,7 +126,7 @@ public:
     }
 
     bool isStepActivated(uint8_t instrument) {
-    	int seqNumber = instrumentStepSeq_[instrument];
+        int seqNumber = instrumentStepSeq_[instrument];
         return stepActivated_[seqNumber];
     }
 
@@ -145,7 +136,7 @@ public:
     uint8_t getMeasure() {
         return (current16bitTimer_ >> (BITS_PER_BEAT + 2));
     }
-    uint8_t getBeat()  {
+    uint8_t getBeat() {
         return ((current16bitTimer_ >> BITS_PER_BEAT) & 0x3) + 1;
     }
     uint8_t getTempo() {
@@ -182,7 +173,7 @@ public:
     void setSequenceName(const char* newName);
     char* getSequenceNameInBuffer(char* buffer);
     uint8_t getInstrumentStepSeq(int instrument) {
-    	return instrumentStepSeq_[instrument];
+        return instrumentStepSeq_[instrument];
     }
     void setInstrumentStepSeq(int instrument, int index);
 
@@ -191,7 +182,6 @@ public:
         tmpStepValue_.full = 0l;
         stepNumberOfNotesOn_ = 0;
     }
-
 
 private:
     void processActionBetwen(int instrument, uint16_t startTimer, uint16_t endTimer);
@@ -202,7 +192,7 @@ private:
     bool createNewNoteIfEmpty(int instrument, int stepCursor, int stepSize);
     char sequenceName_[13];
     uint16_t lastFreeAction_;
-    Synth * synth_;
+    Synth* synth_;
     ScreenSequencer* displaySequencer_;
 
     bool externalClock_;
@@ -242,7 +232,7 @@ private:
     bool recording_[NUMBER_OF_TIMBRES];
     bool muted_[NUMBER_OF_TIMBRES];
     int8_t transpose_[NUMBER_OF_TIMBRES];
-    //uint16_t nextLastActionTimer[NUMBER_OF_TIMBRES];;
+    // uint16_t nextLastActionTimer[NUMBER_OF_TIMBRES];;
     uint16_t instrumentTimerMask_[NUMBER_OF_TIMBRES];
     uint16_t lastInstrument16bitTimer_[NUMBER_OF_TIMBRES];
     uint8_t instrumentStepIndex_[NUMBER_OF_TIMBRES];

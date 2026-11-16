@@ -26,34 +26,35 @@ class TftDisplay;
 
 class ScreenMenu {
 public:
-    void init(SynthState *synthState, TftDisplay *tft, Storage *storage);
+    void init(SynthState* synthState, TftDisplay* tft, Storage* storage);
     void refreshMenuByStep(int currentTimbre, int refreshStatus);
     void encoderTurned(int currentTimbre, int encoder, int ticks);
     void buttonPressed(int currentTimbre, int button);
     void updatePreviousChoice(uint8_t menuState);
-    void newMenuState(FullState *fullState);
-    void displayMenuState(FullState *fullState);
-    void newMenuSelect(FullState *fullState);
-    void menuBack(const MenuItem *oldMenuItem, FullState *fullState);
+    void newMenuState(FullState* fullState);
+    void displayMenuState(FullState* fullState);
+    void newMenuSelect(FullState* fullState);
+    void menuBack(const MenuItem* oldMenuItem, FullState* fullState);
     void setPreviousSynthMode(int synthModeBeforeMenu);
+
 private:
-    bool changePresetSelect(uint32_t *valueToChange, int ticks, int max);
-    bool changePresetSelect(uint8_t *valueToChange, int ticks, int max);
-    bool changePresetSelect(uint16_t *valueToChange, int ticks, int max);
-    bool changePresetSelect(char *valueToChange, int ticks, int max);
-    bool changeCharSelect(char *valueToChange, int ticks);
+    bool changePresetSelect(uint32_t* valueToChange, int ticks, int max);
+    bool changePresetSelect(uint8_t* valueToChange, int ticks, int max);
+    bool changePresetSelect(uint16_t* valueToChange, int ticks, int max);
+    bool changePresetSelect(char* valueToChange, int ticks, int max);
+    bool changeCharSelect(char* valueToChange, int ticks);
     const MenuItem* getMenuBack(int currentTimbre);
-    void copyAndTransformString(char *dest, const char *source);
-    int copyStringAt(char *dest, int offset, const char *source);
-    void moveExtensionAtTheEnd(char *fileName);
-    void copySynthParams(char *source, char *dest);
-    void displayBankSelect(int bankNumber, bool usable, const char *name);
-    void displayPatchSelect(int presetNumber, const char *name);
+    void copyAndTransformString(char* dest, const char* source);
+    int copyStringAt(char* dest, int offset, const char* source);
+    void moveExtensionAtTheEnd(char* fileName);
+    void copySynthParams(char* source, char* dest);
+    void displayBankSelect(int bankNumber, bool usable, const char* name);
+    void displayPatchSelect(int presetNumber, const char* name);
     void printScalaFrequency(float value);
 
-    TftDisplay *tft_;
-    SynthState *synthState_;
-    Storage *storage_;
+    TftDisplay* tft_;
+    SynthState* synthState_;
+    Storage* storage_;
 
     uint8_t previousConfigSetting_;
     uint8_t menuStateRow_;

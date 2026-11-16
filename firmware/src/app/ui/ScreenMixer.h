@@ -24,7 +24,6 @@
 class SynthState;
 class TftDisplay;
 
-
 // Mixer struct
 
 struct Pfm3MixerButtonStateParam {
@@ -32,30 +31,30 @@ struct Pfm3MixerButtonStateParam {
     float maxValue;
     float numberOfValues;
     ParameterDisplayType displayType;
-    const char **valueName;
+    const char** valueName;
 };
 
 struct Pfm3MixerButtonState {
-    const char *stateLabel;
+    const char* stateLabel;
     enum MixerValueType mixerValueType;
     struct Pfm3MixerButtonStateParam buttonState;
 };
 
 struct Pfm3MixerButton {
-    const char *buttonLabel;
+    const char* buttonLabel;
     int numberOfStates;
-    const Pfm3MixerButtonState *state[];
+    const Pfm3MixerButtonState* state[];
 };
 
 struct PfmMixerMenu {
-    const Pfm3MixerButton *mixerButton[6];
+    const Pfm3MixerButton* mixerButton[6];
 };
 
 class ScreenMixer {
 public:
     ScreenMixer();
 
-    void init(SynthState *synthState, TftDisplay *tft) {
+    void init(SynthState* synthState, TftDisplay* tft) {
         synthState_ = synthState;
         tft_ = tft;
     }
@@ -63,21 +62,21 @@ public:
     void setReverbParamVisible(bool visible);
 
     void displayMixerValue(int timbre);
-    void refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus);
+    void refreshMixerByStep(int currentTimbre, int& refreshStatus, int& endRefreshStatus);
     void tempoClick();
-    void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue, int &refreshStatus);
+    void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue, int& refreshStatus);
     void newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
     void encoderTurned(int encoder, int ticks);
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void buttonPressed(int button);
     void* getValuePointer(int valueType, int encoder);
-    void setRefreshStatusPointer(int *refreshStatus, int *endRefreshStatus) {
+    void setRefreshStatusPointer(int* refreshStatus, int* endRefreshStatus) {
         refreshStatusP_ = refreshStatus;
         endRefreshStatusP_ = endRefreshStatus;
     }
 
     void refreshInstrument(int instrument) {
-    	refresh(19 - instrument, 19 - instrument);
+        refresh(19 - instrument, 19 - instrument);
     }
 
     void refresh(int startRefreshStatus, int endRefreshStatus) {
@@ -95,11 +94,11 @@ public:
 private:
     void refreshMixerRowGlobalOptions(int page, int row);
     void displayMixerValueInteger(int timbre, int x, int value);
-    TftDisplay *tft_;
-    SynthState *synthState_;
+    TftDisplay* tft_;
+    SynthState* synthState_;
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
-    int *refreshStatusP_;
-    int *endRefreshStatusP_;
+    int* refreshStatusP_;
+    int* endRefreshStatusP_;
     bool reverbParamVisible_;
 };
 

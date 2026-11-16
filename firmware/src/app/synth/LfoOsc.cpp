@@ -17,16 +17,14 @@
 
 #include "LfoOsc.h"
 
-
-
 extern float noise[32];
 
-void LfoOsc::init(struct LfoParams *lfoParams, float* phase, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
+void LfoOsc::init(struct LfoParams* lfoParams, float* phase, Matrix* matrix, SourceEnum source, DestinationEnum dest) {
     Lfo::init(matrix, source, dest);
     this->type_ = LFO_TRIANGLE;
     this->ramp_ = 0;
     this->initPhase_ = phase;
-    this->rampInv_ = 10000000 ;
+    this->rampInv_ = 10000000;
     this->currentRamp_ = 0;
     this->lfo_ = lfoParams;
     valueChanged(3);
@@ -37,14 +35,13 @@ void LfoOsc::init(struct LfoParams *lfoParams, float* phase, Matrix *matrix, Sou
     midiClock(0, true);
 }
 
-
 void LfoOsc::midiClock(int songPosition, bool computeStep) {
 
     ticks_ &= 0x7ff;
 
     switch ((int)(lfo_->freq * 10.0f + .05f)) {
     case LFO_MIDICLOCK_MC_DIV_16:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 32.0f * invTab[ticks_];
                 ticks_ = 0;
@@ -53,7 +50,7 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
         }
         break;
     case LFO_MIDICLOCK_MC_DIV_8:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 16.0f * invTab[ticks_];
                 ticks_ = 0;
@@ -62,7 +59,7 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
         }
         break;
     case LFO_MIDICLOCK_MC_DIV_4:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 8.0f * invTab[ticks_];
                 ticks_ = 0;
@@ -71,7 +68,7 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
         }
         break;
     case LFO_MIDICLOCK_MC_DIV_2:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE / 4.0f * invTab[ticks_];
                 ticks_ = 0;
@@ -92,16 +89,16 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_2:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_];
                 ticks_ = 0;
             }
-            phase_ =  *this->initPhase_;
+            phase_ = *this->initPhase_;
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_3:
-        if ((songPosition & 0x3)==0) {
+        if ((songPosition & 0x3) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_] * 3.0;
                 ticks_ = 0;
@@ -110,7 +107,7 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_4:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_] * 2.0f;
                 ticks_ = 0;
@@ -119,7 +116,7 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
         }
         break;
     case LFO_MIDICLOCK_MC_TIME_8:
-        if ((songPosition & 0x1)==0) {
+        if ((songPosition & 0x1) == 0) {
             if (computeStep) {
                 currentFreq_ = PREENFM_FREQUENCY / BLOCK_SIZE * invTab[ticks_] * 4.0f;
                 ticks_ = 0;
@@ -130,11 +127,10 @@ void LfoOsc::midiClock(int songPosition, bool computeStep) {
     }
 }
 
-
 void LfoOsc::nextValueInMatrix() {
     float lfoValue;
 
-    ticks_ ++;
+    ticks_++;
 
     if (this->isNotMidiSynchronized_) {
         currentFreq_ = lfo_->freq + this->matrix_->getDestination(destination_);
@@ -142,15 +138,14 @@ void LfoOsc::nextValueInMatrix() {
     phase_ += currentFreq_ * PREENFM_FREQUENCY_INVERSED_LFO;
 
     switch ((int)lfo_->shape) {
-    case LFO_TRIANGLE:
-    {
+    case LFO_TRIANGLE: {
         if (unlikely(phase_ >= 1.0f)) {
             phase_ -= 1;
         }
         if (phase_ < .5f) {
-            lfoValue = phase_ * 4.0f -1.0f ;
+            lfoValue = phase_ * 4.0f - 1.0f;
         } else {
-            lfoValue = 1.0f - (phase_ - .5f ) * 4.0f;
+            lfoValue = 1.0f - (phase_ - .5f) * 4.0f;
         }
         break;
     }
@@ -160,12 +155,11 @@ void LfoOsc::nextValueInMatrix() {
         }
         lfoValue = -1.0f + phase_ * 2.0f;
         break;
-    case LFO_SIN:
-    {
+    case LFO_SIN: {
         if (unlikely(phase_ >= 1.0f)) {
             phase_ -= 1;
         }
-        int sinIndex = (int) (phase_ * waveTables[0].max);
+        int sinIndex = (int)(phase_ * waveTables[0].max);
         sinIndex &= waveTables[0].max;
         lfoValue = sinTable[sinIndex];
         break;
@@ -218,9 +212,8 @@ void LfoOsc::nextValueInMatrix() {
         break;
     }
 
-
     if (unlikely(currentRamp_ < ramp_)) {
-        lfoValue = lfoValue * currentRamp_  * rampInv_ ;
+        lfoValue = lfoValue * currentRamp_ * rampInv_;
         currentRamp_ += PREENFM_FREQUENCY_INVERSED_LFO;
     }
 
@@ -228,7 +221,6 @@ void LfoOsc::nextValueInMatrix() {
 
     matrix_->setSource((enum SourceEnum)source_, lfoValue);
 }
-
 
 void LfoOsc::noteOn() {
     if (ramp_ >= 0.0f) {
@@ -249,4 +241,3 @@ void LfoOsc::noteOn() {
         currentRamp_ = 1; // greater than 0 :
     }
 }
-

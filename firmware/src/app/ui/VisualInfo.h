@@ -20,11 +20,10 @@
 
 class VisualInfo {
 public:
-	virtual ~VisualInfo() {}
+    virtual ~VisualInfo() {
+    }
     virtual void midiClock(bool show) = 0;
     virtual void noteOn(int timbre, bool show) = 0;
 };
-
-
 
 #endif /* VISUALINFO_H_ */

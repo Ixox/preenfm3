@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /*
 
  #include "LiquidCrystal.h"
@@ -27,13 +26,13 @@ extern float userWaveform[6][1024];
 extern char lineBuffer[512];
 #define LINE_BUFFER_SIZE 512
 
-extern char *oscShapeNames[];
+extern char* oscShapeNames[];
 extern struct WaveTable waveTables[];
 
 #include "UserWaveform.h"
 
 UserWaveform::UserWaveform() {
-    for (int k=0; k<6; k++) {
+    for (int k = 0; k < 6; k++) {
         userWaveFormNames_[k][4] = 0;
     }
 }
@@ -45,10 +44,8 @@ const char* UserWaveform::getFolderName() {
     return USERWAVEFORM_DIR;
 }
 
-
 void UserWaveform::loadUserWaveforms() {
     char fileName[30];
-
 
     for (int f = 0; f < 6; f++) {
         // Check if bin exists
@@ -105,19 +102,17 @@ void UserWaveform::loadUserWaveformFromTxt(int f, const char* fileName, int size
     int readIndex = 0;
     floatRead_ = 0;
 
-
     while (floatRead_ != numberOfSample_) {
         int toRead = (size - readIndex > LINE_BUFFER_SIZE) ? LINE_BUFFER_SIZE : size - readIndex;
-        load(fileName, readIndex,  (void*)&lineBuffer, toRead);
+        load(fileName, readIndex, (void*)&lineBuffer, toRead);
 
-        int used = fillUserWaveFormFromTxt(f, lineBuffer, toRead, (readIndex+toRead) >= size);
+        int used = fillUserWaveFormFromTxt(f, lineBuffer, toRead, (readIndex + toRead) >= size);
         if (used < 0) {
             return;
         }
         readIndex += used;
     }
 }
-
 
 int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool last) {
     int index = 0;
@@ -132,11 +127,11 @@ int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool 
                 index++;
             }
             int b = 0;
-            while (b<4 && !fsu_->isSeparator(buffer[index])) {
+            while (b < 4 && !fsu_->isSeparator(buffer[index])) {
                 userWaveFormNames_[f][b++] = buffer[index++];
             }
             // complete with space
-            while (b<4) {
+            while (b < 4) {
                 userWaveFormNames_[f][b++] = ' ';
             }
         }
@@ -150,7 +145,7 @@ int UserWaveform::fillUserWaveFormFromTxt(int f, char* buffer, int filled, bool 
             if (numberOfSample_ < 32 || numberOfSample_ > 1024) {
                 return numberOfSampleError(f);
             }
-            waveTables[f + 8].max = (numberOfSample_  -1);
+            waveTables[f + 8].max = (numberOfSample_ - 1);
             index += floatSize;
         }
 
@@ -170,13 +165,12 @@ int UserWaveform::numberOfSampleError(int f) {
     return -1;
 }
 
-
 void UserWaveform::loadUserWaveformFromBin(int f, const char* fileName) {
     load(fileName, 0, userWaveFormNames_[f], 4);
     oscShapeNames[8 + f] = userWaveFormNames_[f];
 
     load(fileName, 4, &numberOfSample_, 4);
-    waveTables[f + 8].max = (numberOfSample_  -1);
+    waveTables[f + 8].max = (numberOfSample_ - 1);
     waveTables[f + 8].precomputedValue = (waveTables[f + 8].max + 1) * waveTables[f + 8].useFreq * PREENFM_FREQUENCY_INVERSED;
 
     int sampleSize = numberOfSample_ * 4;
@@ -190,7 +184,6 @@ void UserWaveform::loadUserWaveformFromBin(int f, const char* fileName) {
             loadIndex += 512;
         }
     }
-
 }
 
 void UserWaveform::saveUserWaveformToBin(int f, const char* fileName) {
@@ -203,7 +196,7 @@ void UserWaveform::saveUserWaveformToBin(int f, const char* fileName) {
         int saveIndex = 0;
         char* readBuffer = (char*)userWaveform[f];
         while (saveIndex < sampleSize) {
-            save(fileName, 8 + saveIndex, readBuffer + saveIndex , 512);
+            save(fileName, 8 + saveIndex, readBuffer + saveIndex, 512);
             saveIndex += 512;
         }
     }
@@ -213,7 +206,7 @@ void UserWaveform::normalize(float* buffer, int numberOfSamples) {
     float min = 0;
     float max = 0;
     float average = 0;
-    for (int i=0; i < numberOfSamples; i++) {
+    for (int i = 0; i < numberOfSamples; i++) {
         average += buffer[i];
         if (buffer[i] < min) {
             min = buffer[i];
@@ -225,23 +218,22 @@ void UserWaveform::normalize(float* buffer, int numberOfSamples) {
     average /= numberOfSamples;
     min -= average;
     max -= average;
-    float m1 = min != 0 ? - 1 / min : 1;
+    float m1 = min != 0 ? -1 / min : 1;
     float m2 = max != 0 ? 1 / max : 1;
     float m = m1 > m2 ? m2 : m1;
 
-    for (int i=0; i < numberOfSamples; i++) {
+    for (int i = 0; i < numberOfSamples; i++) {
         buffer[i] -= average;
         buffer[i] *= m;
     }
 }
 
 void UserWaveform::interpolate(float* buffer, int sourceNumberOfSamples, int targetNumberOfSamples) {
-    for (int i = targetNumberOfSamples-1; i>=0; i--) {
-        float pos = (float)i * (float)sourceNumberOfSamples /  (float)targetNumberOfSamples;
+    for (int i = targetNumberOfSamples - 1; i >= 0; i--) {
+        float pos = (float)i * (float)sourceNumberOfSamples / (float)targetNumberOfSamples;
         int iPos = pos;
         float decimal = pos - iPos;
-        buffer[i] = buffer[iPos] * (1-decimal) + buffer[iPos+1] * decimal;
+        buffer[i] = buffer[iPos] * (1 - decimal) + buffer[iPos + 1] * decimal;
     }
     numberOfSample_ = targetNumberOfSamples;
 }
-

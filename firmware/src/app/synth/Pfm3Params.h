@@ -21,12 +21,7 @@ struct Engine1Params {
     float glideSpeed;
 };
 
-
-enum {
-    GLIDE_TYPE_OFF = 0,
-    GLIDE_TYPE_OVERLAP,
-    GLIDE_TYPE_ALWAYS
-};
+enum { GLIDE_TYPE_OFF = 0, GLIDE_TYPE_OVERLAP, GLIDE_TYPE_ALWAYS };
 
 struct Engine2Params {
     float glideType;
@@ -54,11 +49,18 @@ struct EngineArp2 {
 
 /* low 16 bits = pattern mask, high reserved for now */
 typedef uint32_t arp_pattern_t;
-#define ARP_PATTERN_GETMASK(x) (uint16_t)( (x) & 0xffff)
-#define ARP_PATTERN_SETMASK(p,m) do { (p) = ((p) & ~0xffff) | ((m) & 0xffff); } while (0)
-#define ARP_PATTERN(x) ((uint32_t)(x) & 0xffff)
-#define ARP_MASK_GETNIBBLE(m,i) (((m) >> (i*4)) & 0xf)
-#define ARP_MASK_SETNIBBLE(m,i,v) do {  mask &= ~(0xf << (i*4)); mask |= (v << (i*4)); } while(0)
+#define ARP_PATTERN_GETMASK(x) (uint16_t)((x) & 0xffff)
+#define ARP_PATTERN_SETMASK(p, m)                                                                                                          \
+    do {                                                                                                                                   \
+        (p) = ((p) & ~0xffff) | ((m) & 0xffff);                                                                                            \
+    } while (0)
+#define ARP_PATTERN(x)           ((uint32_t)(x) & 0xffff)
+#define ARP_MASK_GETNIBBLE(m, i) (((m) >> (i * 4)) & 0xf)
+#define ARP_MASK_SETNIBBLE(m, i, v)                                                                                                        \
+    do {                                                                                                                                   \
+        mask &= ~(0xf << (i * 4));                                                                                                         \
+        mask |= (v << (i * 4));                                                                                                            \
+    } while (0)
 
 struct EngineArpUserPatterns {
     arp_pattern_t patterns[4];
@@ -203,7 +205,6 @@ struct EnvelopeCurveFlashMemory2 {
     uint8_t curveRelease6;
 };
 
-
 struct EnvelopeLfoParams {
     float attack;
     float decay;
@@ -219,7 +220,7 @@ struct Envelope2LfoParams {
 };
 
 struct OscillatorParams {
-    float shape; // OSC_SHAPE_*
+    float shape;         // OSC_SHAPE_*
     float frequencyType; // OSC_FT_*
     float frequencyMul;
     float detune;

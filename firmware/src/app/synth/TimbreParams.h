@@ -96,9 +96,7 @@ struct Pfm3TimbreParams {
 };
 
 static_assert(sizeof(float) == 4, "float must be 32-bit");
-static_assert(offsetof(Pfm3TimbreParams, osc1) / sizeof(float) == Pfm3PresetLayout::sharedBlockStart,
-    "Pfm3TimbreParams layout changed");
-static_assert(offsetof(TimbreSharedParams, effect2) / sizeof(float) == Pfm3PresetLayout::sharedGap,
-    "TimbreSharedParams layout changed");
+static_assert(offsetof(Pfm3TimbreParams, osc1) / sizeof(float) == Pfm3PresetLayout::sharedBlockStart, "Pfm3TimbreParams layout changed");
+static_assert(offsetof(TimbreSharedParams, effect2) / sizeof(float) == Pfm3PresetLayout::sharedGap, "TimbreSharedParams layout changed");
 
 #endif

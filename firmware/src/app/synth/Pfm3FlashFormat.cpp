@@ -24,17 +24,16 @@ static inline void copyFloat(float* source, float* dest, int n) {
  *    engine1.monoPoly has a new value : 2 for unison
  *
  *********************************************************/
-void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *flashMemory, bool saveArp) {
+void pfm3ParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams* flashMemory, bool saveArp) {
     // Engines line
-    copyFloat((float*) &params->engine1, (float*) &flashMemory->engine1, 4);
-    copyFloat((float*) &params->engine2, (float*) &flashMemory->engine2, 4);
+    copyFloat((float*)&params->engine1, (float*)&flashMemory->engine1, 4);
+    copyFloat((float*)&params->engine2, (float*)&flashMemory->engine2, 4);
 
     // VERSION : 1.0
     flashMemory->engine2.pfm3Version = 1.0f;
 
-
     if (saveArp) {
-        copyFloat((float*) &params->engineArp1, (float*) &flashMemory->engineArp1, 4 * 2);
+        copyFloat((float*)&params->engineArp1, (float*)&flashMemory->engineArp1, 4 * 2);
         flashMemory->engineArpUserPatterns = params->engineArpUserPatterns;
     } else {
         flashMemory->engineArp1.clock = 0;
@@ -66,16 +65,15 @@ void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams 
     flashMemory->flashEngineVeloIm2.notUsed1 = 0.0f;
     flashMemory->flashEngineVeloIm2.notUsed1 = 0.0f;
 
-    copyFloat((float*) &params->engineMix1, (float*) &flashMemory->engineMix1, 4 * 3);
-    copyFloat((float*) &params->effect1, (float*) &flashMemory->effect, 4);
-    copyFloat((float*) &params->effect2, (float*) &flashMemory->effect2, 4);
-    copyFloat((float*) &params->osc1, (float*) &flashMemory->osc1, 4 * 6);
-
+    copyFloat((float*)&params->engineMix1, (float*)&flashMemory->engineMix1, 4 * 3);
+    copyFloat((float*)&params->effect1, (float*)&flashMemory->effect, 4);
+    copyFloat((float*)&params->effect2, (float*)&flashMemory->effect2, 4);
+    copyFloat((float*)&params->osc1, (float*)&flashMemory->osc1, 4 * 6);
 
     // Copy env time and levels from new memory mapping (31/12/2022)
     const EnvelopeTimeMemory* envTime = &params->env1Time;
     const EnvelopeLevelMemory* envLevel = &params->env1Level;
-    float* envFlashFloat = (float*) &flashMemory->env1a;
+    float* envFlashFloat = (float*)&flashMemory->env1a;
     for (int e = 0; e < 6; e++) {
         envFlashFloat[e * 8] = envTime[e].attackTime;
         envFlashFloat[e * 8 + 2] = envTime[e].decayTime;
@@ -88,10 +86,9 @@ void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams 
         envFlashFloat[e * 8 + 7] = envLevel[e].releaseLevel;
     }
 
-
     // copy envCurve to int8_t flash memory
     const EnvelopeCurveParams* envCurveParam = &params->env1Curve;
-    uint8_t* envFlashUint8 = (uint8_t*) &flashMemory->envCurves1To4;
+    uint8_t* envFlashUint8 = (uint8_t*)&flashMemory->envCurves1To4;
     for (int e = 0; e < 6; e++) {
         envFlashUint8[e * 4 + 0] = (uint8_t)envCurveParam[e].attackCurve;
         envFlashUint8[e * 4 + 1] = (uint8_t)envCurveParam[e].decayCurve;
@@ -99,16 +96,15 @@ void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams 
         envFlashUint8[e * 4 + 3] = (uint8_t)envCurveParam[e].releaseCurve;
     }
 
-    copyFloat((float*) &params->matrixRowState1, (float*) &flashMemory->matrixRowState1, 4 * 12);
-    copyFloat((float*) &params->lfoOsc1, (float*) &flashMemory->lfoOsc1, 4 * 3);
-    copyFloat((float*) &params->lfoEnv1, (float*) &flashMemory->lfoEnv1, 4);
-    copyFloat((float*) &params->lfoEnv2, (float*) &flashMemory->lfoEnv2, 4);
-    copyFloat((float*) &params->lfoSeq1, (float*) &flashMemory->lfoSeq1, 4 * 2);
+    copyFloat((float*)&params->matrixRowState1, (float*)&flashMemory->matrixRowState1, 4 * 12);
+    copyFloat((float*)&params->lfoOsc1, (float*)&flashMemory->lfoOsc1, 4 * 3);
+    copyFloat((float*)&params->lfoEnv1, (float*)&flashMemory->lfoEnv1, 4);
+    copyFloat((float*)&params->lfoEnv2, (float*)&flashMemory->lfoEnv2, 4);
+    copyFloat((float*)&params->lfoSeq1, (float*)&flashMemory->lfoSeq1, 4 * 2);
 
-    copyFloat((float*) &params->midiNote1Curve, (float*) &flashMemory->midiNote1Curve, 4);
-    copyFloat((float*) &params->midiNote2Curve, (float*) &flashMemory->midiNote2Curve, 4);
-    copyFloat((float*) &params->lfoPhases, (float*) &flashMemory->lfoPhases, 4);
-
+    copyFloat((float*)&params->midiNote1Curve, (float*)&flashMemory->midiNote1Curve, 4);
+    copyFloat((float*)&params->midiNote2Curve, (float*)&flashMemory->midiNote2Curve, 4);
+    copyFloat((float*)&params->lfoPhases, (float*)&flashMemory->lfoPhases, 4);
 
     for (int s = 0; s < 16; s++) {
         flashMemory->lfoSteps1.steps[s] = params->lfoSteps1.steps[s];
@@ -119,21 +115,21 @@ void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams 
     }
 }
 
-inline int iszero(void *ptr, int bytes) {
-    char *bptr = (char*) ptr;
+inline int iszero(void* ptr, int bytes) {
+    char* bptr = (char*)ptr;
     while (bytes--)
         if (*bptr++)
             return 0;
     return 1;
 }
 
-void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Preset *params, bool loadArp) {
+void pfm3FlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Preset* params, bool loadArp) {
     // First engine line
-    copyFloat((float*) &flashMemory->engine1, (float*) &params->engine1, 4);
-    copyFloat((float*) &flashMemory->engine2, (float*) &params->engine2, 4);
+    copyFloat((float*)&flashMemory->engine1, (float*)&params->engine1, 4);
+    copyFloat((float*)&flashMemory->engine2, (float*)&params->engine2, 4);
 
     if (loadArp) {
-        copyFloat((float*) &flashMemory->engineArp1, (float*) &params->engineArp1, 4 * 2);
+        copyFloat((float*)&flashMemory->engineArp1, (float*)&params->engineArp1, 4 * 2);
         params->engineArpUserPatterns = flashMemory->engineArpUserPatterns;
     }
 
@@ -150,23 +146,23 @@ void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Pr
     params->engineIm3.modulationIndexVelo5 = flashMemory->flashEngineVeloIm2.modulationIndexVelo5;
     params->engineIm3.modulationIndexVelo6 = flashMemory->flashEngineVeloIm2.modulationIndexVelo6;
 
-    copyFloat((float*) &flashMemory->engineMix1, (float*) &params->engineMix1, 4 * 3);
-    copyFloat((float*) &flashMemory->effect, (float*) &params->effect1, 4);
-    copyFloat((float*) &flashMemory->effect2, (float*) &params->effect2, 4);
-    copyFloat((float*) &flashMemory->osc1, (float*) &params->osc1, 4 * 6);
+    copyFloat((float*)&flashMemory->engineMix1, (float*)&params->engineMix1, 4 * 3);
+    copyFloat((float*)&flashMemory->effect, (float*)&params->effect1, 4);
+    copyFloat((float*)&flashMemory->effect2, (float*)&params->effect2, 4);
+    copyFloat((float*)&flashMemory->osc1, (float*)&params->osc1, 4 * 6);
 
     // Copy env time and levels to new memory mapping (31/12/2022)
     EnvelopeTimeMemory* envTime = &params->env1Time;
     EnvelopeLevelMemory* envLevel = &params->env1Level;
-    float* envFlashFloat = (float*) &flashMemory->env1a;
+    float* envFlashFloat = (float*)&flashMemory->env1a;
     for (int e = 0; e < 6; e++) {
-        envTime[e].attackTime  = envFlashFloat[e * 8];
-        envTime[e].decayTime   = envFlashFloat[e * 8 + 2];
+        envTime[e].attackTime = envFlashFloat[e * 8];
+        envTime[e].decayTime = envFlashFloat[e * 8 + 2];
         envTime[e].sustainTime = envFlashFloat[e * 8 + 4];
         envTime[e].releaseTime = envFlashFloat[e * 8 + 6];
 
-        envLevel[e].attackLevel  = envFlashFloat[e * 8 + 1];
-        envLevel[e].decayLevel   = envFlashFloat[e * 8 + 3];
+        envLevel[e].attackLevel = envFlashFloat[e * 8 + 1];
+        envLevel[e].decayLevel = envFlashFloat[e * 8 + 3];
         envLevel[e].sustainLevel = envFlashFloat[e * 8 + 5];
         envLevel[e].releaseLevel = envFlashFloat[e * 8 + 7];
 
@@ -187,34 +183,34 @@ void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Pr
 
     // copy envCurve from int8_t flash memory
     EnvelopeCurveParams* envCurveParam = &params->env1Curve;
-    uint8_t* envFlashUint8 = (uint8_t*) &flashMemory->envCurves1To4;
+    uint8_t* envFlashUint8 = (uint8_t*)&flashMemory->envCurves1To4;
 
     if (iszero(envFlashUint8, 24)) {
         // Set default env curve if not initialized
         for (int e = 0; e < 6; e++) {
-            envCurveParam[e].attackCurve  = 1.0f;
-            envCurveParam[e].decayCurve   = 0.0f;
+            envCurveParam[e].attackCurve = 1.0f;
+            envCurveParam[e].decayCurve = 0.0f;
             envCurveParam[e].sustainCurve = 1.0f;
             envCurveParam[e].releaseCurve = 0.0f;
         }
     } else {
         for (int e = 0; e < 6; e++) {
-            envCurveParam[e].attackCurve  = (float)envFlashUint8[e * 4 + 0];
-            envCurveParam[e].decayCurve   = (float)envFlashUint8[e * 4 + 1];
+            envCurveParam[e].attackCurve = (float)envFlashUint8[e * 4 + 0];
+            envCurveParam[e].decayCurve = (float)envFlashUint8[e * 4 + 1];
             envCurveParam[e].sustainCurve = (float)envFlashUint8[e * 4 + 2];
             envCurveParam[e].releaseCurve = (float)envFlashUint8[e * 4 + 3];
         }
     }
 
-    copyFloat((float*) &flashMemory->matrixRowState1, (float*) &params->matrixRowState1, 4 * 12);
-    copyFloat((float*) &flashMemory->lfoOsc1, (float*) &params->lfoOsc1, 4 * 3);
-    copyFloat((float*) &flashMemory->lfoEnv1, (float*) &params->lfoEnv1, 4);
-    copyFloat((float*) &flashMemory->lfoEnv2, (float*) &params->lfoEnv2, 4);
-    copyFloat((float*) &flashMemory->lfoSeq1, (float*) &params->lfoSeq1, 4 * 2);
+    copyFloat((float*)&flashMemory->matrixRowState1, (float*)&params->matrixRowState1, 4 * 12);
+    copyFloat((float*)&flashMemory->lfoOsc1, (float*)&params->lfoOsc1, 4 * 3);
+    copyFloat((float*)&flashMemory->lfoEnv1, (float*)&params->lfoEnv1, 4);
+    copyFloat((float*)&flashMemory->lfoEnv2, (float*)&params->lfoEnv2, 4);
+    copyFloat((float*)&flashMemory->lfoSeq1, (float*)&params->lfoSeq1, 4 * 2);
 
-    copyFloat((float*) &flashMemory->lfoPhases, (float*) &params->lfoPhases, 4);
-    copyFloat((float*) &flashMemory->midiNote1Curve, (float*) &params->midiNote1Curve, 4);
-    copyFloat((float*) &flashMemory->midiNote2Curve, (float*) &params->midiNote2Curve, 4);
+    copyFloat((float*)&flashMemory->lfoPhases, (float*)&params->lfoPhases, 4);
+    copyFloat((float*)&flashMemory->midiNote1Curve, (float*)&params->midiNote1Curve, 4);
+    copyFloat((float*)&flashMemory->midiNote2Curve, (float*)&params->midiNote2Curve, 4);
 
     for (int s = 0; s < 16; s++) {
         params->lfoSteps1.steps[s] = flashMemory->lfoSteps1.steps[s];
@@ -241,21 +237,23 @@ void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Pr
     }
 
     // No effect in preset, set default values
-    if (params->effect1.type == 0.0f && params->effect1.param1 == 0.0f && params->effect1.param2 == 0.0f && params->effect1.param3 == 0.0f) {
+    if (params->effect1.type == 0.0f && params->effect1.param1 == 0.0f && params->effect1.param2 == 0.0f &&
+        params->effect1.param3 == 0.0f) {
         params->effect1.param1 = 0.5f;
         params->effect1.param2 = 0.5f;
         params->effect1.param3 = 1.0f;
     }
 
     // No effect2 in preset, set default values
-    if (params->effect2.type == 0.0f && params->effect2.param1 == 0.0f && params->effect2.param2 == 0.0f && params->effect2.param3 == 0.0f) {
+    if (params->effect2.type == 0.0f && params->effect2.param1 == 0.0f && params->effect2.param2 == 0.0f &&
+        params->effect2.param3 == 0.0f) {
         params->effect2.param1 = 0.5f;
         params->effect2.param2 = 0.5f;
         params->effect2.param3 = 1.0f;
     }
 
     // Set default env curve if not initialized
-    if(iszero(&params->env1Curve, 24)) {
+    if (iszero(&params->env1Curve, 24)) {
         params->env1Curve = {1, 0, 1, 0};
         params->env2Curve = {1, 0, 1, 0};
         params->env3Curve = {1, 0, 1, 0};
@@ -264,12 +262,14 @@ void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Pr
         params->env6Curve = {1, 0, 1, 0};
     }
 
-    if (params->midiNote1Curve.breakNote == 0.0f && params->midiNote1Curve.curveAfter == 0.0f && params->midiNote1Curve.curveBefore == 0.0f) {
+    if (params->midiNote1Curve.breakNote == 0.0f && params->midiNote1Curve.curveAfter == 0.0f &&
+        params->midiNote1Curve.curveBefore == 0.0f) {
         // Default compatibility value
         // FLAT 0 +Lin
         params->midiNote1Curve.curveAfter = 1;
     }
-    if (params->midiNote2Curve.breakNote == 0.0f && params->midiNote2Curve.curveAfter == 0.0f && params->midiNote2Curve.curveBefore == 0.0f) {
+    if (params->midiNote2Curve.breakNote == 0.0f && params->midiNote2Curve.curveAfter == 0.0f &&
+        params->midiNote2Curve.curveBefore == 0.0f) {
         // Default compatibility value
         // FLAT 0 +Lin
         params->midiNote2Curve.curveBefore = 4;
@@ -283,8 +283,8 @@ void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Pr
         // map to new parameters
         // Compatible with pfm2 bank
         // in pfm2 bank playMode was the number of voice
-        if (params->engine1.playMode > 2.0f
-            || (params->engine1.playMode == 2.0f && params->engine2.unisonSpread == 0.0f && params->engine2.unisonDetune == 0.0f)) {
+        if (params->engine1.playMode > 2.0f ||
+            (params->engine1.playMode == 2.0f && params->engine2.unisonSpread == 0.0f && params->engine2.unisonDetune == 0.0f)) {
             params->engine1.playMode = PLAY_MODE_POLY;
         }
         // Old preset, we set unisonSpread and unisonDetune different from 0
@@ -300,4 +300,3 @@ void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Pr
         }
     }
 }
-

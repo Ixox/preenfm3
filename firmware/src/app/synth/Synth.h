@@ -28,22 +28,22 @@
 
 #include "SimpleComp.h"
 
-#define UINT_MAX  4294967295
+#define UINT_MAX               4294967295
 #define NUMBER_OF_STORED_NOTES 6
 
 class Sequencer;
 
-class Synth: public SynthParamListener, public SynthStateAware {
+class Synth : public SynthParamListener, public SynthStateAware {
 public:
     Synth(void);
     virtual ~Synth(void);
 
-    void setSynthState(SynthState *synthState) {
+    void setSynthState(SynthState* synthState) {
         SynthStateAware::setSynthState(synthState);
         init(synthState);
     }
 
-    void setSequencer(Sequencer *sequencer) {
+    void setSequencer(Sequencer* sequencer) {
         this->sequencer_ = sequencer;
     }
 
@@ -57,7 +57,7 @@ public:
     void allSoundOff();
     void allSoundOff(int timbre);
     bool isPlaying();
-    uint8_t buildNewSampleBlock(int32_t *buffer1, int32_t *buffer2, int32_t *buffer3);
+    uint8_t buildNewSampleBlock(int32_t* buffer1, int32_t* buffer2, int32_t* buffer3);
 
     // Overide SynthParamListener
     void playNote(int timbreNumber, char note, char velocity) {
@@ -69,7 +69,7 @@ public:
         }
     }
 
-    void newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue) {
+    void newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
         newPfm3ParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
     }
 
@@ -77,7 +77,7 @@ public:
         newMixerValue(mixerValueType, timbre, oldValue, newValue);
     }
 
-    void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
         newEngineParamValue(timbre, paramId, context, oldValue, newValue);
@@ -146,8 +146,8 @@ public:
 
 private:
     // Called by setSynthState
-    void init(SynthState *synthState);
-    void mixAndPan(int32_t *dest, float *source, float &pan, float sampleMultipler);
+    void init(SynthState* synthState);
+    void mixAndPan(int32_t* dest, float* source, float& pan, float sampleMultipler);
     void processPendingTransfers();
 
     Voice voices_[MAX_NUMBER_OF_VOICES];
@@ -163,7 +163,7 @@ private:
     CYCCNT_buffer cycles_all_;
 
     // Sequencer
-    Sequencer *sequencer_;
+    Sequencer* sequencer_;
 
     // remember notes before changing timbre
     char noteBeforeNewParalsLoad_[NUMBER_OF_STORED_NOTES];
@@ -171,10 +171,9 @@ private:
 
     float smoothPan_[NUMBER_OF_TIMBRES];
     float smoothVolume_[NUMBER_OF_TIMBRES];
-    float *fxSample_;
+    float* fxSample_;
 
     chunkware_simple::SimpleComp instrumentCompressor_[NUMBER_OF_TIMBRES];
 };
 
 #endif
-

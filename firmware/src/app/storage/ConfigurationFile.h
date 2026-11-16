@@ -15,27 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef CONFIGURATIONFILE_H_
 #define CONFIGURATIONFILE_H_
 
 #include "PreenFMFileType.h"
 #include "ScalaFile.h"
 
-class ConfigurationFile: public PreenFMFileType {
+class ConfigurationFile : public PreenFMFileType {
 public:
-	ConfigurationFile();
-	virtual ~ConfigurationFile();
+    ConfigurationFile();
+    virtual ~ConfigurationFile();
 
-
-	void loadConfig(uint8_t* midiConfigBytes);
-	void saveConfig(uint8_t* midiConfigBytes);
+    void loadConfig(uint8_t* midiConfigBytes);
+    void saveConfig(uint8_t* midiConfigBytes);
 
 protected:
-	const char* getFolderName();
-	bool isCorrectFile(char *name, int size) { return true; }
+    const char* getFolderName();
+    bool isCorrectFile(char* name, int size) {
+        return true;
+    }
 
-	void fillMidiConfig(uint8_t* midiConfigBytes, char* line);
+    void fillMidiConfig(uint8_t* midiConfigBytes, char* line);
 };
 
 #endif /* CONFIGURATIONFILE_H_ */

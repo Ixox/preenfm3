@@ -27,71 +27,59 @@
  *	DEALINGS IN THE SOFTWARE.
  */
 
-
 #include "SimpleEnvelope.h"
 
-namespace chunkware_simple
-{
-	//-------------------------------------------------------------
-	// envelope detector
-	//-------------------------------------------------------------
-	EnvelopeDetector::EnvelopeDetector( float ms, float sampleRate )
-	{
-		assert( sampleRate > 0.0 );
-		assert( ms > 0.0 );
-		sampleRate_ = sampleRate;
-		ms_ = ms;
-		setCoef();
-	}
+namespace chunkware_simple {
+//-------------------------------------------------------------
+// envelope detector
+//-------------------------------------------------------------
+EnvelopeDetector::EnvelopeDetector(float ms, float sampleRate) {
+    assert(sampleRate > 0.0);
+    assert(ms > 0.0);
+    sampleRate_ = sampleRate;
+    ms_ = ms;
+    setCoef();
+}
 
-	//-------------------------------------------------------------
-	void EnvelopeDetector::setTc( float ms )
-	{
-		assert( ms > 0.0 );
-		ms_ = ms;
-		setCoef();
-	}
+//-------------------------------------------------------------
+void EnvelopeDetector::setTc(float ms) {
+    assert(ms > 0.0);
+    ms_ = ms;
+    setCoef();
+}
 
-	//-------------------------------------------------------------
-	void EnvelopeDetector::setSampleRate( float sampleRate )
-	{
-		assert( sampleRate > 0.0 );
-		sampleRate_ = sampleRate;
-		setCoef();
-	}
+//-------------------------------------------------------------
+void EnvelopeDetector::setSampleRate(float sampleRate) {
+    assert(sampleRate > 0.0);
+    sampleRate_ = sampleRate;
+    setCoef();
+}
 
-	//-------------------------------------------------------------
-	void EnvelopeDetector::setCoef( void )
-	{
-		coef_ = expf( -1000.0 / ( ms_ * sampleRate_ ) );
-	}
+//-------------------------------------------------------------
+void EnvelopeDetector::setCoef(void) {
+    coef_ = expf(-1000.0 / (ms_ * sampleRate_));
+}
 
-	//-------------------------------------------------------------
-	// attack/release envelope
-	//-------------------------------------------------------------
-	AttRelEnvelope::AttRelEnvelope( float att_ms, float rel_ms, float sampleRate )
-		: att_( att_ms, sampleRate )
-		, rel_( rel_ms, sampleRate )
-	{
-	}
+//-------------------------------------------------------------
+// attack/release envelope
+//-------------------------------------------------------------
+AttRelEnvelope::AttRelEnvelope(float att_ms, float rel_ms, float sampleRate) : att_(att_ms, sampleRate), rel_(rel_ms, sampleRate) {
+}
 
-	//-------------------------------------------------------------
-	void AttRelEnvelope::setAttack( float ms )
-	{
-		att_.setTc( ms );
-	}
+//-------------------------------------------------------------
+void AttRelEnvelope::setAttack(float ms) {
+    att_.setTc(ms);
+}
 
-	//-------------------------------------------------------------
-	void AttRelEnvelope::setRelease( float ms )
-	{
-		rel_.setTc( ms );
-	}
+//-------------------------------------------------------------
+void AttRelEnvelope::setRelease(float ms) {
+    rel_.setTc(ms);
+}
 
-	//-------------------------------------------------------------
-	void AttRelEnvelope::setSampleRate( float sampleRate )
-	{
-		att_.setSampleRate( sampleRate );
-		rel_.setSampleRate( sampleRate );
-	}
+//-------------------------------------------------------------
+void AttRelEnvelope::setSampleRate(float sampleRate) {
+    att_.setSampleRate(sampleRate);
+    rel_.setSampleRate(sampleRate);
+}
 
-}	// end namespace chunkware_simple
+} // end namespace chunkware_simple

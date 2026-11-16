@@ -15,15 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#include "version.h"
-#include "stm32h7xx_hal.h"
-#include "fatfs.h"
-#include "TftDisplay.h"
-#include "ili9341.h"
 #include "Encoders.h"
 #include "FirmwareFile.h"
+#include "TftDisplay.h"
+#include "fatfs.h"
+#include "ili9341.h"
+#include "stm32h7xx_hal.h"
 #include "usb_device.h"
+#include "version.h"
 
 Encoders encoders;
 TftDisplay tft;
@@ -31,11 +30,10 @@ TftAlgo dummyAlgo;
 FirmwareFile firmwares;
 
 #define BLOCK_SIZE_UINT32 4096
-#define BLOCK_SIZE_UINT8 (BLOCK_SIZE_UINT32 * 4)
+#define BLOCK_SIZE_UINT8  (BLOCK_SIZE_UINT32 * 4)
 __attribute__((section(".ram_d2"))) uint32_t d2Buffer[BLOCK_SIZE_UINT32];
 
-
-char sdAccessAnimation[4] = {'-', '\\', '|', '/' };
+char sdAccessAnimation[4] = {'-', '\\', '|', '/'};
 uint32_t writeAnimationIndex = 0;
 uint32_t readAnimationIndex = 0;
 
@@ -43,18 +41,13 @@ uint32_t readAnimationIndex = 0;
 extern "C" {
 #endif
 
-#include "flash_if.h"
 #include "bootloader.h"
+#include "flash_if.h"
 #include "preenfm3lib.h"
 
-typedef  void (*pFunction)(void);
+typedef void (*pFunction)(void);
 
-enum {
-    STATE_INIT,
-    STATE_MAIN_LOOP,
-    STATE_FLASH,
-    STATE_REBOOT
-};
+enum { STATE_INIT, STATE_MAIN_LOOP, STATE_FLASH, STATE_REBOOT };
 
 bool readyForTFT = false;
 uint32_t pfm3Millis = 1;
@@ -71,11 +64,10 @@ int32_t readDisplayCounterAnim = 0;
 extern int32_t writeDisplayCounter;
 int32_t writeDisplayCounterAnim = 0;
 
-
 class BootloaderEncoderListener : public EncodersListener {
     void buttonPressed(int button);
     void encoderTurned(int encoder, int ticks) {};
-    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {} ;
+    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {};
     void buttonLongPressed(int button) {};
     void twoButtonsPressed(int button1, int button2) {};
 };
@@ -84,21 +76,17 @@ void BootloaderEncoderListener::buttonPressed(int b) {
 }
 BootloaderEncoderListener bootloaderEncoderListener;
 
-
-
-void flashFirmware(const FirmwarePFM3File *pfm2File);
+void flashFirmware(const FirmwarePFM3File* pfm2File);
 void formatFlash(int firmwareSize);
 void jumpToBootloader();
 void reboot();
 void SDCardAccess();
 
-
 void resetButtonPressed() {
     button = -1;
 }
 
-void waitForButtonRelease()
-{
+void waitForButtonRelease() {
     while (button) {
         resetButtonPressed();
         encoders.checkSimpleStatus();
@@ -129,7 +117,6 @@ void bootloaderInit() {
     tft.print(PFM3_BOOTLOADER_VERSION);
     tft.setCharBackgroundColor(COLOR_BLACK);
 
-
     // Let's start main loop
     readyForTFT = true;
 
@@ -137,7 +124,6 @@ void bootloaderInit() {
 
     preenfm3ForceTftBacklight();
 }
-
 
 void displayFile(int fileNumber) {
 
@@ -167,7 +153,7 @@ void displayFile(int fileNumber) {
 void bootloaderLoop() {
     switch (state) {
     case STATE_INIT:
-        tft.fillArea(0, 24, 240, 320-24, COLOR_BLACK);
+        tft.fillArea(0, 24, 240, 320 - 24, COLOR_BLACK);
 
         tft.setCharColor(COLOR_YELLOW);
         tft.setCursorSmallChar(11, 5);
@@ -187,9 +173,6 @@ void bootloaderLoop() {
         tft.setCursorSmallChar(8, 8);
         tft.printSmallChars("Firmware to flash");
         HAL_Delay(25);
-
-
-
 
         tft.setCursorSmallChar(8, 14);
         tft.setCharColor(COLOR_YELLOW);
@@ -212,7 +195,6 @@ void bootloaderLoop() {
         tft.printSmallChars("REBOOT");
         HAL_Delay(25);
 
-
         displayFile(fileSelect);
         HAL_Delay(25);
         state = STATE_MAIN_LOOP;
@@ -226,7 +208,7 @@ void bootloaderLoop() {
             case 8:
                 if (sdError == 0 && firmwares.getNumberOfFiles() >= 2) {
                     if (fileSelect < (firmwares.getNumberOfFiles() - 1)) {
-                        fileSelect ++;
+                        fileSelect++;
                     } else {
                         fileSelect = 0;
                     }
@@ -236,7 +218,7 @@ void bootloaderLoop() {
             case 7:
                 if (sdError == 0 && firmwares.getNumberOfFiles() >= 2) {
                     if (fileSelect > 0) {
-                        fileSelect --;
+                        fileSelect--;
                     } else {
                         fileSelect = firmwares.getNumberOfFiles() - 1;
                     }
@@ -275,8 +257,6 @@ void bootloaderLoop() {
     }
 }
 
-
-
 void bootloaderTftTic() {
     cptMainLoop++;
 
@@ -296,22 +276,20 @@ void bootloaderTftTic() {
     tft.tic(false);
 }
 
-
 void dependencyInjection() {
     encoders.insertListener(&bootloaderEncoderListener);
 }
 
 void bootJumpToApplication(uint32_t applicationAddress) {
-    uint32_t jumpAddress = *(__IO uint32_t*) (applicationAddress + 4);
-    pFunction jumpToApplication = (pFunction) jumpAddress;
+    uint32_t jumpAddress = *(__IO uint32_t*)(applicationAddress + 4);
+    pFunction jumpToApplication = (pFunction)jumpAddress;
 
     /* Initialize user application's Stack Pointer */
-    __set_MSP(*(__IO uint32_t*) applicationAddress);
+    __set_MSP(*(__IO uint32_t*)applicationAddress);
     jumpToApplication();
 }
 
-
-void flashFirmware(const FirmwarePFM3File *pfm2File) {
+void flashFirmware(const FirmwarePFM3File* pfm2File) {
     FIL firmwareFile;
     FRESULT fatFSResult = f_open(&firmwareFile, firmwares.getFullName(pfm2File->name), FA_READ);
     tft.setCharBackgroundColor(COLOR_BLACK);
@@ -363,17 +341,14 @@ void flashFirmware(const FirmwarePFM3File *pfm2File) {
         tft.setCharColor(COLOR_RED);
         tft.setCursor(6, 12);
         tft.print("#Error#");
-        while (1);
+        while (1)
+            ;
     }
-
-
-
 }
 
 void formatFlash(int firmwareSize) {
     FLASH_EraseInitTypeDef pEraseInit;
     uint32_t SectorError;
-
 
     tft.setCharBackgroundColor(COLOR_BLACK);
     tft.setCharColor(COLOR_YELLOW);
@@ -381,10 +356,9 @@ void formatFlash(int firmwareSize) {
     tft.print("Formatting");
     HAL_Delay(20);
 
-
     // Use firmware size, no need to format more
     int number = firmwareSize / 131072 + 1;
-    for (int k=0; k < number; k++) {
+    for (int k = 0; k < number; k++) {
         tft.setCharColor(COLOR_LIGHT_GRAY);
         tft.setCursor(9, 11);
         tft.print((k + 1));
@@ -401,13 +375,13 @@ void formatFlash(int firmwareSize) {
         pEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
         pEraseInit.Banks = FLASH_BANK_1;
 
-        if (HAL_FLASHEx_Erase(&pEraseInit, &SectorError) != HAL_OK)
-        {
+        if (HAL_FLASHEx_Erase(&pEraseInit, &SectorError) != HAL_OK) {
             tft.setCharColor(COLOR_RED);
             tft.setCursor(6, 12);
             tft.print("#Error#");
             tft.print((int)SectorError);
-            while (1);
+            while (1)
+                ;
         }
 
         HAL_FLASH_Lock();
@@ -418,14 +392,13 @@ void formatFlash(int firmwareSize) {
 }
 
 // https://community.st.com/s/article/STM32H7-bootloader-jump-from-application
-void jumpToBootloader(void)
-{
+void jumpToBootloader(void) {
     tft.setCharColor(COLOR_YELLOW);
     tft.setCursor(4, 12);
     tft.print("- DFU MODE -");
     HAL_Delay(1000);
 
-    uint32_t i=0;
+    uint32_t i = 0;
     void (*SysMemBootJump)(void);
 
     /* Set the address of the entry point to bootloader */
@@ -441,26 +414,26 @@ void jumpToBootloader(void)
     HAL_RCC_DeInit();
 
     /* Clear Interrupt Enable Register & Interrupt Pending Register */
-    for (i=0;i<5;i++)
-    {
-        NVIC->ICER[i]=0xFFFFFFFF;
-        NVIC->ICPR[i]=0xFFFFFFFF;
+    for (i = 0; i < 5; i++) {
+        NVIC->ICER[i] = 0xFFFFFFFF;
+        NVIC->ICPR[i] = 0xFFFFFFFF;
     }
 
     /* Re-enable all interrupts */
     __enable_irq();
 
     /* Set up the jump to booloader address + 4 */
-    SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
+    SysMemBootJump = (void (*)(void))(*((uint32_t*)((BootAddr + 4))));
 
     /* Set the main stack pointer to the bootloader stack */
-    __set_MSP(*(uint32_t *)BootAddr);
+    __set_MSP(*(uint32_t*)BootAddr);
 
     /* Call the function to jump to bootloader location */
     SysMemBootJump();
 
     /* Jump is done successfully */
-    while (1);
+    while (1)
+        ;
 }
 
 void reboot() {
@@ -468,13 +441,14 @@ void reboot() {
     tft.setCursor(5, 12);
     tft.print("- REBOOT -");
     HAL_Delay(2500);
-    __set_MSP(*(__IO uint32_t*) 0x08000000);
+    __set_MSP(*(__IO uint32_t*)0x08000000);
     NVIC_SystemReset();
-    while (1);
+    while (1)
+        ;
 }
 
 void SDCardAccess() {
-    tft.fillArea(0, 24, 240, 320-24, COLOR_BLACK);
+    tft.fillArea(0, 24, 240, 320 - 24, COLOR_BLACK);
 
     tft.setCharColor(COLOR_WHITE);
     tft.setCursor(4, 3);
@@ -497,7 +471,6 @@ void SDCardAccess() {
     // Exit when MENU button is pressed
     while (getButtonPressed() != 6) {
 
-
         HAL_Delay(2);
 
         // Animation while displaying R and W
@@ -506,7 +479,7 @@ void SDCardAccess() {
                 tft.setCharColor(COLOR_GREEN);
                 tft.setCursor(9, 5);
                 tft.print("R");
-                readAnimationIndex  = (readAnimationIndex + 1) % 4;
+                readAnimationIndex = (readAnimationIndex + 1) % 4;
                 tft.print((char)sdAccessAnimation[readAnimationIndex]);
             }
             readDisplayCounterAnim++;
@@ -524,7 +497,7 @@ void SDCardAccess() {
                 tft.setCharColor(COLOR_RED);
                 tft.setCursor(11, 5);
                 tft.print("W");
-                writeAnimationIndex  = (writeAnimationIndex + 1) % 4;
+                writeAnimationIndex = (writeAnimationIndex + 1) % 4;
                 tft.print((char)sdAccessAnimation[writeAnimationIndex]);
             }
             writeDisplayCounterAnim++;
@@ -549,20 +522,18 @@ void SDCardAccess() {
     state = STATE_INIT;
 }
 
-
 /**
-  * @brief Tx Transfer completed callback.
-  * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
-  *               the configuration information for SPI module.
-  * @retval None
-  */
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+ * @brief Tx Transfer completed callback.
+ * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
+ *               the configuration information for SPI module.
+ * @retval None
+ */
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef* hspi) {
     // Unselect TFT as soon as the transfer is finished to avoid noise on data line
     if (hspi == &hspi1) {
         tft.pushToTftFinished();
     }
 }
-
 
 #ifdef __cplusplus
 }

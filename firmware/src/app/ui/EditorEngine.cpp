@@ -26,7 +26,7 @@ const struct EditorEditMenu* EditorEngine::currentEditMenu() const {
 }
 
 const struct EditorOneButton* EditorEngine::currentPage() const {
-    const struct EditorEditMenu *editMenu = currentEditMenu();
+    const struct EditorEditMenu* editMenu = currentEditMenu();
     if (editMenu == nullptr) {
         return nullptr;
     }
@@ -38,9 +38,9 @@ const struct EditorOneButton* EditorEngine::currentPage() const {
 }
 
 struct RowEncoder EditorEngine::rowEncoderFor(int encoder) const {
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
-        struct RowEncoder none = { ROW_NONE, ENCODER_NONE };
+        struct RowEncoder none = {ROW_NONE, ENCODER_NONE};
         return none;
     }
     return page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder];

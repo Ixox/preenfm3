@@ -24,9 +24,9 @@ public:
 
     void init();
 
-    int findFree(Voice **voices);
-    int findOldestReleased(Voice **voices) const;
-    int findOldestPlaying(Voice **voices, int excludeTimbre) const;
+    int findFree(Voice** voices);
+    int findOldestReleased(Voice** voices) const;
+    int findOldestPlaying(Voice** voices, int excludeTimbre) const;
 
     void claim(int voiceIndex, int timbre);
     void release(int voiceIndex);

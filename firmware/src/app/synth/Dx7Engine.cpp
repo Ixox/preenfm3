@@ -34,7 +34,7 @@
 
 FmCore dx7Core;
 
-static TuningState *dx7Tuning;
+static TuningState* dx7Tuning;
 
 struct Dx7TimbreState {
     Controllers controllers;
@@ -56,36 +56,28 @@ struct Dx7VoiceState {
     Dx7VoiceState();
 };
 
-alignas(Dx7VoiceState) static uint8_t dx7VoiceStorage[MAX_NUMBER_OF_VOICES][sizeof(Dx7VoiceState)]
-    __attribute__((section(".ram_d1")));
-alignas(Dx7TimbreState) static uint8_t dx7TimbreStorage[NUMBER_OF_TIMBRES][sizeof(Dx7TimbreState)]
-    __attribute__((section(".ram_d1")));
+alignas(Dx7VoiceState) static uint8_t dx7VoiceStorage[MAX_NUMBER_OF_VOICES][sizeof(Dx7VoiceState)] __attribute__((section(".ram_d1")));
+alignas(Dx7TimbreState) static uint8_t dx7TimbreStorage[NUMBER_OF_TIMBRES][sizeof(Dx7TimbreState)] __attribute__((section(".ram_d1")));
 
-Dx7VoiceState *dx7VoiceStates = reinterpret_cast<Dx7VoiceState *>(dx7VoiceStorage);
-Dx7TimbreState *dx7TimbreStates = reinterpret_cast<Dx7TimbreState *>(dx7TimbreStorage);
+Dx7VoiceState* dx7VoiceStates = reinterpret_cast<Dx7VoiceState*>(dx7VoiceStorage);
+Dx7TimbreState* dx7TimbreStates = reinterpret_cast<Dx7TimbreState*>(dx7TimbreStorage);
 
-Dx7VoiceState *getDx7VoiceState(int index) {
+Dx7VoiceState* getDx7VoiceState(int index) {
     return dx7VoiceStates + index;
 }
 
-Dx7TimbreState *getDx7TimbreState(int index) {
+Dx7TimbreState* getDx7TimbreState(int index) {
     return dx7TimbreStates + index;
 }
 
-Dx7VoiceState::Dx7VoiceState()
-    : noteObj(dx7Tuning, nullptr),
-      bufferPos(N),
-      active(false),
-      released(false),
-      note(0),
-      velocity(0) {
+Dx7VoiceState::Dx7VoiceState() : noteObj(dx7Tuning, nullptr), bufferPos(N), active(false), released(false), note(0), velocity(0) {
     for (int i = 0; i < N; i++) {
         buffer[i] = 0;
     }
 }
 
-void dx7TimbreInit(Dx7TimbreState *state) {
-    Controllers &controllers = state->controllers;
+void dx7TimbreInit(Dx7TimbreState* state) {
+    Controllers& controllers = state->controllers;
 
     controllers.pitch_cc = 0x2000;
     controllers.pitch_range_up = 3;
@@ -112,11 +104,11 @@ void dx7TimbreInit(Dx7TimbreState *state) {
     state->blockPhase = 0;
 }
 
-void dx7TimbreKeyDown(Dx7TimbreState *state) {
+void dx7TimbreKeyDown(Dx7TimbreState* state) {
     state->lfo.keydown();
 }
 
-void dx7TimbreNextBlock(Dx7TimbreState *state) {
+void dx7TimbreNextBlock(Dx7TimbreState* state) {
     if (state->blockPhase == 0) {
         state->lfoValue = state->lfo.getsample();
         state->lfoDelay = state->lfo.getdelay();
@@ -124,35 +116,34 @@ void dx7TimbreNextBlock(Dx7TimbreState *state) {
     state->blockPhase ^= 1;
 }
 
-void dx7TimbreLoadProgram(Dx7TimbreState *state, const uint8_t *program) {
+void dx7TimbreLoadProgram(Dx7TimbreState* state, const uint8_t* program) {
     state->lfo.reset(program + 137);
 }
 
-void dx7TimbreSetController(Dx7TimbreState *state, enum SourceEnum source, float value) {
-    Controllers &controllers = state->controllers;
+void dx7TimbreSetController(Dx7TimbreState* state, enum SourceEnum source, float value) {
+    Controllers& controllers = state->controllers;
 
     switch (source) {
-        case MATRIX_SOURCE_PITCHBEND:
-            controllers.pitch_cc = 8192 + (int) (value * 8192.0f);
-            break;
-        case MATRIX_SOURCE_MODWHEEL:
-            controllers.modwheel_cc = (int) (value * 127.0f);
-            break;
-        case MATRIX_SOURCE_AFTERTOUCH:
-            controllers.aftertouch_cc = (int) (value * 127.0f);
-            break;
-        case MATRIX_SOURCE_BREATH:
-            controllers.breath_cc = (int) (value * 127.0f);
-            break;
-        default:
-            return;
+    case MATRIX_SOURCE_PITCHBEND:
+        controllers.pitch_cc = 8192 + (int)(value * 8192.0f);
+        break;
+    case MATRIX_SOURCE_MODWHEEL:
+        controllers.modwheel_cc = (int)(value * 127.0f);
+        break;
+    case MATRIX_SOURCE_AFTERTOUCH:
+        controllers.aftertouch_cc = (int)(value * 127.0f);
+        break;
+    case MATRIX_SOURCE_BREATH:
+        controllers.breath_cc = (int)(value * 127.0f);
+        break;
+    default:
+        return;
     }
     controllers.refresh();
 }
 
-void dx7VoiceStart(Dx7VoiceState *state, const uint8_t *program, uint8_t note,
-                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts,
-                    bool voiceStolen) {
+void dx7VoiceStart(Dx7VoiceState* state, const uint8_t* program, uint8_t note, uint8_t velocity, uint8_t channel, Dx7TimbreState* ts,
+                   bool voiceStolen) {
     state->noteObj.tuning_state_ = dx7Tuning;
     state->noteObj.init(program, note, velocity, channel, &ts->controllers);
 
@@ -170,10 +161,9 @@ void dx7VoiceStart(Dx7VoiceState *state, const uint8_t *program, uint8_t note,
     state->released = false;
     state->note = note;
     state->velocity = velocity;
-
 }
 
-void dx7VoiceKeyUp(Dx7VoiceState *state) {
+void dx7VoiceKeyUp(Dx7VoiceState* state) {
     if (state == nullptr || !state->active) {
         return;
     }
@@ -181,11 +171,11 @@ void dx7VoiceKeyUp(Dx7VoiceState *state) {
     state->released = true;
 }
 
-bool isDx7VoiceActive(Dx7VoiceState *state) {
+bool isDx7VoiceActive(Dx7VoiceState* state) {
     return state != nullptr && state->active;
 }
 
-bool dx7VoiceRender(Dx7VoiceState *state, Dx7TimbreState *ts, float *out) {
+bool dx7VoiceRender(Dx7VoiceState* state, Dx7TimbreState* ts, float* out) {
     if (state == nullptr || !state->active) {
         return false;
     }
@@ -202,12 +192,11 @@ bool dx7VoiceRender(Dx7VoiceState *state, Dx7TimbreState *ts, float *out) {
     for (int i = 0; i < BLOCK_SIZE; i++) {
         int32_t val = state->buffer[state->bufferPos + i] >> 4;
         int32_t clip = val < -(1 << 24) ? -32768 : (val >= (1 << 24) ? 32767 : (val >> 9));
-        float f = (float) clip * (DX7_OUTPUT_GAIN / 32768.0f);
+        float f = (float)clip * (DX7_OUTPUT_GAIN / 32768.0f);
         *out++ = f;
         *out++ = f;
     }
     state->bufferPos += BLOCK_SIZE;
-
 
     if (!state->noteObj.isPlaying() || (state->released && state->noteObj.isFinished())) {
         state->active = false;
@@ -216,7 +205,7 @@ bool dx7VoiceRender(Dx7VoiceState *state, Dx7TimbreState *ts, float *out) {
     return true;
 }
 
-void dx7VoiceUpdateProgram(Dx7VoiceState *state, const uint8_t *program) {
+void dx7VoiceUpdateProgram(Dx7VoiceState* state, const uint8_t* program) {
     if (state == nullptr || !state->active) {
         return;
     }
@@ -226,7 +215,7 @@ void dx7VoiceUpdateProgram(Dx7VoiceState *state, const uint8_t *program) {
 // preenFM3: fast live-parameter update. Dx7Note::update() is still used for
 // note-on and full preset/engine/DX7 loads; this path avoids reloading all
 // six operators when only one DX7 parameter changes.
-void dx7VoiceUpdateParam(Dx7VoiceState *state, int paramId, int op) {
+void dx7VoiceUpdateParam(Dx7VoiceState* state, int paramId, int op) {
     if (state == nullptr || !state->active) {
         return;
     }
@@ -239,7 +228,7 @@ void dx7VoiceUpdateParam(Dx7VoiceState *state, int paramId, int op) {
     }
 }
 
-void dx7VoiceReset(Dx7VoiceState *state) {
+void dx7VoiceReset(Dx7VoiceState* state) {
     if (state == nullptr) {
         return;
     }
@@ -253,8 +242,8 @@ void dx7VoiceReset(Dx7VoiceState *state) {
     }
 }
 
-void getDx7EnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, Dx7EnvelopeDisplay *env) {
-    const uint8_t *op = program + (5 - operatorNumber) * 21;
+void getDx7EnvelopeDisplay(const uint8_t* program, uint8_t operatorNumber, Dx7EnvelopeDisplay* env) {
+    const uint8_t* op = program + (5 - operatorNumber) * 21;
 
     // A DX7 rate is the time needed to sweep the full level range. Using that
     // fixed range for every stage keeps the segment widths independent of the

@@ -16,9 +16,8 @@
  */
 
 #include "PatchBank.h"
-#include "Timbre.h"
-#include <string.h>
 #include "Pfm3Preset.h"
+#include "Timbre.h"
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
 
@@ -35,7 +34,7 @@ const char* PatchBank::getFolderName() {
     return PREENFM_DIR;
 }
 
-bool PatchBank::isCorrectFile(char *name, int size) {
+bool PatchBank::isCorrectFile(char* name, int size) {
     if (size < 100000) {
         return false;
     }
@@ -57,15 +56,15 @@ bool PatchBank::isCorrectFile(char *name, int size) {
     return true;
 }
 
-void PatchBank::createPatchBank(const char *name) {
+void PatchBank::createPatchBank(const char* name) {
     UINT byteWritten;
 
     if (!isInitialized_) {
         initFiles();
     }
 
-    const struct PFM3File *newBank = addEmptyFile(name);
-    const char *fullBankName = getFullName(name);
+    const struct PFM3File* newBank = addEmptyFile(name);
+    const char* fullBankName = getFullName(name);
     if (newBank == 0) {
         return;
     }
@@ -78,8 +77,8 @@ void PatchBank::createPatchBank(const char *name) {
     for (uint32_t s = 0; s < ALIGNED_PATCH_SIZE; s++) {
         storageBuffer[s] = 0;
     }
-    convertParamsToFlash(&preenMainPreset, (struct FlashSynthParams*) storageBuffer, *arpeggiatorPartOfThePreset_ > 0);
-    *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
+    convertParamsToFlash(&preenMainPreset, (struct FlashSynthParams*)storageBuffer, *arpeggiatorPartOfThePreset_ > 0);
+    *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = PRESET_CURRENT_VERSION;
 
     for (int k = 0; k < 128; k++) {
         f_write(&bankFile, storageBuffer, ALIGNED_PATCH_SIZE, &byteWritten);
@@ -87,23 +86,23 @@ void PatchBank::createPatchBank(const char *name) {
     closeFile(bankFile);
 }
 
-bool PatchBank::loadPatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre) {
-    const char *fullBankName = getFullName(bank->name);
+bool PatchBank::loadPatch(const struct PFM3File* bank, int patchNumber, Timbre* timbre) {
+    const char* fullBankName = getFullName(bank->name);
 
-    int result = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, (void*) storageBuffer, ALIGNED_PATCH_SIZE);
+    int result = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, (void*)storageBuffer, ALIGNED_PATCH_SIZE);
 
     if (result == ALIGNED_PATCH_SIZE) {
-        uint32_t magic = *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
-        return timbre->loadStorageBlob((const uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5, magic);
+        uint32_t magic = *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
+        return timbre->loadStorageBlob((const uint8_t*)storageBuffer, ALIGNED_PATCH_SIZE - 5, magic);
     }
     return false;
 }
 
-const char* PatchBank::loadPatchName(const struct PFM3File *bank, int patchNumber) {
+const char* PatchBank::loadPatchName(const struct PFM3File* bank, int patchNumber) {
 
-    const char *fullBankName = getFullName(bank->name);
+    const char* fullBankName = getFullName(bank->name);
     uint32_t version;
-    load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE + ALIGNED_PATCH_SIZE - 5, (void*) &version, 4);
+    load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE + ALIGNED_PATCH_SIZE - 5, (void*)&version, 4);
 
     int namePosition = timbre_ != nullptr ? timbre_->getStorageNameOffset(version) : -1;
     if (namePosition < 0) {
@@ -111,38 +110,36 @@ const char* PatchBank::loadPatchName(const struct PFM3File *bank, int patchNumbe
         return presetName_;
     }
 
-    load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + namePosition, (void*) presetName_, 12);
+    load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + namePosition, (void*)presetName_, 12);
     presetName_[12] = 0;
     if (presetName_[0] == 0) {
-        const char *fallback = timbre_->getStorageDefaultName(version);
+        const char* fallback = timbre_->getStorageDefaultName(version);
         for (int n = 0; n < 12 && fallback[n] != 0; n++) {
             presetName_[n] = fallback[n];
         }
         presetName_[12] = 0;
     }
     return presetName_;
-
 }
 
-void PatchBank::savePatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre) {
-    const char *fullBankName = getFullName(bank->name);
+void PatchBank::savePatch(const struct PFM3File* bank, int patchNumber, Timbre* timbre) {
+    const char* fullBankName = getFullName(bank->name);
 
     for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
         storageBuffer[p] = 0;
     }
 
-    timbre->getStorageBlob((uint8_t*) storageBuffer, ALIGNED_PATCH_SIZE - 5);
-    *(uint32_t*) (&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = timbre->getStorageMagic();
+    timbre->getStorageBlob((uint8_t*)storageBuffer, ALIGNED_PATCH_SIZE - 5);
+    *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]) = timbre->getStorageMagic();
 
     // Save patch
     save(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);
 }
 
-void PatchBank::copyNewPreset(struct Pfm3Preset *params) {
-    char *source = (char*) &newPresetParams;
-    char *dest = (char*) params;
+void PatchBank::copyNewPreset(struct Pfm3Preset* params) {
+    char* source = (char*)&newPresetParams;
+    char* dest = (char*)params;
     for (uint32_t k = 0; k < sizeof(struct Pfm3Preset); k++) {
         dest[k] = source[k];
     }
 }
-

@@ -32,7 +32,6 @@ enum EnvState {
     ENV_NUMBER_OF_STATES
 };
 
-
 struct EnvData {
     // State of the env
     uint8_t envState;
@@ -50,8 +49,8 @@ struct EnvData {
 };
 
 struct table {
-	float* table;
-	uint8_t size;
+    float* table;
+    uint8_t size;
 };
 
 extern float envExponential[];
@@ -61,8 +60,7 @@ extern float userEnvCurves[4][64];
 
 extern struct table allLfoTables[CURVE_TYPE_MAX];
 
-class Env
-{
+class Env {
 public:
     Env() {
 
@@ -82,53 +80,53 @@ public:
         stateTarget_[ENV_STATE_ON_QUICK_R] = 0.0f;
         stateInc_[ENV_STATE_ON_QUICK_R] = 0.166667f;
 
-
         stateTarget_[ENV_STATE_DEAD] = 0.0f;
     }
 
     virtual ~Env(void) {
     }
 
-    void init(struct EnvelopeTimeMemory *envTime, struct EnvelopeLevelMemory *envLevel, uint8_t envNumber, float* algoNumber, struct EnvelopeCurveParams *envCurve);
+    void init(struct EnvelopeTimeMemory* envTime, struct EnvelopeLevelMemory* envLevel, uint8_t envNumber, float* algoNumber,
+              struct EnvelopeCurveParams* envCurve);
 
     void applyCurves() {
-        applyCurveToSegment((int)envCurve_->attackCurve,  ENV_STATE_ON_A);
-        applyCurveToSegment((int)envCurve_->decayCurve,   ENV_STATE_ON_D);
+        applyCurveToSegment((int)envCurve_->attackCurve, ENV_STATE_ON_A);
+        applyCurveToSegment((int)envCurve_->decayCurve, ENV_STATE_ON_D);
         applyCurveToSegment((int)envCurve_->sustainCurve, ENV_STATE_ON_S);
         applyCurveToSegment((int)envCurve_->releaseCurve, ENV_STATE_ON_R);
     }
 
     void applyCurveToSegment(int segment, int segmentPos) {
         tables_[segmentPos].table = allLfoTables[segment].table;
-        tables_[segmentPos].size  = allLfoTables[segment].size;
+        tables_[segmentPos].size = allLfoTables[segment].size;
     }
 
     void reloadADSR(int encoder) {
-    	// 0 Attack
-    	// 1 Decay
-    	// 2 Sustain
-    	// 3 Release
+        // 0 Attack
+        // 1 Decay
+        // 2 Sustain
+        // 3 Release
         switch (encoder) {
         case 0:
-        	stateTarget_[ENV_STATE_ON_A] =  envLevel_->attackLevel;
+            stateTarget_[ENV_STATE_ON_A] = envLevel_->attackLevel;
             // Not necessary... recalculated in noteOn....
-        	// stateInc[ENV_STATE_ON_A] = incTab[(int)(envParamsA->attackTime * 100.0f)];
+            // stateInc[ENV_STATE_ON_A] = incTab[(int)(envParamsA->attackTime * 100.0f)];
             break;
         case 1:
-        	stateTarget_[ENV_STATE_ON_D] =  envLevel_->decayLevel;
-        	stateInc_[ENV_STATE_ON_D] = incTab[(int)(envTime_->decayTime * 100.0f)];
+            stateTarget_[ENV_STATE_ON_D] = envLevel_->decayLevel;
+            stateInc_[ENV_STATE_ON_D] = incTab[(int)(envTime_->decayTime * 100.0f)];
             break;
         case 2:
-        	stateTarget_[ENV_STATE_ON_S] =  envLevel_->sustainLevel;
-        	stateTarget_[ENV_STATE_ON_REAL_S] =  envLevel_->sustainLevel;
-        	stateInc_[ENV_STATE_ON_S] = incTab[(int)(envTime_->sustainTime * 100.0f)];
+            stateTarget_[ENV_STATE_ON_S] = envLevel_->sustainLevel;
+            stateTarget_[ENV_STATE_ON_REAL_S] = envLevel_->sustainLevel;
+            stateInc_[ENV_STATE_ON_S] = incTab[(int)(envTime_->sustainTime * 100.0f)];
             stateInc_[ENV_STATE_ON_REAL_S] = 0.0f;
-        	break;
+            break;
         case 3:
-        	stateTarget_[ENV_STATE_ON_R] =  envLevel_->releaseLevel;
+            stateTarget_[ENV_STATE_ON_R] = envLevel_->releaseLevel;
             isLoop_ = checkIsLoop();
             // Not necessary... recalculated in noteOff....
-        	// stateInc[ENV_STATE_ON_R] = incTab[(int)(envParamsB->releaseTime * 100.0f)];
+            // stateInc[ENV_STATE_ON_R] = incTab[(int)(envParamsB->releaseTime * 100.0f)];
             break;
         }
     }
@@ -146,7 +144,7 @@ public:
 
     void newState(struct EnvData* env) {
         if (unlikely(isLoop_ && (env->envState > ENV_STATE_ON_S))) {
-            //loop env
+            // loop env
             env->envState = ENV_STATE_ON_A;
         }
         env->previousStateValue = env->currentValue;
@@ -154,15 +152,13 @@ public:
         env->currentPhase = 0;
     }
 
-
     // Large block-rate routine inlined at ~170 call sites in Preenfm3Engine::renderVoice().
     // Keep it out of line to limit code size / I-cache pressure; the call
     // overhead is negligible because it runs once per block per operator.
-    __attribute__((noinline))
-    float getNextAmpExp(struct EnvData* env) {
+    __attribute__((noinline)) float getNextAmpExp(struct EnvData* env) {
         float incPhase;
 
-        switch(env->envState) {
+        switch (env->envState) {
         case ENV_STATE_ON_A:
             incPhase = env->stateIncAttack;
             break;
@@ -176,33 +172,33 @@ public:
             incPhase = stateInc_[env->envState];
             break;
         }
-		env->currentPhase += incPhase;
+        env->currentPhase += incPhase;
 
-		if (unlikely(env->currentPhase  >= 1.0f)) {
-			env->currentValue = env->nextStateValue;
-			env->envState = nextState_[env->envState];
-			newState(env);
+        if (unlikely(env->currentPhase >= 1.0f)) {
+            env->currentValue = env->nextStateValue;
+            env->envState = nextState_[env->envState];
+            newState(env);
 
-	        return env->currentValue;
-		}
+            return env->currentValue;
+        }
 
-		if (likely(incPhase > 0.0f)) {
-			float fIndex = env->currentPhase * tables_[env->envState].size;
-			int index = (int)fIndex;
+        if (likely(incPhase > 0.0f)) {
+            float fIndex = env->currentPhase * tables_[env->envState].size;
+            int index = (int)fIndex;
 
-			float floatingPart = fIndex - index;
-			float from = tables_[env->envState].table[index];
-			float to = tables_[env->envState].table[index + 1];
-			float tmpValue = from * (1.0f - floatingPart) + to *  floatingPart;
-			// When table value is 0 => next value
-			// When table value is 1 => previous value
-			// see table
-			env->currentValue = tmpValue * (env->nextStateValue - env->previousStateValue) + env->previousStateValue;
-			return env->currentValue;
-		}
+            float floatingPart = fIndex - index;
+            float from = tables_[env->envState].table[index];
+            float to = tables_[env->envState].table[index + 1];
+            float tmpValue = from * (1.0f - floatingPart) + to * floatingPart;
+            // When table value is 0 => next value
+            // When table value is 1 => previous value
+            // see table
+            env->currentValue = tmpValue * (env->nextStateValue - env->previousStateValue) + env->previousStateValue;
+            return env->currentValue;
+        }
 
-		return env->currentValue;
-      }
+        return env->currentValue;
+    }
 
     float noteOnAfterMatrixCompute(struct EnvData* env, Matrix* matrix) {
 
@@ -224,10 +220,9 @@ public:
         if (unlikely(attack < 0.0f)) {
             attack = 0.0f;
         }
-        //stateInc[ENV_STATE_ON_A] = incTab[(int)(attack * 100.0f)];
+        // stateInc[ENV_STATE_ON_A] = incTab[(int)(attack * 100.0f)];
         env->stateIncAttack = incTab[(int)(attack * 100.0f)];
-        env->stateIncDecay= incTab[(int)(decay * 100.0f)];
-
+        env->stateIncDecay = incTab[(int)(decay * 100.0f)];
 
         // For Later / XH 2 Jan 2020
         //        if (attack != 0.0f) {
@@ -251,7 +246,6 @@ public:
     void noteOffQuick(struct EnvData* env) {
         env->envState = ENV_STATE_ON_QUICK_R;
         newState(env);
-
     }
 
     void noteOff(struct EnvData* env, Matrix* matrix) {
@@ -263,22 +257,21 @@ public:
         if (unlikely(algoOpInformation[(int)*this->algoNumber_][this->envNumber_]) == OPERATOR_MODULATOR) {
             release += matrix->getDestination(ALL_ENV_RELEASE_MODULATOR);
         }
-    	if (release < 0.0f) {
-    		release = 0.0f;
+        if (release < 0.0f) {
+            release = 0.0f;
         }
-    	// The lower we are the shorter the release is...
-    	if (env->currentValue > stateTarget_[ENV_STATE_ON_R]) {
-    		release *= (1.0f + (env->currentValue -  stateTarget_[ENV_STATE_ON_R])) / 2.0f;
-    	} else {
-    		release *= (1.0f + (stateTarget_[ENV_STATE_ON_R] - env->currentValue)) / 2.0f;
-    	}
+        // The lower we are the shorter the release is...
+        if (env->currentValue > stateTarget_[ENV_STATE_ON_R]) {
+            release *= (1.0f + (env->currentValue - stateTarget_[ENV_STATE_ON_R])) / 2.0f;
+        } else {
+            release *= (1.0f + (stateTarget_[ENV_STATE_ON_R] - env->currentValue)) / 2.0f;
+        }
         env->stateIncRelease = incTab[(int)(release * 100.0f)];
-    	env->envState = ENV_STATE_ON_R;
+        env->envState = ENV_STATE_ON_R;
         newState(env);
     }
 
-
-    bool isDead(struct EnvData* env)  __attribute__((always_inline))  {
+    bool isDead(struct EnvData* env) __attribute__((always_inline)) {
         return env->envState == ENV_STATE_DEAD;
     }
 
@@ -293,8 +286,8 @@ private:
 
     EnvelopeTimeMemory* envTime_;
     EnvelopeLevelMemory* envLevel_;
-    EnvelopeCurveParams *envCurve_;
-    
+    EnvelopeCurveParams* envCurve_;
+
     uint8_t envNumber_;
     float* algoNumber_;
 

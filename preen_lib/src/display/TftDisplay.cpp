@@ -15,20 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
-#include <string.h>
-#include "stm32h7xx_hal.h"
-#include "stm32h7xx_hal_rng.h"
 #include "TftDisplay.h"
 #include "ili9341.h"
+#include "stm32h7xx_hal.h"
+#include "stm32h7xx_hal_rng.h"
+#include <string.h>
 
 // 95 char + 16 step seqs + 1 note + 4 for sequencers
 #define NUMBER_OF_CHARS (95 + 16 + 1 + 4)
 
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)     __builtin_expect((x),0)
-
+#define likely(x)   __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
 
 RAM_D1_SECTION uint8_t tftForeground[60000];
 RAM_D1_SECTION uint16_t tftBackground[42860 * 2];
@@ -37,29 +34,30 @@ RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 extern DMA2D_HandleTypeDef hdma2d;
 extern RNG_HandleTypeDef hrng;
 
-#define BG_OFFSET_BLACK 0
-#define BG_OFFSET_DARK_BLUE 20*12
-#define BG_OFFSET_LIGHT_BLUE 20*12 * 2
+#define BG_OFFSET_BLACK      0
+#define BG_OFFSET_DARK_BLUE  20 * 12
+#define BG_OFFSET_LIGHT_BLUE 20 * 12 * 2
 
-#define ABS(X)  ((X) > 0 ? (X) : -(X))
-
+#define ABS(X) ((X) > 0 ? (X) : -(X))
 
 #define TFT_OSCILLO_Y 160
 #define TFT_OSCILLO_X 0
-#define TFT_ALGO_Y 160
-#define TFT_ALGO_X 160
+#define TFT_ALGO_Y    160
+#define TFT_ALGO_X    160
 
 uint32_t tftPalette[NUMBER_OF_TFT_COLORS];
 uint16_t tftPalette565[NUMBER_OF_TFT_COLORS];
 
 uint32_t reducedColor(uint32_t x) {
     return
-    // RED
-    (((x & 0xe00000) >> 21) << 10) + (((x & 0x180000) >> 19) << 6)
-    // GREEN
-            + (((x & 0xe000) >> 13) << 3) + (((x & 0x1c00) >> 10) << 21)
-            // BLUE
-            + (((x & 0xc0) >> 6) << 19) + (((x & 0x38) >> 3) << 13);
+        // RED
+        (((x & 0xe00000) >> 21) << 10) +
+        (((x & 0x180000) >> 19) << 6)
+        // GREEN
+        + (((x & 0xe000) >> 13) << 3) +
+        (((x & 0x1c00) >> 10) << 21)
+        // BLUE
+        + (((x & 0xc0) >> 6) << 19) + (((x & 0x38) >> 3) << 13);
 }
 
 uint16_t convertTo565(uint32_t x) {
@@ -124,7 +122,6 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_ORANGE] = reducedColor(0xff7f00);
     tftPalette[COLOR_LIGHT_GREEN] = reducedColor(0x70ff70);
 
-
     for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
         tftPalette565[c] = convertTo565(tftPalette[c]);
     }
@@ -152,7 +149,6 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     int tftTmpIndex = 0;
 
     fgBigChars_ = &tftForeground[tftTmpIndex];
-
 
     for (int ch = 0; ch < NUMBER_OF_CHARS; ch++) {
         int index = ch * Font_11x18.height;
@@ -230,7 +226,6 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
 
     // Check tftTmpIndex here for tftForeground size
 
-
     // ==============================
     // init Background
     int bgIndex = 0;
@@ -258,7 +253,6 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     }
     bgIndex += 160 * 100;
 
-
     bgAlgo_ = &tftBackground[bgIndex];
 
     memset(bgAlgo_, 0, 80 * 100 * 2);
@@ -273,8 +267,6 @@ void TftDisplay::reset() {
     ILI9341_Init();
     tftMustBeReset_ = false;
 }
-
-
 
 void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
 
@@ -313,8 +305,6 @@ void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
     }
 }
 
-
-
 void TftDisplay::tic(bool checkDisplayPower) {
 
     uint32_t offset;
@@ -330,7 +320,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
             }
             // Try to detect when TFT is BLANK
             if (status_[1] != 222 && status_[1] != 156) {
-                if(status_[3] == status_[1]) {
+                if (status_[3] == status_[1]) {
                     clearActions();
                     tftMustBeReset_ = true;
                 }
@@ -342,12 +332,11 @@ void TftDisplay::tic(bool checkDisplayPower) {
         }
 
         if (pushToTft()) {
-           // a part have been pushed
-           tftPushMillis_ = currentMillis;
-           return;
+            // a part have been pushed
+            tftPushMillis_ = currentMillis;
+            return;
         }
     }
-
 
     // If doing nothing try to take next action
     if ((currentAction_.actionType == 0) && (tftActions_.getCount() > 0)) {
@@ -368,10 +357,10 @@ void TftDisplay::tic(bool checkDisplayPower) {
             offset = currentAction_.param2 * 240 + currentAction_.param1;
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 11);
             MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
-            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (18 | (11 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgBigChars_ + currentAction_.param3 * 18 * 11));
-            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgColorChar_[currentAction_.param5]));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
+            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (18 | (11 << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(fgBigChars_ + currentAction_.param3 * 18 * 11));
+            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgColorChar_[currentAction_.param5]));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
 
             setDirtyArea(currentAction_.param2, 18);
 
@@ -389,10 +378,10 @@ void TftDisplay::tic(bool checkDisplayPower) {
             offset = currentAction_.param2 * 240 + currentAction_.param1;
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 7);
             MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
-            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (10 | (7 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgSmallChars_ + currentAction_.param3 * 10 * 7));
-            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgColorChar_[currentAction_.param5]));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
+            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (10 | (7 << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(fgSmallChars_ + currentAction_.param3 * 10 * 7));
+            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgColorChar_[currentAction_.param5]));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
 
             setDirtyArea(currentAction_.param2, 10);
 
@@ -410,9 +399,9 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
 
-            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL),
-                    (areaHeight_[currentAction_.param3] | (240 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + areaY_[currentAction_.param3] * 240));
+            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL),
+                       (areaHeight_[currentAction_.param3] | (240 << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + areaY_[currentAction_.param3] * 240));
             PFM_START_DMA2D();
 
             if (currentAction_.param3 == 0) {
@@ -448,10 +437,10 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 offset = TFT_OSCILLO_Y * 240 + TFT_OSCILLO_X;
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 160);
                 MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
-                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (160 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )(fgOscillo_));
-                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgOscillo_));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (160 << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(fgOscillo_));
+                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgOscillo_));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
                 PFM_START_DMA2D();
                 currentAction_.param3 = 1;
             }
@@ -464,8 +453,8 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
                 // Output is rgb565 (16 bits) and we fill A8 (8 bits) so we can divide the height by 2
-                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (50 | (160 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgOscillo_));
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (50 | (160 << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(fgOscillo_));
                 PFM_START_DMA2D();
                 currentAction_.actionType = 0;
                 tftDirtyBits_ |= TFT_PART_OSCILLO_BITS;
@@ -482,8 +471,8 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[COLOR_BLACK]);
 
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
-                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(bgAlgo_));
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(bgAlgo_));
                 PFM_START_DMA2D();
 
                 currentAction_.param3 = 1;
@@ -512,8 +501,8 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
                 // 40 and not 80 because fgAlgo is a 8 bits buffer
-                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo_));
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(fgAlgo_));
                 PFM_START_DMA2D();
 
                 fgAlgoDirty_ = false;
@@ -529,9 +518,9 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
                 MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 80);
-                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t )fgAlgo_);
-                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t )(bgAlgo_));
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)fgAlgo_);
+                WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgAlgo_));
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
                 PFM_START_DMA2D();
 
@@ -570,8 +559,8 @@ void TftDisplay::tic(bool checkDisplayPower) {
 
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
             // 40 and not 80 because fgAlgo is a 8 bits buffer
-            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(fgAlgo_));
+            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (40 << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(fgAlgo_));
             PFM_START_DMA2D();
 
             fgAlgoDirty_ = false;
@@ -629,9 +618,9 @@ void TftDisplay::tic(bool checkDisplayPower) {
             offset = currentAction_.param1 + currentAction_.param2 * 240;
 
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - currentAction_.param3);
-            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL),
-                    (currentAction_.param4 | (currentAction_.param3 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(tftMemory + offset));
+            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL),
+                       (currentAction_.param4 | (currentAction_.param3 << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
 
             PFM_START_DMA2D();
 
@@ -650,7 +639,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
         currentAction_.actionType = 0;
         break;
     case TFT_WAITCYCLE:
-        currentAction_.param2 --;
+        currentAction_.param2--;
         if (currentAction_.param2 == 0) {
             currentAction_.actionType = 0;
         }
@@ -676,11 +665,10 @@ bool TftDisplay::pushToTft() {
 
     // 4 max - can break before
     int p;
-    for (p = 0; p < TFT_NUMBER_OF_PARTS ; p++) {
+    for (p = 0; p < TFT_NUMBER_OF_PARTS; p++) {
         if ((tftDirtyBits_ & (1UL << part_)) > 0) {
             // Update TFT part
             ILI9341_Select();
-
 
             uint16_t height = areaHeight_[part_];
             uint16_t y = areaY_[part_];
@@ -692,7 +680,7 @@ bool TftDisplay::pushToTft() {
                 // Make sure the composed pixels are visible before SPI DMA reads them.
                 __DSB();
 
-                if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t *) tftMemory + (y * 240 * 2), height * 240 * 2)) {
+                if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t*)tftMemory + (y * 240 * 2), height * 240 * 2)) {
                     tftDirtyBits_ &= ~(1UL << part_);
                     pushingPart_ = part_;
                     pushToTftInProgress_ = true;
@@ -703,7 +691,6 @@ bool TftDisplay::pushToTft() {
         }
         part_ = (part_ + 1) % TFT_NUMBER_OF_PARTS;
     }
-
 
     return true;
 }
@@ -762,7 +749,6 @@ void TftDisplay::clearMixerLabels() {
     tftActions_.insert(newAction);
 }
 
-
 void TftDisplay::clear() {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_FILL_TFT;
@@ -780,11 +766,11 @@ void TftDisplay::print(float f) {
         print(' ');
     }
     if (f < 10.0f) {
-        int integer = (int) f;
-        print((char) ((char) integer + '0'));
+        int integer = (int)f;
+        print((char)((char)integer + '0'));
         print('.');
         f -= integer;
-        int valueTimes100 = (int) (f * 100 + .0005);
+        int valueTimes100 = (int)(f * 100 + .0005);
         if (valueTimes100 < 10) {
             print("0");
             print(valueTimes100);
@@ -792,11 +778,11 @@ void TftDisplay::print(float f) {
             print(valueTimes100);
         }
     } else {
-        int integer = (int) f;
+        int integer = (int)f;
         print(integer);
         print('.');
         f -= integer;
-        print((int) (f * 10));
+        print((int)(f * 10));
     }
 }
 
@@ -804,11 +790,11 @@ void TftDisplay::printFloatWithOneDecimal(float f) {
     if (f < 10.0f) {
         print('0');
     }
-    int integer = (int) f;
+    int integer = (int)f;
     print(integer);
     print('.');
     f -= integer;
-    int valueTimes10 = (int) (f * 10 + .0005);
+    int valueTimes10 = (int)(f * 10 + .0005);
     print(valueTimes10);
 }
 
@@ -831,7 +817,6 @@ bool TftDisplay::print(const char* str, int length) {
     return c == '\0';
 }
 
-
 void TftDisplay::printSmallChars(const char* str) {
     int i = 0;
     char c = str[i++];
@@ -849,7 +834,6 @@ void TftDisplay::printSmallChars(const char* str, int length) {
         c = str[i++];
     }
 }
-
 
 void TftDisplay::print(const char* str, TFT_COLOR color, TFT_COLOR bgColor) {
 
@@ -887,7 +871,7 @@ void TftDisplay::print(int n) {
     }
 
     for (; i > 0; i--) {
-        print((char) ('0' + buf[i - 1]));
+        print((char)('0' + buf[i - 1]));
     }
 }
 
@@ -911,7 +895,7 @@ void TftDisplay::printSmallChar(int n) {
     }
 
     for (; i > 0; i--) {
-        printSmallChar((char) ('0' + buf[i - 1]));
+        printSmallChar((char)('0' + buf[i - 1]));
     }
 }
 
@@ -971,7 +955,7 @@ void TftDisplay::oscilloRrefresh() {
     uint32_t total = 0;
     for (int x = 0; x < 160; x++) {
         // Use _usat on value before multiplying ?????
-        int8_t oValue = (int8_t) (oscilloFullPeriodSampl_[(int) oscilloSampleReadPtr] * multiplier);
+        int8_t oValue = (int8_t)(oscilloFullPeriodSampl_[(int)oscilloSampleReadPtr] * multiplier);
         total += abs(oValue);
         if (unlikely(oValue > 50)) {
             saturate = true;
@@ -1029,7 +1013,7 @@ void TftDisplay::oscilloRrefresh() {
         TFTAction newAction;
         newAction.actionType = TFT_DRAW_OSCILLO;
         // We don't want oscillo in red when saturation since we have olscilloYScale
-        //newAction.param1 = saturate ? 1 : 0;
+        // newAction.param1 = saturate ? 1 : 0;
         newAction.param1 = 0;
         newAction.param3 = 0;
         tftActions_.insert(newAction);
@@ -1044,7 +1028,7 @@ void TftDisplay::oscilloRrefresh() {
         }
     }
     // We can start filling again the oscillo buffer
-	oscilloDataWritePtr_ = 0;
+    oscilloDataWritePtr_ = 0;
 }
 
 void TftDisplay::fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height, uint8_t color) {
@@ -1056,7 +1040,6 @@ void TftDisplay::fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height,
     newAction.param4 = height;
     newAction.param5 = color;
     tftActions_.insert(newAction);
-
 }
 
 void TftDisplay::oscilloNewLowerFrequency(float lf) {
@@ -1064,7 +1047,7 @@ void TftDisplay::oscilloNewLowerFrequency(float lf) {
     if (oscilloSamplePeriod_ > OSCILLO_BUFFER_SIZE) {
         oscilloSamplePeriod_ = OSCILLO_BUFFER_SIZE;
     }
-    oscilloSampleInc_ = (float) oscilloSamplePeriod_ / OSCILLO_WIDTH;
+    oscilloSampleInc_ = (float)oscilloSamplePeriod_ / OSCILLO_WIDTH;
 
     // oscilloPhaseIndexToUse = oscilloSamplePeriod - (oscilloPhaseIndex % ((int)oscilloSamplePeriod + 1));
     int divInt = oscilloPhaseIndex_ / oscilloSamplePeriod_;
@@ -1072,7 +1055,7 @@ void TftDisplay::oscilloNewLowerFrequency(float lf) {
     oscilloPhaseIndexToUse_ = oscilloPhaseIndex_ - divInt * oscilloSamplePeriod_;
 }
 
-void TftDisplay::oscilloRecord32Samples(float *samples) {
+void TftDisplay::oscilloRecord32Samples(float* samples) {
     oscilloPhaseIndex_ += 32.0f;
     if (oscilloDataWritePtr_ < oscilloSamplePeriod_) {
         for (int r = 0; r < 32; r++) {
@@ -1097,7 +1080,7 @@ void TftDisplay::drawDx7Algo(int algo) {
     tftActions_.insert(newAction);
 }
 
-bool TftDisplay::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
+bool TftDisplay::getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest) {
     return tftAlgo_->getDx7Feedback(algo, opSource, opDest);
 }
 
@@ -1175,7 +1158,6 @@ void TftDisplay::pauseRefresh() {
     tftActions_.insert(newAction);
 }
 
-
 void TftDisplay::waitCycle(uint16_t waitCycle) {
     TFTAction newAction;
     newAction.actionType = TFT_WAITCYCLE;
@@ -1186,7 +1168,7 @@ void TftDisplay::waitCycle(uint16_t waitCycle) {
 #define BUTTON_WIDTH 72
 
 void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t numberOfStates,
-        uint8_t activeState, TFT_COLOR background) {
+                            uint8_t activeState, TFT_COLOR background) {
 
     uint8_t x = (buttonNumber % 3) * 80 + 40; // 40 / 120 / 200
     y += buttonNumber > 2 ? dyLine2 : 0;
@@ -1200,26 +1182,26 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
             fillArea(left, y + 20, BUTTON_WIDTH, 1, COLOR_WHITE);
             break;
         case 2:
-            fillArea(left, y + 19, BUTTON_WIDTH/2, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(x, y + 19, BUTTON_WIDTH/2, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 2, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(x, y + 19, BUTTON_WIDTH / 2, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
             break;
         case 3:
-            fillArea(left, y + 19, BUTTON_WIDTH/3, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/3, y + 19, BUTTON_WIDTH/3, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/3*2, y + 19, BUTTON_WIDTH/3, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 3, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 3, y + 19, BUTTON_WIDTH / 3, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 3 * 2, y + 19, BUTTON_WIDTH / 3, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
             break;
         case 4:
-            fillArea(left, y + 19, BUTTON_WIDTH/4, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/4, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(x, y + 19, BUTTON_WIDTH/4, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/4*3, y + 19, BUTTON_WIDTH/4, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 4, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 4, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(x, y + 19, BUTTON_WIDTH / 4, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 4 * 3, y + 19, BUTTON_WIDTH / 4, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
             break;
         case 5:
-            fillArea(left, y + 19, BUTTON_WIDTH/5, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/5, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/5*2, y + 19, BUTTON_WIDTH/5, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/5*3, y + 19, BUTTON_WIDTH/5, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH/5*4, y + 19, BUTTON_WIDTH/5, 2, activeState == 5 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 5, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 5, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 5 * 2, y + 19, BUTTON_WIDTH / 5, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 5 * 3, y + 19, BUTTON_WIDTH / 5, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left + BUTTON_WIDTH / 5 * 4, y + 19, BUTTON_WIDTH / 5, 2, activeState == 5 ? COLOR_WHITE : COLOR_GRAY);
             break;
         }
     } else {
@@ -1232,7 +1214,7 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
     while (label[++len] != 0)
         ;
 
-    x = x  - len * TFT_BIG_CHAR_WIDTH / 2;
+    x = x - len * TFT_BIG_CHAR_WIDTH / 2;
     y = y + 1;
 
     if (numberOfStates > 0) {
@@ -1245,22 +1227,20 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
     setCursorInPixel(x, y);
     print(label);
     setCharBackgroundColor(COLOR_BLACK);
-
 }
 
-
 void TftDisplay::drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
-        TFT_COLOR background) {
+                                  TFT_COLOR background) {
 
     uint8_t x = (buttonNumber % 3) * 80 + 40; // 40 / 120 / 200
     y += buttonNumber > 2 ? dyLine2 : 0;
-    fillArea(x - BUTTON_WIDTH/2, y, BUTTON_WIDTH, 21, background);
+    fillArea(x - BUTTON_WIDTH / 2, y, BUTTON_WIDTH, 21, background);
 
     int len = -1;
     while (label[++len] != 0)
         ;
 
-    x = x  - len * TFT_BIG_CHAR_WIDTH / 2;
+    x = x - len * TFT_BIG_CHAR_WIDTH / 2;
     y = y + 1;
 
     setCharColor(color);
@@ -1270,7 +1250,8 @@ void TftDisplay::drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2
     setCharBackgroundColor(COLOR_BLACK);
 }
 
-void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection, uint8_t buttonState, int8_t baseNumber) {
+void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection,
+                                   uint8_t buttonState, int8_t baseNumber) {
     y += buttonNumber > 2 ? dyLine2 : 0;
 
     uint8_t x1 = (buttonNumber % 3) * 80 + 4;
@@ -1289,11 +1270,11 @@ void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNu
         if (currentSelection == drawnSubButton) {
             // Current operator
             setCharColor(COLOR_WHITE);
-            fillArea(x2, y + 19, BUTTON_WIDTH/2, 2, COLOR_WHITE);
+            fillArea(x2, y + 19, BUTTON_WIDTH / 2, 2, COLOR_WHITE);
         } else {
             setCharColor(COLOR_GRAY);
             if (b == buttonState) {
-                fillArea(x2, y + 20, BUTTON_WIDTH/2, 1, COLOR_GRAY );
+                fillArea(x2, y + 20, BUTTON_WIDTH / 2, 1, COLOR_GRAY);
             }
         }
 
@@ -1305,21 +1286,20 @@ void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNu
     }
 }
 
-
 void TftDisplay::drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
-        TFT_COLOR background) {
+                                        TFT_COLOR background) {
 
     uint8_t x = (buttonNumber % 3) * 80 + 40; // 40 / 120 / 200
     y += buttonNumber > 2 ? dyLine2 : 0;
-    fillArea(x - BUTTON_WIDTH/2, y, BUTTON_WIDTH, 21, background);
-    fillArea(x - BUTTON_WIDTH/2 + 1, y + 1, BUTTON_WIDTH - 2, 21 - 2, COLOR_BLACK);
+    fillArea(x - BUTTON_WIDTH / 2, y, BUTTON_WIDTH, 21, background);
+    fillArea(x - BUTTON_WIDTH / 2 + 1, y + 1, BUTTON_WIDTH - 2, 21 - 2, COLOR_BLACK);
     setCharBackgroundColor(COLOR_BLACK);
 
     int len = -1;
     while (label[++len] != 0)
         ;
 
-    x = x  - len * TFT_BIG_CHAR_WIDTH / 2;
+    x = x - len * TFT_BIG_CHAR_WIDTH / 2;
     y = y + 1;
 
     setCharColor(color);
@@ -1351,11 +1331,11 @@ void TftDisplay::printFloatWithSpace(float value) {
         print(' ');
     }
     if (value < 10.0f) {
-        int integer = (int) (value + .0005f);
+        int integer = (int)(value + .0005f);
         print(integer);
         print('.');
         value -= integer;
-        int valueTimes100 = (int) (value * 100.0f + .0005f);
+        int valueTimes100 = (int)(value * 100.0f + .0005f);
         if (valueTimes100 < 10) {
             print("0");
             print(valueTimes100);
@@ -1363,17 +1343,16 @@ void TftDisplay::printFloatWithSpace(float value) {
             print(valueTimes100);
         }
     } else {
-        int integer = (int) (value + .0005f);
+        int integer = (int)(value + .0005f);
         print(integer);
         print('.');
         value -= integer;
-        print((int) (value * 10 + .0005f));
+        print((int)(value * 10 + .0005f));
     }
 }
 
-
-
-void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr) {
+void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp,
+                                 float gr) {
     float maxX = width + (volume + gr) * pixelPerDb;
     if (maxX < 0) {
         maxX = 0;
@@ -1418,4 +1397,3 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
         fillArea(x + maxX, y, width - maxX, height, COLOR_BLACK);
     }
 }
-

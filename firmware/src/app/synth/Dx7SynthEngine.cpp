@@ -9,14 +9,14 @@
 
 #include <string.h>
 
-#include "Dx7SynthEngine.h"
-#include "SynthState.h"
 #include "Dx7ControlChange.h"
-#include "Timbre.h"
-#include "Voice.h"
-#include "Hexter.h"
 #include "Dx7Engine.h"
 #include "Dx7Params.h"
+#include "Dx7SynthEngine.h"
+#include "Hexter.h"
+#include "SynthState.h"
+#include "Timbre.h"
+#include "Voice.h"
 #include "msfa_init.h"
 #include "waves.h"
 
@@ -28,14 +28,14 @@ void Dx7SynthEngine::initGlobal() {
     dx7EngineInit();
 }
 
-void Dx7SynthEngine::init(Timbre *timbre, SynthState *synthState) {
+void Dx7SynthEngine::init(Timbre* timbre, SynthState* synthState) {
     timbre_ = timbre;
     synthState_ = synthState;
     timbreNumber_ = timbre->getTimbreNumber();
     dx7State_ = getDx7TimbreState(timbreNumber_);
 
-    uint8_t *program = program_[timbreNumber_];
-    uint8_t *packed = packedPatch_[timbreNumber_];
+    uint8_t* program = program_[timbreNumber_];
+    uint8_t* packed = packedPatch_[timbreNumber_];
 
     for (int i = 0; i < DX7_PACKED_PATCH_SIZE; i++) {
         packed[i] = 0;
@@ -51,28 +51,26 @@ void Dx7SynthEngine::init(Timbre *timbre, SynthState *synthState) {
 }
 
 bool Dx7SynthEngine::acceptsFlatParamFromMidi(int row) const {
-    return row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2
-        || row == ROW_ARPEGGIATOR3 || row == ROW_EFFECT1 || row == ROW_EFFECT2;
+    return row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ARPEGGIATOR3 || row == ROW_EFFECT1 || row == ROW_EFFECT2;
 }
 
 void Dx7SynthEngine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
-    uint8_t *program = program_[timbreNumber_];
-    setDx7ParamValue(program, paramId, context, (uint8_t) newValue);
+    uint8_t* program = program_[timbreNumber_];
+    setDx7ParamValue(program, paramId, context, (uint8_t)newValue);
 
-    if (paramId == DX7_LFO_SPEED || paramId == DX7_LFO_DELAY
-        || paramId == DX7_LFO_KEY_SYNC || paramId == DX7_LFO_WAVEFORM) {
+    if (paramId == DX7_LFO_SPEED || paramId == DX7_LFO_DELAY || paramId == DX7_LFO_KEY_SYNC || paramId == DX7_LFO_WAVEFORM) {
         dx7TimbreLoadProgram(dx7State_, program);
         return;
     }
 
-    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
-        Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
+    for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
+        Voice* voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         dx7VoiceUpdateParam(getDx7VoiceState(voice->slot()), paramId, context);
     }
 }
 
 bool Dx7SynthEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
-    (void) timbre;
+    (void)timbre;
 
     int paramId;
     switch (cc) {
@@ -107,9 +105,8 @@ bool Dx7SynthEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
         return false;
     }
 
-    const struct Dx7ParamDesc *desc = &dx7Params[paramId];
-    int newValue = desc->minValue
-        + (((int) value * (desc->maxValue - desc->minValue)) + 63) / 127;
+    const struct Dx7ParamDesc* desc = &dx7Params[paramId];
+    int newValue = desc->minValue + (((int)value * (desc->maxValue - desc->minValue)) + 63) / 127;
     int oldValue = getDx7ParamValue(program_[timbreNumber_], paramId, 0);
 
     if (newValue != oldValue) {
@@ -118,8 +115,8 @@ bool Dx7SynthEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
     return true;
 }
 
-bool Dx7SynthEngine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage &out) const {
-    (void) context;
+bool Dx7SynthEngine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
+    (void)context;
 
     uint8_t cc;
     switch (paramId) {
@@ -154,9 +151,9 @@ bool Dx7SynthEngine::midiParamFeedback(int paramId, int context, float newValue,
         return false;
     }
 
-    const struct Dx7ParamDesc *desc = &dx7Params[paramId];
+    const struct Dx7ParamDesc* desc = &dx7Params[paramId];
     int range = desc->maxValue - desc->minValue;
-    int value = (int) (newValue + .5f);
+    int value = (int)(newValue + .5f);
     if (value < desc->minValue) {
         value = desc->minValue;
     } else if (value > desc->maxValue) {
@@ -166,35 +163,35 @@ bool Dx7SynthEngine::midiParamFeedback(int paramId, int context, float newValue,
 
     out.isNrpn = false;
     out.cc = cc;
-    out.ccValue = (uint8_t) ccValue;
+    out.ccValue = (uint8_t)ccValue;
     return true;
 }
 
 void Dx7SynthEngine::afterNewParamsLoad() {
-    uint8_t *program = program_[timbreNumber_];
+    uint8_t* program = program_[timbreNumber_];
 
-    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
-        Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
+    for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
+        Voice* voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         updateVoiceProgram(voice, program);
     }
     dx7TimbreLoadProgram(dx7State_, program);
 }
 
-void Dx7SynthEngine::killVoice(Voice *voice) {
+void Dx7SynthEngine::killVoice(Voice* voice) {
     voice->resetVoiceState();
     dx7VoiceReset(getDx7VoiceState(voice->slot()));
 }
 
-void Dx7SynthEngine::noteOffVoice(Voice *voice) {
+void Dx7SynthEngine::noteOffVoice(Voice* voice) {
     keyUp(voice);
 }
 
-void Dx7SynthEngine::noteOffVoiceQuick(Voice *voice) {
+void Dx7SynthEngine::noteOffVoiceQuick(Voice* voice) {
     killVoice(voice);
 }
 
-void Dx7SynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index) {
-    Dx7VoiceState *state = getDx7VoiceState(voice->slot());
+void Dx7SynthEngine::startVoice(Voice* voice, const uint8_t* program, uint8_t note, uint8_t velocity, uint32_t index) {
+    Dx7VoiceState* state = getDx7VoiceState(voice->slot());
     bool voiceStolen = isDx7VoiceActive(state);
 
     voice->resetVoiceState();
@@ -211,22 +208,22 @@ void Dx7SynthEngine::startVoice(Voice *voice, const uint8_t *program, uint8_t no
     // The DX7 program carries a voice transpose (24 = no transposition).
     // Keep voice->note raw for note-off matching; the DX7 voice uses the
     // transposed note.
-    int transposedNote = (int) note + (int) program[144] - 24;
+    int transposedNote = (int)note + (int)program[144] - 24;
     if (transposedNote < 0) {
         transposedNote = 0;
     } else if (transposedNote > 127) {
         transposedNote = 127;
     }
 
-    dx7VoiceStart(state, program, (uint8_t) transposedNote, velocity, 1, dx7State_, voiceStolen);
+    dx7VoiceStart(state, program, (uint8_t)transposedNote, velocity, 1, dx7State_, voiceStolen);
 }
 
-void Dx7SynthEngine::updateVoiceProgram(Voice *voice, const uint8_t *program) {
+void Dx7SynthEngine::updateVoiceProgram(Voice* voice, const uint8_t* program) {
     dx7VoiceUpdateProgram(getDx7VoiceState(voice->slot()), program);
 }
 
-void Dx7SynthEngine::keyUp(Voice *voice) {
-    Dx7VoiceState *state = getDx7VoiceState(voice->slot());
+void Dx7SynthEngine::keyUp(Voice* voice) {
+    Dx7VoiceState* state = getDx7VoiceState(voice->slot());
     if (!isDx7VoiceActive(state)) {
         return;
     }
@@ -235,7 +232,7 @@ void Dx7SynthEngine::keyUp(Voice *voice) {
     voice->holdedByPedal_ = false;
 }
 
-void Dx7SynthEngine::bindVoice(Voice *voice) {
+void Dx7SynthEngine::bindVoice(Voice* voice) {
     voice->bindTimbre(timbre_);
 }
 
@@ -260,7 +257,7 @@ void Dx7SynthEngine::noteOn(char note, char velocity) {
     if (note <= timbre_->lowerNote_ || timbre_->lowerNoteReleased_) {
         timbre_->lowerNote_ = note;
         timbre_->lowerNoteReleased_ = false;
-        timbre_->lowerNoteFrequency_ = diatonicScaleFrequency[(int) note];
+        timbre_->lowerNoteFrequency_ = diatonicScaleFrequency[(int)note];
     }
 }
 
@@ -269,7 +266,7 @@ void Dx7SynthEngine::noteOff(char note) {
         timbre_->lowerNoteReleased_ = true;
     }
 
-    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
+    for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
         int n = timbre_->voiceNumber_[k];
 
         if (!timbre_->voices_[n]->isPlaying()) {
@@ -290,8 +287,8 @@ uint8_t Dx7SynthEngine::voicesNextBlock() {
     dx7TimbreNextBlock(dx7State_);
 
     uint8_t playing = 0;
-    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
-        Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
+    for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
+        Voice* voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         bool wasPlaying = voice->isPlaying();
         renderVoice(voice);
         if (wasPlaying) {
@@ -304,7 +301,7 @@ uint8_t Dx7SynthEngine::voicesNextBlock() {
     return playing;
 }
 
-void Dx7SynthEngine::renderVoice(Voice *voice) {
+void Dx7SynthEngine::renderVoice(Voice* voice) {
     if (!isDx7VoiceActive(getDx7VoiceState(voice->slot()))) {
         if (voice->playing_) {
         }
@@ -321,9 +318,9 @@ void Dx7SynthEngine::renderVoice(Voice *voice) {
     }
 }
 
-void Dx7SynthEngine::loadDx7Patch(const uint8_t *packedPatch) {
-    uint8_t *packed = packedPatch_[timbreNumber_];
-    uint8_t *program = program_[timbreNumber_];
+void Dx7SynthEngine::loadDx7Patch(const uint8_t* packedPatch) {
+    uint8_t* packed = packedPatch_[timbreNumber_];
+    uint8_t* program = program_[timbreNumber_];
     memcpy(packed, packedPatch, DX7_PACKED_PATCH_SIZE);
     Hexter::patchUnpack(packed, program);
     // Dexed expects a 156th byte holding the operator on/off bitmask.
@@ -351,14 +348,14 @@ const char* Dx7SynthEngine::getStorageDefaultName() const {
     return "DX7";
 }
 
-uint32_t Dx7SynthEngine::getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) {
+uint32_t Dx7SynthEngine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {
     memcpy(out, program_[timbreNumber_], DX7_PROGRAM_SIZE);
     memcpy(out + 160, shared.presetName, 13);
     memcpy(out + 176, &shared, sizeof(TimbreSharedParams));
     return 176 + sizeof(TimbreSharedParams);
 }
 
-bool Dx7SynthEngine::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
+bool Dx7SynthEngine::loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t magic) {
     memcpy(program_[timbreNumber_], in, DX7_PROGRAM_SIZE);
 
     TimbreSharedParams shared;

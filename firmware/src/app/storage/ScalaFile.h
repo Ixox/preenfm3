@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef SCALAFILE_H_
 #define SCALAFILE_H_
 
@@ -24,7 +23,7 @@
 
 class MixerState;
 
-class ScalaFile: public PreenFMFileType {
+class ScalaFile : public PreenFMFileType {
 public:
     ScalaFile();
     virtual ~ScalaFile();
@@ -34,14 +33,13 @@ public:
 
 protected:
     const char* getFolderName();
-    bool isCorrectFile(char *name, int size);
+    bool isCorrectFile(char* name, int size);
 
 private:
     float getScalaIntervale(const char* line);
-    struct PFM3File *scalaScaleFile_;
+    struct PFM3File* scalaScaleFile_;
     float interval_[NUMBER_OF_TIMBRES][MAX_NUMBER_OF_INTERVALS];
     uint8_t numberOfDegrees_[NUMBER_OF_TIMBRES];
-
 };
 
 #endif /* SCALAFILE_H_ */

@@ -32,13 +32,12 @@ class EditorParamPage : public EditorEngine {
 public:
     EditorParamPage();
 
-    void drawEditorButton(int button, const struct EditorEditMenu *editMenu,
-        const struct EditorOneButton *page) override;
-    void drawParameterName(int button, const struct RowEncoder &rowEncoder,
-        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) override;
+    void drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) override;
+    void drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
+                           const struct EditorOneButton* page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-        ParameterDisplay *param, float oldValue, float newValue) override;
+    void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
+                           float newValue) override;
     void tempoClick() override;
     void encoderTurned(int encoder, int ticks) override;
     void buttonPressed(int button) override;
@@ -47,8 +46,7 @@ public:
 
 protected:
     void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
-    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay *param,
-        float oldValue, float newFloatValue);
+    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay* param, float oldValue, float newFloatValue);
     void resetHideParams();
 
     bool hideParam_[NUMBER_OF_ENCODERS];

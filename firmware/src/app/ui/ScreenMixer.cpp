@@ -15,61 +15,37 @@
  */
 
 #include "ScreenMixer.h"
-#include "SynthState.h"
 #include "SynthEngineFactory.h"
+#include "SynthState.h"
 #include "TftDisplay.h"
-#include "TftAlgo.h"
 
 // To access comp values
 #include "preenfm3.h"
-
 
 // Mixer first Y line and HEIGHT
 #define Y_MIXER           80
 #define HEIGHT_MIXER_LINE 28
 
+const char* outDisplay[] = {"1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6"};
+const char* compDisplay[] = {"Off", "Slow", "Medium", "Fast"};
+const char* engineDisplay[] = {SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
+                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DX7),
+                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS)};
+const char* enableNames[] = {"Off", "On"};
+const char* levelMeterWhere[] = {"Off", "Mix", "All"};
+const char* scalaMapNames[] = {"Keybrd", "Continu"};
+const char* mpeOptions[] = {"No", "MPE48", "MPE36", "MPE24", "MPE12", "MPE0"};
+const char* reverbPresets[] = {"XSmal1", "XSmal2", "XSmal3", "SmlDrk", "SmlWrm", "SmlBrt", "MedDrk", "MedWrm", "MedBrt", "LrgDrk",
+                               "LrgWrm", "LrgBrt", "XLgDrk", "XLgWrm", "XLgBrt", "Glue",   "Hall",   "Cave",   "Aptmnt"};
+const char* reverbOutput[] = {"1-2", "3-4", "5-6"};
+static const char* nullNames[] = {};
 
-const char* outDisplay[] = { "1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6" };
-const char* compDisplay[]= { "Off", "Slow", "Medium", "Fast"};
-const char* engineDisplay[]= {
-    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
-    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DX7),
-    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS)
-};
-const char* enableNames[] = { "Off", "On" };
-const char* levelMeterWhere[] = { "Off", "Mix", "All" };
-const char* scalaMapNames[] = { "Keybrd", "Continu" };
-const char* mpeOptions[] = { "No", "MPE48", "MPE36", "MPE24", "MPE12", "MPE0"};
-const char *reverbPresets[] = {
-    "XSmal1",
-    "XSmal2",
-    "XSmal3",
-    "SmlDrk",
-    "SmlWrm",
-    "SmlBrt",
-    "MedDrk",
-    "MedWrm",
-    "MedBrt",
-    "LrgDrk",
-    "LrgWrm",
-    "LrgBrt",
-    "XLgDrk",
-    "XLgWrm",
-    "XLgBrt",
-    "Glue",
-    "Hall",
-    "Cave",
-    "Aptmnt"
-};
-const char* reverbOutput[] = {"1-2", "3-4", "5-6" } ;
-static const char* nullNames[] = { };
-
-const char* midiWithNone [] = { "None", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
-const char* midiWithAll [] = { "All", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
+const char* midiWithNone[] = {"None", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
+const char* midiWithAll[] = {"All", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"};
 
 // ======================================== MIXER ================================
 
-
+// clang-format off
 const struct Pfm3MixerButtonState volumeButtonState = {
       "Volume", MIXER_VALUE_VOLUME,
         {0, 4, 401, DISPLAY_TYPE_FLOAT, nullNames},
@@ -266,7 +242,7 @@ struct Pfm3MixerButton globalButton = {
 const struct PfmMixerMenu mixerMenu = {
       { &volumeButton, &voiceButton, &outButton, &midiButton, &scalaButton, &globalButton }
 };
-
+// clang-format on
 
 /*
  * Class methods
@@ -287,147 +263,147 @@ void ScreenMixer::setReverbParamVisible(bool visible) {
 }
 
 void* ScreenMixer::getValuePointer(int valueType, int encoder) {
-    void *valueP = 0;
+    void* valueP = 0;
     switch (valueType) {
-        case MIXER_VALUE_OUT:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].out;
+    case MIXER_VALUE_OUT:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].out;
+        break;
+    case MIXER_VALUE_COMPRESSOR:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].compressorType;
+        break;
+    case MIXER_VALUE_PAN:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].pan;
+        break;
+    case MIXER_VALUE_SEND:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].send;
+        break;
+    case MIXER_VALUE_VOLUME:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].volume;
+        break;
+    case MIXER_VALUE_NUMBER_OF_VOICES:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].numberOfVoices;
+        break;
+    case MIXER_VALUE_ENGINE:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].engine;
+        break;
+    case MIXER_VALUE_MIDI_CHANNEL:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].midiChannel;
+        break;
+    case MIXER_VALUE_MIDI_FIRST_NOTE:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].firstNote;
+        break;
+    case MIXER_VALUE_MIDI_LAST_NOTE:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].lastNote;
+        break;
+    case MIXER_VALUE_MIDI_SHIFT_NOTE:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].shiftNote;
+        break;
+    case MIXER_VALUE_SCALA_ENABLE:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].scalaEnable;
+        break;
+    case MIXER_VALUE_SCALA_MAPPING:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].scalaMapping;
+        break;
+    case MIXER_VALUE_SCALA_SCALE:
+        valueP = (void*)&synthState_->mixerState_.instrumentState_[encoder].scaleScaleNumber;
+        break;
+    case MIXER_VALUE_GLOBAL_SETTINGS_1:
+        switch (encoder) {
+        case 0:
+            valueP = (void*)&synthState_->mixerState_.MPE_inst1_;
             break;
-        case MIXER_VALUE_COMPRESSOR:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].compressorType;
+        case 1:
+            valueP = (void*)&synthState_->mixerState_.globalChannel_;
             break;
-        case MIXER_VALUE_PAN:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].pan;
+        case 2:
+            valueP = (void*)&synthState_->mixerState_.currentChannel_;
             break;
-        case MIXER_VALUE_SEND:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].send;
+        case 3:
+            valueP = (void*)&synthState_->mixerState_.midiThru_;
             break;
-        case MIXER_VALUE_VOLUME:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].volume;
+        case 4:
+            valueP = (void*)&synthState_->mixerState_.tuning_;
             break;
-        case MIXER_VALUE_NUMBER_OF_VOICES:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].numberOfVoices;
+        case 5:
+            valueP = (void*)&synthState_->mixerState_.levelMeterWhere_;
             break;
-        case MIXER_VALUE_ENGINE:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].engine;
+        case 6:
             break;
-        case MIXER_VALUE_MIDI_CHANNEL:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].midiChannel;
+        }
+        break;
+    case MIXER_VALUE_GLOBAL_SETTINGS_2:
+        switch (encoder) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            valueP = (void*)&synthState_->mixerState_.userCC_[encoder];
             break;
-        case MIXER_VALUE_MIDI_FIRST_NOTE:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].firstNote;
+        case 4:
+        case 5:
             break;
-        case MIXER_VALUE_MIDI_LAST_NOTE:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].lastNote;
+        }
+        break;
+    case MIXER_VALUE_GLOBAL_SETTINGS_3:
+        switch (encoder) {
+        case 0:
+            valueP = (void*)&synthState_->mixerState_.reverbPreset_;
             break;
-        case MIXER_VALUE_MIDI_SHIFT_NOTE:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].shiftNote;
+        case 1:
+            valueP = (void*)&synthState_->mixerState_.reverbLevel_;
             break;
-        case MIXER_VALUE_SCALA_ENABLE:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].scalaEnable;
+        case 2:
+            valueP = (void*)&synthState_->mixerState_.reverbOutput_;
             break;
-        case MIXER_VALUE_SCALA_MAPPING:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].scalaMapping;
+        case 3:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME];
             break;
-        case MIXER_VALUE_SCALA_SCALE:
-            valueP = (void*) &synthState_->mixerState_.instrumentState_[encoder].scaleScaleNumber;
+        case 4:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX];
             break;
-        case MIXER_VALUE_GLOBAL_SETTINGS_1:
-            switch (encoder) {
-                case 0:
-                    valueP = (void*) &synthState_->mixerState_.MPE_inst1_;
-                    break;
-                case 1:
-                    valueP = (void*) &synthState_->mixerState_.globalChannel_;
-                    break;
-                case 2:
-                    valueP = (void*) &synthState_->mixerState_.currentChannel_;
-                    break;
-                case 3:
-                    valueP = (void*) &synthState_->mixerState_.midiThru_;
-                    break;
-                case 4:
-                    valueP = (void*) &synthState_->mixerState_.tuning_;
-                    break;
-                case 5:
-                    valueP = (void*) &synthState_->mixerState_.levelMeterWhere_;
-                    break;
-                case 6:
-                    break;
-            }
+        case 5:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD];
             break;
-        case MIXER_VALUE_GLOBAL_SETTINGS_2:
-            switch (encoder) {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                    valueP = (void*) &synthState_->mixerState_.userCC_[encoder];
-                    break;
-                case 4:
-                case 5:
-                    break;
-            }
+        }
+        break;
+    case MIXER_VALUE_GLOBAL_SETTINGS_4:
+        switch (encoder) {
+        case 0:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE];
             break;
-        case MIXER_VALUE_GLOBAL_SETTINGS_3:
-            switch (encoder) {
-                case 0:
-                    valueP = (void*) &synthState_->mixerState_.reverbPreset_;
-                    break;
-                case 1:
-                    valueP = (void*) &synthState_->mixerState_.reverbLevel_;
-                    break;
-                case 2:
-                    valueP = (void*) &synthState_->mixerState_.reverbOutput_;
-                    break;
-                case 3:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME];
-                     break;
-                 case 4:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX];
-                     break;
-                 case 5:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD];
-                     break;
-             }
-             break;
-         case MIXER_VALUE_GLOBAL_SETTINGS_4:
-             switch (encoder) {
-                 case 0:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE];
-                     break;
-                 case 1:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH];
-                     break;
-                 case 2:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LOOPHP];
-                     break;
-                 case 3:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH];
-                     break;
-                 case 4:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED];
-                     break;
-                 case 5:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION];
-                     break;
-             }
-             break;
-         case MIXER_VALUE_GLOBAL_SETTINGS_5:
-             switch (encoder) {
-                 case 0:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE];
-                     break;
-                 case 1:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_DAMPING];
-                     break;
-                 case 2:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_SIZE];
-                     break;
-                 case 3:
-                     valueP = (void*) &synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_DECAY];
-                     break;
-            }
+        case 1:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH];
             break;
+        case 2:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LOOPHP];
+            break;
+        case 3:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH];
+            break;
+        case 4:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED];
+            break;
+        case 5:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION];
+            break;
+        }
+        break;
+    case MIXER_VALUE_GLOBAL_SETTINGS_5:
+        switch (encoder) {
+        case 0:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE];
+            break;
+        case 1:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_DAMPING];
+            break;
+        case 2:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_SIZE];
+            break;
+        case 3:
+            valueP = (void*)&synthState_->mixerState_.fxBus_.masterfxConfig_[GLOBALFX_DECAY];
+            break;
+        }
+        break;
     }
     return valueP;
 }
@@ -446,11 +422,11 @@ void ScreenMixer::displayMixerValueInteger(int timbre, int x, int value) {
 void ScreenMixer::displayMixerValue(int timbre) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
 
-    const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+    const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
     bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
 
-    const Pfm3MixerButtonStateParam *buttonStateParam;
-    void *valueP;
+    const Pfm3MixerButtonStateParam* buttonStateParam;
+    void* valueP;
     uint8_t mixerValueType;
 
     if (!isGlobalSettings) {
@@ -461,7 +437,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
         // Instrument 1 / MIDI MPE special case
         if (unlikely(synthState_->mixerState_.MPE_inst1_ > 0 && timbre == 0 && mixerValueType == MIXER_VALUE_MIDI_CHANNEL)) {
             int numberOfVoice = 1 + synthState_->mixerState_.instrumentState_[0].numberOfVoices;
-            tft_->setCursorInPixel(238 - (numberOfVoice >= 10 ? 4 : 3)  * 11 , Y_MIXER);
+            tft_->setCursorInPixel(238 - (numberOfVoice >= 10 ? 4 : 3) * 11, Y_MIXER);
 
             // RED if not poly play mode
             if (synthState_->getTimbrePlayMode(timbre) == 1) {
@@ -484,8 +460,8 @@ void ScreenMixer::displayMixerValue(int timbre) {
     valueP = getValuePointer(mixerValueType, timbre);
 
     // Scale particular case
-    if (!synthState_->mixerState_.instrumentState_[timbre].scalaEnable
-        && (mixerValueType == MIXER_VALUE_SCALA_MAPPING || mixerValueType == MIXER_VALUE_SCALA_SCALE)) {
+    if (!synthState_->mixerState_.instrumentState_[timbre].scalaEnable &&
+        (mixerValueType == MIXER_VALUE_SCALA_MAPPING || mixerValueType == MIXER_VALUE_SCALA_SCALE)) {
         tft_->setCharColor(COLOR_GRAY);
         tft_->setCursorInPixel(18 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
         tft_->print("N/A");
@@ -493,163 +469,165 @@ void ScreenMixer::displayMixerValue(int timbre) {
     }
 
     switch (buttonStateParam->displayType) {
-        case DISPLAY_TYPE_SCALA_SCALE: {
-            // displayMixerValueInteger(timbre, 18, (*((uint8_t*)valueP)));
-            const char *scalaName = synthState_->getStorage()->getScalaFile()->getFile((*((uint8_t*) valueP)))->name;
-            // memorize scala name
-            // memcpy(synthState->mixerState.instrumentState[timbre].scalaScale, scalaName, 12); ??
-            int dotIndex = 0;
-            for (dotIndex = 0; dotIndex < 7 && scalaName[dotIndex] != '.'; dotIndex++);
-            tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235-160, 20, COLOR_BLACK);
-            tft_->setCursorInPixel(238 - dotIndex * TFT_SMALL_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 4);
-            tft_->printSmallChars(scalaName, dotIndex);
-            break;
-        }
-        case DISPLAY_TYPE_INT:
+    case DISPLAY_TYPE_SCALA_SCALE: {
+        // displayMixerValueInteger(timbre, 18, (*((uint8_t*)valueP)));
+        const char* scalaName = synthState_->getStorage()->getScalaFile()->getFile((*((uint8_t*)valueP)))->name;
+        // memorize scala name
+        // memcpy(synthState->mixerState.instrumentState[timbre].scalaScale, scalaName, 12); ??
+        int dotIndex = 0;
+        for (dotIndex = 0; dotIndex < 7 && scalaName[dotIndex] != '.'; dotIndex++)
+            ;
+        tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235 - 160, 20, COLOR_BLACK);
+        tft_->setCursorInPixel(238 - dotIndex * TFT_SMALL_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 4);
+        tft_->printSmallChars(scalaName, dotIndex);
+        break;
+    }
+    case DISPLAY_TYPE_INT:
 
-            if (unlikely(mixerValueType == MIXER_VALUE_PAN)) {
-                // Stereo is 1,4,7
-                int out = synthState_->mixerState_.instrumentState_[timbre].out;
-                out--;
-                if ((out % 3) != 0) {
-                    // Mono, no panning
-                    tft_->setCharColor(COLOR_GRAY);
-                    tft_->setCursorInPixel(20 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
-                    tft_->print('-');
-                    return;
+        if (unlikely(mixerValueType == MIXER_VALUE_PAN)) {
+            // Stereo is 1,4,7
+            int out = synthState_->mixerState_.instrumentState_[timbre].out;
+            out--;
+            if ((out % 3) != 0) {
+                // Mono, no panning
+                tft_->setCharColor(COLOR_GRAY);
+                tft_->setCursorInPixel(20 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+                tft_->print('-');
+                return;
+            }
+        } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
+            uint8_t numberOfVoice = *((int8_t*)valueP);
+            uint8_t polyMono = synthState_->getTimbrePlayMode(timbre);
+            if (numberOfVoice == 0) {
+                tft_->setCharColor(COLOR_DARK_GRAY);
+            } else if (numberOfVoice == 1) {
+                if (polyMono == 2.0f) {
+                    tft_->setCharColor(COLOR_RED);
                 }
-            } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
-                uint8_t numberOfVoice = *((int8_t*) valueP);
-                uint8_t polyMono = synthState_->getTimbrePlayMode(timbre);
-                if (numberOfVoice == 0) {
-                    tft_->setCharColor(COLOR_DARK_GRAY);
-                } else if (numberOfVoice == 1) {
-                    if (polyMono == 2.0f) {
-                        tft_->setCharColor(COLOR_RED);
-                    }
-                } else {
-                    // More than 1 voice and mono mode
-                    if (polyMono == 0.0f) {
-                        tft_->setCharColor(COLOR_RED);
-                    }
+            } else {
+                // More than 1 voice and mono mode
+                if (polyMono == 0.0f) {
+                    tft_->setCharColor(COLOR_RED);
                 }
             }
+        }
 
-            displayMixerValueInteger(timbre, 18, (*((int8_t*) valueP)));
-            break;
-        case DISPLAY_TYPE_STRINGS: {
-            const char *label = buttonStateParam->valueName[(int) (*((uint8_t*) valueP))];
-            int len = getLength(label);
-            tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235-160, 20, COLOR_BLACK);
-            tft_->setCursorInPixel(238 - len * 11 , Y_MIXER + timbre * HEIGHT_MIXER_LINE);
-            tft_->print(label, 7);
-            break;
-        }
-        case DISPLAY_TYPE_FLOAT: {
-            float toDisplay = *((float*) valueP);
-            tft_->setCursorInPixel((toDisplay >= 100.0f ? 15 : 16) * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
-            tft_->print(toDisplay);
-            break;
-        }
-        default:
-            break;
+        displayMixerValueInteger(timbre, 18, (*((int8_t*)valueP)));
+        break;
+    case DISPLAY_TYPE_STRINGS: {
+        const char* label = buttonStateParam->valueName[(int)(*((uint8_t*)valueP))];
+        int len = getLength(label);
+        tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235 - 160, 20, COLOR_BLACK);
+        tft_->setCursorInPixel(238 - len * 11, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+        tft_->print(label, 7);
+        break;
     }
-
+    case DISPLAY_TYPE_FLOAT: {
+        float toDisplay = *((float*)valueP);
+        tft_->setCursorInPixel((toDisplay >= 100.0f ? 15 : 16) * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+        tft_->print(toDisplay);
+        break;
+    }
+    default:
+        break;
+    }
 }
 
-void ScreenMixer::refreshMixerByStep(int currentTimbre, int &refreshStatus, int &endRefreshStatus) {
-    const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int& endRefreshStatus) {
+    const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
     bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
 
     switch (refreshStatus) {
-        case 20:
-            tft_->pauseRefresh();
-            tft_->clear();
-            tft_->fillArea(0, 0, 240, 21, COLOR_DARK_GREEN);
-            tft_->setCursorInPixel(2, 2);
-            tft_->print("MIX ", COLOR_YELLOW, COLOR_DARK_GREEN);
-            tft_->print(synthState_->mixerState_.mixName_, COLOR_WHITE, COLOR_DARK_GREEN);
-            break;
-        case 19:
-        case 18:
-        case 17:
-        case 16:
-        case 15:
-        case 14: {
-            int timbre = 19 - refreshStatus;
-            // Display row : timbre number + preset name
-            tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCursorInPixel(2, Y_MIXER + (timbre) * HEIGHT_MIXER_LINE);
-            if (currentTimbre != (timbre)) {
-                if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
-                    tft_->setCharColor(COLOR_DARK_GRAY);
-                } else {
-                    tft_->setCharColor(COLOR_LIGHT_GRAY);
-                }
+    case 20:
+        tft_->pauseRefresh();
+        tft_->clear();
+        tft_->fillArea(0, 0, 240, 21, COLOR_DARK_GREEN);
+        tft_->setCursorInPixel(2, 2);
+        tft_->print("MIX ", COLOR_YELLOW, COLOR_DARK_GREEN);
+        tft_->print(synthState_->mixerState_.mixName_, COLOR_WHITE, COLOR_DARK_GREEN);
+        break;
+    case 19:
+    case 18:
+    case 17:
+    case 16:
+    case 15:
+    case 14: {
+        int timbre = 19 - refreshStatus;
+        // Display row : timbre number + preset name
+        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCursorInPixel(2, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE);
+        if (currentTimbre != (timbre)) {
+            if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
+                tft_->setCharColor(COLOR_DARK_GRAY);
             } else {
-                if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
-                    tft_->setCharColor(COLOR_DARK_YELLOW);
-                } else {
-                    tft_->setCharColor(COLOR_YELLOW);
-                }
+                tft_->setCharColor(COLOR_LIGHT_GRAY);
             }
-            tft_->print(20 - refreshStatus);
-
-            tft_->setCursorInPixel(22, Y_MIXER + (timbre) * HEIGHT_MIXER_LINE);
-            if (!isGlobalSettings) {
-                if (unlikely(timbre == 0 && synthState_->mixerState_.MPE_inst1_ > 0)) {
-                    // If MPE instrument 1, limit chars to 10
-                    tft_->print(synthState_->getTimbreName(timbre), 10);
-                    tft_->setCursoraddXY(4, 4);
-                    tft_->setCharColor(COLOR_LIGHT_GRAY);
-                    tft_->printSmallChars("MPE");
-                } else {
-                    tft_->print(synthState_->getTimbreName(timbre));
-                }
+        } else {
+            if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
+                tft_->setCharColor(COLOR_DARK_YELLOW);
             } else {
-                int globalSettingPage = synthState_->fullState_.buttonState[BUTTONID_MIXER_GLOBAL];
-
-                if (timbre < numberOfGlobalSettings[globalSettingPage]) {
-                    refreshMixerRowGlobalOptions(globalSettingPage, timbre);
-                }
+                tft_->setCharColor(COLOR_YELLOW);
             }
-            break;
         }
-        case 12:
-        case 11:
-        case 10:
-        case 9:
-        case 8:
-        case 7: {
-            tft_->setCharColor(COLOR_WHITE);
-            displayMixerValue(12 - refreshStatus);
-            break;
-        }
-        case 6: {
-            uint8_t buttonState = synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState_.mixerCurrentEdit];
-            const char *valueTitle = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit]->state[buttonState]->stateLabel;
-            int len = getLength(valueTitle);
-            tft_->setCursorInPixel(240 - len * TFT_BIG_CHAR_WIDTH, 50);
-            tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCharColor(COLOR_GREEN);
-            tft_->print(valueTitle);
-            // NO BREAK ....
-        }
-        case 5:
-        case 4:
-        case 3:
-        case 2:
-        case 1: {
-            uint8_t button = 6 - refreshStatus;
+        tft_->print(20 - refreshStatus);
 
-            const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[button];
+        tft_->setCursorInPixel(22, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE);
+        if (!isGlobalSettings) {
+            if (unlikely(timbre == 0 && synthState_->mixerState_.MPE_inst1_ > 0)) {
+                // If MPE instrument 1, limit chars to 10
+                tft_->print(synthState_->getTimbreName(timbre), 10);
+                tft_->setCursoraddXY(4, 4);
+                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                tft_->printSmallChars("MPE");
+            } else {
+                tft_->print(synthState_->getTimbreName(timbre));
+            }
+        } else {
+            int globalSettingPage = synthState_->fullState_.buttonState[BUTTONID_MIXER_GLOBAL];
 
-            tft_->drawButton(currentButton->buttonLabel, 270, 29, button, currentButton->numberOfStates,
-                synthState_->fullState_.mixerCurrentEdit == button ? synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + button] + 1 : 0,
-                COLOR_DARK_GREEN);
-
-            break;
+            if (timbre < numberOfGlobalSettings[globalSettingPage]) {
+                refreshMixerRowGlobalOptions(globalSettingPage, timbre);
+            }
         }
+        break;
+    }
+    case 12:
+    case 11:
+    case 10:
+    case 9:
+    case 8:
+    case 7: {
+        tft_->setCharColor(COLOR_WHITE);
+        displayMixerValue(12 - refreshStatus);
+        break;
+    }
+    case 6: {
+        uint8_t buttonState = synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState_.mixerCurrentEdit];
+        const char* valueTitle = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit]->state[buttonState]->stateLabel;
+        int len = getLength(valueTitle);
+        tft_->setCursorInPixel(240 - len * TFT_BIG_CHAR_WIDTH, 50);
+        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharColor(COLOR_GREEN);
+        tft_->print(valueTitle);
+        // NO BREAK ....
+    }
+    case 5:
+    case 4:
+    case 3:
+    case 2:
+    case 1: {
+        uint8_t button = 6 - refreshStatus;
+
+        const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[button];
+
+        tft_->drawButton(currentButton->buttonLabel, 270, 29, button, currentButton->numberOfStates,
+                         synthState_->fullState_.mixerCurrentEdit == button
+                             ? synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + button] + 1
+                             : 0,
+                         COLOR_DARK_GREEN);
+
+        break;
+    }
     }
 
     if (refreshStatus == endRefreshStatus) {
@@ -662,117 +640,113 @@ void ScreenMixer::refreshMixerRowGlobalOptions(int page, int row) {
     tft_->setCharColor(COLOR_LIGHT_GRAY);
 
     switch (page) {
-        case 0:
+    case 0:
         switch (row) {
-            case 0:
-                tft_->print("MPE Inst1");
-                break;
-            case 1:
-                tft_->print("Global midi");
-                break;
-            case 2:
-                tft_->print("Current midi");
-                break;
-            case 3:
-                tft_->print("Midi thru");
-                break;
-            case 4:
-                tft_->print("Tuning");
-                break;
-            case 5:
-                tft_->print("Level meter");
-                break;
-            case 6:
-                break;
-        }
-        break;
+        case 0:
+            tft_->print("MPE Inst1");
+            break;
         case 1:
-            switch (row) {
-                case 0:
-                    tft_->print("User CC 1");
-                    break;
-                case 1:
-                    tft_->print("User CC 2");
-                    break;
-                case 2:
-                    tft_->print("User CC 3");
-                    break;
-                case 3:
-                    tft_->print("User CC 4");
-                    break;
-                case 4:
-                case 5:
-                    break;
-            }
+            tft_->print("Global midi");
             break;
         case 2:
-            switch (row) {
-                case 0:
-                    tft_->print("Preset");
-                    break;
-                case 1:
-                    tft_->print("Volume");
-                    break;
-                case 2:
-                    tft_->print("Output");
-                    break;
-                case 3:
-                    tft_->print("Pre delay");
-                    break;
-                case 4:
-                    tft_->print("Pre delay Mix");
-                    break;
-                case 5:
-                    tft_->print("Notch Spread");
-                    break;
-            }
+            tft_->print("Current midi");
             break;
         case 3:
-            switch (row) {
-                case 0:
-                    tft_->print("Filter base");
-                    break;
-                case 1:
-                    tft_->print("Filter width");
-                    break;
-                case 2:
-                    tft_->print("Tank hp");
-                    break;
-                case 3:
-                    tft_->print("Mod Depth");
-                    break;
-                case 4:
-                    tft_->print("Mod Speed");
-                    break;
-                case 5:
-                    tft_->print("Diffusion");
-                    break;
-            }
+            tft_->print("Midi thru");
             break;
         case 4:
-            switch (row) {
-                case 0:
-                    tft_->print("Notch Base");
-                    break;
-                case 1:
-                    tft_->print("Damping");
-                    break;
-                case 2:
-                    tft_->print("Size");
-                    break;
-                case 3:
-                    tft_->print("Decay");
-                    break;
-            }
+            tft_->print("Tuning");
             break;
+        case 5:
+            tft_->print("Level meter");
+            break;
+        case 6:
+            break;
+        }
+        break;
+    case 1:
+        switch (row) {
+        case 0:
+            tft_->print("User CC 1");
+            break;
+        case 1:
+            tft_->print("User CC 2");
+            break;
+        case 2:
+            tft_->print("User CC 3");
+            break;
+        case 3:
+            tft_->print("User CC 4");
+            break;
+        case 4:
+        case 5:
+            break;
+        }
+        break;
+    case 2:
+        switch (row) {
+        case 0:
+            tft_->print("Preset");
+            break;
+        case 1:
+            tft_->print("Volume");
+            break;
+        case 2:
+            tft_->print("Output");
+            break;
+        case 3:
+            tft_->print("Pre delay");
+            break;
+        case 4:
+            tft_->print("Pre delay Mix");
+            break;
+        case 5:
+            tft_->print("Notch Spread");
+            break;
+        }
+        break;
+    case 3:
+        switch (row) {
+        case 0:
+            tft_->print("Filter base");
+            break;
+        case 1:
+            tft_->print("Filter width");
+            break;
+        case 2:
+            tft_->print("Tank hp");
+            break;
+        case 3:
+            tft_->print("Mod Depth");
+            break;
+        case 4:
+            tft_->print("Mod Speed");
+            break;
+        case 5:
+            tft_->print("Diffusion");
+            break;
+        }
+        break;
+    case 4:
+        switch (row) {
+        case 0:
+            tft_->print("Notch Base");
+            break;
+        case 1:
+            tft_->print("Damping");
+            break;
+        case 2:
+            tft_->print("Size");
+            break;
+        case 3:
+            tft_->print("Decay");
+            break;
+        }
+        break;
     }
 }
 
-
-
-
-
-void ScreenMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue, int &refreshStatus) {
+void ScreenMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue, int& refreshStatus) {
     tft_->setCharBackgroundColor(COLOR_BLACK);
     if (oldValue != newValue) {
         tft_->setCharColor(COLOR_YELLOW);
@@ -784,17 +758,16 @@ void ScreenMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldVal
 
     // Did we change the Reverb Preset
     if (reverbParamVisible_) {
-        const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+        const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
         int buttonState = synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState_.mixerCurrentEdit];
         if (currentButton->state[buttonState]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_3 && timbre == 0) {
             refreshStatus = 9;
         }
     }
-
 }
 
 void ScreenMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
-    const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+    const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
     int buttonState = synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + synthState_->fullState_.mixerCurrentEdit];
 
     if (currentButton->state[buttonState]->mixerValueType == valueType) {
@@ -834,8 +807,7 @@ void ScreenMixer::tempoClick() {
                     lastGainReduction[timbre] = gr;
 
                     bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
-                    tft_->drawLevelMetter(22, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 21,
-                        218, 3, 5, volume, isCompressed, gr);
+                    tft_->drawLevelMetter(22, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 21, 218, 3, 5, volume, isCompressed, gr);
                 }
             }
         }
@@ -844,12 +816,12 @@ void ScreenMixer::tempoClick() {
 
 void ScreenMixer::encoderTurned(int encoder, int ticks) {
 
-    const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+    const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
     bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
     bool isScalaButton = currentButton->state[0]->mixerValueType == MIXER_VALUE_SCALA_ENABLE;
 
-    const Pfm3MixerButtonStateParam *buttonStateParam;
-    void *valueP;
+    const Pfm3MixerButtonStateParam* buttonStateParam;
+    void* valueP;
     uint8_t mixerValueType;
 
     if (!isGlobalSettings) {
@@ -872,75 +844,73 @@ void ScreenMixer::encoderTurned(int encoder, int ticks) {
     valueP = getValuePointer(mixerValueType, encoder);
 
     switch (buttonStateParam->displayType) {
-        case DISPLAY_TYPE_INT:
-        case DISPLAY_TYPE_STRINGS:
-        case DISPLAY_TYPE_SCALA_SCALE: {
-            int8_t oldValue = *((int8_t*) valueP);
-            int newValue = oldValue + ticks;
+    case DISPLAY_TYPE_INT:
+    case DISPLAY_TYPE_STRINGS:
+    case DISPLAY_TYPE_SCALA_SCALE: {
+        int8_t oldValue = *((int8_t*)valueP);
+        int newValue = oldValue + ticks;
 
-            float maxValue;
-            if (mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES) {
-                maxValue = MAX_NUMBER_OF_VOICES;
+        float maxValue;
+        if (mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES) {
+            maxValue = MAX_NUMBER_OF_VOICES;
+        } else {
+            maxValue = buttonStateParam->maxValue;
+        }
+
+        if (unlikely(newValue > maxValue)) {
+            newValue = maxValue;
+        } else if (unlikely(newValue < buttonStateParam->minValue)) {
+            newValue = buttonStateParam->minValue;
+        }
+
+        if (oldValue != newValue) {
+            if (isScalaButton) {
+                *((uint8_t*)valueP) = (uint8_t)newValue;
+                if (!synthState_->scalaSettingsChanged(encoder)) {
+                    *((uint8_t*)valueP) = (uint8_t)oldValue;
+                    newValue = oldValue;
+                }
             } else {
-                maxValue = buttonStateParam->maxValue;
+                *((int8_t*)valueP) = (int8_t)newValue;
             }
 
-            if (unlikely(newValue > maxValue)) {
-                newValue = maxValue;
-            } else if (unlikely(newValue < buttonStateParam->minValue)) {
-                newValue = buttonStateParam->minValue;
-            }
-
-            if (oldValue != newValue) {
-                if (isScalaButton) {
-                    *((uint8_t*) valueP) = (uint8_t) newValue;
-                    if (!synthState_->scalaSettingsChanged(encoder)) {
-                        *((uint8_t*) valueP) = (uint8_t) oldValue;
-                        newValue = oldValue;
-                    }
-                } else {
-                    *((int8_t*) valueP) = (int8_t) newValue;
+            // If we arrive to 0 voice or leave 0 voice, let's redraw the timbre names
+            if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
+                if (oldValue == 0.0f || newValue == 0.0f) {
+                    refresh(19, 14);
                 }
-
-                // If we arrive to 0 voice or leave 0 voice, let's redraw the timbre names
-                if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
-                    if (oldValue == 0.0f || newValue == 0.0f) {
-                        refresh(19, 14);
-                    }
-                }
-
             }
-            synthState_->propagateNewMixerValue(mixerValueType, encoder, oldValue, newValue);
-
-            break;
         }
-        case DISPLAY_TYPE_FLOAT: {
-            float oldValue = *((float*) valueP);
-            float inc = (buttonStateParam->maxValue - buttonStateParam->minValue) / (buttonStateParam->numberOfValues - 1);
-            float newValue = oldValue + ticks * inc;
+        synthState_->propagateNewMixerValue(mixerValueType, encoder, oldValue, newValue);
 
-            // Round to next hundredth
-            int newValueInt =  newValue * 1000 + 3;
-            newValueInt /= 10;
-            newValue = (float)newValueInt / 100.0f;
+        break;
+    }
+    case DISPLAY_TYPE_FLOAT: {
+        float oldValue = *((float*)valueP);
+        float inc = (buttonStateParam->maxValue - buttonStateParam->minValue) / (buttonStateParam->numberOfValues - 1);
+        float newValue = oldValue + ticks * inc;
 
-            if (unlikely(newValue > buttonStateParam->maxValue)) {
-                newValue = buttonStateParam->maxValue;
-            } else if (unlikely(newValue < buttonStateParam->minValue)) {
-                newValue = buttonStateParam->minValue;
-            }
+        // Round to next hundredth
+        int newValueInt = newValue * 1000 + 3;
+        newValueInt /= 10;
+        newValue = (float)newValueInt / 100.0f;
 
-            if (oldValue != newValue) {
-                *((float*) valueP) = (float) newValue;
-            }
-            synthState_->propagateNewMixerValue(mixerValueType, encoder, oldValue, newValue);
-            break;
+        if (unlikely(newValue > buttonStateParam->maxValue)) {
+            newValue = buttonStateParam->maxValue;
+        } else if (unlikely(newValue < buttonStateParam->minValue)) {
+            newValue = buttonStateParam->minValue;
         }
-        default:
-            break;
+
+        if (oldValue != newValue) {
+            *((float*)valueP) = (float)newValue;
+        }
+        synthState_->propagateNewMixerValue(mixerValueType, encoder, oldValue, newValue);
+        break;
+    }
+    default:
+        break;
     }
 }
-
 
 /**
  * Mixer volume : ENCODER + MENU => modify volumes of all instruments on same DAC
@@ -949,7 +919,7 @@ void ScreenMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int b
 
     switch (button) {
     case BUTTON_PFM3_MENU: {
-        const Pfm3MixerButton *currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+        const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
         if (currentButton->state[0]->mixerValueType == MIXER_VALUE_VOLUME) {
             if (synthState_->fullState_.buttonState[BUTTONID_MIXER_MIX] == 0) {
                 // We're modifying volume
@@ -960,16 +930,14 @@ void ScreenMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int b
                         this->encoderTurned(i, ticks);
                     }
                 }
-
             }
         }
     }
     }
 }
 
-
 void ScreenMixer::buttonPressed(int button) {
-    struct FullState *fullState = &synthState_->fullState_;
+    struct FullState* fullState = &synthState_->fullState_;
 
     if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {
         if (fullState->mixerCurrentEdit != button) {
@@ -988,4 +956,3 @@ void ScreenMixer::buttonPressed(int button) {
         }
     }
 }
-

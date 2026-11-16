@@ -15,23 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stm32h7xx_hal.h"
-#include "ScreenMixer.h"
-#include "ScreenMenu.h"
-#include "ScreenEditor.h"
-#include "ScreenSequencer.h"
 #include "SynthState.h"
-#include "Pfm3ParameterRows.h"
 #include "Hexter.h"
-#include "Timbre.h"
+#include "Pfm3ParameterRows.h"
+#include "ScreenEditor.h"
+#include "ScreenMenu.h"
+#include "ScreenMixer.h"
+#include "ScreenSequencer.h"
 #include "Synth.h"
-#include "preenfm3lib.h"
+#include "Timbre.h"
 #include "preenfm3.h"
 
 extern Synth synth;
 extern RNG_HandleTypeDef hrng;
 extern float diatonicScaleFrequency[];
-
 
 SynthState::SynthState() {
     operatorNumber_ = 0;
@@ -117,10 +114,9 @@ void SynthState::init(ScreenMixer* displayMixer, ScreenEditor* displayEditor, Sc
     mixerState_.fxBus_.init();
 }
 
-
 void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encoder6, int ticks) {
     int whichStepSeq = row - ROW_LFOSEQ1;
-    StepSequencerSteps * seqSteps = &((StepSequencerSteps *) (&pfm3Preset_->lfoSteps1))[whichStepSeq];
+    StepSequencerSteps* seqSteps = &((StepSequencerSteps*)(&pfm3Preset_->lfoSteps1))[whichStepSeq];
 
     if (encoder6 == 3) {
         int oldPos = stepSelect_[whichStepSeq];
@@ -133,11 +129,11 @@ void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encode
         }
 
         stepSelect_[whichStepSeq] = newValue;
-        propagateNewPfm3ParamValue(currentTimbre_, row, encoder4, (ParameterDisplay*) NULL, oldPos, stepSelect_[whichStepSeq]);
+        propagateNewPfm3ParamValue(currentTimbre_, row, encoder4, (ParameterDisplay*)NULL, oldPos, stepSelect_[whichStepSeq]);
 
     } else if (encoder6 == 4) {
-        char *step = &seqSteps->steps[(int) stepSelect_[whichStepSeq]];
-        int oldValue = (int) (*step);
+        char* step = &seqSteps->steps[(int)stepSelect_[whichStepSeq]];
+        int oldValue = (int)(*step);
 
         int newValue = (*step) + ticks;
 
@@ -148,7 +144,7 @@ void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encode
         }
         if ((*step) != newValue) {
             (*step) = newValue;
-            propagateNewPfm3ParamValue(currentTimbre_, row, encoder4, (ParameterDisplay*) NULL, oldValue, (int) (*step));
+            propagateNewPfm3ParamValue(currentTimbre_, row, encoder4, (ParameterDisplay*)NULL, oldValue, (int)(*step));
         }
     }
 }
@@ -167,7 +163,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         }
         if (newPos != oldPos) {
             patternSelect_ = newPos;
-            propagateNewPfm3ParamValue(currentTimbre_, row, encoder, (ParameterDisplay*) NULL, oldPos, patternSelect_);
+            propagateNewPfm3ParamValue(currentTimbre_, row, encoder, (ParameterDisplay*)NULL, oldPos, patternSelect_);
         }
 
     } else if (encoder == 1) {
@@ -175,7 +171,8 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         if (pfm3Preset_->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
             return;
         }
-        arp_pattern_t pattern = pfm3Preset_->engineArpUserPatterns.patterns[(int) pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT];
+        arp_pattern_t pattern =
+            pfm3Preset_->engineArpUserPatterns.patterns[(int)pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT];
         const uint16_t oldMask = ARP_PATTERN_GETMASK(pattern);
         uint16_t newMask = oldMask;
 
@@ -183,7 +180,7 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
         switch (encoder) {
         case 1:
             bitsToModify = 0x1 << patternSelect_;
-            break;       // modify single note
+            break; // modify single note
         case 2:
             bitsToModify = 0x1111 << (patternSelect_ & 3);
             break; // modify all
@@ -199,8 +196,8 @@ void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
 
         if (oldMask != newMask) {
             ARP_PATTERN_SETMASK(pattern, newMask);
-            pfm3Preset_->engineArpUserPatterns.patterns[(int) pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
-            propagateNewPfm3ParamValue(currentTimbre_, row, encoder, (ParameterDisplay*) NULL, oldMask, newMask);
+            pfm3Preset_->engineArpUserPatterns.patterns[(int)pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
+            propagateNewPfm3ParamValue(currentTimbre_, row, encoder, (ParameterDisplay*)NULL, oldMask, newMask);
         }
     }
 }
@@ -209,34 +206,34 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
     switch (button1) {
     case BUTTON_PFM3_MENU:
         switch (button2) {
-            case BUTTON_PFM3_1:
-                propagateNoteOn(-2);
-                break;
-            case BUTTON_PFM3_2:
-                propagateNoteOn(0);
-                break;
-            case BUTTON_PFM3_3:
-                propagateNoteOn(2);
-                break;
-            case BUTTON_PFM3_4:
-                propagateNoteOn(-14);
-                break;
-            case BUTTON_PFM3_5:
-                propagateNoteOn(-12);
-                break;
-            case BUTTON_PFM3_6:
-                propagateNoteOn(-10);
-                break;
-            case BUTTON_PREVIOUS_INSTRUMENT: {
-                SynthEditMode previousMode = fullState_.synthMode;
-                fullState_.synthMode = SYNTH_MODE_REINIT_TFT;
-                propagateNewPfm3Page();
-                fullState_.synthMode = previousMode;
-                propagateNewPfm3Page();
-                break;
-            }
-            case BUTTON_PFM3_MIXER:
-                break;
+        case BUTTON_PFM3_1:
+            propagateNoteOn(-2);
+            break;
+        case BUTTON_PFM3_2:
+            propagateNoteOn(0);
+            break;
+        case BUTTON_PFM3_3:
+            propagateNoteOn(2);
+            break;
+        case BUTTON_PFM3_4:
+            propagateNoteOn(-14);
+            break;
+        case BUTTON_PFM3_5:
+            propagateNoteOn(-12);
+            break;
+        case BUTTON_PFM3_6:
+            propagateNoteOn(-10);
+            break;
+        case BUTTON_PREVIOUS_INSTRUMENT: {
+            SynthEditMode previousMode = fullState_.synthMode;
+            fullState_.synthMode = SYNTH_MODE_REINIT_TFT;
+            propagateNewPfm3Page();
+            fullState_.synthMode = previousMode;
+            propagateNewPfm3Page();
+            break;
+        }
+        case BUTTON_PFM3_MIXER:
+            break;
         }
         break;
     case BUTTON_NEXT_INSTRUMENT:
@@ -280,7 +277,6 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
         }
     }
 #endif
-
 }
 
 void SynthState::encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
@@ -296,7 +292,6 @@ void SynthState::encoderTurnedWhileButtonPressed(int encoder, int ticks, int but
     } else if (fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
         displaySequencer_->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     }
-
 }
 
 bool SynthState::newRandomizerValue(int encoder, int ticks) {
@@ -345,7 +340,8 @@ void SynthState::encoderTurned(int encoder, int ticks) {
     case SYNTH_MODE_MENU:
         displayMenu_->encoderTurned(currentTimbre_, encoder, ticks);
         // Did we modify reverb visibility ?
-        if (unlikely(fullState_.currentMenuItem->menuState == MENU_CONFIG_SETTINGS && encoder == 3 &&  fullState_.menuSelect == MIDICONFIG_REVERB_PARAMS)) {
+        if (unlikely(fullState_.currentMenuItem->menuState == MENU_CONFIG_SETTINGS && encoder == 3 &&
+                     fullState_.menuSelect == MIDICONFIG_REVERB_PARAMS)) {
             displayMixer_->setReverbParamVisible(fullState_.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
         }
         break;
@@ -371,7 +367,7 @@ void SynthState::loadNewPreset(int timbre) {
     restoreTestNote();
 }
 
-void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
+void SynthState::loadPreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
@@ -386,7 +382,7 @@ void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, s
     restoreTestNote();
 }
 
-void SynthState::savePreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
+void SynthState::savePreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params) {
     if (params != nullptr) {
         // The save dialog edits presetName in the Pfm3Preset mirror; keep the
         // persisted name in sync for every engine.
@@ -395,12 +391,12 @@ void SynthState::savePreset(int timbre, PFM3File const *bank, int patchNumber, s
     storage_->getPatchBank()->savePatch(bank, patchNumber, &timbres_[timbre]);
 }
 
-void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
+void SynthState::loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
 
-    uint8_t *packed = storage_->getDX7SysexFile()->dx7LoadPatch(bank, patchNumber);
+    uint8_t* packed = storage_->getDX7SysexFile()->dx7LoadPatch(bank, patchNumber);
     if (packed != nullptr) {
         // DX7 sysex patches always switch the target timbre to DX7.
         mixerState_.instrumentState_[timbre].engine = SYNTH_ENGINE_DX7;
@@ -425,7 +421,7 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber,
     restoreTestNote();
 }
 
-void SynthState::loadMixer(PFM3File const *bank, int patchNumber) {
+void SynthState::loadMixer(PFM3File const* bank, int patchNumber) {
     propagateBeforeNewParamsLoad(currentTimbre_);
     storage_->getMixerBank()->loadMixer(bank, patchNumber);
     // Update and clean all timbres
@@ -434,42 +430,40 @@ void SynthState::loadMixer(PFM3File const *bank, int patchNumber) {
     propagateAfterNewMixerLoad();
 }
 
-void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset *params) {
+void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset* params) {
     switch (bank) {
-        case 0: {
-            PFM3File const *bank = storage_->getPatchBank()->getFile(bankLSB);
-            if (bank->fileType != FILE_EMPTY) {
-                fullState_.preenFMBankNumber = bankLSB;
-                fullState_.preenFMPresetNumber = patchNumber;
-                loadPreset(timbre, bank, patchNumber, params);
-            }
-            break;
+    case 0: {
+        PFM3File const* bank = storage_->getPatchBank()->getFile(bankLSB);
+        if (bank->fileType != FILE_EMPTY) {
+            fullState_.preenFMBankNumber = bankLSB;
+            fullState_.preenFMPresetNumber = patchNumber;
+            loadPreset(timbre, bank, patchNumber, params);
         }
-        case 1: {
-            PFM3File const *bank = storage_->getMixerBank()->getFile(bankLSB);
-            if (bank->fileType != FILE_EMPTY) {
-                fullState_.preenFMMixerNumber = bankLSB;
-                fullState_.preenFMMixerPresetNumber = patchNumber;
-                loadMixer(bank, patchNumber);
-            }
-            break;
+        break;
+    }
+    case 1: {
+        PFM3File const* bank = storage_->getMixerBank()->getFile(bankLSB);
+        if (bank->fileType != FILE_EMPTY) {
+            fullState_.preenFMMixerNumber = bankLSB;
+            fullState_.preenFMMixerPresetNumber = patchNumber;
+            loadMixer(bank, patchNumber);
         }
-        case 2:
-        case 3:
-        case 4: {
-            int dx7bank = bank - 2;
-            PFM3File const *bank = storage_->getDX7SysexFile()->getFile(bankLSB + dx7bank * 128);
-            if (bank->fileType != FILE_EMPTY) {
-                fullState_.dx7BankNumber = bankLSB;
-                fullState_.dx7PresetNumber = patchNumber;
-                loadDx7Patch(timbre, bank, patchNumber, params);
-            }
-            break;
+        break;
+    }
+    case 2:
+    case 3:
+    case 4: {
+        int dx7bank = bank - 2;
+        PFM3File const* bank = storage_->getDX7SysexFile()->getFile(bankLSB + dx7bank * 128);
+        if (bank->fileType != FILE_EMPTY) {
+            fullState_.dx7BankNumber = bankLSB;
+            fullState_.dx7PresetNumber = patchNumber;
+            loadDx7Patch(timbre, bank, patchNumber, params);
         }
+        break;
+    }
     }
 }
-
-
 
 void SynthState::setCurrentInstrument(int value) {
     if (value == -1) {
@@ -489,12 +483,12 @@ void SynthState::setCurrentInstrument(int value) {
 
 void SynthState::buttonLongPressed(int button) {
     switch (fullState_.synthMode) {
-        case SYNTH_MODE_SEQUENCER:
-            displaySequencer_->buttonLongPressed(currentTimbre_, button);
-            break;
-        case SYNTH_MODE_EDITOR:
-            displayEditor_->buttonLongPressed(currentTimbre_, button);
-            break;
+    case SYNTH_MODE_SEQUENCER:
+        displaySequencer_->buttonLongPressed(currentTimbre_, button);
+        break;
+    case SYNTH_MODE_EDITOR:
+        displayEditor_->buttonLongPressed(currentTimbre_, button);
+        break;
     }
 }
 
@@ -515,8 +509,7 @@ void SynthState::buttonPressed(int button) {
     } else if (fullState_.synthMode == SYNTH_MODE_MIXER) {
         displayMixer_->buttonPressed(button);
     } else if (fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
-        if (displaySequencer_->getSequencerMode() != SEQ_MODE_NORMAL
-            && displaySequencer_->getSequencerMode() != SEQ_MODE_STEP) {
+        if (displaySequencer_->getSequencerMode() != SEQ_MODE_NORMAL && displaySequencer_->getSequencerMode() != SEQ_MODE_STEP) {
             swithToMenuIfBackButtonPressed = false;
         }
         displaySequencer_->buttonPressed(currentTimbre_, button);
@@ -575,7 +568,6 @@ void SynthState::buttonPressed(int button) {
     }
 }
 
-
 void SynthState::propagateAfterNewParamsLoad(int timbre) {
     for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
         listener->afterNewParamsLoad(timbre);
@@ -609,13 +601,10 @@ void SynthState::tempoClick() {
     }
 }
 
-void SynthState::setParamsAndTimbre(struct Pfm3Preset *newParams, int newCurrentTimbre) {
+void SynthState::setParamsAndTimbre(struct Pfm3Preset* newParams, int newCurrentTimbre) {
     this->pfm3Preset_ = newParams;
     this->currentTimbre_ = newCurrentTimbre;
 }
-
-
-
 
 /*
  * Randomizer
@@ -630,7 +619,7 @@ int getRandomInt(int max) {
 float getRandomFloat(float min, float max) {
     uint32_t rnd;
     HAL_RNG_GenerateRandomNumber(&hrng, &rnd);
-    float f = ((float) (rnd % 100000)) / 100000.0f;
+    float f = ((float)(rnd % 100000)) / 100000.0f;
     return f * (max - min) + min;
 }
 
@@ -663,8 +652,8 @@ float getRandomFrequencyType(int operatorRandom) {
 }
 
 float getRandomFrequency(int operatorRandom) {
-    float random1Frequency[] = { .5f, 1.0f, 2.0f, 4.0f };
-    float random2Frequency[] = { .25, .5f, 1.0f, 1.5, 2.0f, 3.0f, 4.0f };
+    float random1Frequency[] = {.5f, 1.0f, 2.0f, 4.0f};
+    float random2Frequency[] = {.25, .5f, 1.0f, 1.5, 2.0f, 3.0f, 4.0f};
     float freq = 0;
     switch (operatorRandom) {
     case 1:
@@ -727,7 +716,7 @@ void SynthState::randomizePreset() {
         pfm3Preset_->engine1.algo = getRandomInt(ALGO_END);
 
         for (int o = 0; o < 6; o++) {
-            struct OscillatorParams* currentOsc = &((struct OscillatorParams*) &pfm3Preset_->osc1)[o];
+            struct OscillatorParams* currentOsc = &((struct OscillatorParams*)&pfm3Preset_->osc1)[o];
             currentOsc->shape = getRandomShape(operatorRandom);
             currentOsc->frequencyMul = getRandomFrequency(operatorRandom);
             currentOsc->frequencyType = getRandomFrequencyType(operatorRandom);
@@ -748,8 +737,8 @@ void SynthState::randomizePreset() {
     }
 
     for (int e = 0; e < 6; e++) {
-        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*) &pfm3Preset_->env1Time)[e * 2];
-        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*) &pfm3Preset_->env1Level)[e * 2];
+        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*)&pfm3Preset_->env1Time)[e * 2];
+        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*)&pfm3Preset_->env1Level)[e * 2];
 
         switch (envelopeTypeRandom) {
         case 1:
@@ -791,9 +780,9 @@ void SynthState::randomizePreset() {
     }
 
     if (imRandom > 0) {
-        struct EngineIm1* im1 = (struct EngineIm1*) &pfm3Preset_->engineIm1;
-        struct EngineIm2* im2 = (struct EngineIm2*) &pfm3Preset_->engineIm2;
-        struct EngineIm3* im3 = (struct EngineIm3*) &pfm3Preset_->engineIm3;
+        struct EngineIm1* im1 = (struct EngineIm1*)&pfm3Preset_->engineIm1;
+        struct EngineIm2* im2 = (struct EngineIm2*)&pfm3Preset_->engineIm2;
+        struct EngineIm3* im3 = (struct EngineIm3*)&pfm3Preset_->engineIm3;
 
         float min = 0;
         float max = 0;
@@ -857,21 +846,21 @@ void SynthState::randomizePreset() {
         pfm3Preset_->matrixRowState12.dest1 = INDEX_MODULATION1;
 
         for (int m = 1; m <= 9; m++) {
-            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset_->matrixRowState1)[m - 1];
+            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[m - 1];
             matrixRow->mul = 0;
             matrixRow->dest1 = 0;
         }
 
-        float dest[] = { INDEX_ALL_MODULATION, OSC1_FREQ, ALL_PAN, OSC2_FREQ, INDEX_MODULATION1, PAN_OSC1, INDEX_ALL_MODULATION };
+        float dest[] = {INDEX_ALL_MODULATION, OSC1_FREQ, ALL_PAN, OSC2_FREQ, INDEX_MODULATION1, PAN_OSC1, INDEX_ALL_MODULATION};
         for (int i = 0; i < 2; i++) {
-            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset_->matrixRowState1)[getRandomInt(10)];
+            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[getRandomInt(10)];
             matrixRow->mul = getRandomFloat(0.2f, 3.0f);
             matrixRow->dest1 = dest[getRandomInt(7)];
         }
 
         if (modulationRandom >= 2) {
             for (int i = 0; i < 3; i++) {
-                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset_->matrixRowState1)[getRandomInt(10)];
+                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[getRandomInt(10)];
                 matrixRow->mul = getRandomFloat(1.0f, 3.0f);
                 matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
             }
@@ -879,7 +868,7 @@ void SynthState::randomizePreset() {
 
         if (modulationRandom >= 3) {
             for (int i = 0; i < 6; i++) {
-                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*) &pfm3Preset_->matrixRowState1)[getRandomInt(10)];
+                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[getRandomInt(10)];
                 float mm = getRandomFloat(2.0f, 5.0f);
                 matrixRow->mul = getRandomFloat(-mm, mm);
                 matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
@@ -887,7 +876,7 @@ void SynthState::randomizePreset() {
         }
 
         for (int o = 0; o < 3; o++) {
-            struct LfoParams* osc = &((struct LfoParams*) &pfm3Preset_->lfoOsc1)[o];
+            struct LfoParams* osc = &((struct LfoParams*)&pfm3Preset_->lfoOsc1)[o];
             osc->shape = getRandomInt(5);
             osc->freq = getRandomFloat(0.2, 3 + modulationRandom * 2);
             if (getRandomInt(4) > 1) {
@@ -903,7 +892,7 @@ void SynthState::randomizePreset() {
             }
         }
         for (int e = 0; e < 2; e++) {
-            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*) &pfm3Preset_->lfoEnv1)[e];
+            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*)&pfm3Preset_->lfoEnv1)[e];
             env->attack = getRandomFloat(0.05f, 1.0f);
             env->decay = getRandomFloat(0.05f, 1.0f);
             env->sustain = getRandomFloat(0.05f, 1.0f);
@@ -916,11 +905,11 @@ void SynthState::randomizePreset() {
 
         int bpm = getRandomInt(120) + 60;
         for (int s = 0; s < 2; s++) {
-            struct StepSequencerParams* stepSeq = &((struct StepSequencerParams*) &pfm3Preset_->lfoSeq1)[s];
+            struct StepSequencerParams* stepSeq = &((struct StepSequencerParams*)&pfm3Preset_->lfoSeq1)[s];
             stepSeq->bpm = bpm;
             stepSeq->gate = getRandomFloat(0.25, 1);
 
-            struct StepSequencerSteps* steps = &((struct StepSequencerSteps*) &pfm3Preset_->lfoSteps1)[s];
+            struct StepSequencerSteps* steps = &((struct StepSequencerSteps*)&pfm3Preset_->lfoSteps1)[s];
             for (int k = 0; k < 16; k++) {
                 if ((k % 4) == 0) {
                     steps->steps[k] = getRandomInt(5) + 11;
@@ -944,7 +933,6 @@ uint8_t SynthState::getTimbrePlayMode(int t) {
     return timbres_[t].getPfm3Preset()->engine1.playMode;
 }
 
-
 /*
  * When a scala scale file does not exist anymore ?
  * If both number and name are wrong, scala is disable
@@ -953,7 +941,7 @@ bool SynthState::scalaSettingsChanged(int timbre) {
     if (!mixerState_.instrumentState_[timbre].scalaEnable) {
         mixerState_.instrumentState_[timbre].scaleFrequencies = diatonicScaleFrequency;
     } else {
-        const struct PFM3File*  scalaFile = storage_->getScalaFile()->getFile(mixerState_.instrumentState_[timbre].scaleScaleNumber);
+        const struct PFM3File* scalaFile = storage_->getScalaFile()->getFile(mixerState_.instrumentState_[timbre].scaleScaleNumber);
         if (scalaFile->fileType == FILE_EMPTY) {
             // Lest file
             return false;
@@ -975,5 +963,3 @@ bool SynthState::scalaSettingsChanged(int timbre) {
 const char* SynthState::getSequenceName() {
     return displaySequencer_->getSequenceName();
 }
-
-

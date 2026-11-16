@@ -26,24 +26,18 @@
 #ifndef LFOENV2_H_
 #define LFOENV2_H_
 
-#include "Lfo.h"
 #include "Env.h"
+#include "Lfo.h"
 
-enum Env2State {
-    ENV2_STATE_ON_S = 0,
-    ENV2_STATE_ON_A,
-    ENV2_STATE_ON_D,
-    ENV2_STATE_DEAD,
-    ENV2_NUMBER_OF_STATES
-};
+enum Env2State { ENV2_STATE_ON_S = 0, ENV2_STATE_ON_A, ENV2_STATE_ON_D, ENV2_STATE_DEAD, ENV2_NUMBER_OF_STATES };
 
-class LfoEnv2: public Lfo {
+class LfoEnv2 : public Lfo {
 public:
     LfoEnv2();
 
-	void init(struct Envelope2LfoParams * envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest);
+    void init(struct Envelope2LfoParams* envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
-	void valueChanged(int encoder) {
+    void valueChanged(int encoder) {
         switch (encoder) {
         case 0:
             stateInc_[ENV2_STATE_ON_S] = 0.0008f / (envParams_->silence + 0.0001);
@@ -55,7 +49,7 @@ public:
             stateInc_[ENV2_STATE_ON_D] = 0.0008f / (envParams_->decay + 0.0001);
             break;
         }
-	}
+    }
 
     void newState() {
         if (env_.envState == ENV2_STATE_DEAD) {
@@ -75,7 +69,7 @@ public:
                 if (silencePlusMatrix <= 0) {
                     stateInc_[ENV2_STATE_ON_S] = 1.0;
                 } else if (silencePlusMatrix > 8) {
-                    stateInc_[ENV2_STATE_ON_S] = 0.0001f ;
+                    stateInc_[ENV2_STATE_ON_S] = 0.0001f;
                 } else {
                     stateInc_[ENV2_STATE_ON_S] = 0.0008f / silencePlusMatrix;
                 }
@@ -83,34 +77,32 @@ public:
         }
     }
 
-
-
     void nextValueInMatrix() {
         env_.currentPhase += stateInc_[env_.envState];
 
-        if (unlikely(env_.currentPhase  >= 1.0f)) {
+        if (unlikely(env_.currentPhase >= 1.0f)) {
             env_.currentValue = env_.nextStateValue;
             env_.envState++;
             newState();
         } else if (likely(stateInc_[env_.envState] > 0)) {
-            env_.currentValue = env_.previousStateValue * (1- env_.currentPhase) + env_.nextStateValue * env_.currentPhase;
+            env_.currentValue = env_.previousStateValue * (1 - env_.currentPhase) + env_.nextStateValue * env_.currentPhase;
         }
 
-		matrix_->setSource((enum SourceEnum)source_, env_.currentValue);
-	}
+        matrix_->setSource((enum SourceEnum)source_, env_.currentValue);
+    }
 
-	void noteOn() {
+    void noteOn() {
         // index is decremented in the first call...
         env_.currentValue = 0;
         env_.envState = ENV2_STATE_ON_S;
         newState();
-	}
+    }
 
-	void noteOff() {
-	}
+    void noteOff() {
+    }
 
-	void midiClock(int songPosition, bool computeStep) {
-	}
+    void midiClock(int songPosition, bool computeStep) {
+    }
 
 private:
     // target values of ADSR
@@ -119,7 +111,7 @@ private:
     float stateInc_[ENV2_NUMBER_OF_STATES];
 
     Envelope2LfoParams* envParams_;
-	EnvData env_;
+    EnvData env_;
 };
 
 #endif /* LfoEnv2_H_ */

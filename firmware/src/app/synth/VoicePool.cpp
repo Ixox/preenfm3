@@ -21,7 +21,7 @@ void VoicePool::init() {
     oneFreeVoice_ = 0;
 }
 
-int VoicePool::findFree(Voice **voices) {
+int VoicePool::findFree(Voice** voices) {
     if (likely(oneFreeVoice_ != -1)) {
         return oneFreeVoice_;
     }
@@ -29,7 +29,7 @@ int VoicePool::findFree(Voice **voices) {
     int idle = -1;
     for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
         if (owner_[v] == -1) {
-            oneFreeVoice_ = (int8_t) v;
+            oneFreeVoice_ = (int8_t)v;
             return v;
         }
         if (idle == -1 && !voices[v]->isPlaying() && !voices[v]->isTransferPending()) {
@@ -39,7 +39,7 @@ int VoicePool::findFree(Voice **voices) {
     return idle;
 }
 
-int VoicePool::findOldestReleased(Voice **voices) const {
+int VoicePool::findOldestReleased(Voice** voices) const {
     int best = -1;
     uint32_t bestIndex = UINT32_MAX;
 
@@ -60,7 +60,7 @@ int VoicePool::findOldestReleased(Voice **voices) const {
     return best;
 }
 
-int VoicePool::findOldestPlaying(Voice **voices, int excludeTimbre) const {
+int VoicePool::findOldestPlaying(Voice** voices, int excludeTimbre) const {
     int best = -1;
     uint32_t bestIndex = UINT32_MAX;
 
@@ -82,7 +82,7 @@ int VoicePool::findOldestPlaying(Voice **voices, int excludeTimbre) const {
 }
 
 void VoicePool::claim(int voiceIndex, int timbre) {
-    owner_[voiceIndex] = (int8_t) timbre;
+    owner_[voiceIndex] = (int8_t)timbre;
     if (oneFreeVoice_ == voiceIndex) {
         oneFreeVoice_ = -1;
     }
@@ -90,5 +90,5 @@ void VoicePool::claim(int voiceIndex, int timbre) {
 
 void VoicePool::release(int voiceIndex) {
     owner_[voiceIndex] = -1;
-    oneFreeVoice_ = (int8_t) voiceIndex;
+    oneFreeVoice_ = (int8_t)voiceIndex;
 }

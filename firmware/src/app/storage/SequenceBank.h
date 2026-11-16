@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef FILESYSTEM_SEQUENCEBANK_H_
 #define FILESYSTEM_SEQUENCEBANK_H_
 
@@ -43,19 +42,17 @@ public:
     bool loadDefaultSequence();
     void removeDefaultSequence();
 
-
 protected:
-    bool isReadOnly(struct PFM3File *file);
+    bool isReadOnly(struct PFM3File* file);
+
 private:
     bool saveSequencerData(FIL* file);
     void loadSequenceDataVersion1(FIL* sequenceFile, int patchNumber);
     void loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber);
     const char* getFolderName();
-    bool isCorrectFile(char *name, int size) ;
+    bool isCorrectFile(char* name, int size);
     char sequenceName_[13];
     Sequencer* sequencer_;
 };
-
-
 
 #endif /* FILESYSTEM_SEQUENCEBANK_H_ */

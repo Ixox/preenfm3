@@ -26,20 +26,19 @@
  *	DEALINGS IN THE SOFTWARE.
  */
 
-
 #ifndef __SIMPLE_HEADER_H__
 #define __SIMPLE_HEADER_H__
 
-#if _MSC_VER > 1000			// MS Visual Studio
-#define INLINE __forceinline	// forces inline
-#define NOMINMAX				// for standard library min(), max()
-#define _USE_MATH_DEFINES		// for math constants
-#else						// other IDE's
+#if _MSC_VER > 1000                     // MS Visual Studio
+#define INLINE            __forceinline // forces inline
+#define NOMINMAX                        // for standard library min(), max()
+#define _USE_MATH_DEFINES               // for math constants
+#else                                   // other IDE's
 #define INLINE inline
 #endif
 
-#include <algorithm>	// for min(), max()
-#include <cassert>		// for assert()
+#include <algorithm> // for min(), max()
+#include <cassert>   // for assert()
 #include <cmath>
 
-#endif	// end __SIMPLE_HEADER_H__
+#endif // end __SIMPLE_HEADER_H__

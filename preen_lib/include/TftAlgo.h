@@ -15,68 +15,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #ifndef HARDWARE_TFTALGO_H_
 #define HARDWARE_TFTALGO_H_
 
 #define PREENFM_FREQUENCY 47916.0f
-#define ABS(X) ((X) > 0 ? (X) : -(X))
+#define ABS(X)            ((X) > 0 ? (X) : -(X))
 
 #include "stm32h7xx_hal.h"
 // #include "Common.h"
 
 enum {
-	OPERATOR = 1,
-	IM,
-	IMSYNC,
-	MIX,
-	OPERATORSYNC,
-	FEEDBACK,
-	END,
+    OPERATOR = 1,
+    IM,
+    IMSYNC,
+    MIX,
+    OPERATORSYNC,
+    FEEDBACK,
+    END,
 };
-
 
 struct ModulationIndex {
-	unsigned int source:4;
-	unsigned int destination:4;
+    unsigned int source : 4;
+    unsigned int destination : 4;
 };
-
-
 
 class TftAlgo {
 public:
-	TftAlgo();
-	virtual ~TftAlgo();
+    TftAlgo();
+    virtual ~TftAlgo();
 
-	void setBufferAdress(uint16_t *bufferAdress);
-	void setFGBufferAdress(uint8_t *bufferAdress);
-	void drawAlgo(int algo);
-	void drawDx7Algo(int algo);
-	bool getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest);
-	void highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest);
+    void setBufferAdress(uint16_t* bufferAdress);
+    void setFGBufferAdress(uint8_t* bufferAdress);
+    void drawAlgo(int algo);
+    void drawDx7Algo(int algo);
+    bool getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest);
+    void highlightIM(bool draw, uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void highlightFeedback(bool draw, uint8_t opSource, uint8_t opDest);
     void highlightOperator(bool draw, uint8_t opNum);
     const uint8_t* getDigitBits(uint8_t digit);
 
 private:
-	void drawAlgoFromTable(const uint8_t *algoInfo);
-	void drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
-	void setColor(uint16_t col);
-	void drawNumber(int x, int y, int digit);
-	void drawOperator(uint8_t opNum, uint8_t opPosition);
-	void drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest);
-	void drawFeedback(uint8_t mode, uint8_t opSource, uint8_t opDest);
-	void drawMix(uint8_t imNum);
+    void drawAlgoFromTable(const uint8_t* algoInfo);
+    void drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+    void setColor(uint16_t col);
+    void drawNumber(int x, int y, int digit);
+    void drawOperator(uint8_t opNum, uint8_t opPosition);
+    void drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest);
+    void drawFeedback(uint8_t mode, uint8_t opSource, uint8_t opDest);
+    void drawMix(uint8_t imNum);
 
-	uint8_t operatorPosition_[6];
-	uint8_t imSource_[6];
-	uint8_t imDest_[6];
-	uint8_t operatorMix_[6];
-	uint16_t *buffer_;
-	uint8_t *fgBuffer_;
-	uint16_t color_;
-
+    uint8_t operatorPosition_[6];
+    uint8_t imSource_[6];
+    uint8_t imDest_[6];
+    uint8_t operatorMix_[6];
+    uint16_t* buffer_;
+    uint8_t* fgBuffer_;
+    uint16_t color_;
 };
 
 #endif /* HARDWARE_TFTALGO_H_ */

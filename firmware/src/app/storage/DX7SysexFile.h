@@ -15,24 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef DX7SYSEXFILE_H_
 #define DX7SYSEXFILE_H_
 
 #include "PreenFMFileType.h"
 
-class DX7SysexFile: public PreenFMFileType {
+class DX7SysexFile : public PreenFMFileType {
 public:
-	DX7SysexFile();
-	virtual ~DX7SysexFile();
+    DX7SysexFile();
+    virtual ~DX7SysexFile();
 
-	uint8_t* dx7LoadPatch(const struct PFM3File* bank, int patchNumber);
+    uint8_t* dx7LoadPatch(const struct PFM3File* bank, int patchNumber);
 
 protected:
-	const char* getFolderName();
-	bool isCorrectFile(char *name, int size);
-	struct PFM3File *dx7Bank_;
-
+    const char* getFolderName();
+    bool isCorrectFile(char* name, int size);
+    struct PFM3File* dx7Bank_;
 };
 
 #endif /* DX7SYSEXFILE_H_ */

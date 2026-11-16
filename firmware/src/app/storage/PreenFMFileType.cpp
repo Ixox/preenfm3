@@ -38,17 +38,17 @@ PreenFMFileType::~PreenFMFileType() {
 
 const char* PreenFMFileType::getFileName(FILE_ENUM file) {
     switch (file) {
-        case DEFAULT_MIXER:
-            return DEFAULT_MIXER_NAME;
-        case DEFAULT_SEQUENCE:
-            return DEFAULT_SEQUENCE_NAME;
-        case PROPERTIES:
-            return PROPERTIES_NAME;
+    case DEFAULT_MIXER:
+        return DEFAULT_MIXER_NAME;
+    case DEFAULT_SEQUENCE:
+        return DEFAULT_SEQUENCE_NAME;
+    case PROPERTIES:
+        return PROPERTIES_NAME;
     }
 }
 
-const char* PreenFMFileType::getFullName(const char *fileName) {
-    const char *folderName = getFolderName();
+const char* PreenFMFileType::getFullName(const char* fileName) {
+    const char* folderName = getFolderName();
     int pos = 0;
     int cpt = 0;
     int len = fsu_->strlen(folderName);
@@ -69,11 +69,11 @@ int PreenFMFileType::remove(FILE_ENUM file) {
     f_unlink(getFileName(file));
 }
 
-int PreenFMFileType::load(FILE_ENUM file, int seek, void *bytes, int size) {
+int PreenFMFileType::load(FILE_ENUM file, int seek, void* bytes, int size) {
     return load(getFileName(file), seek, bytes, size);
 }
 
-int PreenFMFileType::load(const char *fileName, int seek, void *bytes, int size) {
+int PreenFMFileType::load(const char* fileName, int seek, void* bytes, int size) {
 
     FRESULT fatFSResult = f_open(&file, fileName, FA_READ);
     if (seek == 0 && size == 0) {
@@ -101,7 +101,7 @@ int PreenFMFileType::load(const char *fileName, int seek, void *bytes, int size)
     return toReturn;
 }
 
-FIL PreenFMFileType::createFile(const char *fileName) {
+FIL PreenFMFileType::createFile(const char* fileName) {
     FRESULT fatFSResult = f_open(&file, fileName, FA_OPEN_ALWAYS | FA_WRITE);
     if (fatFSResult != FR_OK) {
         file.err = 1;
@@ -109,7 +109,7 @@ FIL PreenFMFileType::createFile(const char *fileName) {
     return file;
 }
 
-bool PreenFMFileType::closeFile(FIL &file) {
+bool PreenFMFileType::closeFile(FIL& file) {
     FRESULT fatFSResult = f_close(&file);
     if (fatFSResult != FR_OK) {
         return false;
@@ -117,7 +117,7 @@ bool PreenFMFileType::closeFile(FIL &file) {
     return true;
 }
 
-int PreenFMFileType::saveData(FIL &file, void *bytes, uint32_t size) {
+int PreenFMFileType::saveData(FIL& file, void* bytes, uint32_t size) {
     int toReturn = 0;
     UINT byteWritten;
     FRESULT fatFSResult = f_write(&file, bytes, size, &byteWritten);
@@ -125,14 +125,13 @@ int PreenFMFileType::saveData(FIL &file, void *bytes, uint32_t size) {
         toReturn = byteWritten;
     }
     return toReturn;
-
 }
 
-int PreenFMFileType::save(FILE_ENUM file, int seek, void *bytes, int size) {
+int PreenFMFileType::save(FILE_ENUM file, int seek, void* bytes, int size) {
     return save(getFileName(file), seek, bytes, size);
 }
 
-int PreenFMFileType::save(const char *fileName, int seek, void *bytes, int size) {
+int PreenFMFileType::save(const char* fileName, int seek, void* bytes, int size) {
     FRESULT fatFSResult = f_open(&file, fileName, FA_OPEN_ALWAYS | FA_WRITE);
     int toReturn = 0;
     if (fatFSResult == FR_OK) {
@@ -159,7 +158,7 @@ int PreenFMFileType::checkSize(FILE_ENUM file) {
     return checkSize(getFileName(file));
 }
 
-int PreenFMFileType::checkSize(const char *fileName) {
+int PreenFMFileType::checkSize(const char* fileName) {
     FRESULT fatFSResult = f_open(&file, fileName, FA_READ);
     int toReturn = -1;
     if (fatFSResult == FR_OK) {
@@ -191,7 +190,7 @@ int PreenFMFileType::initFiles() {
                 break;
             }
             if (!(fno.fattrib & AM_DIR)) {
-                if (isCorrectFile((char*) fno.fname, fno.fsize)) {
+                if (isCorrectFile((char*)fno.fname, fno.fsize)) {
                     for (int k = 0; k < 13; k++) {
                         if (fno.fname[k] == ' ') {
                             myFiles_[numberOfFiles_].name[k] = '_';
@@ -221,7 +220,7 @@ int PreenFMFileType::initFiles() {
     return numberOfFiles_;
 }
 
-int PreenFMFileType::readNextFile(struct PFM3File *bank) {
+int PreenFMFileType::readNextFile(struct PFM3File* bank) {
     return 0;
 }
 
@@ -235,7 +234,7 @@ const struct PFM3File* PreenFMFileType::getFile(int fileNumber) {
     return &myFiles_[fileNumber];
 }
 
-int PreenFMFileType::getFileIndex(const char *name) {
+int PreenFMFileType::getFileIndex(const char* name) {
     if (!isInitialized_) {
         initFiles();
     }
@@ -247,7 +246,7 @@ int PreenFMFileType::getFileIndex(const char *name) {
     return -1;
 }
 
-int PreenFMFileType::getFileIndex(const struct PFM3File *file) {
+int PreenFMFileType::getFileIndex(const struct PFM3File* file) {
     if (!isInitialized_) {
         initFiles();
     }
@@ -259,19 +258,19 @@ int PreenFMFileType::getFileIndex(const struct PFM3File *file) {
     return -1;
 }
 
-int PreenFMFileType::renameFile(const struct PFM3File *bank, const char *newName) {
+int PreenFMFileType::renameFile(const struct PFM3File* bank, const char* newName) {
     isInitialized_ = false;
 
     // getFullName(bank->name) -> getFullName(newName)
     char fullNewBankName[40];
-    const char *fullNameTmp = getFullName(newName);
+    const char* fullNameTmp = getFullName(newName);
     for (int k = 0; k < 40; k++) {
         fullNewBankName[k] = fullNameTmp[k];
     }
-    return (int) f_rename(getFullName(bank->name), fullNewBankName);
+    return (int)f_rename(getFullName(bank->name), fullNewBankName);
 }
 
-void PreenFMFileType::swapFiles(struct PFM3File *bankFiles, int i, int j) {
+void PreenFMFileType::swapFiles(struct PFM3File* bankFiles, int i, int j) {
     if (i == j) {
         return;
     }
@@ -280,7 +279,7 @@ void PreenFMFileType::swapFiles(struct PFM3File *bankFiles, int i, int j) {
     bankFiles[j] = tmp;
 }
 
-void PreenFMFileType::sortFiles(struct PFM3File *bankFiles, int numberOfFiles) {
+void PreenFMFileType::sortFiles(struct PFM3File* bankFiles, int numberOfFiles) {
     for (int i = 0; i < numberOfFiles - 1; i++) {
         int minBank = i;
         for (int j = i + 1; j < numberOfFiles; j++) {
@@ -292,25 +291,25 @@ void PreenFMFileType::sortFiles(struct PFM3File *bankFiles, int numberOfFiles) {
     }
 }
 
-void PreenFMFileType::convertParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *flashMemory, bool saveArp) {
+void PreenFMFileType::convertParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams* flashMemory, bool saveArp) {
     pfm3ParamsToFlash(params, flashMemory, saveArp);
 }
 
-void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Preset *params, bool loadArp) {
+void PreenFMFileType::convertFlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Preset* params, bool loadArp) {
     pfm3FlashToParams(flashMemory, params, loadArp);
 }
 
-int PreenFMFileType::bankBaseLength(const char *bankName) {
+int PreenFMFileType::bankBaseLength(const char* bankName) {
     int k;
     for (k = 0; k < 8 && bankName[k] != 0 && bankName[k] != '.'; k++)
         ;
     return k;
 }
 
-bool PreenFMFileType::nameExists(const char *bankName) {
+bool PreenFMFileType::nameExists(const char* bankName) {
     int nameLength = bankBaseLength(bankName);
     for (int b = 0; getFile(b)->fileType != FILE_EMPTY && b < numberOfFilesMax_; b++) {
-        const struct PFM3File *pfmb = getFile(b);
+        const struct PFM3File* pfmb = getFile(b);
         if (nameLength != bankBaseLength(pfmb->name)) {
             continue;
         }
@@ -336,7 +335,7 @@ bool PreenFMFileType::nameExists(const char *bankName) {
     return false;
 }
 
-const struct PFM3File* PreenFMFileType::addEmptyFile(const char *fileName) {
+const struct PFM3File* PreenFMFileType::addEmptyFile(const char* fileName) {
     int k;
     for (k = 0; myFiles_[k].fileType != FILE_EMPTY && k < numberOfFilesMax_; k++)
         ;
@@ -352,4 +351,3 @@ const struct PFM3File* PreenFMFileType::addEmptyFile(const char *fileName) {
     isInitialized_ = false;
     return &myFiles_[k];
 }
-

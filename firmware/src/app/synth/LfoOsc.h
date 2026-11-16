@@ -21,46 +21,41 @@
 #include "Lfo.h"
 #include "Osc.h"
 
-
-
-class LfoOsc: public Lfo {
+class LfoOsc : public Lfo {
 public:
     virtual ~LfoOsc() {};
 
-	void init(struct LfoParams *lfoParams, float* lfoPhase, Matrix* matrix, SourceEnum source, DestinationEnum dest);
+    void init(struct LfoParams* lfoParams, float* lfoPhase, Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
-	void valueChanged(int encoder) {
-	    switch (encoder) {
-	    case ENCODER_LFO_KSYNC:
+    void valueChanged(int encoder) {
+        switch (encoder) {
+        case ENCODER_LFO_KSYNC:
             this->rampInv_ = 50 * invTab[(int)(lfo_->keybRamp * 50.0f)];
             this->ramp_ = lfo_->keybRamp;
-            if (this->ramp_ < 0 ) {
+            if (this->ramp_ < 0) {
                 // resync all LFO
                 phase_ = 0;
             }
             break;
-	    case ENCODER_LFO_FREQ:
-	        isNotMidiSynchronized_ = ((lfo_->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16);
-	        break;
-	    }
-	}
+        case ENCODER_LFO_FREQ:
+            isNotMidiSynchronized_ = ((lfo_->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16);
+            break;
+        }
+    }
 
+    void midiClock(int songPosition, bool computeStep);
 
-	void midiClock(int songPosition, bool computeStep);
+    void nextValueInMatrix();
 
-	void nextValueInMatrix();
+    void noteOn();
 
-	void noteOn();
-
-	void noteOff() {
-		// Nothing to do
-	}
-
-
+    void noteOff() {
+        // Nothing to do
+    }
 
 private:
-	LfoType type_;
-	LfoParams* lfo_ ;
+    LfoType type_;
+    LfoParams* lfo_;
     float currentRamp_, ramp_, rampInv_;
     float phase_;
     float* initPhase_;
@@ -68,10 +63,9 @@ private:
     float currentRandomValue_;
     float nextRandomValue_ = 0;
     float noiseLp_ = 0;
-    float currentFreq_ ;
+    float currentFreq_;
     //
     bool isNotMidiSynchronized_;
-
 };
 
 #endif /* LFOOSC_H_ */

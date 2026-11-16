@@ -11,8 +11,8 @@
 #define SYNTH_ENGINE_FACTORY_H_
 
 #include "Common.h"
-#include "Preenfm3Engine.h"
 #include "Dx7SynthEngine.h"
+#include "Preenfm3Engine.h"
 #include "byos/ByosEngine.h"
 
 class Timbre;
@@ -27,7 +27,7 @@ class SynthEngineFactory {
 public:
     // One-time DSP table initialization, before any engine/voice init.
     static void initDsp();
-    static void init(Timbre *timbre, SynthState *synthState);
+    static void init(Timbre* timbre, SynthState* synthState);
     static SynthEngine* get(SynthEngineType type, int timbreNumber);
     static const char* getEngineDisplayName(SynthEngineType type);
     // Map a preset/mixer storage magic to its engine, or COUNT if unknown.

@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef SYNTHPARAMLISTENER_H_
 #define SYNTHPARAMLISTENER_H_
 
@@ -25,9 +24,12 @@ class SynthParamListener {
 
 public:
     virtual void newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
-    virtual void newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
-    virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {}
-    virtual void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {}
+    virtual void newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue,
+                                               float newValue) = 0;
+    virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    }
+    virtual void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
+    }
     virtual void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) = 0;
     virtual void newTimbre(int timbre) = 0;
     virtual void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) = 0;

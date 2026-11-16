@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach (ST-LINK)",
+            "type": "cortex-debug",
+            "request": "attach",
+            "servertype": "stutil",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/firmware/preenfm3_firmware.elf",
+            "device": "STM32H753VI",
+            "interface": "swd",
+            "gdbPath": "/usr/bin/gdb",
+            "showDevDebugOutput": "raw"
+        }
+    ]
+}

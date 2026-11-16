@@ -18,49 +18,46 @@
 #ifndef LFO_H_
 #define LFO_H_
 
-#include "SynthStateAware.h"
 #include "Matrix.h"
 
-
-
-#define NUMBER_OF_LFO_OSC 3
-#define NUMBER_OF_LFO_ENV 1
+#define NUMBER_OF_LFO_OSC  3
+#define NUMBER_OF_LFO_ENV  1
 #define NUMBER_OF_LFO_ENV2 1
 #define NUMBER_OF_LFO_STEP 2
 
-#define NUMBER_OF_LFO NUMBER_OF_LFO_OSC+NUMBER_OF_LFO_ENV+NUMBER_OF_LFO_ENV2+NUMBER_OF_LFO_STEP
+#define NUMBER_OF_LFO NUMBER_OF_LFO_OSC + NUMBER_OF_LFO_ENV + NUMBER_OF_LFO_ENV2 + NUMBER_OF_LFO_STEP
 
 class Lfo {
 public:
-	Lfo();
-	virtual ~Lfo() {}
-	virtual void init(Matrix* matrix, SourceEnum source, DestinationEnum dest);
+    Lfo();
+    virtual ~Lfo() {
+    }
+    virtual void init(Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
-	/*
-	 * All calls to these functions are currently type-specific, and the
-	 * virtual function calls have a high overhead (~500 cycles total per
-	 * buildNewSampleBlock). The savings may be due to inlining which is
-	 * (usually) not possible for virtual functions
-	virtual void valueChanged(int encoder) = 0;
-	virtual void nextValueInMatrix() = 0 ;
-	virtual void noteOn() = 0;
-	virtual void noteOff() = 0;
-	virtual void midiClock(int songPosition, bool computeStep) = 0;
-	*/
+    /*
+     * All calls to these functions are currently type-specific, and the
+     * virtual function calls have a high overhead (~500 cycles total per
+     * buildNewSampleBlock). The savings may be due to inlining which is
+     * (usually) not possible for virtual functions
+    virtual void valueChanged(int encoder) = 0;
+    virtual void nextValueInMatrix() = 0 ;
+    virtual void noteOn() = 0;
+    virtual void noteOff() = 0;
+    virtual void midiClock(int songPosition, bool computeStep) = 0;
+    */
 
-	void midiContinue() {
-		ticks_ = 0;
-	}
-
+    void midiContinue() {
+        ticks_ = 0;
+    }
 
 protected:
-	Matrix *matrix_;
+    Matrix* matrix_;
     uint8_t destination_;
     uint8_t source_;
-	// Midi Clock sync
-	int ticks_;
+    // Midi Clock sync
+    int ticks_;
 
-	// Precalcul 1/freq
+    // Precalcul 1/freq
     static int initTab;
     static float invTab[2048];
 };

@@ -33,21 +33,20 @@ class EditorPfm3 : public EditorParamPage {
 public:
     EditorPfm3();
 
-    void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) override;
+    void init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) override;
     SynthEngineType getEngineType() const override;
     const char* getEngineName() const override;
     const struct EditorEditMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
     void drawAlgorithm() override;
     void drawPageHeader() override;
-    void drawEditorButton(int button, const struct EditorEditMenu *editMenu,
-        const struct EditorOneButton *page) override;
-    void drawParameterName(int button, const struct RowEncoder &rowEncoder,
-        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) override;
+    void drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) override;
+    void drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
+                           const struct EditorOneButton* page) override;
     void preparePage() override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-        ParameterDisplay *param, float oldValue, float newValue) override;
+    void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
+                           float newValue) override;
     void tempoClick() override;
     void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) override;
     void buttonPressed(int button) override;

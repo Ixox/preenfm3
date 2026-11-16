@@ -20,8 +20,6 @@
 
 #include "PreenFMFileType.h"
 
-
-
 class ScalaFile;
 class Sequencer;
 class MixerState;
@@ -29,10 +27,9 @@ class Timbre;
 
 class MixerBank : public PreenFMFileType {
 public:
-	MixerBank();
-	virtual ~MixerBank();
-    void init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3,
-            Timbre *timbre4, Timbre *timbre5, Timbre *timbre6);
+    MixerBank();
+    virtual ~MixerBank();
+    void init(Timbre* timbre1, Timbre* timbre2, Timbre* timbre3, Timbre* timbre4, Timbre* timbre5, Timbre* timbre6);
     void setMixerState(MixerState* mixerState);
     void setSequencer(Sequencer* sequencer);
     void setScalaFile(ScalaFile* scalaFile);
@@ -48,7 +45,7 @@ public:
 
 protected:
     const char* getFolderName();
-	bool isCorrectFile(char *name, int size);
+    bool isCorrectFile(char* name, int size);
     Timbre* timbre_[NUMBER_OF_TIMBRES];
     bool saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerStateToSave);
     bool loadMixerData(FIL* file, uint8_t mixerNumber);

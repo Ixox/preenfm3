@@ -20,35 +20,30 @@
 
 #include "stm32h7xx_hal.h"
 
-#include "RingBuffer.h"
 #include "EncodersListener.h"
+#include "RingBuffer.h"
 #include "preenfm3_pins.h"
 
-#define NUMBER_OF_ENCODERS 6
+#define NUMBER_OF_ENCODERS    6
 #define NUMBER_OF_BUTTONS_MIN 12
 #define NUMBER_OF_BUTTONS_MAX 18
 
-enum LastEncoderMove {
-    LAST_MOVE_NONE = 0, LAST_MOVE_INC, LAST_MOVE_DEC
-};
+enum LastEncoderMove { LAST_MOVE_NONE = 0, LAST_MOVE_INC, LAST_MOVE_DEC };
 
 enum EncoderActionType {
-	ENCODER_TURNED = 0,
-	ENCODER_TURNED_WHILE_BUTTON_PRESSED,
-	ENCODER_BUTTON_CLICKED,
-	ENCODER_TWO_BUTTON_PRESSED,
-	ENCODER_LONG_BUTTON_PRESSED,
+    ENCODER_TURNED = 0,
+    ENCODER_TURNED_WHILE_BUTTON_PRESSED,
+    ENCODER_BUTTON_CLICKED,
+    ENCODER_TWO_BUTTON_PRESSED,
+    ENCODER_LONG_BUTTON_PRESSED,
 };
 
-
-
-
 struct EncoderAction {
-	uint8_t actionType;
-	uint8_t encoder;
-	int8_t ticks;
-	uint8_t button1;
-	uint8_t button2;
+    uint8_t actionType;
+    uint8_t encoder;
+    int8_t ticks;
+    uint8_t button1;
+    uint8_t button2;
 };
 
 struct EncoderStatus {
@@ -73,7 +68,7 @@ public:
     uint32_t getRegisterBits(uint8_t encoderPush);
     void processActions();
 
-    void insertListener(EncodersListener *listener) {
+    void insertListener(EncodersListener* listener) {
         if (firstListener_ != 0) {
             listener->nextListener_ = firstListener_;
         }
@@ -83,36 +78,36 @@ public:
     void clearState();
 
     void encoderTurned(int encoder, int ticks) {
-		for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
-			listener->encoderTurned(encoder, ticks);
-		}
+        for (EncodersListener* listener = firstListener_; listener != 0; listener = listener->nextListener_) {
+            listener->encoderTurned(encoder, ticks);
+        }
     }
 
     void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
-		for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
-			listener->encoderTurnedWhileButtonPressed(encoder, ticks, button);
-		}
+        for (EncodersListener* listener = firstListener_; listener != 0; listener = listener->nextListener_) {
+            listener->encoderTurnedWhileButtonPressed(encoder, ticks, button);
+        }
     }
 
     void buttonPressed(int button) {
-        for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
+        for (EncodersListener* listener = firstListener_; listener != 0; listener = listener->nextListener_) {
             listener->buttonPressed(button);
         }
     }
 
     void buttonLongPressed(int button) {
-        for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
+        for (EncodersListener* listener = firstListener_; listener != 0; listener = listener->nextListener_) {
             listener->buttonLongPressed(button);
         }
     }
 
     void twoButtonsPressed(int button1, int button2) {
-        for (EncodersListener *listener = firstListener_; listener != 0; listener = listener->nextListener_) {
+        for (EncodersListener* listener = firstListener_; listener != 0; listener = listener->nextListener_) {
             listener->twoButtonsPressed(button1, button2);
         }
     }
 
-    private:
+private:
     uint8_t action_[2][16];
     uint32_t encoderBit1_[NUMBER_OF_ENCODERS];
     uint32_t encoderBit2_[NUMBER_OF_ENCODERS];
@@ -132,7 +127,7 @@ public:
     // execute action can be async
     RingBuffer<EncoderAction, 16> actions_;
 
-    EncodersListener *firstListener_;
+    EncodersListener* firstListener_;
 };
 
 #endif /* ENCODERS_H_ */

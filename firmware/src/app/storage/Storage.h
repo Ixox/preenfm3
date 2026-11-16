@@ -15,50 +15,63 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #ifndef __STORAGE_H__
 #define __STORAGE_H__
 
-#include <MixerBank.h>
 #include "Common.h"
-#include "FileSystemUtils.h"
 #include "ConfigurationFile.h"
 #include "DX7SysexFile.h"
+#include "FileSystemUtils.h"
+#include "PPMImage.h"
 #include "PatchBank.h"
 #include "ScalaFile.h"
-#include "UserWaveform.h"
-#include "UserEnvCurve.h"
-#include "PPMImage.h"
 #include "SequenceBank.h"
-
-
-
+#include "UserEnvCurve.h"
+#include "UserWaveform.h"
+#include <MixerBank.h>
 
 class Timbre;
 
 class Storage {
 public:
-    virtual ~Storage() {}
-    void init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3,
-        Timbre *timbre4, Timbre *timbre5, Timbre *timbre6);
+    virtual ~Storage() {
+    }
+    void init(Timbre* timbre1, Timbre* timbre2, Timbre* timbre3, Timbre* timbre4, Timbre* timbre5, Timbre* timbre6);
 
 #ifdef DEBUG
     void testMemoryPreset();
 #endif
 
 #ifndef BOOTLOADER
-    MixerBank* getMixerBank() { return &mixerBank_; }
-    ConfigurationFile* getConfigurationFile() { return &configurationFile_; }
-    DX7SysexFile* getDX7SysexFile() { return &dx7SysexFile_; }
-    PatchBank* getPatchBank() { return &patchBank_; }
-    ScalaFile* getScalaFile() { return &scalaFile_; }
-    UserWaveform* getUserWaveform() { return &userWaveForm_; };
-    UserEnvCurve* getUserEnvCurve() { return &userEnvCurve_; };
+    MixerBank* getMixerBank() {
+        return &mixerBank_;
+    }
+    ConfigurationFile* getConfigurationFile() {
+        return &configurationFile_;
+    }
+    DX7SysexFile* getDX7SysexFile() {
+        return &dx7SysexFile_;
+    }
+    PatchBank* getPatchBank() {
+        return &patchBank_;
+    }
+    ScalaFile* getScalaFile() {
+        return &scalaFile_;
+    }
+    UserWaveform* getUserWaveform() {
+        return &userWaveForm_;
+    };
+    UserEnvCurve* getUserEnvCurve() {
+        return &userEnvCurve_;
+    };
 #ifdef PPMIMAGE_ENABLE
-    PPMImage* getPPMImage() { return &ppmImage_; };
+    PPMImage* getPPMImage() {
+        return &ppmImage_;
+    };
 #endif
-    SequenceBank* getSequenceBank() { return &sequenceBank_; };
+    SequenceBank* getSequenceBank() {
+        return &sequenceBank_;
+    };
 #else
 #endif
 

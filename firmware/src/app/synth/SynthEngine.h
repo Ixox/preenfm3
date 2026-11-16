@@ -14,8 +14,8 @@
 
 #include "Common.h"
 #include "PersistenceMagic.h"
-#include "TimbreParams.h"
 #include "Pfm3Preset.h"
+#include "TimbreParams.h"
 
 class Timbre;
 class Voice;
@@ -50,10 +50,11 @@ struct MidiParamMessage {
  */
 class SynthEngine {
 public:
-    virtual ~SynthEngine() {}
+    virtual ~SynthEngine() {
+    }
 
     // Called once at startup: bind the engine to its timbre and global state.
-    virtual void init(Timbre *timbre, SynthState *synthState) = 0;
+    virtual void init(Timbre* timbre, SynthState* synthState) = 0;
 
     // A preset/mixer was loaded or the timbre reset: rebuild derived state
     // (envelopes, context, per-voice data) from the new parameters.
@@ -61,7 +62,7 @@ public:
 
     // Attach the engine's per-voice state to a voice owned by this timbre.
     // Called when a voice is allocated or transferred from another timbre.
-    virtual void bindVoice(Voice *voice) = 0;
+    virtual void bindVoice(Voice* voice) = 0;
 
     // MIDI note on/off (note 0..127, velocity 0..127). The engine allocates or
     // reuses voices, applies mono/unison/glide and updates the matrix.
@@ -69,13 +70,18 @@ public:
     virtual void noteOff(char note) = 0;
 
     // External voice lifecycle, dispatched to the engine that owns the voice.
-    virtual void killVoice(Voice *voice) {}
-    virtual void noteOffVoice(Voice *voice) {}
-    virtual void noteOffVoiceQuick(Voice *voice) {}
+    virtual void killVoice(Voice* voice) {
+    }
+    virtual void noteOffVoice(Voice* voice) {
+    }
+    virtual void noteOffVoiceQuick(Voice* voice) {
+    }
 
     // Restart a voice after a deferred cross-timbre transfer.
-    virtual void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff) {}
-    virtual void completeVoiceTransfer(Voice *voice, int poolIndex, VoicePool *pool) {}
+    virtual void startVoiceAfterTransfer(Voice* voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff) {
+    }
+    virtual void completeVoiceTransfer(Voice* voice, int poolIndex, VoicePool* pool) {
+    }
 
     // Render one block for all voices of the timbre.
     // Returns the number of voices that were playing.
@@ -108,53 +114,76 @@ public:
     virtual void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) = 0;
 
     // Generic engine-owned parameter change (engine-specific paramId).
-    virtual void engineParamChanged(int paramId, int context, float oldValue, float newValue) {}
+    virtual void engineParamChanged(int paramId, int context, float oldValue, float newValue) {
+    }
 
     // Engine-owned editor/patch memory (nullptr/0 when the engine has none).
-    virtual uint8_t* getPatchMemory() { return nullptr; }
+    virtual uint8_t* getPatchMemory() {
+        return nullptr;
+    }
 
     // Reload the engine after direct edits to getPatchMemory().
-    virtual void patchMemoryChanged() {}
+    virtual void patchMemoryChanged() {
+    }
 
     // Prepare a voice's FX matrix before rendering (once per block).
-    virtual void prepareFxMatrix(Voice *voice) {}
+    virtual void prepareFxMatrix(Voice* voice) {
+    }
 
     // Re-apply note/velocity matrix sources after a voice was bound/transferred.
-    virtual void updateVoiceMatrix(Voice *voice, int note, int velocity) {}
+    virtual void updateVoiceMatrix(Voice* voice, int note, int velocity) {
+    }
 
     // True if a stolen voice may finish its release with the old timbre while
     // the new timbre starts (deferred cross-timbre transfer).
-    virtual bool supportsDeferredSteal() const { return false; }
+    virtual bool supportsDeferredSteal() const {
+        return false;
+    }
 
     // True if a repeated note may restart the still-playing voice in place
     // (the engine implements a soft retrigger). When false,
     // Timbre::allocateVoice() prefers a free voice so the release tail rings on.
-    virtual bool reusesSameNoteVoice() const { return false; }
+    virtual bool reusesSameNoteVoice() const {
+        return false;
+    }
 
     // Engine-owned parameter CC. Return true when the CC was consumed.
-    virtual bool midiControlChange(int timbre, uint8_t cc, uint8_t value) { return false; }
+    virtual bool midiControlChange(int timbre, uint8_t cc, uint8_t value) {
+        return false;
+    }
 
     // Engine-owned NRPN. `param` and `value` are the packed 14-bit values.
     // Return true when the NRPN was consumed.
-    virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) { return false; }
+    virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) {
+        return false;
+    }
 
     // Map a generic engine-parameter change to an outgoing CC/NRPN message.
     // `paramId` and `context` are engine-defined (e.g. parameter/operator).
-    virtual bool midiParamFeedback(int paramId, int context, float newValue,
-                                   struct MidiParamMessage &out) const { return false; }
+    virtual bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
+        return false;
+    }
 
     // Enumerate the patch as outgoing NRPN messages. `index` starts at 0 and
     // is advanced by the caller; return false when the patch is exhausted.
-    virtual bool midiPatchParam(int timbre, int index, struct MidiParamMessage &out) const { return false; }
+    virtual bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const {
+        return false;
+    }
 
     // MIDI clock sync for LFOs, step sequencers and arpeggiators.
-    virtual void midiClockContinue(int songPosition) {}
-    virtual void midiClockStart() {}
-    virtual void midiClockStop() {}
-    virtual void midiClockSongPositionStep(int songPosition) {}
+    virtual void midiClockContinue(int songPosition) {
+    }
+    virtual void midiClockStart() {
+    }
+    virtual void midiClockStop() {
+    }
+    virtual void midiClockSongPositionStep(int songPosition) {
+    }
 
     // Read a matrix destination from the last played voice (shared FX/filter).
-    virtual float getMatrixDestination(int destination) { return 0.0f; }
+    virtual float getMatrixDestination(int destination) {
+        return 0.0f;
+    }
 
     /*
      * Persistence.
@@ -182,12 +211,12 @@ public:
     // Write the on-flash engine bytes (without magic) into `out`.
     // Must not write more than `maxSize` bytes.
     // Returns the number of bytes written.
-    virtual uint32_t getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) = 0;
+    virtual uint32_t getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) = 0;
 
     // Load from `in` (`size` valid bytes; magic already read by storage).
     // `magic` lets the engine accept its legacy formats.
     // Return false on unknown/invalid data; storage then keeps the current preset.
-    virtual bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) = 0;
+    virtual bool loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t magic) = 0;
 
     /*
      * PFM3 only.
@@ -198,50 +227,70 @@ public:
      */
 
     // A PFM3 row/encoder parameter changed.
-    virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {}
+    virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {
+    }
 
     // Write a flat parameter value into the PFM3 owner storage.
     // `index` is the flat index used by the editor/MIDI path (row * 4 + encoder).
-    virtual void setParamValue(int index, float value) {}
+    virtual void setParamValue(int index, float value) {
+    }
 
-    virtual bool isUnisonMode() const { return false; }
-    virtual bool supportsStepSequencer() const { return true; }
-    virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) {}
+    virtual bool isUnisonMode() const {
+        return false;
+    }
+    virtual bool supportsStepSequencer() const {
+        return true;
+    }
+    virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps& steps) {
+    }
 
     // Flat Pfm3Preset mirror (PFM3 UI/storage layout).
-    virtual void serializePfm3Preset(struct Pfm3Preset &out) const {}
-    virtual void deserializePfm3Preset(const struct Pfm3Preset &in) {}
+    virtual void serializePfm3Preset(struct Pfm3Preset& out) const {
+    }
+    virtual void deserializePfm3Preset(const struct Pfm3Preset& in) {
+    }
     // Does this engine use the shared Pfm3Preset mirror?
-    virtual bool usesPfm3PresetMirror() const { return false; }
+    virtual bool usesPfm3PresetMirror() const {
+        return false;
+    }
 
     // Accept a flat-parameter edit coming from MIDI for `row`.
     // Rejecting rows also protects the shared Pfm3Preset mirror
     // (the hidden PFM3 patch).
-    virtual bool acceptsFlatParamFromMidi(int row) const { return true; }
+    virtual bool acceptsFlatParamFromMidi(int row) const {
+        return true;
+    }
 
     // Map a PFM3 row/encoder change to an outgoing CC/NRPN message.
     // Return false when the parameter has no MIDI representation.
-    virtual bool midiPfm3ParamFeedback(int row, int encoder, float newValue,
-                                       struct MidiParamMessage &out) const { return false; }
+    virtual bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const {
+        return false;
+    }
 
     // An LFO/step parameter changed: forward the new value to the voices.
-    virtual void lfoValueChange(int row, int encoder, float value) {}
+    virtual void lfoValueChange(int row, int encoder, float value) {
+    }
 
     // Recompute the MIDI note curve table (scale 0 or 1) used by matrix sources.
-    virtual void updateMidiNoteScale(int scale) {}
+    virtual void updateMidiNoteScale(int scale) {
+    }
 
     // Recompute which LFOs the matrix actually uses (CPU optimisation).
-    virtual void verifyLfoUsed(int encoder, float oldValue, float newValue) {}
+    virtual void verifyLfoUsed(int encoder, float oldValue, float newValue) {
+    }
 
     // Whether an LFO is used by the matrix (skip its processing when unused).
-    virtual bool isLfoUsed(int lfo) { return false; }
+    virtual bool isLfoUsed(int lfo) {
+        return false;
+    }
 
     /*
      * DX7 only.
      */
 
     // DX7 SysEx import (156-byte packed DX7 program).
-    virtual void loadDx7Patch(const uint8_t *packedPatch) {}
+    virtual void loadDx7Patch(const uint8_t* packedPatch) {
+    }
 };
 
 #endif

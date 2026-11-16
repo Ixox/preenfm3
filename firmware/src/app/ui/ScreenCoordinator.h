@@ -18,23 +18,23 @@
 #ifndef SCREEN_COORDINATOR_H_
 #define SCREEN_COORDINATOR_H_
 
-#include "SynthStateAware.h"
 #include "FirmwareTftDisplay.h"
 #include "Menu.h"
-#include "VisualInfo.h"
 #include "Storage.h"
+#include "SynthStateAware.h"
+#include "VisualInfo.h"
 
 class ScreenEditor;
 class ScreenMixer;
 class ScreenMenu;
 class ScreenSequencer;
 
-class ScreenCoordinator: public SynthParamListener, public SynthMenuListener, public SynthStateAware, public VisualInfo {
+class ScreenCoordinator : public SynthParamListener, public SynthMenuListener, public SynthStateAware, public VisualInfo {
 public:
     ScreenCoordinator();
     ~ScreenCoordinator();
-    void init(FirmwareTftDisplay *tft);
-    void setDisplays(ScreenMixer *mixer, ScreenEditor *editor, ScreenMenu *menu, ScreenSequencer *sequencer);
+    void init(FirmwareTftDisplay* tft);
+    void setDisplays(ScreenMixer* mixer, ScreenEditor* editor, ScreenMenu* menu, ScreenSequencer* sequencer);
     void customCharsInit();
 
     void updateEncoderValue(int refreshStatus);
@@ -56,16 +56,16 @@ public:
     void checkPresetModified(int timbre);
 
     int rowInc(MenuState menuState);
-    void newSynthMode(FullState *fullState);
-    void newMenuState(FullState *fullState);
-    void newMenuSelect(FullState *fullState);
-    void newPfm3Page(FullState *fullState);
-    void menuBack(const MenuItem *oldMenuItem, FullState *fullState);
+    void newSynthMode(FullState* fullState);
+    void newMenuState(FullState* fullState);
+    void newMenuSelect(FullState* fullState);
+    void newPfm3Page(FullState* fullState);
+    void menuBack(const MenuItem* oldMenuItem, FullState* fullState);
     void refreshOscilloBG();
 
-    void newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
-    void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue);
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
@@ -90,7 +90,7 @@ public:
     }
 
 private:
-    FirmwareTftDisplay *tft_;
+    FirmwareTftDisplay* tft_;
     int refreshStatus_;
     int endRefreshStatus_;
 
@@ -100,10 +100,10 @@ private:
     int noteOnCounter_[NUMBER_OF_TIMBRES];
 
     // One Display class per main page
-    ScreenMixer *mixer_;
-    ScreenMenu *menu_;
-    ScreenEditor *editor_;
-    ScreenSequencer *sequencer_;
+    ScreenMixer* mixer_;
+    ScreenMenu* menu_;
+    ScreenEditor* editor_;
+    ScreenSequencer* sequencer_;
 };
 
 #endif /* SCREEN_COORDINATOR_H_ */

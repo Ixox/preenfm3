@@ -23,6 +23,6 @@ Matrix::Matrix() {
 Matrix::~Matrix() {
 }
 
-void Matrix::init(struct MatrixRowParams *matrixRows) {
+void Matrix::init(struct MatrixRowParams* matrixRows) {
     this->rows_ = matrixRows;
 }

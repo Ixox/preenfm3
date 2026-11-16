@@ -39,8 +39,6 @@ enum MIXER_BANK_VERSION {
 
 #define MIXER_BANK_CURRENT_VERSION MIXER_BANK_VERSION7
 
-
-
 struct MixerInstrumentState {
     uint8_t out;
     uint8_t compressorType;
@@ -54,22 +52,21 @@ struct MixerInstrumentState {
     uint16_t scaleScaleNumber;
     char scalaScaleFileName[13];
     float volume;
-    float *scaleFrequencies;
+    float* scaleFrequencies;
     int8_t pan;
     float send;
     uint8_t engine;
 };
-
 
 class MixerState {
 public:
     MixerState();
     virtual ~MixerState();
 
-    void getFullState(char *buffer, uint32_t *size);
-    void getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNumber);
-    void restoreFullState(char *buffer);
-    static char* getMixNameFromFile(char *buffer);
+    void getFullState(char* buffer, uint32_t* size);
+    void getFullDefaultState(char* buffer, uint32_t* size, uint8_t mixNumber);
+    void restoreFullState(char* buffer);
+    static char* getMixNameFromFile(char* buffer);
 
     char mixName_[13];
     uint8_t currentChannel_;
@@ -86,13 +83,13 @@ public:
     FxBus fxBus_;
 
 private:
-    void restoreFullStateVersion1(char *buffer);
-    void restoreFullStateVersion2(char *buffer);
-    void restoreFullStateVersion3(char *buffer);
-    void restoreFullStateVersion4(char *buffer);
-    void restoreFullStateVersion5(char *buffer);
-    void restoreFullStateVersion6(char *buffer);
-    void restoreFullStateVersion7(char *buffer);
+    void restoreFullStateVersion1(char* buffer);
+    void restoreFullStateVersion2(char* buffer);
+    void restoreFullStateVersion3(char* buffer);
+    void restoreFullStateVersion4(char* buffer);
+    void restoreFullStateVersion5(char* buffer);
+    void restoreFullStateVersion6(char* buffer);
+    void restoreFullStateVersion7(char* buffer);
     void setDefaultValues();
 };
 

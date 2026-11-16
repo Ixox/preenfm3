@@ -20,21 +20,19 @@
 
 #include "Lfo.h"
 
-
-
-class LfoStepSeq: public Lfo {
+class LfoStepSeq : public Lfo {
 public:
-	void init(struct StepSequencerParams* stepSeqParam, struct StepSequencerSteps* stepSeqSteps, Matrix* matrix, SourceEnum source, DestinationEnum dest);
-	void valueChanged(int encoder);
-	void nextValueInMatrix();
-	void noteOn();
-	void noteOff();
-	void midiClock(int songPosition, bool computeStep);
-
+    void init(struct StepSequencerParams* stepSeqParam, struct StepSequencerSteps* stepSeqSteps, Matrix* matrix, SourceEnum source,
+              DestinationEnum dest);
+    void valueChanged(int encoder);
+    void nextValueInMatrix();
+    void noteOn();
+    void noteOff();
+    void midiClock(int songPosition, bool computeStep);
 
 private:
-	StepSequencerParams* seqParams_;
-	StepSequencerSteps* seqSteps_;
+    StepSequencerParams* seqParams_;
+    StepSequencerSteps* seqSteps_;
 
     float phase_;
     float phaseStep_;

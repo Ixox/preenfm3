@@ -15,20 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef ENCODERSLISTENER_H_
 #define ENCODERSLISTENER_H_
 
 class EncodersListener {
 public:
-	virtual ~EncodersListener() {}
-	virtual void encoderTurned(int encoder, int ticks) = 0;
-	virtual void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) = 0;
-	virtual void buttonPressed(int button) = 0;
-	virtual void buttonLongPressed(int button) = 0;
-	virtual void twoButtonsPressed(int button1, int button2) = 0;
-	EncodersListener* nextListener_;
-
+    virtual ~EncodersListener() {
+    }
+    virtual void encoderTurned(int encoder, int ticks) = 0;
+    virtual void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) = 0;
+    virtual void buttonPressed(int button) = 0;
+    virtual void buttonLongPressed(int button) = 0;
+    virtual void twoButtonsPressed(int button1, int button2) = 0;
+    EncodersListener* nextListener_;
 };
 
 #endif /* ENCODERSLISTENER_H_ */

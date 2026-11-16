@@ -18,17 +18,16 @@
 #ifndef LFOENV_H_
 #define LFOENV_H_
 
-#include "Lfo.h"
 #include "Env.h"
+#include "Lfo.h"
 
-
-class LfoEnv: public Lfo {
+class LfoEnv : public Lfo {
 public:
     LfoEnv();
 
-	void init(struct EnvelopeLfoParams * envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest);
+    void init(struct EnvelopeLfoParams* envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
-	void valueChanged(int encoder) {
+    void valueChanged(int encoder) {
         switch (encoder) {
         case 0:
             stateInc_[ENV_STATE_ON_A] = 0.0008f / (envParams_->attack + 0.0001);
@@ -37,13 +36,14 @@ public:
             stateInc_[ENV_STATE_ON_D] = 0.0008f / (envParams_->decay + 0.0001);
             break;
         case 2:
-            stateTarget_[ENV_STATE_ON_D] =  envParams_->sustain;
-            stateTarget_[ENV_STATE_ON_S] =  envParams_->sustain;
+            stateTarget_[ENV_STATE_ON_D] = envParams_->sustain;
+            stateTarget_[ENV_STATE_ON_S] = envParams_->sustain;
             break;
         case 3:
             stateInc_[ENV_STATE_ON_R] = 0.0008f / (envParams_->release + 0.0001);
             break;
-        }	}
+        }
+    }
 
     void newState() {
 
@@ -55,34 +55,33 @@ public:
         env_.currentPhase = 0;
     }
 
-
     void nextValueInMatrix() {
         env_.currentPhase += stateInc_[env_.envState];
 
-        if (unlikely(env_.currentPhase  >= 1.0f)) {
+        if (unlikely(env_.currentPhase >= 1.0f)) {
             env_.currentValue = env_.nextStateValue;
             env_.envState++;
             newState();
         } else if (likely(stateInc_[env_.envState] > 0)) {
-            env_.currentValue = env_.previousStateValue * (1- env_.currentPhase) + env_.nextStateValue * env_.currentPhase;
+            env_.currentValue = env_.previousStateValue * (1 - env_.currentPhase) + env_.nextStateValue * env_.currentPhase;
         }
 
-		matrix_->setSource((enum SourceEnum) source_, env_.currentValue);
-	}
+        matrix_->setSource((enum SourceEnum)source_, env_.currentValue);
+    }
 
-	void noteOn() {
+    void noteOn() {
         env_.currentValue = 0;
         env_.envState = ENV_STATE_ON_A;
         newState();
-	}
+    }
 
-	void noteOff() {
-		env_.envState = ENV_STATE_ON_R;
-		newState();
-	}
+    void noteOff() {
+        env_.envState = ENV_STATE_ON_R;
+        newState();
+    }
 
-	void midiClock(int songPosition, bool computeStep) {
-	}
+    void midiClock(int songPosition, bool computeStep) {
+    }
 
 private:
     // target values of ADSR
@@ -91,7 +90,7 @@ private:
     float stateInc_[ENV_NUMBER_OF_STATES];
 
     EnvelopeLfoParams* envParams_;
-	EnvData env_;
+    EnvData env_;
 };
 
 #endif /* LFOENV_H_ */

@@ -96,4 +96,4 @@ int getMemoryIndexFromMidi(int index) {
     return row * 4 + encoder;
 }
 
-}
+} // namespace Pfm3Midi

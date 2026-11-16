@@ -15,14 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #define PPMIMAGE_ENABLE 0
 
 #ifdef PPMIMAGE_ENABLE
 
 #ifndef FILESYSTEM_PPMIMAGE_H_
 #define FILESYSTEM_PPMIMAGE_H_
-
 
 class PPMImage {
 public:

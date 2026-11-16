@@ -37,7 +37,6 @@ public:
     void fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterAmp);
     void setNewEffectParam(int encoder);
 
-
     bool isReleased() {
         return this->released_;
     }
@@ -65,10 +64,10 @@ public:
     void setHoldedByPedal(bool holded) {
         this->holdedByPedal_ = holded;
     }
-    void bindTimbre(Timbre *timbre) {
+    void bindTimbre(Timbre* timbre) {
         currentTimbre_ = timbre;
     }
-    void setPendingTimbre(Timbre *timbre) {
+    void setPendingTimbre(Timbre* timbre) {
         pendingTimbre_ = timbre;
     }
     Timbre* getPendingTimbre() {
@@ -81,11 +80,9 @@ public:
         return transferReady_;
     }
 
-            
     Timbre* getCurrentTimbre() {
         return currentTimbre_;
     }
-
 
     void resetVoiceState();
 
@@ -93,11 +90,9 @@ public:
         return sampleBlock_;
     }
 
-
 private:
     // private function for BP filter
     void recomputeBPValues(float q, float fSquare);
-
 
     // voice status
     bool released_;
@@ -112,10 +107,9 @@ private:
 
     bool holdedByPedal_;
     // Fixing the "plop" when all notes are buisy...
-    Timbre *currentTimbre_;
-    Timbre *pendingTimbre_;
+    Timbre* currentTimbre_;
+    Timbre* pendingTimbre_;
     bool transferReady_;
-
 
     // Voice needs its own sample block to apply effects
     float sampleBlock_[BLOCK_SIZE * 2];
@@ -130,8 +124,6 @@ private:
     float fxPhase_;
     // save float fxParam1 to detect modification
     float fxParam1PlusMatrix_;
-
-
 };
 
 #endif

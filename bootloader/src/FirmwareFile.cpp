@@ -15,14 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "FirmwareFile.h"
 #include "fatfs.h"
 
 __attribute__((section(".ram_d2"))) uint8_t firmwareRead[2048];
 __attribute__((section(".ram_d2"))) struct FirmwarePFM3File firmwareAlloc[16];
-
-
 
 FirmwareFile::FirmwareFile() {
     isInitialized_ = false;
@@ -39,8 +36,6 @@ uint32_t FirmwareFile::getNumberOfFiles() {
     }
     return numberOfFiles_;
 }
-
-
 
 const struct FirmwarePFM3File* FirmwareFile::getFile(uint32_t fileNumber) {
     if (!isInitialized_) {
@@ -74,7 +69,7 @@ int FirmwareFile::initFiles() {
                 break;
             }
             if (!(fno.fattrib & AM_DIR)) {
-                if (isCorrectFile((char*) fno.fname, fno.fsize)) {
+                if (isCorrectFile((char*)fno.fname, fno.fsize)) {
                     for (int k = 0; k < 13; k++) {
                         if (fno.fname[k] == ' ') {
                             myFiles_[numberOfFiles_].name[k] = '_';
@@ -105,20 +100,24 @@ int FirmwareFile::initFiles() {
 }
 
 const char* FirmwareFile::getFolderName() {
-	return "0:/";
+    return "0:/";
 }
 
-bool FirmwareFile::isCorrectFile(char *name, int size)  {
+bool FirmwareFile::isCorrectFile(char* name, int size) {
     int pointPos = -1;
     for (int k = 10; k > 2 && pointPos == -1; k--) {
         if (name[k] == '.') {
             pointPos = k;
         }
     }
-    if (pointPos == -1) return false;
-    if (name[pointPos+1] != 'b' && name[pointPos+1] != 'B') return false;
-    if (name[pointPos+2] != 'i' && name[pointPos+2] != 'I') return false;
-    if (name[pointPos+3] != 'n' && name[pointPos+3] != 'N') return false;
+    if (pointPos == -1)
+        return false;
+    if (name[pointPos + 1] != 'b' && name[pointPos + 1] != 'B')
+        return false;
+    if (name[pointPos + 2] != 'i' && name[pointPos + 2] != 'I')
+        return false;
+    if (name[pointPos + 3] != 'n' && name[pointPos + 3] != 'N')
+        return false;
 
     return true;
 }
@@ -127,29 +126,29 @@ const char* FirmwareFile::getFullName(const char* fileName) {
     const char* pathName = getFolderName();
     int pos = 0;
     int cpt = 0;
-    for (int k =0; k < strlen(pathName) && cpt++<24; k++) {
+    for (int k = 0; k < strlen(pathName) && cpt++ < 24; k++) {
         this->fullName_[pos++] = pathName[k];
     }
     this->fullName_[pos++] = '/';
     cpt = 0;
-    for (int k = 0; k <strlen(fileName) && cpt++<14 ; k++) {
+    for (int k = 0; k < strlen(fileName) && cpt++ < 14; k++) {
         this->fullName_[pos++] = fileName[k];
     }
     this->fullName_[pos] = 0;
     return this->fullName_;
 }
 
-int FirmwareFile::strlen(const char *str) {
+int FirmwareFile::strlen(const char* str) {
     int k;
-    for (k=0; k<1000 && str[k] != 0; k++);
+    for (k = 0; k < 1000 && str[k] != 0; k++)
+        ;
     return k;
 }
 
-int FirmwareFile::strcmp(const char *s1, const char *s2) {
-    while (*s1==*s2)
-    {
-        if(*s1=='\0')
-            return(0);
+int FirmwareFile::strcmp(const char* s1, const char* s2) {
+    while (*s1 == *s2) {
+        if (*s1 == '\0')
+            return (0);
         s1++;
         s2++;
     }
@@ -161,12 +160,8 @@ int FirmwareFile::strcmp(const char *s1, const char *s2) {
     if (rs2 == '_') {
         rs2 = 0;
     }
-    return(rs1-rs2);
+    return (rs1 - rs2);
 }
-
-
-
-
 
 void FirmwareFile::swapFiles(struct FirmwarePFM3File* bankFiles, int i, int j) {
     if (i == j) {

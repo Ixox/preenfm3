@@ -76,7 +76,7 @@ struct FlashSynthParams {
     struct EffectRowParams effect2;
 };
 
-void pfm3ParamsToFlash(const struct Pfm3Preset *params, struct FlashSynthParams *flashMemory, bool saveArp);
-void pfm3FlashToParams(const struct FlashSynthParams *flashMemory, struct Pfm3Preset *params, bool loadArp);
+void pfm3ParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams* flashMemory, bool saveArp);
+void pfm3FlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Preset* params, bool loadArp);
 
 #endif

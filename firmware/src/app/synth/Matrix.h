@@ -25,15 +25,16 @@
 
 class Matrix {
     friend class Timbre;
+
 public:
     Matrix();
     ~Matrix();
 
-    void init(struct MatrixRowParams *matrixRows);
+    void init(struct MatrixRowParams* matrixRows);
 
     void resetSources() {
         for (int k = 0; k < MATRIX_SOURCE_MAX; k++) {
-            setSource((SourceEnum) k, 0);
+            setSource((SourceEnum)k, 0);
         }
     }
 
@@ -58,59 +59,59 @@ public:
         int k = 0;
         // No need to erase first one (tiny optim)
         // destinations[(int)rows[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
-        destinations_[(int) rows_[k].dest1] = 0;
-        destinations_[(int) rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
+        destinations_[(int)rows_[k].dest1] = 0;
+        destinations_[(int)rows_[k++].dest2] = 0;
 
         // For first row can be modified by destination
         if (likely(rows_[0].source != MATRIX_SOURCE_NONE)) {
-            float sourceTimesMul = sources_[(int) rows_[0].source] * (rows_[0].mul + mul1);
+            float sourceTimesMul = sources_[(int)rows_[0].source] * (rows_[0].mul + mul1);
             // First one was not set to 0 above (tiny optim)
-            destinations_[(int) rows_[0].dest1] = sourceTimesMul;
-            destinations_[(int) rows_[0].dest2] += sourceTimesMul;
+            destinations_[(int)rows_[0].dest1] = sourceTimesMul;
+            destinations_[(int)rows_[0].dest2] += sourceTimesMul;
         }
         if (likely(rows_[1].source != MATRIX_SOURCE_NONE)) {
-            float sourceTimesMul = sources_[(int) rows_[1].source] * (rows_[1].mul + mul2);
-            destinations_[(int) rows_[1].dest1] += sourceTimesMul;
-            destinations_[(int) rows_[1].dest2] += sourceTimesMul;
+            float sourceTimesMul = sources_[(int)rows_[1].source] * (rows_[1].mul + mul2);
+            destinations_[(int)rows_[1].dest1] += sourceTimesMul;
+            destinations_[(int)rows_[1].dest2] += sourceTimesMul;
         }
         if (likely(rows_[2].source != MATRIX_SOURCE_NONE)) {
-            float sourceTimesMul = sources_[(int) rows_[2].source] * (rows_[2].mul + mul3);
-            destinations_[(int) rows_[2].dest1] += sourceTimesMul;
-            destinations_[(int) rows_[2].dest2] += sourceTimesMul;
+            float sourceTimesMul = sources_[(int)rows_[2].source] * (rows_[2].mul + mul3);
+            destinations_[(int)rows_[2].dest1] += sourceTimesMul;
+            destinations_[(int)rows_[2].dest2] += sourceTimesMul;
         }
         if (likely(rows_[3].source != MATRIX_SOURCE_NONE)) {
-            float sourceTimesMul = sources_[(int) rows_[3].source] * (rows_[3].mul + mul4);
-            destinations_[(int) rows_[3].dest1] += sourceTimesMul;
-            destinations_[(int) rows_[3].dest2] += sourceTimesMul;
+            float sourceTimesMul = sources_[(int)rows_[3].source] * (rows_[3].mul + mul4);
+            destinations_[(int)rows_[3].dest1] += sourceTimesMul;
+            destinations_[(int)rows_[3].dest2] += sourceTimesMul;
         }
 
         // and compute other rows
         for (int r = 4; r < MATRIX_SIZE; r++) {
             if (likely(rows_[r].source != MATRIX_SOURCE_NONE && rows_[r].mul != 0.0f)) {
-                float sourceTimesMul = sources_[(int) rows_[r].source] * rows_[r].mul;
-                destinations_[(int) rows_[r].dest1] += sourceTimesMul;
-                destinations_[(int) rows_[r].dest2] += sourceTimesMul;
+                float sourceTimesMul = sources_[(int)rows_[r].source] * rows_[r].mul;
+                destinations_[(int)rows_[r].dest1] += sourceTimesMul;
+                destinations_[(int)rows_[r].dest2] += sourceTimesMul;
             }
         }
     }
@@ -131,7 +132,7 @@ public:
 private:
     float sources_[MATRIX_SOURCE_MAX];
     float destinations_[DESTINATION_MAX];
-    struct MatrixRowParams *rows_;
+    struct MatrixRowParams* rows_;
 };
 
 #endif /* MATRIX_H_ */

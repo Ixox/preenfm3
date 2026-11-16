@@ -101,13 +101,13 @@ struct Pfm3Preset {
  * PFM3:   [0, sharedBlockStart) and [pfm3BlockBStart, effect2Start).
  */
 namespace Pfm3PresetLayout {
-    static const int sharedBlockStart = offsetof(Pfm3Preset, engineArp1) / sizeof(float);
-    static const int sharedBlockEnd = offsetof(Pfm3Preset, osc1) / sizeof(float);
-    static const int pfm3BlockBStart = offsetof(Pfm3Preset, osc1) / sizeof(float);
-    static const int effect2Start = offsetof(Pfm3Preset, effect2) / sizeof(float);
-    static const int presetNameStart = offsetof(Pfm3Preset, presetName) / sizeof(float);
-    static const int sharedGap = sharedBlockEnd - sharedBlockStart;
-}
+static const int sharedBlockStart = offsetof(Pfm3Preset, engineArp1) / sizeof(float);
+static const int sharedBlockEnd = offsetof(Pfm3Preset, osc1) / sizeof(float);
+static const int pfm3BlockBStart = offsetof(Pfm3Preset, osc1) / sizeof(float);
+static const int effect2Start = offsetof(Pfm3Preset, effect2) / sizeof(float);
+static const int presetNameStart = offsetof(Pfm3Preset, presetName) / sizeof(float);
+static const int sharedGap = sharedBlockEnd - sharedBlockStart;
+} // namespace Pfm3PresetLayout
 
 extern const struct Pfm3Preset preenMainPreset;
 extern const struct Pfm3Preset defaultPreset;

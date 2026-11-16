@@ -27,104 +27,103 @@
  *	DEALINGS IN THE SOFTWARE.
  */
 
-
 #ifndef __SIMPLE_ENVELOPE_H__
 #define __SIMPLE_ENVELOPE_H__
 
-#include "SimpleHeader.h"	// common header
+#include "SimpleHeader.h" // common header
 
-namespace chunkware_simple
-{
-	//-------------------------------------------------------------
-	// DC offset (to prevent denormal)
-	//-------------------------------------------------------------
+namespace chunkware_simple {
+//-------------------------------------------------------------
+// DC offset (to prevent denormal)
+//-------------------------------------------------------------
 
-	// USE:
-	// 1. init envelope state to DC_OFFSET before processing
-	// 2. add to input before envelope runtime function
-	static const float DC_OFFSET = 1.0E-25;
+// USE:
+// 1. init envelope state to DC_OFFSET before processing
+// 2. add to input before envelope runtime function
+static const float DC_OFFSET = 1.0E-25;
 
-	//-------------------------------------------------------------
-	// envelope detector
-	//-------------------------------------------------------------
-	class EnvelopeDetector
-	{
-	public:
-		EnvelopeDetector(
-			  float ms = 1.0
-			, float sampleRate = 44100.0
-			);
-		virtual ~EnvelopeDetector() {}
+//-------------------------------------------------------------
+// envelope detector
+//-------------------------------------------------------------
+class EnvelopeDetector {
+public:
+    EnvelopeDetector(float ms = 1.0, float sampleRate = 44100.0);
+    virtual ~EnvelopeDetector() {
+    }
 
-		// time constant
-		virtual void   setTc( float ms );
-		virtual float getTc( void ) const { return ms_; }
+    // time constant
+    virtual void setTc(float ms);
+    virtual float getTc(void) const {
+        return ms_;
+    }
 
-		// sample rate
-		virtual void   setSampleRate( float sampleRate );
-		virtual float getSampleRate( void ) const { return sampleRate_; }
+    // sample rate
+    virtual void setSampleRate(float sampleRate);
+    virtual float getSampleRate(void) const {
+        return sampleRate_;
+    }
 
-		// runtime function
-		INLINE void run( float in, float &state ) {
-			state = in + coef_ * ( state - in );
-		}
+    // runtime function
+    INLINE void run(float in, float& state) {
+        state = in + coef_ * (state - in);
+    }
 
-	protected:
-			
-		float sampleRate_;		// sample rate
-		float ms_;				// time constant in ms
-		float coef_;			// runtime coefficient
-		virtual void setCoef( void );	// coef calculation
+protected:
+    float sampleRate_;          // sample rate
+    float ms_;                  // time constant in ms
+    float coef_;                // runtime coefficient
+    virtual void setCoef(void); // coef calculation
 
-	};	// end SimpleComp class
+}; // end SimpleComp class
 
-	//-------------------------------------------------------------
-	// attack/release envelope
-	//-------------------------------------------------------------
-	class AttRelEnvelope
-	{
-	public:
-		AttRelEnvelope(
-			  float att_ms = 10.0
-			, float rel_ms = 100.0
-			, float sampleRate = 44100.0
-			);
-		virtual ~AttRelEnvelope() {}
+//-------------------------------------------------------------
+// attack/release envelope
+//-------------------------------------------------------------
+class AttRelEnvelope {
+public:
+    AttRelEnvelope(float att_ms = 10.0, float rel_ms = 100.0, float sampleRate = 44100.0);
+    virtual ~AttRelEnvelope() {
+    }
 
-		// attack time constant
-		virtual void   setAttack( float ms );
-		virtual float getAttack( void ) const { return att_.getTc(); }
+    // attack time constant
+    virtual void setAttack(float ms);
+    virtual float getAttack(void) const {
+        return att_.getTc();
+    }
 
-		// release time constant
-		virtual void   setRelease( float ms );
-		virtual float getRelease( void ) const { return rel_.getTc(); }
+    // release time constant
+    virtual void setRelease(float ms);
+    virtual float getRelease(void) const {
+        return rel_.getTc();
+    }
 
-		// sample rate dependencies
-		virtual void   setSampleRate( float sampleRate );
-		virtual float getSampleRate( void ) const { return att_.getSampleRate(); }
+    // sample rate dependencies
+    virtual void setSampleRate(float sampleRate);
+    virtual float getSampleRate(void) const {
+        return att_.getSampleRate();
+    }
 
-		// runtime function
-		INLINE void run( float in, float &state ) {
+    // runtime function
+    INLINE void run(float in, float& state) {
 
-			/* assumes that:
-			* positive delta = attack
-			* negative delta = release
-			* good for linear & log values
-			*/
+        /* assumes that:
+         * positive delta = attack
+         * negative delta = release
+         * good for linear & log values
+         */
 
-			if ( in > state )
-				att_.run( in, state );	// attack
-			else
-				rel_.run( in, state );	// release
-		}
+        if (in > state)
+            att_.run(in, state); // attack
+        else
+            rel_.run(in, state); // release
+    }
 
-	private:
-			
-		EnvelopeDetector att_;
-		EnvelopeDetector rel_;
-		
-	};	// end AttRelEnvelope class
+private:
+    EnvelopeDetector att_;
+    EnvelopeDetector rel_;
 
-}	// end namespace chunkware_simple
+}; // end AttRelEnvelope class
 
-#endif	// end __SIMPLE_ENVELOPE_H__
+} // end namespace chunkware_simple
+
+#endif // end __SIMPLE_ENVELOPE_H__

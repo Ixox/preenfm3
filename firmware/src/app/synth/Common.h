@@ -23,30 +23,29 @@
 
 // #define DEBUG 1
 
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)     __builtin_expect((x),0)
-#define ARRAY_SIZE(x)  ( sizeof(x) / sizeof((x)[0]) )
+#define likely(x)     __builtin_expect((x), 1)
+#define unlikely(x)   __builtin_expect((x), 0)
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define BLOCK_SIZE 32
 
 #define NUMBER_OF_ENCODERS_PFM2 4
-#define NUMBER_OF_ENCODERS 6
+#define NUMBER_OF_ENCODERS      6
 
 #define MAX_NUMBER_OF_VOICES 16
 
-#define NUMBER_OF_TIMBRES 6
+#define NUMBER_OF_TIMBRES   6
 #define NUMBER_OF_OPERATORS 6
 
 #define PREENFM_FREQUENCY 47916.0f
 
-#define PREENFM_FREQUENCY_INVERSED 1.0f/PREENFM_FREQUENCY
-#define PREENFM_FREQUENCY_INVERSED_LFO PREENFM_FREQUENCY_INVERSED*32.0f
+#define PREENFM_FREQUENCY_INVERSED     1.0f / PREENFM_FREQUENCY
+#define PREENFM_FREQUENCY_INVERSED_LFO PREENFM_FREQUENCY_INVERSED * 32.0f
 
 #define NUMBER_OF_WAVETABLES 14
 
-
-#define BUTTON_PFM3_MIXER 9
-#define BUTTON_PFM3_EDIT 10
+#define BUTTON_PFM3_MIXER     9
+#define BUTTON_PFM3_EDIT      10
 #define BUTTON_PFM3_SEQUENCER 11
 
 // switch 1
@@ -66,14 +65,12 @@
 #define BUTTON_LFO    4
 
 #define BUTTON_PREVIOUS_INSTRUMENT 7
-#define BUTTON_NEXT_INSTRUMENT 8
+#define BUTTON_NEXT_INSTRUMENT     8
 
+#define BUTTON_MENUSELECT 22
+#define BUTTON_ENCODER    23
 
-#define BUTTON_MENUSELECT   22
-#define BUTTON_ENCODER   23
-
-#define BUTTON_DUMP   0
-
+#define BUTTON_DUMP 0
 
 #define BUTTON_ENCODER_1 12
 #define BUTTON_ENCODER_2 13
@@ -82,17 +79,12 @@
 #define BUTTON_ENCODER_5 16
 #define BUTTON_ENCODER_6 17
 
-
 struct RowEncoder {
     uint8_t row;
     uint8_t encoder;
 };
 
-typedef enum {
-    FILE_OK = 0,
-    FILE_READ_ONLY,
-    FILE_EMPTY
-} FileType;
+typedef enum { FILE_OK = 0, FILE_READ_ONLY, FILE_EMPTY } FileType;
 
 struct WaveTable {
     float* table;
@@ -177,7 +169,7 @@ enum {
     ROW_ARPEGGIATOR2,
     ROW_ARPEGGIATOR3,
     ROW_EFFECT1,
-    ROW_OSC_FIRST ,
+    ROW_OSC_FIRST,
     ROW_OSC1 = ROW_OSC_FIRST,
     ROW_OSC2,
     ROW_OSC3,
@@ -239,9 +231,8 @@ enum {
     ROW_NONE
 };
 
-#define NUMBER_OF_ROWS (ROW_EFFECT2+1)
-#define NUMBER_OF_ROWS_FOR_EDITOR (ROW_ENGINE2+1)
-
+#define NUMBER_OF_ROWS            (ROW_EFFECT2 + 1)
+#define NUMBER_OF_ROWS_FOR_EDITOR (ROW_ENGINE2 + 1)
 
 enum {
     LFO_SEQ_MIDICLOCK_DIV_4 = 241,
@@ -251,8 +242,8 @@ enum {
     LFO_SEQ_MIDICLOCK_TIME_4,
 };
 
-#define LFO_FREQ_MAX  99.9f
-#define LFO_FREQ_MAX_TIMES_10 (int)(LFO_FREQ_MAX*10.0f)
+#define LFO_FREQ_MAX          99.9f
+#define LFO_FREQ_MAX_TIMES_10 (int)(LFO_FREQ_MAX * 10.0f)
 
 enum LfoMidiClockMc {
     LFO_BEFORE_MIDI_CLOCK = LFO_FREQ_MAX_TIMES_10,
@@ -273,23 +264,16 @@ enum {
     ARPEGGIATOR_PATTERN_COUNT = ARPEGGIATOR_PRESET_PATTERN_COUNT + ARPEGGIATOR_USER_PATTERN_COUNT
 };
 
-
-
 extern struct AlgoInformation algoInformation[];
 extern const uint8_t* allAlgos[];
 
-#define OPERATOR_CARRIER 1
+#define OPERATOR_CARRIER   1
 #define OPERATOR_MODULATOR 2
 extern int algoOpInformation[][NUMBER_OF_OPERATORS];
 
 extern uint8_t sysexTmpMem[];
 
-
-enum {
-    PLAY_MODE_MONO = 0,
-    PLAY_MODE_POLY,
-    PLAY_MODE_UNISON
-};
+enum { PLAY_MODE_MONO = 0, PLAY_MODE_POLY, PLAY_MODE_UNISON };
 
 #define MAX_UNISON_VOICES 7
 
@@ -383,20 +367,9 @@ enum DestinationEnum {
     DESTINATION_MAX
 };
 
+enum { SCALA_MAPPING_KEYB = 0, SCALA_MAPPING_CONT, SCALA_MAPPING_NUMBER_OF_OPTIONS };
 
-
-enum {
-    SCALA_MAPPING_KEYB = 0,
-    SCALA_MAPPING_CONT,
-    SCALA_MAPPING_NUMBER_OF_OPTIONS
-};
-
-enum SynthEngineType {
-    SYNTH_ENGINE_PFM3 = 0,
-    SYNTH_ENGINE_DX7,
-    SYNTH_ENGINE_BYOS,
-    SYNTH_ENGINE_COUNT
-};
+enum SynthEngineType { SYNTH_ENGINE_PFM3 = 0, SYNTH_ENGINE_DX7, SYNTH_ENGINE_BYOS, SYNTH_ENGINE_COUNT };
 
 enum MixerValueType {
     MIXER_VALUE_OUT = 0,
@@ -420,13 +393,7 @@ enum MixerValueType {
     MIXER_VALUE_ENGINE
 };
 
-enum SeqValueType {
-    SEQ_VALUE_PLAY_ALL = 0,
-    SEQ_VALUE_PLAY_INST,
-    SEQ_VALUE_RECORD_INST,
-    SEQ_VALUE_SEQUENCE_NUMBER,
-    SEQ_VALUE_TRANSPOSE
-};
+enum SeqValueType { SEQ_VALUE_PLAY_ALL = 0, SEQ_VALUE_PLAY_INST, SEQ_VALUE_RECORD_INST, SEQ_VALUE_SEQUENCE_NUMBER, SEQ_VALUE_TRANSPOSE };
 
 enum Algorithm {
     ALGO1 = 0,

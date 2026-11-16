@@ -30,7 +30,7 @@ class EditorCommon : public EditorParamPage {
 public:
     EditorCommon();
 
-    void init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) override;
+    void init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) override;
     SynthEngineType getEngineType() const override;
     const char* getEngineName() const override;
     const struct EditorEditMenu* getEngineMenu(int page) const override;

@@ -21,20 +21,22 @@
 #include "EditorEngine.h"
 #include "SynthParamListener.h"
 
-class SynthState; class TftDisplay; class ScreenEditor;
+class SynthState;
+class TftDisplay;
+class ScreenEditor;
 
 class ScreenEditor {
 public:
     ScreenEditor();
 
-    void init(SynthState *synthState, FirmwareTftDisplay *tft);
+    void init(SynthState* synthState, FirmwareTftDisplay* tft);
 
     // Register an engine editor; called from each editor's init().
-    void insertEditor(EditorEngine *editor);
+    void insertEditor(EditorEngine* editor);
     // Editor handling the current timbre and main page, or nullptr.
-    EditorEngine *activeEditor() const;
+    EditorEngine* activeEditor() const;
     // Editor implementing the current timbre's engine, or nullptr.
-    EditorEngine *editorForEngine() const;
+    EditorEngine* editorForEngine() const;
     // Engine selected for the current timbre.
     SynthEngineType currentEngineType() const;
 
@@ -45,9 +47,10 @@ public:
     void markPresetModified(int timbre);
     void drawAlgorithm();
 
-    void refreshEditorByStep(int &refreshStatus, int &endRefreshStatus);
+    void refreshEditorByStep(int& refreshStatus, int& endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
-    void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
+    void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
+                           float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void tempoClick();
 
@@ -75,12 +78,12 @@ public:
 private:
     void buttonPressedMenuPage(int button);
     void displayLevelMeter();
-    FirmwareTftDisplay *tft_;
-    SynthState *synthState_;
-    EditorEngine *firstEditor_;
+    FirmwareTftDisplay* tft_;
+    SynthState* synthState_;
+    EditorEngine* firstEditor_;
     // editorForEngine() cache, keyed by engine type.
     mutable SynthEngineType cachedEngineType_;
-    mutable EditorEngine *cachedEditor_;
+    mutable EditorEngine* cachedEditor_;
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
     int currentTimbre_;

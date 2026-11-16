@@ -18,12 +18,12 @@
 #ifndef MIDIDECODER_H_
 #define MIDIDECODER_H_
 
-#include "SynthStateAware.h"
-#include "Synth.h"
-#include "RingBuffer.h"
-#include "VisualInfo.h"
-#include "Storage.h"
 #include "MidiControlChange.h"
+#include "RingBuffer.h"
+#include "Storage.h"
+#include "Synth.h"
+#include "SynthStateAware.h"
+#include "VisualInfo.h"
 
 // number of external control change
 #define NUMBER_OF_ECC 4
@@ -39,7 +39,6 @@ struct MidiEvent {
     EventType eventType;
     unsigned char value[2];
 };
-    
 
 struct Nrpn {
     unsigned char paramLSB;
@@ -49,11 +48,7 @@ struct Nrpn {
     bool readyToSend;
 };
 
-
-enum ActionType {
-    LOAD_PRESET,
-    SEND_PATCH_AS_NRPN
-};
+enum ActionType { LOAD_PRESET, SEND_PATCH_AS_NRPN };
 
 struct AsyncActionDetail {
     uint8_t actionType;
@@ -73,7 +68,7 @@ struct AsyncAction {
     };
 };
 
-class MidiDecoder: public SynthParamListener, public SynthStateAware {
+class MidiDecoder : public SynthParamListener, public SynthStateAware {
 public:
     MidiDecoder();
     virtual ~MidiDecoder();
@@ -110,7 +105,7 @@ public:
     void showIMInformation() {
     }
 
-    void writeMidiCCOut(struct MidiEvent *toSend);
+    void writeMidiCCOut(struct MidiEvent* toSend);
     void sendMidiDin5Out();
     void sendMidiUsbOut();
     void sendMidiUsbOutIfBufferFull();
@@ -125,14 +120,15 @@ public:
 
     // Some actions must not be called from the audio thread
     void processAsyncActions();
+
 private:
-    void sendMidiParamFeedback(int timbre, const struct MidiParamMessage &message);
-    uint8_t analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size);
+    void sendMidiParamFeedback(int timbre, const struct MidiParamMessage& message);
+    uint8_t analyseSysexBuffer(uint8_t* sysexBuffer, uint16_t size);
 
     struct MidiEventState currentEventState_;
     struct MidiEvent currentEvent_;
     Synth* synth_;
-    VisualInfo *visualInfo_;
+    VisualInfo* visualInfo_;
     Storage* storage_;
     int currentTimbre_;
     struct MidiEvent toSend_;
@@ -149,7 +145,6 @@ private:
     // int bank number
     char bankNumber_[NUMBER_OF_TIMBRES];
     char bankNumberLSB_[NUMBER_OF_TIMBRES];
-
 };
 
 #endif /* MIDIDECODER_H_ */

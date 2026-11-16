@@ -15,27 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef SCREEN_TYPES_H
 #define SCREEN_TYPES_H
-
 
 #include "Common.h"
 #include "Pfm3Params.h"
 
-
 extern const char* lfoSeqMidiClock[];
 extern const char* lfoOscMidiClock[];
-extern const char *polyMonoNames[];
+extern const char* polyMonoNames[];
 
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MIN(X, Y)        (((X) < (Y)) ? (X) : (Y))
 #define CUSTOM_CHAR_NOTE (char)7
-
 
 extern struct ModulationIndex modulationIndex[ALGO_END][6];
 extern arp_pattern_t lut_res_arpeggiator_patterns[ARPEGGIATOR_PRESET_PATTERN_COUNT];
 
-extern int getLength(const char *str);
+extern int getLength(const char* str);
 
 enum {
     LINE_PRESET_NAME = 0,
@@ -71,31 +67,31 @@ struct ParameterDisplay {
     float numberOfValues;
     ParameterDisplayType displayType;
     const char** valueName;
-    const unsigned char * valueNameOrder;
-    const unsigned char * valueNameOrderReversed;
+    const unsigned char* valueNameOrder;
+    const unsigned char* valueNameOrderReversed;
     float incValue;
 };
 
 struct EditorOneButtonState {
-    const char *stateLabel;
+    const char* stateLabel;
     const RowEncoder rowEncoder[6];
 };
 
 struct EditorOneButton {
-    const char *buttonLabel;
+    const char* buttonLabel;
     const uint8_t buttonId;
     const int numberOfStates;
-    const EditorOneButtonState *states[];
+    const EditorOneButtonState* states[];
 };
 
 struct EditorEditMenu {
-    const char *mainMenuName;
+    const char* mainMenuName;
     const int numberOfButtons;
-    const EditorOneButton *pages[];
+    const EditorOneButton* pages[];
 };
 
 struct EditorMainMenu {
-    const EditorEditMenu *editMenu[6];
+    const EditorEditMenu* editMenu[6];
 };
 
 #endif

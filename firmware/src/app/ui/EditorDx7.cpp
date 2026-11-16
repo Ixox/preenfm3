@@ -20,10 +20,10 @@
 #include "EditorDx7.h"
 #include "ScreenEditor.h"
 
-#include "SynthState.h"
-#include "Timbre.h"
 #include "Dx7Engine.h"
 #include "Dx7Params.h"
+#include "SynthState.h"
+#include "Timbre.h"
 
 /*
  * DX7 156-byte program layout (see Dx7Note::init):
@@ -61,7 +61,7 @@
  * DX7 operator 1 (operatorNumber 0) lives in block 5, operator 6 in block 0.
  */
 
-
+// clang-format off
 static const struct EditorOneButtonState dx7EngineState = {
     "Engine",
     {
@@ -235,6 +235,7 @@ static const struct EditorEditMenu dx7OperMenu = {
     3,
     { &dx7ButtonLevel, &dx7ButtonOsc, &dx7ButtonEnv }
 };
+// clang-format on
 
 EditorDx7::EditorDx7() {
     copyOperatorValid_ = false;
@@ -248,7 +249,7 @@ EditorDx7::EditorDx7() {
     }
 }
 
-void EditorDx7::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
+void EditorDx7::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
     parent_ = parent;
     synthState_ = synthState;
     tft_ = tft;
@@ -296,10 +297,8 @@ Timbre* EditorDx7::timbre() {
     return synthState_->getTimbre(currentTimbre());
 }
 
-
-
 void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
-    const struct Dx7ParamDesc *d = &dx7Params[paramId];
+    const struct Dx7ParamDesc* d = &dx7Params[paramId];
 
     switch (d->displayType) {
     case DX7_DISPLAY_STRINGS:
@@ -309,7 +308,7 @@ void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
         tft_->printValueWithSpace(value + 1);
         break;
     case DX7_DISPLAY_DETUNE:
-        tft_->printValueWithSpace((int) value - 7);
+        tft_->printValueWithSpace((int)value - 7);
         break;
     case DX7_DISPLAY_INT:
     default:
@@ -319,13 +318,12 @@ void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
 }
 
 void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
-    struct FullState *fullState = &synthState_->fullState_;
-    const struct EditorOneButton *page = currentPage();
+    struct FullState* fullState = &synthState_->fullState_;
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
-    const struct RowEncoder rowEncoder =
-        page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder];
+    const struct RowEncoder rowEncoder = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder];
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
@@ -343,25 +341,24 @@ void EditorDx7::drawAlgorithm() {
     tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
 }
 
-void EditorDx7::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
-        const struct EditorOneButton *page) {
-    struct FullState *fullState = &synthState_->fullState_;
+void EditorDx7::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
+    struct FullState* fullState = &synthState_->fullState_;
     if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
-        tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5,
-            fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
+        tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5, fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
+                                (button - 3) * 2);
     } else if (button < editMenu->numberOfButtons) {
-        const struct EditorOneButton *buttonPage = editMenu->pages[button];
+        const struct EditorOneButton* buttonPage = editMenu->pages[button];
         tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
-            fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
+                         fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
     } else {
         tft_->drawButton("", 270, 29, button, 0, 0);
     }
 }
 
-void EditorDx7::drawParameterName(int button, const struct RowEncoder &rowEncoder,
-        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) {
-    (void) editMenu;
-    (void) page;
+void EditorDx7::drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
+                                  const struct EditorOneButton* page) {
+    (void)editMenu;
+    (void)page;
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_MEDIUM_GRAY);
@@ -374,24 +371,23 @@ void EditorDx7::drawParameterName(int button, const struct RowEncoder &rowEncode
 }
 
 void EditorDx7::encoderTurned(int encoder6, int ticks) {
-    struct FullState *fullState = &synthState_->fullState_;
+    struct FullState* fullState = &synthState_->fullState_;
 
     if (fullState->mainPage < 0) {
         return;
     }
 
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
-    const struct RowEncoder rowEncoder =
-        page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder6];
+    const struct RowEncoder rowEncoder = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder6];
 
     if (rowEncoder.row == DX7_NONE) {
         return;
     }
 
-    const struct Dx7ParamDesc *d = &dx7Params[rowEncoder.row];
+    const struct Dx7ParamDesc* d = &dx7Params[rowEncoder.row];
     const int operatorNumber = fullState->operatorNumber;
     uint8_t oldValue = getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, operatorNumber);
     int newValue = oldValue;
@@ -415,14 +411,14 @@ void EditorDx7::encoderTurned(int encoder6, int ticks) {
 }
 
 void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
-    (void) timbre; (void) oldValue;
+    (void)timbre;
+    (void)oldValue;
 
-    struct FullState *fullState = &synthState_->fullState_;
-    if (fullState->mainPage < 0 || fullState->mainPage > 1
-        || paramId <= DX7_NONE || paramId >= DX7_PARAM_COUNT) {
+    struct FullState* fullState = &synthState_->fullState_;
+    if (fullState->mainPage < 0 || fullState->mainPage > 1 || paramId <= DX7_NONE || paramId >= DX7_PARAM_COUNT) {
         return;
     }
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
@@ -445,8 +441,7 @@ void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float 
             feedbackSource_ = source;
             feedbackDest_ = dest;
         }
-    } else if ((dx7Params[paramId].kind == DX7_KIND_OPERATOR
-            || dx7Params[paramId].kind == DX7_KIND_OP_ENABLED) && encoder >= 0) {
+    } else if ((dx7Params[paramId].kind == DX7_KIND_OPERATOR || dx7Params[paramId].kind == DX7_KIND_OP_ENABLED) && encoder >= 0) {
         tft_->highlightOperator(context);
         operatorChangedCounter_[encoder] = 4;
         highlightedOperator_[encoder] = context;
@@ -456,7 +451,7 @@ void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float 
         refreshOscillatorOperatorEnvelope();
     }
     if (paramId == DX7_ALGORITHM) {
-        tft_->drawDx7Algo((int) newValue);
+        tft_->drawDx7Algo((int)newValue);
     }
 
     if (encoder >= 0) {
@@ -472,10 +467,10 @@ void EditorDx7::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int but
 }
 
 void EditorDx7::buttonPressed(int button) {
-    struct FullState *fullState = &synthState_->fullState_;
+    struct FullState* fullState = &synthState_->fullState_;
     int mainPage = fullState->mainPage;
-    const struct EditorEditMenu *editMenu = currentEditMenu();
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorEditMenu* editMenu = currentEditMenu();
+    const struct EditorOneButton* page = currentPage();
     if (editMenu == nullptr || page == nullptr) {
         return;
     }
@@ -504,8 +499,7 @@ void EditorDx7::buttonPressed(int button) {
             fullState->buttonState[buttonId] = newButtonState;
         } else if (fullState->editPage == button) {
             if (page->numberOfStates > 0) {
-                fullState->buttonState[page->buttonId] =
-                    (fullState->buttonState[page->buttonId] + 1) % page->numberOfStates;
+                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->numberOfStates;
             }
         } else if (button < editMenu->numberOfButtons) {
             if (editMenu->pages[button]->numberOfStates > 0) {
@@ -526,7 +520,7 @@ void EditorDx7::buttonLongPressed(int instrument, int button) {
         return;
     }
 
-    uint8_t *program = timbre()->getPatchMemory();
+    uint8_t* program = timbre()->getPatchMemory();
     int block = (5 - synthState_->fullState_.operatorNumber) * 21;
 
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
@@ -562,9 +556,8 @@ void EditorDx7::refreshOscillatorOperatorEnvelope() {
     Dx7EnvelopeDisplay env;
     getDx7EnvelopeDisplay(timbre()->getPatchMemory(), op, &env);
 
-    tft_->oscilloBgSetEnvelope(env.time[0], env.time[1], env.time[2], env.time[3],
-            env.level[0], env.level[1], env.level[2], env.level[3],
-            CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN);
+    tft_->oscilloBgSetEnvelope(env.time[0], env.time[1], env.time[2], env.time[3], env.level[0], env.level[1], env.level[2], env.level[3],
+                               CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN, CURVE_TYPE_LIN);
     tft_->oscilloBgActionEnvelope();
 }
 

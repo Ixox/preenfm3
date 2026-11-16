@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <PPMImage.h>
 
 #ifdef PPMIMAGE_ENABLE
@@ -28,16 +27,15 @@ __attribute__((section(".ram_d2"))) char imagePPM[6400 * 3];
 __attribute__((section(".ram_d2b"))) static FIL imageFile;
 extern uint16_t tftMemory[240 * 320];
 
-
 PPMImage::PPMImage() {
     cptImage_ = 0;
 
     char imageTitlePattern[] = "0:/PPM/img_####.ppm";
     for (int i = 0; i < 32; i++) {
-    	imageTitle_[i] = 0;
+        imageTitle_[i] = 0;
     }
     for (int i = 0; imageTitlePattern[i] != 0; i++) {
-    	imageTitle_[i] = imageTitlePattern[i];
+        imageTitle_[i] = imageTitlePattern[i];
     }
 }
 
@@ -51,10 +49,8 @@ void PPMImage::init() {
 
     // Calculcate sharpIndexInName once
     sharpIndexInName_ = 0;
-    while (imageTitle_[sharpIndexInName_] != '#'
-			&& imageTitle_[sharpIndexInName_] != 0
-			&& sharpIndexInName_ < 50) {
-    	sharpIndexInName_++;
+    while (imageTitle_[sharpIndexInName_] != '#' && imageTitle_[sharpIndexInName_] != 0 && sharpIndexInName_ < 50) {
+        sharpIndexInName_++;
     }
 
     // We don't care about the result and we call this only once in the init() method
@@ -63,23 +59,22 @@ void PPMImage::init() {
     do {
         cpt++;
         updateImageName(cpt);
-        fresult = f_stat(imageTitle_, &fileInfo );
+        fresult = f_stat(imageTitle_, &fileInfo);
     } while (fresult != FR_NO_FILE);
 
     cptImage_ = cpt;
 }
 
 void PPMImage::updateImageName(int cpt) {
-	imageTitle_[sharpIndexInName_] = '0' + ((cpt % 10000) / 1000);
-	imageTitle_[sharpIndexInName_+1] = '0' + ((cpt % 1000) / 100);
-	imageTitle_[sharpIndexInName_+2] = '0' + ((cpt % 100) / 10);
-	imageTitle_[sharpIndexInName_+3] = '0' + (cpt % 10);
+    imageTitle_[sharpIndexInName_] = '0' + ((cpt % 10000) / 1000);
+    imageTitle_[sharpIndexInName_ + 1] = '0' + ((cpt % 1000) / 100);
+    imageTitle_[sharpIndexInName_ + 2] = '0' + ((cpt % 100) / 10);
+    imageTitle_[sharpIndexInName_ + 3] = '0' + (cpt % 10);
 }
 
 void PPMImage::saveImage() {
 
-
-	if (!isInitialized_) {
+    if (!isInitialized_) {
         isInitialized_ = true;
         init();
     }
@@ -89,51 +84,48 @@ void PPMImage::saveImage() {
     updateImageName(cptImage_);
 
     if (f_open(&imageFile, imageTitle_, FA_OPEN_ALWAYS | FA_WRITE) != FR_OK) {
-    	errorNumber = 1;
+        errorNumber = 1;
     }
     if (f_write(&imageFile, "P6\n240 320\n255\n", 15, &byteWriten)) {
-    	errorNumber = 2;
-
+        errorNumber = 2;
     }
-
 
     for (int j = 0; j < 320; ++j) {
         for (int i = 0; i < 240; ++i) {
             int iIndex = (j * 240 + i) % 6400;
             uint16_t p = tftMemory[j * 240 + i];
             uint16_t pixel = (p >> 8) + (p << 8);
-            imagePPM[iIndex * 3 + 0] = (uint8_t) ((pixel & 0xF800) >> 11) << 3; /* red   */
-            imagePPM[iIndex * 3 + 1] = (uint8_t) ((pixel & 0x07E0) >> 5) << 2; /* green */
-            imagePPM[iIndex * 3 + 2] = (uint8_t) ((pixel & 0x001F) << 3); /* blue  */
+            imagePPM[iIndex * 3 + 0] = (uint8_t)((pixel & 0xF800) >> 11) << 3; /* red   */
+            imagePPM[iIndex * 3 + 1] = (uint8_t)((pixel & 0x07E0) >> 5) << 2;  /* green */
+            imagePPM[iIndex * 3 + 2] = (uint8_t)((pixel & 0x001F) << 3);       /* blue  */
             UINT byteWriten;
             if (iIndex == 6399) {
                 FRESULT fres = f_write(&imageFile, imagePPM, 6400 * 3, &byteWriten);
-                if (fres != FR_OK || byteWriten != 6400* 3) {
-                	errorNumber = 3;
+                if (fres != FR_OK || byteWriten != 6400 * 3) {
+                    errorNumber = 3;
                 }
             }
         }
     }
 
-
-    if ( f_close(&imageFile) != FR_OK) {
-    	errorNumber = 4;
+    if (f_close(&imageFile) != FR_OK) {
+        errorNumber = 4;
     }
 
-	tft.fillArea(22, 0, 240, 320-22, COLOR_BLACK);
-	tft.setCharBackgroundColor(COLOR_BLACK);
+    tft.fillArea(22, 0, 240, 320 - 22, COLOR_BLACK);
+    tft.setCharBackgroundColor(COLOR_BLACK);
     if (errorNumber == 0) {
-		tft.setCharColor(COLOR_WHITE);
+        tft.setCharColor(COLOR_WHITE);
     } else {
-		tft.setCharColor(COLOR_RED);
-	    tft.setCursor(5, 4);
-	    tft.print("##ERROR : ");
-	    tft.print(errorNumber);
+        tft.setCharColor(COLOR_RED);
+        tft.setCursor(5, 4);
+        tft.print("##ERROR : ");
+        tft.print(errorNumber);
     }
     tft.setCursor(4, 6);
-	tft.print(imageTitle_ + 12);
+    tft.print(imageTitle_ + 12);
 
-	HAL_Delay(1000);
+    HAL_Delay(1000);
 
     cptImage_ = (cptImage_ + 1) % 10000;
 }

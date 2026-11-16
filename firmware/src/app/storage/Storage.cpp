@@ -16,15 +16,12 @@
  */
 
 #include <stdint.h>
-#include <math.h>
 
 #include "Storage.h"
-#include "Menu.h"
 
+__attribute__((section(".ram_d2b"))) char lineBuffer[1024];
 
-__attribute__((section(".ram_d2b")))  char lineBuffer[1024];
-
-void Storage::init(Timbre *timbre1, Timbre *timbre2, Timbre *timbre3, Timbre *timbre4, Timbre *timbre5, Timbre *timbre6) {
+void Storage::init(Timbre* timbre1, Timbre* timbre2, Timbre* timbre3, Timbre* timbre4, Timbre* timbre5, Timbre* timbre6) {
     mixerBank_.setFileSystemUtils(&fsu_);
     mixerBank_.init(timbre1, timbre2, timbre3, timbre4, timbre5, timbre6);
     scalaFile_.setFileSystemUtils(&fsu_);

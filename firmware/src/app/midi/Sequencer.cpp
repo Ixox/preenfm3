@@ -15,18 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Sequencer.h>
-#include <RingBuffer.h>
-#include "Synth.h"
 #include "ScreenSequencer.h"
+#include "Synth.h"
+#include <Sequencer.h>
 
 __attribute__((section(".ram_d3"))) SeqMidiAction actions[SEQ_ACTION_SIZE];
 __attribute__((section(".ram_d3"))) StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];
 
-
 Sequencer::Sequencer() {
     uint32_t stateSize;
-    uint8_t* actionBuffer =  (uint8_t*)actions;
+    uint8_t* actionBuffer = (uint8_t*)actions;
     // Use actions as a temporary buffer
     getFullDefaultState(actionBuffer, &stateSize, 0);
     setFullState((uint8_t*)actions);
@@ -92,14 +90,13 @@ void Sequencer::setNumberOfBars(int instrument, uint8_t bars) {
         return;
     }
     // set instrumentTimerMask to last number
-    instrumentTimerMask_[instrument] = (uint16_t)((MAX_PER_BEAT + 1)* 4 * bars - 1);
+    instrumentTimerMask_[instrument] = (uint16_t)((MAX_PER_BEAT + 1) * 4 * bars - 1);
     // update the last action
     actions[instrument * 2 + 1].when = instrumentTimerMask_[instrument];
 
     // action timer need to be recalculated from scratch
     nextActionTimerOutOfSync_[instrument] = true;
 }
-
 
 bool Sequencer::setSeqActivated(uint8_t instrument) {
     bool newActivated = (actions[instrument * 2].nextIndex != instrument * 2 + 1);
@@ -113,7 +110,6 @@ bool Sequencer::setSeqActivated(uint8_t instrument) {
 void Sequencer::setExternalClock(bool enable) {
     externalClock_ = enable;
 }
-
 
 void Sequencer::stop() {
     running_ = false;
@@ -155,11 +151,10 @@ void Sequencer::setTempo(float newTempo) {
     oneBitInMillis_ = 60.0f * 1000.0f / newTempo / (MAX_PER_BEAT + 1);
     millisInBits_ = 1 / oneBitInMillis_;
     // Main sequence always 4 bars (16 beats)
-    sequenceDuration_ = 60 * 16 * 1000 / tempo_ ;
+    sequenceDuration_ = 60 * 16 * 1000 / tempo_;
     // We must have sent 4 *4 * 24 (384) midi ticks at the end of sequenceDuration
     midiTickCounterInc_ = 384.0f / sequenceDuration_;
 }
-
 
 void Sequencer::start() {
     running_ = true;
@@ -202,7 +197,6 @@ void Sequencer::onMidiStop() {
     }
 }
 
-
 void Sequencer::onMidiClock() {
     if (externalClock_ && running_) {
         // We're called 24 times per beat
@@ -213,7 +207,6 @@ void Sequencer::onMidiClock() {
         mainSequencerTic(midiClockTimer_);
     }
 }
-
 
 void Sequencer::ticMillis() {
     // if external clock we don't do anything here
@@ -234,7 +227,7 @@ void Sequencer::ticMillis() {
         midiTickCounter_ += midiTickCounterInc_;
 
         // We reach the end of the 4 bars sequence
-        if (unlikely(millisTimer_ >=  sequenceDuration_)) {
+        if (unlikely(millisTimer_ >= sequenceDuration_)) {
             millisTimer_ = 0;
             songPosition_ = 0;
             midiTickCounter_ = 0.0f;
@@ -249,12 +242,10 @@ void Sequencer::ticMillis() {
             if (unlikely((midiTickCounterInt % 6) == 0)) {
                 songPosition_++;
                 synth_->midiClockSongPositionStep(songPosition_);
-
             }
         }
     }
 }
-
 
 void Sequencer::midiClockSetSongPosition(int songPosition) {
     int midiClockTimerInt = songPosition * 4;
@@ -263,15 +254,14 @@ void Sequencer::midiClockSetSongPosition(int songPosition) {
     midiClockTimer_ = midiClockTimerInt;
 }
 
-
 void Sequencer::mainSequencerTic(uint16_t counter) {
 
-    if (!running_)  {
+    if (!running_) {
         return;
     }
 
     if (unlikely(precount_ > 0)) {
-        precount_ -=  millisInBits_;
+        precount_ -= millisInBits_;
         current16bitTimer_ = precount_;
         if ((current16bitTimer_ & 0x300) != lastBeat_) {
             lastBeat_ = current16bitTimer_ & 0x300;
@@ -296,7 +286,6 @@ void Sequencer::mainSequencerTic(uint16_t counter) {
 
     current16bitTimer_ = counter;
 
-
     // at 120 BPM we're called (.5 / 16 = 0.031ms) 31 times before a new current16bitTimer value
     if (likely(previousCurrent16bitTimer_ == current16bitTimer_)) {
         return;
@@ -310,12 +299,11 @@ void Sequencer::mainSequencerTic(uint16_t counter) {
         displaySequencer_->displayBeat();
         HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_SET);
         ledTimer_ = HAL_GetTick();
-    } else if (unlikely(HAL_GetTick() - ledTimer_ > 100)){
+    } else if (unlikely(HAL_GetTick() - ledTimer_ > 100)) {
         // Led remains on during 1/10th of a sec
         HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
         ledTimer_ = 0Xffffffff;
     }
-
 
     for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
 
@@ -346,7 +334,6 @@ void Sequencer::mainSequencerTic(uint16_t counter) {
 
         lastInstrument16bitTimer_[i] = instrument16bitTimer;
     }
-
 }
 
 void Sequencer::resyncNextAction(int instrument, uint16_t newInstrumentTimer) {
@@ -373,7 +360,7 @@ void Sequencer::processActionBetwen(int instrument, uint16_t startTimer, uint16_
     if (stepActivated_[instrumentStepSeq_[instrument]] && !muted_[instrument]) {
         uint8_t currentIndex = endTimer >> 4;
         if (instrumentStepIndex_[instrument] != currentIndex) {
-        	int seqNumber = instrumentStepSeq_[instrument];
+            int seqNumber = instrumentStepSeq_[instrument];
             instrumentStepIndex_[instrument] = currentIndex;
             uint16_t newUnique = stepNotes[seqNumber][instrumentStepIndex_[instrument]].unique;
 
@@ -385,20 +372,22 @@ void Sequencer::processActionBetwen(int instrument, uint16_t startTimer, uint16_
                     if ((stepNotes[seqNumber][previousIndex].full & 0xffffff00) != 0l) {
                         // Note off
                         for (int n = 0; stepNotes[seqNumber][previousIndex].values[3 + n] != 0 && n < 6; n++) {
-                            synth_->noteOffFromSequencer(instrument, stepNotes[seqNumber][previousIndex].values[3 + n] + transpose_[instrument]);
+                            synth_->noteOffFromSequencer(instrument,
+                                                         stepNotes[seqNumber][previousIndex].values[3 + n] + transpose_[instrument]);
                         }
                     }
                 } else {
                     // Note off
                     if ((stepNotes[seqNumber][previousIndex].full & 0xffffff00) != 0l) {
                         for (int n = 0; stepNotes[seqNumber][previousIndex].values[3 + n] != 0 && n < 6; n++) {
-                            synth_->noteOffFromSequencer(instrument, stepNotes[seqNumber][previousIndex].values[3 + n] + transpose_[instrument]);
+                            synth_->noteOffFromSequencer(instrument,
+                                                         stepNotes[seqNumber][previousIndex].values[3 + n] + transpose_[instrument]);
                         }
                     }
                     // Note on
                     for (int n = 0; stepNotes[seqNumber][currentIndex].values[3 + n] != 0 && n < 6; n++) {
-                        synth_->noteOnFromSequencer(instrument, stepNotes[seqNumber][currentIndex].values[3 + n]  + transpose_[instrument],
-                            stepNotes[seqNumber][currentIndex].values[2]);
+                        synth_->noteOnFromSequencer(instrument, stepNotes[seqNumber][currentIndex].values[3 + n] + transpose_[instrument],
+                                                    stepNotes[seqNumber][currentIndex].values[2]);
                     }
                 }
             }
@@ -408,15 +397,17 @@ void Sequencer::processActionBetwen(int instrument, uint16_t startTimer, uint16_
     // Play to the end before looping
     // We test activated as we can clear or apply step seq in the middle of this loop
     if (seqActivated_[instrument]) {
-        while (actions[nextActionIndex_[instrument]].when >= startTimer && actions[nextActionIndex_[instrument]].when <= endTimer && seqActivated_[instrument]) {
+        while (actions[nextActionIndex_[instrument]].when >= startTimer && actions[nextActionIndex_[instrument]].when <= endTimer &&
+               seqActivated_[instrument]) {
             // actions[nextActionIndex];
             if (!muted_[instrument]) {
                 switch (actions[nextActionIndex_[instrument]].actionType) {
                 case SEQ_ACTION_NOTE:
                     if (actions[nextActionIndex_[instrument]].param2 > 0) {
-                        synth_->noteOnFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1  + transpose_[instrument] , actions[nextActionIndex_[instrument]].param2);
+                        synth_->noteOnFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1 + transpose_[instrument],
+                                                    actions[nextActionIndex_[instrument]].param2);
                     } else {
-                        synth_->noteOffFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1  + transpose_[instrument]);
+                        synth_->noteOffFromSequencer(instrument, actions[nextActionIndex_[instrument]].param1 + transpose_[instrument]);
                     }
                     break;
                 }
@@ -433,8 +424,6 @@ void Sequencer::processActionBetwen(int instrument, uint16_t startTimer, uint16_
         }
     }
 }
-
-
 
 void Sequencer::clear(uint8_t instrument) {
 
@@ -492,7 +481,7 @@ void Sequencer::clear(uint8_t instrument) {
                 break;
             } else {
                 // Update nextActionIndex if needed
-                for (int instrument = 0; instrument < NUMBER_OF_TIMBRES; instrument ++) {
+                for (int instrument = 0; instrument < NUMBER_OF_TIMBRES; instrument++) {
                     if (nextActionIndex_[instrument] == movedFromIndex) {
                         nextActionIndex_[instrument] = i;
                         break;
@@ -518,10 +507,7 @@ void Sequencer::clear(uint8_t instrument) {
     }
 
     synth_->allNoteOff(instrument);
-
 }
-
-
 
 // From main loop thread
 // Different lower priority thread than tic() above
@@ -530,16 +516,16 @@ void Sequencer::insertNote(uint8_t instrument, uint8_t note, uint8_t velocity) {
     if (stepMode_) {
         if (velocity > 0) {
             if (stepNumberOfNotesOn_ < 5) {
-                if (stepNumberOfNotesOn_ == 0){
-                	tmpStepValue_.values[2] = velocity;
+                if (stepNumberOfNotesOn_ == 0) {
+                    tmpStepValue_.values[2] = velocity;
                 }
                 tmpStepValue_.values[3 + stepNumberOfNotesOn_] = note;
             }
-            stepNumberOfNotesOn_ ++;
+            stepNumberOfNotesOn_++;
 
         } else {
             // Can be < 0 when we swap between normal and step mode while playuing
-            stepNumberOfNotesOn_ --;
+            stepNumberOfNotesOn_--;
             if (stepNumberOfNotesOn_ == 0) {
                 displaySequencer_->newNoteEntered(instrument);
             }
@@ -575,13 +561,12 @@ void Sequencer::insertNote(uint8_t instrument, uint8_t note, uint8_t velocity) {
     }
 }
 
-
 /*
  * Returns true if more than one note
  */
 bool Sequencer::stepRecordNotes(int instrument, int stepCursor, int stepSize) {
     bool moreThanOneNote;
-	int seqNumber = instrumentStepSeq_[instrument];
+    int seqNumber = instrumentStepSeq_[instrument];
 
     for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
         stepNotes[seqNumber][s].full = tmpStepValue_.full;
@@ -593,13 +578,13 @@ bool Sequencer::stepRecordNotes(int instrument, int stepCursor, int stepSize) {
     stepNumberOfNotesOn_ = 0;
 
     if (unlikely(!stepActivated_[seqNumber])) {
-    	stepActivated_[seqNumber] = true;
+        stepActivated_[seqNumber] = true;
     }
     return moreThanOneNote;
 }
 
 void Sequencer::stepClearPart(int instrument, int stepCursor, int stepSize) {
-	int seqNumber = instrumentStepSeq_[instrument];
+    int seqNumber = instrumentStepSeq_[instrument];
     for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 255); s++) {
         stepNotes[seqNumber][s].full = 0l;
         stepNotes[seqNumber][s].unique = stepUniqueValue_[instrument];
@@ -609,16 +594,15 @@ void Sequencer::stepClearPart(int instrument, int stepCursor, int stepSize) {
     stepNumberOfNotesOn_ = 0;
 }
 
-
 StepSeqValue* Sequencer::stepGetSequence(int instrument) {
-	int seqNumber = instrumentStepSeq_[instrument];
+    int seqNumber = instrumentStepSeq_[instrument];
     return stepNotes[seqNumber];
 }
 
 void Sequencer::stepClearAll(int instrument) {
-	int seqNumber = instrumentStepSeq_[instrument];
+    int seqNumber = instrumentStepSeq_[instrument];
     synth_->stopArpegiator(instrument);
-	synth_->allNoteOff(instrument);
+    synth_->allNoteOff(instrument);
     for (int s = 0; s < 255; s++) {
         stepNotes[seqNumber][s].full = 0;
     }
@@ -627,11 +611,10 @@ void Sequencer::stepClearAll(int instrument) {
     stepActivated_[seqNumber] = false;
 }
 
-
 /*
  * Used to create empty bank
  */
-void Sequencer::getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seqNumber) {
+void Sequencer::getFullDefaultState(uint8_t* buffer, uint32_t* size, uint8_t seqNumber) {
     int index = 0;
     buffer[index++] = (uint8_t)SEQ_CURRENT_VERSION;
     // sequenceName
@@ -647,10 +630,10 @@ void Sequencer::getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seq
     buffer[index++] = (uint8_t)1;
     // tempo
     *((float*)&buffer[index]) = 90.0f;
-    index+=sizeof(float);
+    index += sizeof(float);
     // Last free action
     *((uint16_t*)&buffer[index]) = 12;
-    index+=sizeof(uint16_t);
+    index += sizeof(uint16_t);
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         // stepUniqueValue
@@ -670,15 +653,14 @@ void Sequencer::getFullDefaultState(uint8_t* buffer, uint32_t *size, uint8_t seq
     }
 
     for (int t = 0; t < NUMBER_OF_STEP_SEQUENCES; t++) {
-		// stepActivated
-		buffer[index++] = 0;
+        // stepActivated
+        buffer[index++] = 0;
     }
 
     *size = index;
 }
 
-
-void Sequencer::getFullState(uint8_t* buffer, uint32_t *size) {
+void Sequencer::getFullState(uint8_t* buffer, uint32_t* size) {
     int index = 0;
     buffer[index++] = (uint8_t)SEQ_CURRENT_VERSION;
     for (int s = 0; s < 12; s++) {
@@ -686,9 +668,9 @@ void Sequencer::getFullState(uint8_t* buffer, uint32_t *size) {
     }
     buffer[index++] = (uint8_t)(isExternalClockEnabled() ? 1 : 0);
     *((float*)&buffer[index]) = tempo_;
-    index+=sizeof(float);
+    index += sizeof(float);
     *((uint16_t*)&buffer[index]) = lastFreeAction_;
-    index+=sizeof(uint16_t);
+    index += sizeof(uint16_t);
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         *((uint16_t*)&buffer[index]) = stepUniqueValue_[t];
         index += sizeof(uint16_t);
@@ -701,7 +683,7 @@ void Sequencer::getFullState(uint8_t* buffer, uint32_t *size) {
     }
 
     for (int s = 0; s < NUMBER_OF_STEP_SEQUENCES; s++) {
-    	buffer[index++] = (stepActivated_[s] ? 1 : 0);
+        buffer[index++] = (stepActivated_[s] ? 1 : 0);
     }
 
     *size = index;
@@ -732,20 +714,20 @@ void Sequencer::loadStateVersion1(uint8_t* buffer) {
     for (int i = 0; i < 4; i++) {
         tempoUint8[i] = buffer[index++];
     }
-    float newTempo = * ((float*)tempoUint8);
+    float newTempo = *((float*)tempoUint8);
     setTempo(newTempo);
 
-    lastFreeAction_ = *((uint16_t*)&buffer[index]) ;
-    index+=sizeof(uint16_t);
+    lastFreeAction_ = *((uint16_t*)&buffer[index]);
+    index += sizeof(uint16_t);
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         stepUniqueValue_[t] = *((uint16_t*)(&buffer[index]));
-        index+=sizeof(uint16_t);
+        index += sizeof(uint16_t);
         instrumentTimerMask_[t] = *((uint16_t*)(&buffer[index]));
-        index+=sizeof(uint16_t);
-        seqActivated_[t]  = (buffer[index++] == 1);
-        stepActivated_[t]  = (buffer[index++] == 1);
-        recording_[t]  = (buffer[index++] == 1);
-        muted_[t]  = (buffer[index++] == 1);
+        index += sizeof(uint16_t);
+        seqActivated_[t] = (buffer[index++] == 1);
+        stepActivated_[t] = (buffer[index++] == 1);
+        recording_[t] = (buffer[index++] == 1);
+        muted_[t] = (buffer[index++] == 1);
         // init default Value
         instrumentStepSeq_[t] = t;
     }
@@ -764,26 +746,25 @@ void Sequencer::loadStateVersion2(uint8_t* buffer) {
     for (int i = 0; i < 4; i++) {
         tempoUint8[i] = buffer[index++];
     }
-    float newTempo = * ((float*)tempoUint8);
+    float newTempo = *((float*)tempoUint8);
     setTempo(newTempo);
 
-    lastFreeAction_ = *((uint16_t*)&buffer[index]) ;
-    index+=sizeof(uint16_t);
+    lastFreeAction_ = *((uint16_t*)&buffer[index]);
+    index += sizeof(uint16_t);
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         stepUniqueValue_[t] = *((uint16_t*)(&buffer[index]));
-        index+=sizeof(uint16_t);
+        index += sizeof(uint16_t);
         instrumentTimerMask_[t] = *((uint16_t*)(&buffer[index]));
-        index+=sizeof(uint16_t);
-        seqActivated_[t]  = (buffer[index++] == 1);
-        recording_[t]  = (buffer[index++] == 1);
-        muted_[t]  = (buffer[index++] == 1);
+        index += sizeof(uint16_t);
+        seqActivated_[t] = (buffer[index++] == 1);
+        recording_[t] = (buffer[index++] == 1);
+        muted_[t] = (buffer[index++] == 1);
         instrumentStepSeq_[t] = buffer[index++];
     }
     for (int s = 0; s < NUMBER_OF_STEP_SEQUENCES; s++) {
-        stepActivated_[s]  = (buffer[index++] == 1);
+        stepActivated_[s] = (buffer[index++] == 1);
     }
 }
-
 
 char* Sequencer::getSequenceNameInBuffer(char* buffer) {
     SEQ_VERSION version = (SEQ_VERSION)buffer[0];
@@ -802,7 +783,6 @@ void Sequencer::setInstrumentStepSeq(int instrument, int index) {
     instrumentStepSeq_[instrument] = (uint8_t)index;
 }
 
-
 void Sequencer::setSequenceName(const char* newName) {
     for (int n = 0; n < 12; n++) {
         sequenceName_[n] = newName[n];
@@ -810,13 +790,12 @@ void Sequencer::setSequenceName(const char* newName) {
     sequenceName_[12] = 0;
 }
 
-
 void Sequencer::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
     switch (seqValue) {
     case SEQ_VALUE_PLAY_ALL:
         if (newValue > 0) {
             start();
-        } else  {
+        } else {
             stop();
         }
         break;
@@ -836,13 +815,10 @@ void Sequencer::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t
     displaySequencer_->sequencerWasUpdated(timbre, seqValue, newValue);
 }
 
-
 uint64_t Sequencer::getStepData(int instrument, int stepCursor) {
     int seqNumber = instrumentStepSeq_[instrument];
     return stepNotes[seqNumber][stepCursor].full;
 }
-
-
 
 void Sequencer::changeCurrentNote(int instrument, int stepCursor, int stepSize, int ticks) {
     int seqNumber = instrumentStepSeq_[instrument];
@@ -905,7 +881,6 @@ void Sequencer::changeCurrentVelocity(int instrument, int stepCursor, int stepSi
     }
 }
 
-
 /*
  * We check limit
  * If everything is the same, we're in the middle of a bigger note -> yes we must create a new note (new uniqueId)
@@ -918,7 +893,8 @@ bool Sequencer::createNewNoteIfNeeded(int instrument, int stepCursor, int stepSi
     // Before cursor
     if (stepCursor > 0) {
         if (stepNotes[seqNumber][stepCursor - 1].unique == startUniqueId) {
-            createNewNote = true;;
+            createNewNote = true;
+            ;
         }
     }
 
@@ -938,7 +914,6 @@ bool Sequencer::createNewNoteIfNeeded(int instrument, int stepCursor, int stepSi
             }
         }
     }
-
 
     if (createNewNote) {
         int uniqueId = stepUniqueValue_[instrument];
@@ -972,11 +947,8 @@ bool Sequencer::createNewNoteIfEmpty(int instrument, int stepCursor, int stepSiz
     newNote.values[3] = 64;
     for (int s = stepCursor; (s < (stepCursor + stepSize)) && (s < 256); s++) {
         stepNotes[seqNumber][s] = newNote;
-
     }
     stepUniqueValue_[instrument]++;
     displaySequencer_->refreshStepSeq();
     return true;
 }
-
-

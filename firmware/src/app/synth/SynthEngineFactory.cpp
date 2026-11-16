@@ -22,15 +22,15 @@ struct StorageMagicEntry {
 };
 
 const StorageMagicEntry storageMagics[] = {
-    { PRESET_VERSION1, SYNTH_ENGINE_PFM3 },
-    { PRESET_VERSION2, SYNTH_ENGINE_PFM3 },
-    { PRESET_DX7, SYNTH_ENGINE_DX7 },
-    { PRESET_BYOS, SYNTH_ENGINE_BYOS },
+    {PRESET_VERSION1, SYNTH_ENGINE_PFM3},
+    {PRESET_VERSION2, SYNTH_ENGINE_PFM3},
+    {PRESET_DX7, SYNTH_ENGINE_DX7},
+    {PRESET_BYOS, SYNTH_ENGINE_BYOS},
 };
-}
+} // namespace
 
 SynthEngineType SynthEngineFactory::engineTypeForStorageMagic(uint32_t magic) {
-    for (const StorageMagicEntry &entry : storageMagics) {
+    for (const StorageMagicEntry& entry : storageMagics) {
         if (entry.magic == magic) {
             return entry.type;
         }
@@ -63,7 +63,7 @@ const char* SynthEngineFactory::getEngineDisplayName(SynthEngineType type) {
     }
 }
 
-void SynthEngineFactory::init(Timbre *timbre, SynthState *synthState) {
+void SynthEngineFactory::init(Timbre* timbre, SynthState* synthState) {
     int timbreNumber = timbre->getTimbreNumber();
     pfm3Engines_[timbreNumber].init(timbre, synthState);
     dx7Engines_[timbreNumber].init(timbre, synthState);

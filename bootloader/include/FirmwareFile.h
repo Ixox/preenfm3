@@ -15,18 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #ifndef FIRMWAREFILE_H_
 #define FIRMWAREFILE_H_
 
 #include "stm32h7xx_hal.h"
 
-typedef enum {
-    FILE_OK = 0,
-    FILE_READ_ONLY,
-    FILE_EMPTY
-} FileType;
+typedef enum { FILE_OK = 0, FILE_READ_ONLY, FILE_EMPTY } FileType;
 
 struct FirmwarePFM3File {
     char name[13];
@@ -34,29 +28,30 @@ struct FirmwarePFM3File {
     uint32_t size;
 };
 
-
-class FirmwareFile  {
+class FirmwareFile {
 public:
-	FirmwareFile();
-	virtual ~FirmwareFile();
+    FirmwareFile();
+    virtual ~FirmwareFile();
     const struct FirmwarePFM3File* getFile(uint32_t fileNumber);
     uint32_t getNumberOfFiles();
     const char* getFullName(const char* fileName);
-    void reset() { isInitialized_ = false; }
+    void reset() {
+        isInitialized_ = false;
+    }
 
 protected:
     int initFiles();
-	const char* getFolderName();
-	bool isCorrectFile(char *name, int size);
-	int strlen(const char *str);
-	int strcmp(const char *s1, const char *s2);
-	void swapFiles(struct FirmwarePFM3File* bankFiles, int i, int j);
-	void sortFiles(struct FirmwarePFM3File* bankFiles, int numberOfFiles);
+    const char* getFolderName();
+    bool isCorrectFile(char* name, int size);
+    int strlen(const char* str);
+    int strcmp(const char* s1, const char* s2);
+    void swapFiles(struct FirmwarePFM3File* bankFiles, int i, int j);
+    void sortFiles(struct FirmwarePFM3File* bankFiles, int numberOfFiles);
 
 private:
     uint32_t numberOfFiles_;
-	uint32_t numberOfFilesMax_;
-    struct FirmwarePFM3File *myFiles_;
+    uint32_t numberOfFilesMax_;
+    struct FirmwarePFM3File* myFiles_;
     char fullName_[64];
     bool isInitialized_;
 };

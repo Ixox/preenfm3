@@ -17,7 +17,6 @@
 
 #include "Lfo.h"
 
-
 // Standard 128kb memory
 float Lfo::invTab[2048] __attribute__((section(".ram_d1")));
 int Lfo::initTab = 0;
@@ -25,14 +24,14 @@ int Lfo::initTab = 0;
 Lfo::Lfo() {
 }
 
-void Lfo::init(Matrix *matrix, SourceEnum source, DestinationEnum dest) {
+void Lfo::init(Matrix* matrix, SourceEnum source, DestinationEnum dest) {
     this->destination_ = (uint8_t)dest;
     this->source_ = (uint8_t)source;
-	this->matrix_ = matrix;
+    this->matrix_ = matrix;
 
     if (initTab == 0) {
         initTab = 1;
-        for (int k=1; k<2048; k++) {
+        for (int k = 1; k < 2048; k++) {
             invTab[k] = 1.0f / ((float)k);
         }
         invTab[0] = 1.0;

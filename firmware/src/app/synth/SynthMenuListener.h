@@ -15,12 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef SYNTHMENULISTENER_H_
 #define SYNTHMENULISTENER_H_
 
 #include "Menu.h"
-
 
 class SynthMenuListener {
 public:
@@ -29,7 +27,6 @@ public:
     virtual void newMenuState(FullState* fullState) = 0;
     virtual void newMenuSelect(FullState* fullState) = 0;
     virtual void newPfm3Page(FullState* fullState) = 0;
-
 
     SynthMenuListener* nextListener_;
 };

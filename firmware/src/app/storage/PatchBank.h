@@ -18,39 +18,39 @@
 #ifndef PATCHBANK_H_
 #define PATCHBANK_H_
 
-#include "PreenFMFileType.h"
 #include "Common.h"
 #include "PersistenceMagic.h"
 #include "Pfm3Preset.h"
+#include "PreenFMFileType.h"
 
 class Timbre;
 
-class PatchBank: public PreenFMFileType {
+class PatchBank : public PreenFMFileType {
 public:
     PatchBank();
     virtual ~PatchBank();
 
-    void createPatchBank(const char *name);
-    void savePatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre);
-    void setArpeggiatorPartOfThePreset(uint8_t *pointer) {
+    void createPatchBank(const char* name);
+    void savePatch(const struct PFM3File* bank, int patchNumber, Timbre* timbre);
+    void setArpeggiatorPartOfThePreset(uint8_t* pointer) {
         arpeggiatorPartOfThePreset_ = pointer;
     }
-    void setTimbre(Timbre *timbre) {
+    void setTimbre(Timbre* timbre) {
         timbre_ = timbre;
     }
-    bool loadPatch(const struct PFM3File *bank, int patchNumber, Timbre *timbre);
-    const char* loadPatchName(const struct PFM3File *bank, int patchNumber);
+    bool loadPatch(const struct PFM3File* bank, int patchNumber, Timbre* timbre);
+    const char* loadPatchName(const struct PFM3File* bank, int patchNumber);
 
-    bool decodeBufferAndApplyPreset(uint8_t *buffer, struct Pfm3Preset *params);
-    void copyNewPreset(struct Pfm3Preset *params);
+    bool decodeBufferAndApplyPreset(uint8_t* buffer, struct Pfm3Preset* params);
+    void copyNewPreset(struct Pfm3Preset* params);
 
 protected:
     const char* getFolderName();
-    bool isCorrectFile(char *name, int size);
+    bool isCorrectFile(char* name, int size);
 
 private:
-    uint8_t *arpeggiatorPartOfThePreset_;
-    Timbre *timbre_;
+    uint8_t* arpeggiatorPartOfThePreset_;
+    Timbre* timbre_;
     char presetName_[13];
 };
 

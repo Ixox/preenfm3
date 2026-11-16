@@ -15,95 +15,88 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "ConfigurationFile.h"
 #include "Menu.h"
 
 extern char lineBuffer[512];
 
 ConfigurationFile::ConfigurationFile() {
-	numberOfFilesMax_ = 0;
+    numberOfFilesMax_ = 0;
 }
 
 ConfigurationFile::~ConfigurationFile() {
 }
 
 const char* ConfigurationFile::getFolderName() {
-	return PREENFM_DIR;
+    return PREENFM_DIR;
 }
 
-
 void ConfigurationFile::loadConfig(uint8_t* midiConfigBytes) {
-	char *line = lineBuffer;
+    char* line = lineBuffer;
     char* reachableProperties = storageBuffer;
     int size = checkSize(PROPERTIES);
     if (size >= PROPERTY_FILE_SIZE || size == -1) {
-    	// ERROR
-    	return;
+        // ERROR
+        return;
     }
     reachableProperties[size] = 0;
 
-    int result = load(PROPERTIES, 0,  reachableProperties, size);
+    int result = load(PROPERTIES, 0, reachableProperties, size);
     int loop = 0;
-    char *readProperties = reachableProperties;
-    while (loop !=-1 && (readProperties - reachableProperties) < size) {
-    	loop = fsu_->getLine(readProperties, line);
-    	if (line[0] != '#') {
-    		fillMidiConfig(midiConfigBytes, line);
-    	}
-    	readProperties += loop;
+    char* readProperties = reachableProperties;
+    while (loop != -1 && (readProperties - reachableProperties) < size) {
+        loop = fsu_->getLine(readProperties, line);
+        if (line[0] != '#') {
+            fillMidiConfig(midiConfigBytes, line);
+        }
+        readProperties += loop;
     }
 }
-
 
 void ConfigurationFile::saveConfig(uint8_t* midiConfigBytes) {
     int wptr = 0;
-    for (int k=0; k<MIDICONFIG_SIZE; k++) {
-    	storageBuffer[wptr++] = '#';
-    	storageBuffer[wptr++] = ' ';
-    	wptr += fsu_->copy_string((char*)storageBuffer + wptr, midiConfig[k].title);
-    	storageBuffer[wptr++] = '\n';
-    	if (midiConfig[k].maxValue < 10 && midiConfig[k].valueName != 0) {
-	    	wptr += fsu_->copy_string((char*)storageBuffer + wptr, "#   0=");
-			for (int o=0; o<midiConfig[k].maxValue; o++) {
-		    	wptr += fsu_->copy_string((char*)storageBuffer + wptr, midiConfig[k].valueName[o]);
-				if ( o != midiConfig[k].maxValue - 1) {
-			    	wptr += fsu_->copy_string((char*)storageBuffer + wptr, ", ");
-				} else {
-			    	storageBuffer[wptr++] = '\n';
-				}
-			}
-    	}
-    	wptr += fsu_->copy_string((char*)storageBuffer + wptr, midiConfig[k].nameInFile);
-    	storageBuffer[wptr++] = '=';
-    	wptr += fsu_->printInt((char*)storageBuffer + wptr, (int)midiConfigBytes[k]);
-    	storageBuffer[wptr++] = '\n';
-    	storageBuffer[wptr++] = '\n';
+    for (int k = 0; k < MIDICONFIG_SIZE; k++) {
+        storageBuffer[wptr++] = '#';
+        storageBuffer[wptr++] = ' ';
+        wptr += fsu_->copy_string((char*)storageBuffer + wptr, midiConfig[k].title);
+        storageBuffer[wptr++] = '\n';
+        if (midiConfig[k].maxValue < 10 && midiConfig[k].valueName != 0) {
+            wptr += fsu_->copy_string((char*)storageBuffer + wptr, "#   0=");
+            for (int o = 0; o < midiConfig[k].maxValue; o++) {
+                wptr += fsu_->copy_string((char*)storageBuffer + wptr, midiConfig[k].valueName[o]);
+                if (o != midiConfig[k].maxValue - 1) {
+                    wptr += fsu_->copy_string((char*)storageBuffer + wptr, ", ");
+                } else {
+                    storageBuffer[wptr++] = '\n';
+                }
+            }
+        }
+        wptr += fsu_->copy_string((char*)storageBuffer + wptr, midiConfig[k].nameInFile);
+        storageBuffer[wptr++] = '=';
+        wptr += fsu_->printInt((char*)storageBuffer + wptr, (int)midiConfigBytes[k]);
+        storageBuffer[wptr++] = '\n';
+        storageBuffer[wptr++] = '\n';
     }
     // delete it so that we're sure the new one has the right size...
     remove(PROPERTIES);
-    save(PROPERTIES, 0,  storageBuffer, wptr);
+    save(PROPERTIES, 0, storageBuffer, wptr);
 }
-
-
 
 void ConfigurationFile::fillMidiConfig(uint8_t* midiConfigBytes, char* line) {
-	char key[21];
-	char value[21];
+    char key[21];
+    char value[21];
 
-	int equalPos = fsu_->getPositionOfEqual(line);
-	if (equalPos == -1) {
-		return;
-	}
-	fsu_->getKey(line, key);
+    int equalPos = fsu_->getPositionOfEqual(line);
+    if (equalPos == -1) {
+        return;
+    }
+    fsu_->getKey(line, key);
 
-	for (int k=0; k < MIDICONFIG_SIZE; k++) {
-		if (fsu_->str_cmp(key, midiConfig[k].nameInFile) == 0) {
-			fsu_->getValue(line + equalPos+1, value);
-			midiConfigBytes[k] = fsu_->toInt(value);
-			return;
-		}
-	}
+    for (int k = 0; k < MIDICONFIG_SIZE; k++) {
+        if (fsu_->str_cmp(key, midiConfig[k].nameInFile) == 0) {
+            fsu_->getValue(line + equalPos + 1, value);
+            midiConfigBytes[k] = fsu_->toInt(value);
+            return;
+        }
+    }
 }
-
-

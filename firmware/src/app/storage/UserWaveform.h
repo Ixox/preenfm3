@@ -15,15 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef USERWAVEFORMS_H_
 #define USERWAVEFORMS_H_
 
-
-
 #include "PreenFMFileType.h"
 
-class UserWaveform: public PreenFMFileType {
+class UserWaveform : public PreenFMFileType {
 public:
     UserWaveform();
     virtual ~UserWaveform();
@@ -31,7 +28,9 @@ public:
 
 protected:
     const char* getFolderName();
-    bool isCorrectFile(char *name, int size) { return true; }
+    bool isCorrectFile(char* name, int size) {
+        return true;
+    }
 
 private:
     void loadUserWaveformFromTxt(int f, const char* fileName, int size);

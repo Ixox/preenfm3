@@ -19,6 +19,6 @@ namespace Pfm3Midi {
 int getMemoryIndexFromMidi(int index);
 int getMidiIndexFromMemory(int index);
 
-}
+} // namespace Pfm3Midi
 
 #endif

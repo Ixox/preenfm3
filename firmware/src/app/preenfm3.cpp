@@ -15,23 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stm32h7xx_hal.h"
-#include "fatfs.h"
-#include "Synth.h"
-#include "SynthState.h"
-#include "SynthEngineFactory.h"
+#include "Encoders.h"
+#include "FirmwareTftDisplay.h"
+#include "Hexter.h"
 #include "MidiDecoder.h"
 #include "ScreenCoordinator.h"
-#include "ScreenMixer.h"
 #include "ScreenEditor.h"
 #include "ScreenMenu.h"
+#include "ScreenMixer.h"
 #include "ScreenSequencer.h"
-#include "FirmwareTftDisplay.h"
-#include "ili9341.h"
-#include "Storage.h"
-#include "Encoders.h"
-#include "Hexter.h"
 #include "Sequencer.h"
+#include "Storage.h"
+#include "Synth.h"
+#include "SynthEngineFactory.h"
+#include "SynthState.h"
+#include "ili9341.h"
+#include "stm32h7xx_hal.h"
 
 extern UART_HandleTypeDef huart1;
 extern SAI_HandleTypeDef hsai_BlockA1;
@@ -41,10 +40,10 @@ extern RingBuffer<uint8_t, 64> usartBufferOut;
 extern RingBuffer<uint8_t, 64> usartBufferIn;
 extern TIM_HandleTypeDef htim1;
 
-#define RAM_D1_SECTION __attribute__((section(".ram_d1")))
-#define RAM_D2_SECTION __attribute__((section(".ram_d2")))
+#define RAM_D1_SECTION  __attribute__((section(".ram_d1")))
+#define RAM_D2_SECTION  __attribute__((section(".ram_d2")))
 #define RAM_D2B_SECTION __attribute__((section(".ram_d2b")))
-#define RAM_D3_SECTION __attribute__((section(".ram_d3")))
+#define RAM_D3_SECTION  __attribute__((section(".ram_d3")))
 
 SynthState synthState;
 ScreenCoordinator fmDisplay3;
@@ -83,9 +82,9 @@ uint32_t oscilloMillis = 1;
 uint32_t cpuUsageMillis = 1;
 uint32_t saturatedOutputMillis = 0;
 
-
-uint32_t ledCpt = 0;;
-float *timbreSamples;
+uint32_t ledCpt = 0;
+;
+float* timbreSamples;
 int previousCpuUsage = 101;
 uint8_t previousNumberOfPlayingVoices = 255;
 
@@ -113,9 +112,9 @@ void preenfm3Init() {
         waveform3[s] = 0;
     }
 
-    HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t *) waveform3, 64 * 2);
-    HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t *) waveform2, 64 * 2);
-    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *) waveform1, 64 * 2);
+    HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t*)waveform3, 64 * 2);
+    HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)waveform2, 64 * 2);
+    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)waveform1, 64 * 2);
 
     timbreSamples = synth.getTimbre(synthState.getCurrentTimbre())->getSampleBlock();
 
@@ -145,7 +144,7 @@ void preenfm3Init() {
 
     // the TFT should be ready, we can turn on the led backlight
     // the TFT should be ready, we can turn on the led backlight
-    uint8_t tft_bl =  synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
+    uint8_t tft_bl = synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
 
     TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -157,7 +156,6 @@ void preenfm3Init() {
     }
     HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
 }
-
 
 void preenfm3Loop() {
     uint32_t currentMillis = HAL_GetTick();
@@ -200,7 +198,7 @@ void preenfm3Loop() {
         }
     }
 
-    if (unlikely(tftHasJustBeenCleared))  {
+    if (unlikely(tftHasJustBeenCleared)) {
         tft.resetHasJustBeenCleared();
         // force cpu usage refresh
         cpuUsageMillis = 0;
@@ -219,7 +217,7 @@ void preenfm3Loop() {
             oscilloMillis = currentMillis;
             tft.oscilloRrefresh();
             float lf = synth.getLowerNoteFrequency(synthState.getCurrentTimbre());
-			tft.oscilloNewLowerFrequency(lf);
+            tft.oscilloNewLowerFrequency(lf);
             timbreSamples = synth.getTimbre(synthState.getCurrentTimbre())->getSampleBlock();
         }
     } else {
@@ -228,7 +226,6 @@ void preenfm3Loop() {
         // so that it's not erased just after beeing displayed once
         oscilloMillis = currentMillis;
     }
-
 
     if (synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1) {
         // Detect TFT errors
@@ -255,8 +252,8 @@ void preenfm3Loop() {
                 previousCpuUsage = cpuUsage;
                 tft.setCharBackgroundColor(COLOR_BLACK);
                 tft.setCharColor(COLOR_GRAY);
-                tft.setCursorInPixel(90,25);
-                int  cpuUsage10 = cpuUsage / 10;
+                tft.setCursorInPixel(90, 25);
+                int cpuUsage10 = cpuUsage / 10;
                 if (cpuUsage10 < 10) {
                     tft.printSmallChar('0');
                 }
@@ -287,11 +284,12 @@ void preenfm3Tic() {
         return;
     }
 
-	tftCpt++;
+    tftCpt++;
 
-	// check encoder/buttons status : 500 times per seconds
+    // check encoder/buttons status : 500 times per seconds
     if ((tftCpt & 0x1) == 0) {
-        encoders.checkStatus(synthState.fullState_.midiConfigValue[MIDICONFIG_ENCODER], synthState.fullState_.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
+        encoders.checkStatus(synthState.fullState_.midiConfigValue[MIDICONFIG_ENCODER],
+                             synthState.fullState_.midiConfigValue[MIDICONFIG_ENCODER_PUSH]);
     }
 
     // In case of sequencer running on internal BPM
@@ -330,7 +328,7 @@ void preenfm3DecodeMidiIn() {
     }
 }
 
-void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai) {
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef* hsai) {
     if (hsai == &hsai_BlockA1) {
         preenfm3DecodeMidiIn();
 
@@ -346,7 +344,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai) {
  *              the configuration information for SAI module.
  * @retval None
  */
-void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef* hsai) {
     if (hsai == &hsai_BlockA1) {
         preenfm3DecodeMidiIn();
 
@@ -357,12 +355,12 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
 }
 
 /**
-  * @brief Tx Transfer completed callback.
-  * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
-  *               the configuration information for SPI module.
-  * @retval None
-  */
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+ * @brief Tx Transfer completed callback.
+ * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
+ *               the configuration information for SPI module.
+ * @retval None
+ */
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef* hspi) {
     // Unselect TFT as soon as the transfer is finished to avoid noise on data line
     if (hspi == &hspi1) {
         tft.pushToTftFinished();
@@ -372,7 +370,6 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 extern "C" void tftSpiError() {
     tft.pushToTftError();
 }
-
 
 /*
  * Deal with Receive fifo not empty => new midi byte to read
@@ -410,7 +407,6 @@ void preenfm3_USART1_IRQHandler() {
     if (READ_BIT(huart1.Instance->ISR, USART_ISR_ORE) != 0) {
         SET_BIT(huart1.Instance->ICR, USART_ICR_ORECF);
     }
-
 }
 
 void dependencyInjection() {
@@ -438,13 +434,11 @@ void dependencyInjection() {
     midiDecoder.setSynth(&synth);
     midiDecoder.setStorage(&sdCard);
 
-
     // Init child display
     displayMixer.init(&synthState, &tft);
     displayMenu.init(&synthState, &tft, &sdCard);
     displayEditor.init(&synthState, &tft);
     displaySequencer.init(&synthState, &tft);
-
 
     // ---------------------------------------
     // Register listener
@@ -467,8 +461,7 @@ void dependencyInjection() {
     // pfm3 : synthState needs to know all timbre params names
     synthState.setTimbres(synth.getTimbres());
 
-    sdCard.init(synth.getTimbre(0), synth.getTimbre(1), synth.getTimbre(2),
-            synth.getTimbre(3), synth.getTimbre(4), synth.getTimbre(5));
+    sdCard.init(synth.getTimbre(0), synth.getTimbre(1), synth.getTimbre(2), synth.getTimbre(3), synth.getTimbre(4), synth.getTimbre(5));
 
     sdCard.getMixerBank()->setMixerState(&synthState.mixerState_);
     sdCard.getMixerBank()->setScalaFile(sdCard.getScalaFile());
@@ -483,14 +476,12 @@ void dependencyInjection() {
     sdCard.getUserEnvCurve()->loadUserEnvCurves();
     synthState.propagateAfterNewMixerLoad();
 
-
     // To call after config loaded
     sdCard.getPatchBank()->setArpeggiatorPartOfThePreset(&synthState.fullState_.midiConfigValue[MIDICONFIG_ARPEGGIATOR_IN_PRESET]);
     displayMixer.setReverbParamVisible(synthState.fullState_.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
-
 }
 
-void preenfm3_usbDataReceive(uint8_t *buffer) {
+void preenfm3_usbDataReceive(uint8_t* buffer) {
     int usbr = 0;
     while (buffer[usbr] != 0 && usbr < 64) {
         // Cable 0
@@ -504,9 +495,9 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xe:
             case 0x3:
                 if (synthState.mixerState_.midiThru_ != 0) {
-                    usartBufferOut.insert(buffer[usbr+1]);
-                    usartBufferOut.insert(buffer[usbr+2]);
-                    usartBufferOut.insert(buffer[usbr+3]);
+                    usartBufferOut.insert(buffer[usbr + 1]);
+                    usartBufferOut.insert(buffer[usbr + 2]);
+                    usartBufferOut.insert(buffer[usbr + 3]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
                 }
                 // Sysex - No thru
@@ -521,8 +512,8 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xd:
             case 0x2:
                 if (synthState.mixerState_.midiThru_ != 0) {
-                    usartBufferOut.insert(buffer[usbr+1]);
-                    usartBufferOut.insert(buffer[usbr+2]);
+                    usartBufferOut.insert(buffer[usbr + 1]);
+                    usartBufferOut.insert(buffer[usbr + 2]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
                 }
                 // Sysex - No thru
@@ -534,7 +525,7 @@ void preenfm3_usbDataReceive(uint8_t *buffer) {
             case 0xF:
                 usbMidi.insert(buffer[usbr + 1]);
                 if (synthState.mixerState_.midiThru_ != 0) {
-                    usartBufferOut.insert(buffer[usbr+1]);
+                    usartBufferOut.insert(buffer[usbr + 1]);
                     SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE_TXFNFIE);
                 }
                 // Sysex - No thru
@@ -555,8 +546,6 @@ float getCompInstrumentGainReduction(int t) {
     return synth.getCompInstrument(t).getCurrentGainReduction();
 }
 
-
 #ifdef __cplusplus
 }
 #endif
-

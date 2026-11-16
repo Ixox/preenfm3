@@ -21,24 +21,25 @@
 
 #include "PreenFMFileType.h"
 
-class UserEnvCurve : public PreenFMFileType
-{
+class UserEnvCurve : public PreenFMFileType {
 public:
     UserEnvCurve();
     virtual ~UserEnvCurve();
     void loadUserEnvCurves();
 
 protected:
-    const char *getFolderName();
-    bool isCorrectFile(char *name, int size) { return true; }
+    const char* getFolderName();
+    bool isCorrectFile(char* name, int size) {
+        return true;
+    }
 
 private:
-    void loadUserEnvCurveFromTxt(int f, const char *fileName, int size);
-    int fillUserEnvCurveFromTxt(int f, char *buffer, int filled, bool last);
-    void loadUserEnvCurveFromBin(int f, const char *fileName);
-    void saveUserEnvCurveToBin(int f, const char *fileName);
-    void interpolate(float *source, int sourceNumberOfSamples, int targetNumberOfSamples);
-    void normalize(float *buffer, int numberOfSamples);
+    void loadUserEnvCurveFromTxt(int f, const char* fileName, int size);
+    int fillUserEnvCurveFromTxt(int f, char* buffer, int filled, bool last);
+    void loadUserEnvCurveFromBin(int f, const char* fileName);
+    void saveUserEnvCurveToBin(int f, const char* fileName);
+    void interpolate(float* source, int sourceNumberOfSamples, int targetNumberOfSamples);
+    void normalize(float* buffer, int numberOfSamples);
     int numberOfSampleError(int f);
 
     int numberOfSample_;

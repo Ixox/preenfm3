@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 /*
  * SEQUENCE_BANK_VERSION1 : uin32_t on 4 bytes
  * Per Bank :
@@ -50,12 +48,10 @@
 
  */
 
-
-#include <SequenceBank.h>
 #include "TftDisplay.h"
+#include <SequenceBank.h>
 
 extern TftDisplay tft;
-
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
 __attribute__((section(".ram_d2b"))) static FIL sequenceFile;
@@ -72,8 +68,7 @@ const char* SequenceBank::getFolderName() {
     return PREENFM_DIR;
 }
 
-
-bool SequenceBank::isCorrectFile(char *name, int size) {
+bool SequenceBank::isCorrectFile(char* name, int size) {
     int pointPos = -1;
     for (int k = 1; k < 9 && pointPos == -1; k++) {
         if (name[k] == '.') {
@@ -96,17 +91,17 @@ void SequenceBank::setSequencer(Sequencer* sequencer) {
     this->sequencer_ = sequencer;
 }
 
-bool SequenceBank::isReadOnly(struct PFM3File *file) {
+bool SequenceBank::isReadOnly(struct PFM3File* file) {
     const char* fullSeqBankName = getFullName(file->name);
     uint32_t bankVersion;
     UINT byteRead;
     this->sequencer_ = sequencer_;
     if (f_open(&sequenceFile, fullSeqBankName, FA_READ) == FR_OK) {
-        f_read(&sequenceFile, (void *)&bankVersion, 4, &byteRead);
+        f_read(&sequenceFile, (void*)&bankVersion, 4, &byteRead);
         f_close(&sequenceFile);
     }
     if (bankVersion == SEQUENCE_BANK_CURRENT_VERSION) {
-    	return false;
+        return false;
     } else {
         return true;
     }
@@ -121,15 +116,15 @@ void SequenceBank::loadSequence(const struct PFM3File* bank, int patchNumber) {
     uint32_t bankVersion;
     UINT byteRead;
     if (f_open(&sequenceFile, fullSeqBankName, FA_READ) == FR_OK) {
-        f_read(&sequenceFile, (void *)&bankVersion, 4, &byteRead);
+        f_read(&sequenceFile, (void*)&bankVersion, 4, &byteRead);
 
         switch (bankVersion) {
-            case SEQUENCE_BANK_VERSION1:
-                loadSequenceDataVersion1(&sequenceFile, patchNumber);
-                break;
-            case SEQUENCE_BANK_VERSION2:
-                loadSequenceDataVersion2(&sequenceFile, patchNumber);
-                break;
+        case SEQUENCE_BANK_VERSION1:
+            loadSequenceDataVersion1(&sequenceFile, patchNumber);
+            break;
+        case SEQUENCE_BANK_VERSION2:
+            loadSequenceDataVersion2(&sequenceFile, patchNumber);
+            break;
         }
         f_close(&sequenceFile);
     }
@@ -167,8 +162,6 @@ void SequenceBank::loadSequenceDataVersion2(FIL* sequenceFile, int patchNumber) 
     f_read(sequenceFile, stepNotes, 24576, &byteRead);
 }
 
-
-
 const char* SequenceBank::loadSequenceName(const struct PFM3File* bank, int patchNumber) {
     if (!isInitialized_) {
         initFiles();
@@ -179,46 +172,45 @@ const char* SequenceBank::loadSequenceName(const struct PFM3File* bank, int patc
     UINT byteRead;
 
     if (f_open(&sequenceFile, fullSeqBankName, FA_READ) == FR_OK) {
-        f_read(&sequenceFile, (void *)&bankVersion, 4, &byteRead);
+        f_read(&sequenceFile, (void*)&bankVersion, 4, &byteRead);
 
         switch (bankVersion) {
-            case SEQUENCE_BANK_VERSION1: {
-                f_lseek(&sequenceFile, 4 + (1024 + 16384 + 12336) * patchNumber);
-                f_read(&sequenceFile, storageBuffer, 20, &byteRead);
-                const char* sequenceNameInBuffer = sequencer_->getSequenceNameInBuffer(storageBuffer);
-                for (int s = 0; s < 12; s++) {
-                    sequenceName_[s] = sequenceNameInBuffer[s];
-                }
-                sequenceName_[12] = 0;
-                f_close(&sequenceFile);
-                return sequenceName_;
-                break;
+        case SEQUENCE_BANK_VERSION1: {
+            f_lseek(&sequenceFile, 4 + (1024 + 16384 + 12336) * patchNumber);
+            f_read(&sequenceFile, storageBuffer, 20, &byteRead);
+            const char* sequenceNameInBuffer = sequencer_->getSequenceNameInBuffer(storageBuffer);
+            for (int s = 0; s < 12; s++) {
+                sequenceName_[s] = sequenceNameInBuffer[s];
             }
-            case SEQUENCE_BANK_VERSION2: {
-                f_lseek(&sequenceFile, 4 + (1024 + 16384 + 24576) * patchNumber);
-                f_read(&sequenceFile, storageBuffer, 20, &byteRead);
-                const char* sequenceNameInBuffer = sequencer_->getSequenceNameInBuffer(storageBuffer);
-                for (int s = 0; s < 12; s++) {
-                    sequenceName_[s] = sequenceNameInBuffer[s];
-                }
-                sequenceName_[12] = 0;
-                f_close(&sequenceFile);
-                return sequenceName_;
-                break;
+            sequenceName_[12] = 0;
+            f_close(&sequenceFile);
+            return sequenceName_;
+            break;
+        }
+        case SEQUENCE_BANK_VERSION2: {
+            f_lseek(&sequenceFile, 4 + (1024 + 16384 + 24576) * patchNumber);
+            f_read(&sequenceFile, storageBuffer, 20, &byteRead);
+            const char* sequenceNameInBuffer = sequencer_->getSequenceNameInBuffer(storageBuffer);
+            for (int s = 0; s < 12; s++) {
+                sequenceName_[s] = sequenceNameInBuffer[s];
             }
+            sequenceName_[12] = 0;
+            f_close(&sequenceFile);
+            return sequenceName_;
+            break;
+        }
         }
     }
 
     return "##";
 }
 
-
 void SequenceBank::createSequenceFile(const char* name) {
     if (!isInitialized_) {
         initFiles();
     }
 
-    const struct PFM3File * newBank = addEmptyFile(name);
+    const struct PFM3File* newBank = addEmptyFile(name);
     const char* fullBankName = getFullName(name);
     UINT byteWritten;
     uint32_t seqStatesize;
@@ -233,7 +225,7 @@ void SequenceBank::createSequenceFile(const char* name) {
     }
 
     uint32_t bankVersion = (uint32_t)SEQUENCE_BANK_CURRENT_VERSION;
-    f_write(&sequenceFile, (void *)&bankVersion, 4, &byteWritten);
+    f_write(&sequenceFile, (void*)&bankVersion, 4, &byteWritten);
 
     for (int i = 0; i < PROPERTY_FILE_SIZE; i++) {
         storageBuffer[i] = 0;
@@ -290,7 +282,7 @@ bool SequenceBank::saveDefaultSequence() {
     FRESULT fatFSResult = f_open(&sequenceFile, getFileName(DEFAULT_SEQUENCE), FA_OPEN_ALWAYS | FA_WRITE);
     if (fatFSResult == FR_OK) {
         uint32_t bankVersion = (uint32_t)SEQUENCE_BANK_CURRENT_VERSION;
-        f_write(&sequenceFile, (void *)&bankVersion, 4, &byteWritten);
+        f_write(&sequenceFile, (void*)&bankVersion, 4, &byteWritten);
 
         savedOK = saveSequencerData(&sequenceFile);
 
@@ -303,34 +295,33 @@ bool SequenceBank::saveDefaultSequence() {
 }
 
 bool SequenceBank::loadDefaultSequence() {
-	uint32_t bankVersion;
+    uint32_t bankVersion;
     UINT byteRead;
 
     if (f_open(&sequenceFile, getFileName(DEFAULT_SEQUENCE), FA_READ) == FR_OK) {
-        f_read(&sequenceFile, (void *)&bankVersion, 4, &byteRead);
+        f_read(&sequenceFile, (void*)&bankVersion, 4, &byteRead);
 
         switch (bankVersion) {
-            case SEQUENCE_BANK_VERSION1:
-                loadSequenceDataVersion1(&sequenceFile, 0);
-                break;
-            case SEQUENCE_BANK_VERSION2:
-                loadSequenceDataVersion2(&sequenceFile, 0);
-                break;
+        case SEQUENCE_BANK_VERSION1:
+            loadSequenceDataVersion1(&sequenceFile, 0);
+            break;
+        case SEQUENCE_BANK_VERSION2:
+            loadSequenceDataVersion2(&sequenceFile, 0);
+            break;
         }
         f_close(&sequenceFile);
     }
 
-	return true;
+    return true;
 }
 
 void SequenceBank::removeDefaultSequence() {
     remove(DEFAULT_SEQUENCE);
 }
 
-
 bool SequenceBank::saveSequencerData(FIL* file) {
-	uint32_t seqStateSize;
-	UINT byteWritten;
+    uint32_t seqStateSize;
+    UINT byteWritten;
 
     for (int i = 0; i < 1024; i++) {
         storageBuffer[i] = 0;
@@ -347,5 +338,3 @@ bool SequenceBank::saveSequencerData(FIL* file) {
 
     return true;
 }
-
-

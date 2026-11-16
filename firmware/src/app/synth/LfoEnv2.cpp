@@ -17,7 +17,6 @@
 
 #include "LfoEnv2.h"
 
-
 LfoEnv2::LfoEnv2() {
     stateTarget_[ENV2_STATE_ON_S] = 0.0f;
     stateTarget_[ENV2_STATE_ON_A] = 1.0f;
@@ -27,11 +26,10 @@ LfoEnv2::LfoEnv2() {
     stateInc_[ENV2_STATE_DEAD] = 0.0f;
 }
 
-
-void LfoEnv2::init(struct Envelope2LfoParams * envParams, Matrix *matrix, SourceEnum source, DestinationEnum dest) {
-	Lfo::init(matrix, source, dest);
-	this->envParams_ = envParams;
-	this->valueChanged(0);
+void LfoEnv2::init(struct Envelope2LfoParams* envParams, Matrix* matrix, SourceEnum source, DestinationEnum dest) {
+    Lfo::init(matrix, source, dest);
+    this->envParams_ = envParams;
+    this->valueChanged(0);
     this->valueChanged(1);
     this->valueChanged(2);
 }

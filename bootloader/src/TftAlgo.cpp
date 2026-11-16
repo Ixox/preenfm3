@@ -13,10 +13,10 @@ TftAlgo::TftAlgo() {
 TftAlgo::~TftAlgo() {
 }
 
-void TftAlgo::setBufferAdress(uint16_t *bufferAdress) {
+void TftAlgo::setBufferAdress(uint16_t* bufferAdress) {
 }
 
-void TftAlgo::setFGBufferAdress(uint8_t *bufferAdress) {
+void TftAlgo::setFGBufferAdress(uint8_t* bufferAdress) {
 }
 
 void TftAlgo::setColor(uint16_t col) {
@@ -56,13 +56,12 @@ void TftAlgo::drawAlgo(int algo) {
 void TftAlgo::drawDx7Algo(int algo) {
 }
 
-bool TftAlgo::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
+bool TftAlgo::getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest) {
     return false;
 }
 
-void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
+void TftAlgo::drawAlgoFromTable(const uint8_t* algoInfo) {
 }
-
 
 const uint8_t* TftAlgo::getDigitBits(uint8_t digit) {
     return 0;

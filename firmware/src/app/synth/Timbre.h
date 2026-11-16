@@ -19,35 +19,31 @@
 #define TIMBRE_H_
 
 #include "Common.h"
-#include "TimbreParams.h"
-#include "SynthEngine.h"
 #include "MixerState.h"
-#include "note_stack.h"
-#include "event_scheduler.h"
 #include "Pfm3Preset.h"
 #include "SharedParams.h"
+#include "SynthEngine.h"
+#include "TimbreParams.h"
+#include "event_scheduler.h"
+#include "note_stack.h"
 
 extern float panTable[];
 class Voice;
 class VoicePool;
 
-enum {
-    CLOCK_OFF,
-    CLOCK_INTERNAL,
-    CLOCK_EXTERNAL
-};
-
+enum { CLOCK_OFF, CLOCK_INTERNAL, CLOCK_EXTERNAL };
 
 class Timbre {
     friend class Dx7SynthEngine;
     friend class Preenfm3Engine;
     friend class ByosEngine;
+
 public:
     Timbre();
     virtual ~Timbre();
-    void init(SynthState *synthState, int timbreNumber);
+    void init(SynthState* synthState, int timbreNumber);
     void setVoiceNumber(int v, int n);
-    void initVoicePointer(int n, Voice *voice);
+    void initVoicePointer(int n, Voice* voice);
     void updateArpegiatorInternalClock();
     void cleanNextBlock();
     void prepareMatrixForNewBlock();
@@ -60,24 +56,24 @@ public:
     void afterNewParamsLoad();
     void setParamValue(int index, float oldValue, float newValue);
     void setFlatParamFromMidi(int row, int encoder, float newValue);
-    bool getSharedParamRowEncoder(SharedParamId param, int &row, int &encoder) const;
-    bool decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId &param, float &scaledValue) const;
+    bool getSharedParamRowEncoder(SharedParamId param, int& row, int& encoder) const;
+    bool decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId& param, float& scaledValue) const;
     void syncArpUserPatterns();
     void setStepSequencerSteps(int whichStepSeq);
     void handleNullFlatParam(int row);
     void resetPfm3PresetToDefault();
     void setPresetNameChar(int index, char c);
-    void setPresetName(const char *name);
+    void setPresetName(const char* name);
     void engineParamChanged(int paramId, int context, float oldValue, float newValue);
-    void serializePfm3Preset(struct Pfm3Preset &out) const;
-    void deserializePfm3Preset(const struct Pfm3Preset &in);
+    void serializePfm3Preset(struct Pfm3Preset& out) const;
+    void deserializePfm3Preset(const struct Pfm3Preset& in);
     uint32_t getStorageMagic() const;
-    uint32_t getStorageBlob(uint8_t *out, uint32_t maxSize);
-    bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic);
+    uint32_t getStorageBlob(uint8_t* out, uint32_t maxSize);
+    bool loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t magic);
     int getStorageNameOffset(uint32_t magic) const;
     const char* getStorageDefaultName(uint32_t magic) const;
-    void applyPfm3Preset(const struct Pfm3Preset &flat);
-    void setSharedParams(const TimbreSharedParams &shared);
+    void applyPfm3Preset(const struct Pfm3Preset& flat);
+    void setSharedParams(const TimbreSharedParams& shared);
     void setNewEffectParam(int encoder);
     int getSeqStepValue(int whichStepSeq, int step);
     void setSeqStepValue(int whichStepSeq, int step, int value);
@@ -125,19 +121,19 @@ public:
         return engineImpl_->midiNrpn(timbreNumber_, param, value);
     }
 
-    bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage &out) const {
+    bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const {
         return engineImpl_->midiPfm3ParamFeedback(row, encoder, newValue, out);
     }
 
-    bool midiPatchParam(int timbre, int index, struct MidiParamMessage &out) const {
+    bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const {
         return engineImpl_->midiPatchParam(timbre, index, out);
     }
 
-    bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage &out) const {
+    bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
         return engineImpl_->midiParamFeedback(paramId, context, newValue, out);
     }
 
-    void loadDx7Patch(const uint8_t *packedPatch) {
+    void loadDx7Patch(const uint8_t* packedPatch) {
         engineImpl_->loadDx7Patch(packedPatch);
     }
     uint8_t* getPatchMemory() {
@@ -158,7 +154,7 @@ public:
         engineImpl_->noteOff(note);
     }
 
-    void initVoicePool(VoicePool *pool) {
+    void initVoicePool(VoicePool* pool) {
         voicePool_ = pool;
     }
 
@@ -177,14 +173,14 @@ public:
     void applyTimbreFx() {
         fxAfterBlock();
     }
-    bool adoptVoiceFromPool(Voice *voice, int voiceIndex) {
+    bool adoptVoiceFromPool(Voice* voice, int voiceIndex) {
         return adoptVoice(voice, voiceIndex);
     }
     void dropVoiceToPool(int voiceIndex) {
         dropVoice(voiceIndex);
     }
     int getNumberOfVoices() const {
-        return (int) numberOfVoices_;
+        return (int)numberOfVoices_;
     }
     int getVoiceNumber(int index) const {
         return voiceNumber_[index];
@@ -224,8 +220,7 @@ public:
         return sharedParams_[timbreNumber_];
     }
 
-
-    void updateVoiceMatrix(Voice *voice, int note, int velocity) {
+    void updateVoiceMatrix(Voice* voice, int note, int velocity) {
         engineImpl_->updateVoiceMatrix(voice, note, velocity);
     }
 
@@ -264,19 +259,18 @@ public:
     }
 
     bool isUnisonMode() {
-    	return engineImpl_->isUnisonMode();
+        return engineImpl_->isUnisonMode();
     }
 
     void stopPlayingNow();
     void allNoteOff();
     void allNoteOffQuick();
     void allSoundOff();
-    void noteOffVoice(Voice *voice);
-    void noteOffVoiceQuick(Voice *voice);
-    void killVoice(Voice *voice);
-    void startVoiceAfterTransfer(Voice *voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff);
-    void completeVoiceTransfer(Voice *voice, int poolIndex, VoicePool *pool);
-
+    void noteOffVoice(Voice* voice);
+    void noteOffVoiceQuick(Voice* voice);
+    void killVoice(Voice* voice);
+    void startVoiceAfterTransfer(Voice* voice, int note, float noteFrequency, uint8_t velocity, float phase, bool alreadyOff);
+    void completeVoiceTransfer(Voice* voice, int poolIndex, VoicePool* pool);
 
     void setMPESetting(uint8_t mpeSetting) {
         mpeSetting_ = mpeSetting;
@@ -287,10 +281,9 @@ public:
     }
 
 private:
-
     int allocateVoice(int note);
     int reuseVoice(int voiceIndex);
-    bool adoptVoice(Voice *voice, int voiceIndex);
+    bool adoptVoice(Voice* voice, int voiceIndex);
     void dropVoice(int voiceIndex);
     int countPendingVoices() const;
     bool ensureActiveVoices(int count);
@@ -311,28 +304,28 @@ private:
     void fxAfterBlock();
     float delayInterpolation(float readPos, float buffer[], int bufferLenM1);
     float delayInterpolation2(float readPos, float buffer[], int bufferLenM1, int offset);
-    float iirFilter(float x, float a0, float *yn1, float *yn2, float *xn1, float *xn2) ;
+    float iirFilter(float x, float a0, float* yn1, float* yn2, float* xn1, float* xn2);
 
-    int prevFx2Type_         = 0;
+    int prevFx2Type_ = 0;
 
-    #define delayBufferSize 2048
+#define delayBufferSize 2048
 
     static float delayBuffer[NUMBER_OF_TIMBRES][delayBufferSize];
-    float *delayBuffer_;
+    float* delayBuffer_;
 
     float param1S_ = 0;
     float matrixFilterFrequencyS_ = 0;
     float param2S_ = 0;
     float delaySize1_ = 0, delaySize2_ = 0, delaySize3_ = 0;
-    float feedback_            = 0;
-    float shift_ = 0,   shift2_ = 0;
-    int delayWritePos_         = 0;
-    float delayWritePosF_      = 0;
-    float delayReadPos_        = 0;
-    float delayReadPos2_       = 0;
-    float delayReadFrac_       = 0;
-    float delayReadFrac2_      = 0;
-     
+    float feedback_ = 0;
+    float shift_ = 0, shift2_ = 0;
+    int delayWritePos_ = 0;
+    float delayWritePosF_ = 0;
+    float delayReadPos_ = 0;
+    float delayReadPos2_ = 0;
+    float delayReadFrac_ = 0;
+    float delayReadFrac2_ = 0;
+
     float low1_ = 0, band1_ = 0;
     float low2_ = 0, band2_ = 0;
     float low3_ = 0, band3_ = 0;
@@ -369,11 +362,11 @@ private:
     float samplen1_ = 0;
 
     // diffuser
-    int inputWritePos1_     = 0;
-    int inputWritePos2_     = 0;
-    int inputWritePos3_     = 0;
-    int inputWritePos4_     = 0;
-    int inputWritePos5_     = 0;
+    int inputWritePos1_ = 0;
+    int inputWritePos2_ = 0;
+    int inputWritePos3_ = 0;
+    int inputWritePos4_ = 0;
+    int inputWritePos5_ = 0;
     const int inputBufferLen1_ = 126;
     const int inputBufferLen2_ = 180;
     const int inputBufferLen3_ = 204;
@@ -381,30 +374,17 @@ private:
     const int inputBufferLen5_ = 269;
 
     // granulator
-    enum GRAIN_PARAMS {
-        GRAIN_RAMP = 0,
-        GRAIN_POS,
-        GRAIN_SIZE,
-        GRAIN_CURRENT_SHIFT,
-        GRAIN_NEXT_SHIFT,
-        GRAIN_INC,
-        GRAIN_VOL,
-        GRAIN_PAN
-    };
+    enum GRAIN_PARAMS { GRAIN_RAMP = 0, GRAIN_POS, GRAIN_SIZE, GRAIN_CURRENT_SHIFT, GRAIN_NEXT_SHIFT, GRAIN_INC, GRAIN_VOL, GRAIN_PAN };
 
     uint8_t grainNext_ = 0, grainPrev_ = 0;
-    float grainTable_[3][8] = {
-        {1, 1, 1, 0, 0, 0, 1, 0.5f},
-        {1, 1, 1, 0, 0, 0, 1, 0.5f},
-        {1, 1, 1, 0, 0, 0, 1, 0.5f}
-    };
+    float grainTable_[3][8] = {{1, 1, 1, 0, 0, 0, 1, 0.5f}, {1, 1, 1, 0, 0, 0, 1, 0.5f}, {1, 1, 1, 0, 0, 0, 1, 0.5f}};
     float lockA_, lockB_, loopSize_ = 20;
-    
+
     /** --------------end of FX conf--------------  */
 
     int8_t timbreNumber_;
     SynthEngineType engine_;
-    SynthEngine *engineImpl_;
+    SynthEngine* engineImpl_;
     // Flat Pfm3Preset mirror for the editor and storage.
     // The PFM3 DSP state is owned by Pfm3TimbreParams in Preenfm3Engine.
     struct Pfm3Preset pfm3Preset_;
@@ -414,19 +394,19 @@ private:
     static TimbreSharedParams sharedParams_[NUMBER_OF_TIMBRES];
     // Note-to-frequency scale (MTS) table for this instrument. Engines need
     // it to start notes, so it is the only MixerState they read.
-    struct MixerState *mixerState_;
-    SynthState *synthState_;
+    struct MixerState* mixerState_;
+    SynthState* synthState_;
     float sampleBlock_[BLOCK_SIZE * 2];
-    float *sbMax_;
+    float* sbMax_;
     float numberOfVoiceInverse_;
     // numberOfVoices_ is the number of voices currently owned by this timbre.
     // maxVoices_ is the configured polyphony limit from the mixer.
     float numberOfVoices_;
     int maxVoices_;
-    VoicePool *voicePool_;
+    VoicePool* voicePool_;
 
     float mixerGain_;
-    Voice *voices_[MAX_NUMBER_OF_VOICES];
+    Voice* voices_[MAX_NUMBER_OF_VOICES];
     int8_t mpeChannelVoice_[16];
     bool holdPedal_;
     int8_t lastPlayedNote_;
@@ -461,7 +441,6 @@ private:
     static uint32_t voiceIndex_;
 
     uint8_t mpeSetting_;
-
 };
 
 #endif /* TIMBRE_H_ */

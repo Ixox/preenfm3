@@ -24,8 +24,7 @@ MixerState::MixerState() {
 MixerState::~MixerState() {
 }
 
-
-void MixerState::getFullState(char *buffer, uint32_t *size) {
+void MixerState::getFullState(char* buffer, uint32_t* size) {
     uint32_t index = 0;
 
     buffer[index++] = MIXER_BANK_CURRENT_VERSION;
@@ -37,7 +36,7 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     buffer[index++] = globalChannel_;
     buffer[index++] = midiThru_;
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     buffer[index++] = tuningUint8[0];
     buffer[index++] = tuningUint8[1];
     buffer[index++] = tuningUint8[2];
@@ -57,7 +56,7 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
         for (int s = 0; s < 12; s++) {
             buffer[index++] = instrumentState_[t].scalaScaleFileName[s];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         buffer[index++] = volumeUint8[0];
         buffer[index++] = volumeUint8[1];
         buffer[index++] = volumeUint8[2];
@@ -77,14 +76,13 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
 
     // User CC
     for (int u = 0; u < 4; u++) {
-        buffer[index++] =  userCC_[u];
+        buffer[index++] = userCC_[u];
     }
 
     // reverb preset, output, volume
     buffer[index++] = reverbPreset_;
     buffer[index++] = reverbOutput_;
-    buffer[index++] = (char)(100.0f * reverbLevel_) ;
-
+    buffer[index++] = (char)(100.0f * reverbLevel_);
 
     buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME]);
     buffer[index++] = (char)(100.0f * fxBus_.masterfxConfig_[GLOBALFX_DECAY]);
@@ -103,15 +101,15 @@ void MixerState::getFullState(char *buffer, uint32_t *size) {
     *size = index;
 }
 
-void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNumber) {
+void MixerState::getFullDefaultState(char* buffer, uint32_t* size, uint8_t mixNumber) {
     // == Default mixer for new bank
     char defaultMixName[13] = "Mix \0\0\0\0\0\0\0\0";
     if (mixNumber > 99) {
         mixNumber = 99;
     }
     uint8_t dizaine = mixNumber / 10;
-    defaultMixName[4] = (char) ('0' + dizaine);
-    defaultMixName[5] = (char) ('0' + (mixNumber - dizaine * 10));
+    defaultMixName[4] = (char)('0' + dizaine);
+    defaultMixName[5] = (char)('0' + (mixNumber - dizaine * 10));
     uint32_t index = 0;
     buffer[index++] = MIXER_BANK_CURRENT_VERSION;
     for (int i = 0; i < 12; i++) {
@@ -123,14 +121,14 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     buffer[index++] = 0;
 
     float defaultTuning = 440.0f;
-    uint8_t *tuningUint8 = (uint8_t*) &defaultTuning;
+    uint8_t* tuningUint8 = (uint8_t*)&defaultTuning;
     buffer[index++] = tuningUint8[0];
     buffer[index++] = tuningUint8[1];
     buffer[index++] = tuningUint8[2];
     buffer[index++] = tuningUint8[3];
 
-    uint8_t outs[] = { 1, 1, 4, 4, 6, 8 };
-    int numberOfVoices[] = { 3, 3, 3, 2, 1, 1 };
+    uint8_t outs[] = {1, 1, 4, 4, 6, 8};
+    int numberOfVoices[] = {3, 3, 3, 2, 1, 1};
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         buffer[index++] = outs[t];
         buffer[index++] = 1 + t;
@@ -146,7 +144,7 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
             buffer[index++] = 0;
         }
         float defaultVolume = 1.0f;
-        uint8_t *volumeUint8 = (uint8_t*) &defaultVolume;
+        uint8_t* volumeUint8 = (uint8_t*)&defaultVolume;
         buffer[index++] = volumeUint8[0];
         buffer[index++] = volumeUint8[1];
         buffer[index++] = volumeUint8[2];
@@ -173,7 +171,6 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     buffer[index++] = 0;
     buffer[index++] = 100;
 
-
     // Master FX default value
     buffer[index++] = (char)(GLOBALFX_PREDELAYTIME_DEFAULT * 100.0f);
     buffer[index++] = (char)(GLOBALFX_PREDELAYMIX_DEFAULT * 100.0f);
@@ -192,32 +189,31 @@ void MixerState::getFullDefaultState(char *buffer, uint32_t *size, uint8_t mixNu
     *size = index;
 }
 
-
-void MixerState::restoreFullState(char *buffer) {
+void MixerState::restoreFullState(char* buffer) {
     uint8_t version = buffer[0];
     setDefaultValues();
     switch (version) {
-        case MIXER_BANK_VERSION1:
-            restoreFullStateVersion1(buffer);
-            break;
-        case MIXER_BANK_VERSION2:
-            restoreFullStateVersion2(buffer);
-            break;
-        case MIXER_BANK_VERSION3:
-            restoreFullStateVersion3(buffer);
-            break;
-        case MIXER_BANK_VERSION4:
-            restoreFullStateVersion4(buffer);
-            break;
-        case MIXER_BANK_VERSION5:
-            restoreFullStateVersion5(buffer);
-            break;
-        case MIXER_BANK_VERSION6:
-            restoreFullStateVersion6(buffer);
-            break;
-        case MIXER_BANK_VERSION7:
-            restoreFullStateVersion7(buffer);
-            break;
+    case MIXER_BANK_VERSION1:
+        restoreFullStateVersion1(buffer);
+        break;
+    case MIXER_BANK_VERSION2:
+        restoreFullStateVersion2(buffer);
+        break;
+    case MIXER_BANK_VERSION3:
+        restoreFullStateVersion3(buffer);
+        break;
+    case MIXER_BANK_VERSION4:
+        restoreFullStateVersion4(buffer);
+        break;
+    case MIXER_BANK_VERSION5:
+        restoreFullStateVersion5(buffer);
+        break;
+    case MIXER_BANK_VERSION6:
+        restoreFullStateVersion6(buffer);
+        break;
+    case MIXER_BANK_VERSION7:
+        restoreFullStateVersion7(buffer);
+        break;
     }
 }
 
@@ -243,13 +239,9 @@ void MixerState::setDefaultValues() {
     reverbOutput_ = 0;
 
     fxBus_.setDefaultValue();
-
 }
 
-
-
-
-void MixerState::restoreFullStateVersion1(char *buffer) {
+void MixerState::restoreFullStateVersion1(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -260,7 +252,7 @@ void MixerState::restoreFullStateVersion1(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -280,19 +272,18 @@ void MixerState::restoreFullStateVersion1(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
         volumeUint8[3] = buffer[index++];
     }
-
 }
 
 /*
  * Version 2 has pan
  */
-void MixerState::restoreFullStateVersion2(char *buffer) {
+void MixerState::restoreFullStateVersion2(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -303,7 +294,7 @@ void MixerState::restoreFullStateVersion2(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -323,7 +314,7 @@ void MixerState::restoreFullStateVersion2(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
@@ -335,7 +326,7 @@ void MixerState::restoreFullStateVersion2(char *buffer) {
 /*
  * Version 3 has compressor
  */
-void MixerState::restoreFullStateVersion3(char *buffer) {
+void MixerState::restoreFullStateVersion3(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -346,7 +337,7 @@ void MixerState::restoreFullStateVersion3(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -366,7 +357,7 @@ void MixerState::restoreFullStateVersion3(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
@@ -381,7 +372,7 @@ void MixerState::restoreFullStateVersion3(char *buffer) {
 /*
  * Version 4 has userCC
  */
-void MixerState::restoreFullStateVersion4(char *buffer) {
+void MixerState::restoreFullStateVersion4(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -392,7 +383,7 @@ void MixerState::restoreFullStateVersion4(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -412,7 +403,7 @@ void MixerState::restoreFullStateVersion4(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
@@ -432,7 +423,7 @@ void MixerState::restoreFullStateVersion4(char *buffer) {
 /*
  * Version 4 has MPE
  */
-void MixerState::restoreFullStateVersion5(char *buffer) {
+void MixerState::restoreFullStateVersion5(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -444,7 +435,7 @@ void MixerState::restoreFullStateVersion5(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -464,7 +455,7 @@ void MixerState::restoreFullStateVersion5(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
@@ -484,7 +475,7 @@ void MixerState::restoreFullStateVersion5(char *buffer) {
 /*
  * With FX send + reverb global params
  */
-void MixerState::restoreFullStateVersion6(char *buffer) {
+void MixerState::restoreFullStateVersion6(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -496,7 +487,7 @@ void MixerState::restoreFullStateVersion6(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -516,7 +507,7 @@ void MixerState::restoreFullStateVersion6(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
@@ -535,22 +526,22 @@ void MixerState::restoreFullStateVersion6(char *buffer) {
 
     reverbPreset_ = buffer[index++];
     reverbOutput_ = buffer[index++];
-    reverbLevel_ = .01f * buffer[index++] ;
+    reverbLevel_ = .01f * buffer[index++];
 
     // No loop in case we add/remove params later
-    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_DECAY] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_SIZE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_DECAY] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_SIZE] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_DAMPING] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_LOOPHP] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++];
 
     fxBus_.paramChanged();
 }
@@ -558,7 +549,7 @@ void MixerState::restoreFullStateVersion6(char *buffer) {
 /*
  * With per timbre synth engine
  */
-void MixerState::restoreFullStateVersion7(char *buffer) {
+void MixerState::restoreFullStateVersion7(char* buffer) {
     int index = 0;
     index++; // version
 
@@ -570,7 +561,7 @@ void MixerState::restoreFullStateVersion7(char *buffer) {
     globalChannel_ = buffer[index++];
     midiThru_ = buffer[index++];
 
-    uint8_t *tuningUint8 = (uint8_t*) &tuning_;
+    uint8_t* tuningUint8 = (uint8_t*)&tuning_;
     tuningUint8[0] = buffer[index++];
     tuningUint8[1] = buffer[index++];
     tuningUint8[2] = buffer[index++];
@@ -590,7 +581,7 @@ void MixerState::restoreFullStateVersion7(char *buffer) {
         for (int s = 0; s < 12; s++) {
             instrumentState_[t].scalaScaleFileName[s] = buffer[index++];
         }
-        uint8_t *volumeUint8 = (uint8_t*) &instrumentState_[t].volume;
+        uint8_t* volumeUint8 = (uint8_t*)&instrumentState_[t].volume;
         volumeUint8[0] = buffer[index++];
         volumeUint8[1] = buffer[index++];
         volumeUint8[2] = buffer[index++];
@@ -611,33 +602,31 @@ void MixerState::restoreFullStateVersion7(char *buffer) {
 
     reverbPreset_ = buffer[index++];
     reverbOutput_ = buffer[index++];
-    reverbLevel_ = .01f * buffer[index++] ;
+    reverbLevel_ = .01f * buffer[index++];
 
     // No loop in case we add/remove params later
-    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_DECAY] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_SIZE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_DAMPING] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_LOOPHP] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE] = .01f * buffer[index++] ;
-    fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++] ;
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYTIME] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_DECAY] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_PREDELAYMIX] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_SIZE] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_DIFFUSION] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_DAMPING] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_LFODEPTH] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_LFOSPEED] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTBASE] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_INPUTWIDTH] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_LOOPHP] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHBASE] = .01f * buffer[index++];
+    fxBus_.masterfxConfig_[GLOBALFX_NOTCHSPREAD] = .01f * buffer[index++];
 
     fxBus_.paramChanged();
 }
 
-
-char* MixerState::getMixNameFromFile(char *buffer) {
+char* MixerState::getMixNameFromFile(char* buffer) {
     uint8_t version = buffer[0];
     switch (version) {
-        // All version have the name at the same place
-        default:
-            return buffer + 1;
+    // All version have the name at the same place
+    default:
+        return buffer + 1;
     }
 }
-

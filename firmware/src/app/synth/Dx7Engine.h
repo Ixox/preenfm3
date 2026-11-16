@@ -35,30 +35,29 @@ struct Dx7EnvelopeDisplay {
     float level[4];
 };
 
-extern Dx7VoiceState *dx7VoiceStates;
-extern Dx7TimbreState *dx7TimbreStates;
+extern Dx7VoiceState* dx7VoiceStates;
+extern Dx7TimbreState* dx7TimbreStates;
 
-Dx7VoiceState *getDx7VoiceState(int index);
-Dx7TimbreState *getDx7TimbreState(int index);
+Dx7VoiceState* getDx7VoiceState(int index);
+Dx7TimbreState* getDx7TimbreState(int index);
 
 void dx7EngineInit();
 
-void dx7TimbreInit(Dx7TimbreState *state);
-void dx7TimbreKeyDown(Dx7TimbreState *state);
-void dx7TimbreNextBlock(Dx7TimbreState *state);
-void dx7TimbreLoadProgram(Dx7TimbreState *state, const uint8_t *program);
-void dx7TimbreSetController(Dx7TimbreState *state, enum SourceEnum source, float value);
+void dx7TimbreInit(Dx7TimbreState* state);
+void dx7TimbreKeyDown(Dx7TimbreState* state);
+void dx7TimbreNextBlock(Dx7TimbreState* state);
+void dx7TimbreLoadProgram(Dx7TimbreState* state, const uint8_t* program);
+void dx7TimbreSetController(Dx7TimbreState* state, enum SourceEnum source, float value);
 
-void dx7VoiceStart(Dx7VoiceState *state, const uint8_t *program, uint8_t note,
-                    uint8_t velocity, uint8_t channel, Dx7TimbreState *ts,
-                    bool voiceStolen);
-void dx7VoiceKeyUp(Dx7VoiceState *state);
-bool isDx7VoiceActive(Dx7VoiceState *state);
-bool dx7VoiceRender(Dx7VoiceState *state, Dx7TimbreState *ts, float *out);
-void dx7VoiceUpdateProgram(Dx7VoiceState *state, const uint8_t *program);
-void dx7VoiceUpdateParam(Dx7VoiceState *state, int paramId, int op);
-void dx7VoiceReset(Dx7VoiceState *state);
+void dx7VoiceStart(Dx7VoiceState* state, const uint8_t* program, uint8_t note, uint8_t velocity, uint8_t channel, Dx7TimbreState* ts,
+                   bool voiceStolen);
+void dx7VoiceKeyUp(Dx7VoiceState* state);
+bool isDx7VoiceActive(Dx7VoiceState* state);
+bool dx7VoiceRender(Dx7VoiceState* state, Dx7TimbreState* ts, float* out);
+void dx7VoiceUpdateProgram(Dx7VoiceState* state, const uint8_t* program);
+void dx7VoiceUpdateParam(Dx7VoiceState* state, int paramId, int op);
+void dx7VoiceReset(Dx7VoiceState* state);
 
-void getDx7EnvelopeDisplay(const uint8_t *program, uint8_t operatorNumber, Dx7EnvelopeDisplay *env);
+void getDx7EnvelopeDisplay(const uint8_t* program, uint8_t operatorNumber, Dx7EnvelopeDisplay* env);
 
 #endif

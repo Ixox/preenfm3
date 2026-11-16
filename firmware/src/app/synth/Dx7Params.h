@@ -61,35 +61,23 @@ enum Dx7ParamId {
     DX7_PARAM_COUNT
 };
 
-enum Dx7ParamKind {
-    DX7_KIND_GLOBAL,
-    DX7_KIND_OPERATOR,
-    DX7_KIND_PITCH_RATE,
-    DX7_KIND_PITCH_LEVEL,
-    DX7_KIND_OP_ENABLED
-};
+enum Dx7ParamKind { DX7_KIND_GLOBAL, DX7_KIND_OPERATOR, DX7_KIND_PITCH_RATE, DX7_KIND_PITCH_LEVEL, DX7_KIND_OP_ENABLED };
 
-enum Dx7DisplayType {
-    DX7_DISPLAY_INT,
-    DX7_DISPLAY_STRINGS,
-    DX7_DISPLAY_ALGO,
-    DX7_DISPLAY_DETUNE
-};
+enum Dx7DisplayType { DX7_DISPLAY_INT, DX7_DISPLAY_STRINGS, DX7_DISPLAY_ALGO, DX7_DISPLAY_DETUNE };
 
 struct Dx7ParamDesc {
-    const char *name;
+    const char* name;
     uint8_t kind;
     uint8_t offset;
     uint8_t minValue;
     uint8_t maxValue;
     uint8_t displayType;
-    const char **valueNames;
+    const char** valueNames;
 };
-
 
 extern const struct Dx7ParamDesc dx7Params[];
 
-uint8_t getDx7ParamValue(const uint8_t *program, int paramId, int operatorNumber);
-void setDx7ParamValue(uint8_t *program, int paramId, int operatorNumber, uint8_t value);
+uint8_t getDx7ParamValue(const uint8_t* program, int paramId, int operatorNumber);
+void setDx7ParamValue(uint8_t* program, int paramId, int operatorNumber, uint8_t value);
 
 #endif

@@ -14,31 +14,12 @@
 #include "SynthState.h"
 #include "Timbre.h"
 
-static const char *byosParamNames[] = {
-    "Wave",
-    "Mult",
-    "Mix 12",
-    "Attk",
-    "Rel"
-};
+static const char* byosParamNames[] = {"Wave", "Mult", "Mix 12", "Attk", "Rel"};
 
-static const char *byosShapeNames[] = {
-    "sin ",
-    "saw ",
-    "squa",
-    "s^2 ",
-    "szer",
-    "spos",
-    "rand",
-    "off ",
-    "Usr1",
-    "Usr2",
-    "Usr3",
-    "Usr4",
-    "Usr5",
-    "Usr6"
-};
+static const char* byosShapeNames[] = {"sin ", "saw ", "squa", "s^2 ", "szer", "spos", "rand",
+                                       "off ", "Usr1", "Usr2", "Usr3", "Usr4", "Usr5", "Usr6"};
 
+// clang-format off
 static const struct EditorOneButtonState byosOpState = {
     "OP",
     {
@@ -82,6 +63,7 @@ static const struct EditorEditMenu byosMenu = {
     2,
     { &byosOpButton, &byosEnvButton }
 };
+// clang-format on
 
 static float clampf(float value, float minValue, float maxValue) {
     if (value < minValue) {
@@ -93,7 +75,7 @@ static float clampf(float value, float minValue, float maxValue) {
     return value;
 }
 
-static float getByosParamValue(const ByosParams *params, int paramId, int context) {
+static float getByosParamValue(const ByosParams* params, int paramId, int context) {
     switch (paramId) {
     case BYOS_PARAM_WAVE:
         return (context >= 0 && context < 2) ? params->wave[context] : 0.0f;
@@ -113,7 +95,7 @@ static float getByosParamValue(const ByosParams *params, int paramId, int contex
 EditorByos::EditorByos() {
 }
 
-void EditorByos::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
+void EditorByos::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
     parent_ = parent;
     synthState_ = synthState;
     tft_ = tft;
@@ -150,22 +132,21 @@ Timbre* EditorByos::timbre() {
     return synthState_->getTimbre(currentTimbre());
 }
 
-void EditorByos::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
-        const struct EditorOneButton *page) {
-    struct FullState *fullState = &synthState_->fullState_;
+void EditorByos::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
+    struct FullState* fullState = &synthState_->fullState_;
     if (button < editMenu->numberOfButtons) {
-        const struct EditorOneButton *buttonPage = editMenu->pages[button];
+        const struct EditorOneButton* buttonPage = editMenu->pages[button];
         tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
-            fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
+                         fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
     } else {
         tft_->drawButton("", 270, 29, button, 0, 0);
     }
 }
 
-void EditorByos::drawParameterName(int button, const struct RowEncoder &rowEncoder,
-        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) {
-    (void) editMenu;
-    (void) page;
+void EditorByos::drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
+                                   const struct EditorOneButton* page) {
+    (void)editMenu;
+    (void)page;
 
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
@@ -191,10 +172,10 @@ void EditorByos::displayParamValue(int encoder, TFT_COLOR color) {
         return;
     }
 
-    ByosParams *params = (ByosParams*) timbre()->getPatchMemory();
+    ByosParams* params = (ByosParams*)timbre()->getPatchMemory();
     switch (rowEncoder.row) {
     case BYOS_PARAM_WAVE: {
-        int shape = (int) params->wave[rowEncoder.encoder];
+        int shape = (int)params->wave[rowEncoder.encoder];
         if (shape < 0) {
             shape = 0;
         } else if (shape >= OSC_SHAPE_LAST) {
@@ -227,7 +208,7 @@ void EditorByos::encoderTurned(int encoder6, int ticks) {
         return;
     }
 
-    ByosParams *params = (ByosParams*) timbre()->getPatchMemory();
+    ByosParams* params = (ByosParams*)timbre()->getPatchMemory();
     float oldValue = getByosParamValue(params, rowEncoder.row, rowEncoder.encoder);
     float step = 0.0f;
     float minValue = 0.0f;
@@ -236,7 +217,7 @@ void EditorByos::encoderTurned(int encoder6, int ticks) {
     switch (rowEncoder.row) {
     case BYOS_PARAM_WAVE:
         step = 1.0f;
-        maxValue = (float) (OSC_SHAPE_LAST - 1);
+        maxValue = (float)(OSC_SHAPE_LAST - 1);
         break;
     case BYOS_PARAM_MULTIPLIER:
         step = 0.25f;
@@ -256,20 +237,19 @@ void EditorByos::encoderTurned(int encoder6, int ticks) {
         return;
     }
 
-    float newValue = clampf(oldValue + (float) ticks * step, minValue, maxValue);
+    float newValue = clampf(oldValue + (float)ticks * step, minValue, maxValue);
     if (newValue != oldValue) {
-        synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, rowEncoder.encoder,
-            oldValue, newValue);
+        synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, rowEncoder.encoder, oldValue, newValue);
     }
 }
 
 void EditorByos::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
-    (void) timbre;
-    (void) oldValue;
-    (void) newValue;
+    (void)timbre;
+    (void)oldValue;
+    (void)newValue;
 
-    struct FullState *fullState = &synthState_->fullState_;
-    const struct EditorOneButton *page = currentPage();
+    struct FullState* fullState = &synthState_->fullState_;
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
@@ -283,10 +263,10 @@ void EditorByos::newEngineParamValue(int timbre, int paramId, int context, float
 }
 
 void EditorByos::buttonPressed(int button) {
-    struct FullState *fullState = &synthState_->fullState_;
+    struct FullState* fullState = &synthState_->fullState_;
     int mainPage = fullState->mainPage;
-    const struct EditorEditMenu *editMenu = currentEditMenu();
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorEditMenu* editMenu = currentEditMenu();
+    const struct EditorOneButton* page = currentPage();
     if (editMenu == nullptr || page == nullptr) {
         return;
     }
@@ -304,8 +284,7 @@ void EditorByos::buttonPressed(int button) {
     case BUTTON_PFM3_6:
         if (fullState->editPage == button) {
             if (page->numberOfStates > 0) {
-                fullState->buttonState[page->buttonId] =
-                    (fullState->buttonState[page->buttonId] + 1) % page->numberOfStates;
+                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->numberOfStates;
             }
         } else if (button < editMenu->numberOfButtons) {
             if (editMenu->pages[button]->numberOfStates > 0) {
@@ -325,8 +304,8 @@ void EditorByos::drawAlgorithm() {
     static const int algoY = 160;
     static const int algoWidth = 80;
     static const int algoHeight = 100;
-    static const char *lines[] = { "Your", "Synth", "Here" };
-    static const int lineLength[] = { 4, 5, 4 };
+    static const char* lines[] = {"Your", "Synth", "Here"};
+    static const int lineLength[] = {4, 5, 4};
 
     int y = algoY + (algoHeight - 3 * TFT_BIG_CHAR_HEIGHT) / 2;
     for (int i = 0; i < 3; i++) {

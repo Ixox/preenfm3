@@ -1,0 +1,12 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+PointerAlignment: Left
+ReferenceAlignment: Left
+ColumnLimit: 140
+AllowShortFunctionsOnASingleLine: None
+BreakBeforeBraces: Attach
+AlignConsecutiveMacros: true

@@ -31,7 +31,7 @@ static float clampf(float value, float minValue, float maxValue) {
 ByosEngine::ByosEngine() : timbre_(nullptr), synthState_(nullptr), timbreNumber_(0) {
 }
 
-void ByosEngine::init(Timbre *timbre, SynthState *synthState) {
+void ByosEngine::init(Timbre* timbre, SynthState* synthState) {
     timbre_ = timbre;
     synthState_ = synthState;
     timbreNumber_ = timbre->getTimbreNumber();
@@ -74,29 +74,29 @@ void ByosEngine::patchMemoryChanged() {
 }
 
 uint8_t* ByosEngine::getPatchMemory() {
-    return (uint8_t*) &params_;
+    return (uint8_t*)&params_;
 }
 
-void ByosEngine::bindVoice(Voice *voice) {
+void ByosEngine::bindVoice(Voice* voice) {
     voice->bindTimbre(timbre_);
     resetVoiceState(voice);
 }
 
-void ByosEngine::resetVoiceState(Voice *voice) {
-    ByosVoiceState &state = voiceStates_[voice->slot()];
+void ByosEngine::resetVoiceState(Voice* voice) {
+    ByosVoiceState& state = voiceStates_[voice->slot()];
     state.envLevel = 0.0f;
     state.envInc = 0.0f;
     state.velocityGain = 0.0f;
     state.envStage = BYOS_ENV_IDLE;
 }
 
-void ByosEngine::startVoice(Voice *voice, int note, int velocity, uint32_t index, float noteFrequency) {
+void ByosEngine::startVoice(Voice* voice, int note, int velocity, uint32_t index, float noteFrequency) {
     voice->resetVoiceState();
 
-    ByosVoiceState &state = voiceStates_[voice->slot()];
+    ByosVoiceState& state = voiceStates_[voice->slot()];
     state.envLevel = 0.0f;
     state.envStage = BYOS_ENV_ATTACK;
-    state.velocityGain = (float) velocity * (1.0f / 127.0f);
+    state.velocityGain = (float)velocity * (1.0f / 127.0f);
     if (params_.attack <= 0.0f) {
         state.envLevel = 1.0f;
         state.envStage = BYOS_ENV_SUSTAIN;
@@ -108,8 +108,8 @@ void ByosEngine::startVoice(Voice *voice, int note, int velocity, uint32_t index
     osc_[0].newNote(&state.osc[0], noteFrequency, 0.0f);
     osc_[1].newNote(&state.osc[1], noteFrequency, 0.0f);
 
-    voice->note_ = (char) note;
-    voice->midiVelocity_ = (char) velocity;
+    voice->note_ = (char)note;
+    voice->midiVelocity_ = (char)velocity;
     voice->noteFrequency_ = noteFrequency;
     voice->velocity_ = state.velocityGain;
     voice->index_ = index;
@@ -119,8 +119,8 @@ void ByosEngine::startVoice(Voice *voice, int note, int velocity, uint32_t index
     voice->holdedByPedal_ = false;
 }
 
-void ByosEngine::releaseVoice(Voice *voice) {
-    ByosVoiceState &state = voiceStates_[voice->slot()];
+void ByosEngine::releaseVoice(Voice* voice) {
+    ByosVoiceState& state = voiceStates_[voice->slot()];
     if (params_.release <= 0.0f || state.envLevel <= 0.0f) {
         state.envLevel = 0.0f;
         state.envStage = BYOS_ENV_IDLE;
@@ -147,8 +147,8 @@ void ByosEngine::noteOn(char note, char velocity) {
     }
     timbre_->clearMpeMapping(voiceToUse);
 
-    float noteFrequency = timbre_->mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int) note];
-    Voice *voice = timbre_->voices_[voiceToUse];
+    float noteFrequency = timbre_->mixerState_->instrumentState_[timbreNumber_].scaleFrequencies[(int)note];
+    Voice* voice = timbre_->voices_[voiceToUse];
     startVoice(voice, note, velocity, timbre_->voiceIndex_++, noteFrequency);
 
     timbre_->lastPlayedNote_ = voiceToUse;
@@ -164,8 +164,8 @@ void ByosEngine::noteOff(char note) {
         timbre_->lowerNoteReleased_ = true;
     }
 
-    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
-        Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
+    for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
+        Voice* voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         if (!voice->isPlaying()) {
             continue;
         }
@@ -179,42 +179,42 @@ void ByosEngine::noteOff(char note) {
     }
 }
 
-void ByosEngine::killVoice(Voice *voice) {
+void ByosEngine::killVoice(Voice* voice) {
     voice->resetVoiceState();
     resetVoiceState(voice);
     voice->playing_ = false;
     voice->released_ = false;
 }
 
-void ByosEngine::noteOffVoice(Voice *voice) {
+void ByosEngine::noteOffVoice(Voice* voice) {
     releaseVoice(voice);
 }
 
-void ByosEngine::noteOffVoiceQuick(Voice *voice) {
+void ByosEngine::noteOffVoiceQuick(Voice* voice) {
     killVoice(voice);
 }
 
 void ByosEngine::noteOnMpe(uint8_t channel, uint8_t note, uint8_t velocity) {
-    (void) channel;
+    (void)channel;
     noteOn(note, velocity);
 }
 
 void ByosEngine::noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) {
-    (void) channel;
-    (void) velocity;
+    (void)channel;
+    (void)velocity;
     noteOff(note);
 }
 
-void ByosEngine::renderVoice(Voice *voice) {
+void ByosEngine::renderVoice(Voice* voice) {
     if (!voice->isPlaying()) {
         voice->emptyBuffer();
         return;
     }
 
-    ByosVoiceState &state = voiceStates_[voice->slot()];
-    const struct WaveTable *waveTable0 = osc_[0].getWaveTable();
-    const struct WaveTable *waveTable1 = osc_[1].getWaveTable();
-    float *out = voice->getSampleBlock();
+    ByosVoiceState& state = voiceStates_[voice->slot()];
+    const struct WaveTable* waveTable0 = osc_[0].getWaveTable();
+    const struct WaveTable* waveTable1 = osc_[1].getWaveTable();
+    float* out = voice->getSampleBlock();
 
     for (int k = 0; k < BLOCK_SIZE; k++) {
         if (state.envStage == BYOS_ENV_ATTACK) {
@@ -246,8 +246,8 @@ void ByosEngine::renderVoice(Voice *voice) {
 
 uint8_t ByosEngine::voicesNextBlock() {
     uint8_t playing = 0;
-    for (int k = 0; k < (int) timbre_->numberOfVoices_; k++) {
-        Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
+    for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
+        Voice* voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         bool wasPlaying = voice->isPlaying();
         renderVoice(voice);
         if (wasPlaying) {
@@ -261,14 +261,14 @@ uint8_t ByosEngine::voicesNextBlock() {
 }
 
 void ByosEngine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
-    (void) oldValue;
+    (void)oldValue;
 
     switch (paramId) {
     case BYOS_PARAM_WAVE:
         if (context < 0 || context > 1) {
             return;
         }
-        params_.wave[context] = clampf(newValue, 0.0f, (float) (OSC_SHAPE_LAST - 1));
+        params_.wave[context] = clampf(newValue, 0.0f, (float)(OSC_SHAPE_LAST - 1));
         oscParams_[context].shape = params_.wave[context];
         break;
     case BYOS_PARAM_MULTIPLIER:
@@ -310,7 +310,7 @@ float ByosEngine::getParamValue(int paramId, int context) const {
 }
 
 bool ByosEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
-    (void) timbre;
+    (void)timbre;
 
     int paramId;
     int context = 0;
@@ -319,33 +319,33 @@ bool ByosEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
     switch (cc) {
     case BYOS_CC_OP1_WAVE:
         paramId = BYOS_PARAM_WAVE;
-        newValue = (float) ((value * (OSC_SHAPE_LAST - 1) + 63) / 127);
+        newValue = (float)((value * (OSC_SHAPE_LAST - 1) + 63) / 127);
         break;
     case BYOS_CC_OP1_MULTIPLIER:
         paramId = BYOS_PARAM_MULTIPLIER;
-        newValue = 0.25f + (float) ((value * 15 + 63) / 127) * 0.25f;
+        newValue = 0.25f + (float)((value * 15 + 63) / 127) * 0.25f;
         break;
     case BYOS_CC_OP2_WAVE:
         paramId = BYOS_PARAM_WAVE;
         context = 1;
-        newValue = (float) ((value * (OSC_SHAPE_LAST - 1) + 63) / 127);
+        newValue = (float)((value * (OSC_SHAPE_LAST - 1) + 63) / 127);
         break;
     case BYOS_CC_OP2_MULTIPLIER:
         paramId = BYOS_PARAM_MULTIPLIER;
         context = 1;
-        newValue = 0.25f + (float) ((value * 15 + 63) / 127) * 0.25f;
+        newValue = 0.25f + (float)((value * 15 + 63) / 127) * 0.25f;
         break;
     case BYOS_CC_MIX:
         paramId = BYOS_PARAM_MIX;
-        newValue = (float) value * (1.0f / 127.0f);
+        newValue = (float)value * (1.0f / 127.0f);
         break;
     case BYOS_CC_ATTACK:
         paramId = BYOS_PARAM_ATTACK;
-        newValue = (float) value * (5.0f / 127.0f);
+        newValue = (float)value * (5.0f / 127.0f);
         break;
     case BYOS_CC_RELEASE:
         paramId = BYOS_PARAM_RELEASE;
-        newValue = (float) value * (5.0f / 127.0f);
+        newValue = (float)value * (5.0f / 127.0f);
         break;
     default:
         return false;
@@ -358,30 +358,30 @@ bool ByosEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
     return true;
 }
 
-bool ByosEngine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage &out) const {
+bool ByosEngine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
     int cc;
     int ccValue;
 
     switch (paramId) {
     case BYOS_PARAM_WAVE:
         cc = context == 0 ? BYOS_CC_OP1_WAVE : BYOS_CC_OP2_WAVE;
-        ccValue = (int) (newValue * 127.0f / (OSC_SHAPE_LAST - 1) + 0.5f);
+        ccValue = (int)(newValue * 127.0f / (OSC_SHAPE_LAST - 1) + 0.5f);
         break;
     case BYOS_PARAM_MULTIPLIER:
         cc = context == 0 ? BYOS_CC_OP1_MULTIPLIER : BYOS_CC_OP2_MULTIPLIER;
-        ccValue = (int) ((newValue - 0.25f) / 0.25f * 127.0f / 15.0f + 0.5f);
+        ccValue = (int)((newValue - 0.25f) / 0.25f * 127.0f / 15.0f + 0.5f);
         break;
     case BYOS_PARAM_MIX:
         cc = BYOS_CC_MIX;
-        ccValue = (int) (newValue * 127.0f + 0.5f);
+        ccValue = (int)(newValue * 127.0f + 0.5f);
         break;
     case BYOS_PARAM_ATTACK:
         cc = BYOS_CC_ATTACK;
-        ccValue = (int) (newValue * 127.0f / 5.0f + 0.5f);
+        ccValue = (int)(newValue * 127.0f / 5.0f + 0.5f);
         break;
     case BYOS_PARAM_RELEASE:
         cc = BYOS_CC_RELEASE;
-        ccValue = (int) (newValue * 127.0f / 5.0f + 0.5f);
+        ccValue = (int)(newValue * 127.0f / 5.0f + 0.5f);
         break;
     default:
         return false;
@@ -394,8 +394,8 @@ bool ByosEngine::midiParamFeedback(int paramId, int context, float newValue, str
     }
 
     out.isNrpn = false;
-    out.cc = (uint8_t) cc;
-    out.ccValue = (uint8_t) ccValue;
+    out.cc = (uint8_t)cc;
+    out.ccValue = (uint8_t)ccValue;
     return true;
 }
 
@@ -404,14 +404,14 @@ uint32_t ByosEngine::getStorageMagic() const {
 }
 
 int ByosEngine::getStorageNameOffset(uint32_t magic) const {
-    return magic == PRESET_BYOS ? (int) sizeof(ByosParams) : -1;
+    return magic == PRESET_BYOS ? (int)sizeof(ByosParams) : -1;
 }
 
 const char* ByosEngine::getStorageDefaultName() const {
     return "BYOS";
 }
 
-uint32_t ByosEngine::getStorageBlob(uint8_t *out, uint32_t maxSize, const TimbreSharedParams &shared) {
+uint32_t ByosEngine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {
     const uint32_t nameOffset = sizeof(ByosParams);
     const uint32_t sharedOffset = nameOffset + 16;
     if (maxSize < sharedOffset + sizeof(TimbreSharedParams)) {
@@ -423,8 +423,8 @@ uint32_t ByosEngine::getStorageBlob(uint8_t *out, uint32_t maxSize, const Timbre
     return sharedOffset + sizeof(TimbreSharedParams);
 }
 
-bool ByosEngine::loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) {
-    (void) magic;
+bool ByosEngine::loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t magic) {
+    (void)magic;
 
     const uint32_t nameOffset = sizeof(ByosParams);
     const uint32_t sharedOffset = nameOffset + 16;

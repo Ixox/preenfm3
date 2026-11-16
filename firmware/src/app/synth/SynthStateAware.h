@@ -23,10 +23,11 @@
 class SynthStateAware {
 public:
     virtual ~SynthStateAware() {};
-	virtual void setSynthState(SynthState* sState) {
-		this->synthState_ = sState;
-	}
+    virtual void setSynthState(SynthState* sState) {
+        this->synthState_ = sState;
+    }
+
 protected:
-	SynthState* synthState_;
+    SynthState* synthState_;
 };
 #endif /* SYNTHSTATEAWARE_H_ */

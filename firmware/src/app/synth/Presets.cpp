@@ -16,9 +16,10 @@
  */
 
 #include "Common.h"
-#include "SynthState.h"
 #include "Pfm3Preset.h"
+#include "SynthState.h"
 
+// clang-format off
 const struct Pfm3Preset defaultPreset  = {
         // Engine 1
         { ALGO7, 14, 1, 4} ,
@@ -276,4 +277,4 @@ const struct Pfm3Preset newPresetParams  = {
         { 0, 0.5, 0.5, 1.0} ,
         "Default"
 };
-
+// clang-format on

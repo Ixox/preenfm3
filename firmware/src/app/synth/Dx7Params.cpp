@@ -13,12 +13,12 @@
 
 #include "Dx7Params.h"
 
-static const char *dx7OffOn[] = { "Off", "On " };
-static const char *dx7OscMode[] = { "Ratio", "Fixed" };
-static const char *dx7LfoWave[] = { "Tri", "Saw-", "Saw+", "Sqr", "Sin", "S&H" };
-static const char *dx7Curve[] = { "-Lin", "-Exp", "+Exp", "+Lin" };
+static const char* dx7OffOn[] = {"Off", "On "};
+static const char* dx7OscMode[] = {"Ratio", "Fixed"};
+static const char* dx7LfoWave[] = {"Tri", "Saw-", "Saw+", "Sqr", "Sin", "S&H"};
+static const char* dx7Curve[] = {"-Lin", "-Exp", "+Exp", "+Lin"};
 
-
+// clang-format off
 const struct Dx7ParamDesc dx7Params[DX7_PARAM_COUNT] = {
     // DX7_NONE - Empty slot
     { "",        DX7_KIND_GLOBAL,      0,   0,  0,  DX7_DISPLAY_INT,     nullptr },
@@ -103,10 +103,10 @@ const struct Dx7ParamDesc dx7Params[DX7_PARAM_COUNT] = {
     // DX7_PITCH_EG_LEVEL_4 - Pitch envelope generator level 4
     { "Lvl 4",    DX7_KIND_PITCH_LEVEL, 3,   0,  99, DX7_DISPLAY_INT,     nullptr }
 };
+// clang-format on
 
-
-uint8_t getDx7ParamValue(const uint8_t *program, int paramId, int operatorNumber) {
-    const struct Dx7ParamDesc *d = &dx7Params[paramId];
+uint8_t getDx7ParamValue(const uint8_t* program, int paramId, int operatorNumber) {
+    const struct Dx7ParamDesc* d = &dx7Params[paramId];
     switch (d->kind) {
     case DX7_KIND_GLOBAL:
         return program[d->offset];
@@ -122,8 +122,8 @@ uint8_t getDx7ParamValue(const uint8_t *program, int paramId, int operatorNumber
     return 0;
 }
 
-void setDx7ParamValue(uint8_t *program, int paramId, int operatorNumber, uint8_t value) {
-    const struct Dx7ParamDesc *d = &dx7Params[paramId];
+void setDx7ParamValue(uint8_t* program, int paramId, int operatorNumber, uint8_t value) {
+    const struct Dx7ParamDesc* d = &dx7Params[paramId];
     switch (d->kind) {
     case DX7_KIND_GLOBAL:
         program[d->offset] = value;

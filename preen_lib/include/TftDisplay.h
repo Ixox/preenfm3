@@ -15,26 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #ifndef HARDWARE_TFTDISPLAY_H_
 #define HARDWARE_TFTDISPLAY_H_
 
-#include "stm32h7xx_hal.h"
 #include "RingBuffer.h"
 #include "TftAlgo.h"
+#include "stm32h7xx_hal.h"
 
 #define TFTACTION_BUFFER_SIZE 128
 
 enum {
-	TFT_PART_HEADER = 0,
-	TFT_PART_VALUES,
+    TFT_PART_HEADER = 0,
+    TFT_PART_VALUES,
     TFT_PART_VALUES2,
     TFT_PART_VALUES3,
-	TFT_PART_OSCILLO,
+    TFT_PART_OSCILLO,
     TFT_PART_OSCILLO2,
     TFT_PART_OSCILLO3,
-	TFT_PART_BUTTONS
+    TFT_PART_BUTTONS
 };
 
 enum {
@@ -59,18 +57,16 @@ enum {
     TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM
 };
 
-
-#define TFT_PART_HEADER_BITS        0b00000001
-#define TFT_PART_VALUES_BITS        0b00001110
-#define TFT_PART_OSCILLO_BITS       0b01110000
-#define TFT_PART_BUTTONS_BITS       0b10000000
-#define TFT_PART_ALL_BITS           0b11111111
+#define TFT_PART_HEADER_BITS  0b00000001
+#define TFT_PART_VALUES_BITS  0b00001110
+#define TFT_PART_OSCILLO_BITS 0b01110000
+#define TFT_PART_BUTTONS_BITS 0b10000000
+#define TFT_PART_ALL_BITS     0b11111111
 
 #define TFT_NUMBER_OF_PARTS 8
 
-
-#define RAM_D1_SECTION __attribute__((section(".ram_d1")))
-#define DMA2D_POSITION_NLR_PL         (uint32_t)POSITION_VAL(DMA2D_NLR_PL)        /*!< Required left shift to set pixels per lines value */
+#define RAM_D1_SECTION        __attribute__((section(".ram_d1")))
+#define DMA2D_POSITION_NLR_PL (uint32_t)POSITION_VAL(DMA2D_NLR_PL) /*!< Required left shift to set pixels per lines value */
 
 enum TFT_COLOR {
     COLOR_BLACK = 0,
@@ -93,16 +89,13 @@ enum TFT_COLOR {
     NUMBER_OF_TFT_COLORS
 };
 
-#define TFT_BIG_CHAR_WIDTH 11
+#define TFT_BIG_CHAR_WIDTH  11
 #define TFT_BIG_CHAR_HEIGHT 20
 
-#define TFT_SMALL_CHAR_WIDTH 7
+#define TFT_SMALL_CHAR_WIDTH  7
 #define TFT_SMALL_CHAR_HEIGHT 10
 
-
-enum TFTActionType {
-    clear, charAt
-};
+enum TFTActionType { clear, charAt };
 
 struct TFTAction {
     uint8_t actionType = 0;
@@ -113,13 +106,15 @@ struct TFTAction {
     uint8_t param5 = 0;
 };
 
-#define OSCILLO_WIDTH 160
+#define OSCILLO_WIDTH       160
 #define OSCILLO_BUFFER_SIZE 1024
 
 #define PFM_IS_DMA2D_READY() (hdma2d.Instance->CR & DMA2D_CR_START) == 0
-#define PFM_START_DMA2D() do { __DSB(); hdma2d.Instance->CR |= DMA2D_CR_START; } while (0)
-
-
+#define PFM_START_DMA2D()                                                                                                                  \
+    do {                                                                                                                                   \
+        __DSB();                                                                                                                           \
+        hdma2d.Instance->CR |= DMA2D_CR_START;                                                                                             \
+    } while (0)
 
 class TftDisplay {
 public:
@@ -157,11 +152,12 @@ public:
     void setDirtyArea(uint16_t y, uint16_t height);
 
     void drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t numberOfStates, uint8_t activeState,
-            TFT_COLOR background = COLOR_DARK_BLUE);
+                    TFT_COLOR background = COLOR_DARK_BLUE);
     void drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color, TFT_COLOR background);
-    void drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color, TFT_COLOR background);
-    void drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection, uint8_t buttonState, int8_t baseNumber);
-
+    void drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
+                                TFT_COLOR background);
+    void drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection,
+                           uint8_t buttonState, int8_t baseNumber);
 
     void clear();
     void clearMixerValues();
@@ -174,11 +170,11 @@ public:
     // Oscillo
     void oscilloRrefresh();
     void oscilloNewLowerFrequency(float lf);
-    void oscilloRecord32Samples(float *samples);
+    void oscilloRecord32Samples(float* samples);
 
     void drawAlgo(int algo);
     void drawDx7Algo(int algo);
-    bool getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest);
+    bool getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest);
     void highlightOperator(int op);
     void eraseHighlightOperator(int op);
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);
@@ -187,14 +183,14 @@ public:
     void eraseHighlightFeedback(uint8_t imNum, uint8_t opSource, uint8_t opDest);
     void clearAlgoFG();
     void setCursoraddXY(uint8_t x, uint16_t y) {
-        cursorX_ +=x;
-        cursorY_ +=y;
+        cursorX_ += x;
+        cursorY_ += y;
     }
     void setCharColor(TFT_COLOR newColor) {
-        charColor_ = (uint8_t) newColor;
+        charColor_ = (uint8_t)newColor;
     }
     void setCharBackgroundColor(TFT_COLOR newColor) {
-        charBackgroundColor_ = (uint8_t) newColor;
+        charBackgroundColor_ = (uint8_t)newColor;
     }
     int getNumberOfPendingActions() {
         return tftActions_.getCount();
@@ -203,23 +199,31 @@ public:
     void printValueWithSpace(int value);
     void printFloatWithSpace(float value);
 
-    void oscilloForceNextDisplay() { flatOscilloAlreadyDisplayed_ = false; }
+    void oscilloForceNextDisplay() {
+        flatOscilloAlreadyDisplayed_ = false;
+    }
 
-    bool hasJustBeenCleared() { return bHasJustBeenCleared_; }
-    void resetHasJustBeenCleared() { bHasJustBeenCleared_ = false; }
+    bool hasJustBeenCleared() {
+        return bHasJustBeenCleared_;
+    }
+    void resetHasJustBeenCleared() {
+        bHasJustBeenCleared_ = false;
+    }
 
     void drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr);
 
-    bool mustBeReset() { return tftMustBeReset_; }
+    bool mustBeReset() {
+        return tftMustBeReset_;
+    }
     void reset();
 
 protected:
     int8_t oscilloYValue_[OSCILLO_WIDTH];
-    uint16_t *bgOscillo_;
+    uint16_t* bgOscillo_;
     RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions_;
     TFTAction currentAction_;
     uint8_t currentActionStep_;
-    TftAlgo *tftAlgo_;
+    TftAlgo* tftAlgo_;
 
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);
@@ -232,20 +236,19 @@ private:
     uint32_t tftPushMillis_;
     uint32_t tftGetStatusMillis_;
     // adress of the segment digit;
-    uint8_t *fgSegmentDigit_;
-    uint8_t *fgBigChars_;
-    uint8_t *fgSmallChars_;
-    uint8_t *fgOscillo_;
-    uint8_t *fgAlgo_;
+    uint8_t* fgSegmentDigit_;
+    uint8_t* fgBigChars_;
+    uint8_t* fgSmallChars_;
+    uint8_t* fgOscillo_;
+    uint8_t* fgAlgo_;
     uint8_t cursorX_;
     uint16_t cursorY_;
     bool fgAlgoDirty_;
 
-
     float oscilloSamplePeriod_;
     float oscilloLowerFrequency_;
     float oscilloSampleInc_;
-//	float oscilloSampleReadPtr;
+    //	float oscilloSampleReadPtr;
     int oscilloDataWritePtr_;
     float oscilloPhaseIndex_;
     uint32_t oscilloPhaseIndexToUse_;
@@ -253,8 +256,8 @@ private:
 
     float oscilloFullPeriodSampl_[OSCILLO_BUFFER_SIZE];
     uint8_t charBackgroundColor_, charColor_;
-    uint16_t *bgColorChar_[NUMBER_OF_TFT_COLORS];
-    uint16_t *bgAlgo_;
+    uint16_t* bgColorChar_[NUMBER_OF_TFT_COLORS];
+    uint16_t* bgAlgo_;
 
     // TFT refresh
     bool tftRefreshing_;

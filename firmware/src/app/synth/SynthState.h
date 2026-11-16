@@ -20,26 +20,23 @@
 
 #include "Common.h"
 #include "EncodersListener.h"
-#include "SynthParamListener.h"
-#include "SynthMenuListener.h"
 #include "Menu.h"
-#include "Storage.h"
 #include "MixerState.h"
 #include "Pfm3Preset.h"
-
-
+#include "Storage.h"
+#include "SynthMenuListener.h"
+#include "SynthParamListener.h"
 
 enum {
     ENCODER_ENGINE_ALGO = 0,
     ENCODER_ENGINE_VELOCITY,
     ENCODER_ENGINE_PLAY_MODE,
     ENCODER_ENGINE_GLIDE_SPEED,
-	ENCODER_NONE, // Define only once !
-	ENCODER_INVISIBLE,
+    ENCODER_NONE, // Define only once !
+    ENCODER_INVISIBLE,
     ENCODER_MODULATOR_SYNC_LFO,
     ENCODER_MODULATOR_SYNC_STEPS
 };
-
 
 enum {
     ENCODER_ENGINE2_GLIDE_TYPE = 0,
@@ -48,34 +45,13 @@ enum {
     ENCODER_USED_FOR_PFM3_VERSION,
 };
 
+enum { ENCODER_ARPEGGIATOR_CLOCK = 0, ENCODER_ARPEGGIATOR_BPM, ENCODER_ARPEGGIATOR_DIRECTION, ENCODER_ARPEGGIATOR_OCTAVE };
 
-enum {
-    ENCODER_ARPEGGIATOR_CLOCK = 0,
-    ENCODER_ARPEGGIATOR_BPM,
-    ENCODER_ARPEGGIATOR_DIRECTION,
-    ENCODER_ARPEGGIATOR_OCTAVE
-};
+enum { ENCODER_ARPEGGIATOR_PATTERN = 0, ENCODER_ARPEGGIATOR_DIVISION, ENCODER_ARPEGGIATOR_DURATION, ENCODER_ARPEGGIATOR_LATCH };
 
-enum {
-    ENCODER_ARPEGGIATOR_PATTERN = 0,
-    ENCODER_ARPEGGIATOR_DIVISION,
-    ENCODER_ARPEGGIATOR_DURATION,
-    ENCODER_ARPEGGIATOR_LATCH
-};
+enum { ENCODER_EFFECT_TYPE = 0, ENCODER_EFFECT_PARAM1, ENCODER_EFFECT_PARAM2, ENCODER_EFFECT_PARAM3 };
 
-enum {
-    ENCODER_EFFECT_TYPE = 0,
-    ENCODER_EFFECT_PARAM1,
-    ENCODER_EFFECT_PARAM2,
-    ENCODER_EFFECT_PARAM3
-};
-
-enum {
-    ENCODER_ENGINE_IM1 = 0,
-    ENCODER_ENGINE_IM1_VELOCITY,
-    ENCODER_ENGINE_IM2,
-    ENCODER_ENGINE_IM2_VELOCITY
-};
+enum { ENCODER_ENGINE_IM1 = 0, ENCODER_ENGINE_IM1_VELOCITY, ENCODER_ENGINE_IM2, ENCODER_ENGINE_IM2_VELOCITY };
 enum {
     ENCODER_ENGINE_IM3 = 0,
     ENCODER_ENGINE_IM3_VELOCITY,
@@ -83,13 +59,7 @@ enum {
     ENCODER_ENGINE_IM4_VELOCITY,
 };
 
-enum {
-    ENCODER_ENGINE_IM5 = 0,
-    ENCODER_ENGINE_IM5_VELOCITY,
-    ENCODER_ENGINE_IM6,
-    ENCODER_ENGINE_IM6_VELOCITY
-};
-
+enum { ENCODER_ENGINE_IM5 = 0, ENCODER_ENGINE_IM5_VELOCITY, ENCODER_ENGINE_IM6, ENCODER_ENGINE_IM6_VELOCITY };
 
 enum {
     ENCODER_ENGINE_MIX1 = 0,
@@ -98,38 +68,15 @@ enum {
     ENCODER_ENGINE_PAN2,
 };
 
-enum {
-    ENCODER_ENGINE_MIX3 = 0,
-    ENCODER_ENGINE_PAN3,
-    ENCODER_ENGINE_MIX4,
-    ENCODER_ENGINE_PAN4
-};
+enum { ENCODER_ENGINE_MIX3 = 0, ENCODER_ENGINE_PAN3, ENCODER_ENGINE_MIX4, ENCODER_ENGINE_PAN4 };
 
-enum {
-    ENCODER_ENGINE_MIX5 = 0,
-    ENCODER_ENGINE_PAN5,
-    ENCODER_ENGINE_MIX6,
-    ENCODER_ENGINE_PAN6
-};
+enum { ENCODER_ENGINE_MIX5 = 0, ENCODER_ENGINE_PAN5, ENCODER_ENGINE_MIX6, ENCODER_ENGINE_PAN6 };
 
-enum {
-    ENCODER_PERFORMANCE_CC1 = 0,
-    ENCODER_PERFORMANCE_CC2,
-    ENCODER_PERFORMANCE_CC3,
-    ENCODER_PERFORMANCE_CC4
-};
+enum { ENCODER_PERFORMANCE_CC1 = 0, ENCODER_PERFORMANCE_CC2, ENCODER_PERFORMANCE_CC3, ENCODER_PERFORMANCE_CC4 };
 
-enum {
-    ENCODER_PERFORMANCE_CC5 = 0,
-    ENCODER_PERFORMANCE_CC6
-};
+enum { ENCODER_PERFORMANCE_CC5 = 0, ENCODER_PERFORMANCE_CC6 };
 
-enum {
-    ENCODER_OSC_SHAP = 0,
-    ENCODER_OSC_FTYPE,
-    ENCODER_OSC_FREQ,
-    ENCODER_OSC_FTUNE
-};
+enum { ENCODER_OSC_SHAP = 0, ENCODER_OSC_FTYPE, ENCODER_OSC_FREQ, ENCODER_OSC_FTUNE };
 
 enum {
     ENCODER_ENV_A = 0,
@@ -138,14 +85,7 @@ enum {
     ENCODER_ENV_R,
 };
 
-
-enum {
-    ENCODER_ENV_A_CURVE = 0,
-    ENCODER_ENV_D_CURVE,
-    ENCODER_ENV_S_CURVE,
-    ENCODER_ENV_R_CURVE
-};
-
+enum { ENCODER_ENV_A_CURVE = 0, ENCODER_ENV_D_CURVE, ENCODER_ENV_S_CURVE, ENCODER_ENV_R_CURVE };
 
 enum {
     ENCODER_MATRIX_SOURCE = 0,
@@ -154,44 +94,17 @@ enum {
     ENCODER_MATRIX_DEST2,
 };
 
-enum {
-    ENCODER_LFO_SHAPE = 0,
-    ENCODER_LFO_FREQ,
-    ENCODER_LFO_BIAS,
-    ENCODER_LFO_KSYNC
-};
+enum { ENCODER_LFO_SHAPE = 0, ENCODER_LFO_FREQ, ENCODER_LFO_BIAS, ENCODER_LFO_KSYNC };
 
-enum {
-    ENCODER_LFO_PHASE1 = 0,
-    ENCODER_LFO_PHASE2,
-    ENCODER_LFO_PHASE3
-};
+enum { ENCODER_LFO_PHASE1 = 0, ENCODER_LFO_PHASE2, ENCODER_LFO_PHASE3 };
 
-enum {
-    ENCODER_LFO_ENV2_SILENCE = 0,
-    ENCODER_LFO_ENV2_ATTACK,
-    ENCODER_LFO_ENV2_RELEASE,
-    ENCODER_LFO_ENV2_LOOP
-};
+enum { ENCODER_LFO_ENV2_SILENCE = 0, ENCODER_LFO_ENV2_ATTACK, ENCODER_LFO_ENV2_RELEASE, ENCODER_LFO_ENV2_LOOP };
 
+enum { ENCODER_STEPSEQ_BPM = 0, ENCODER_STEPSEQ_GATE };
 
-enum {
-    ENCODER_STEPSEQ_BPM = 0,
-    ENCODER_STEPSEQ_GATE
-};
-
-enum {
-    ENCODER_NOTECURVE_BEFORE = 0,
-    ENCODER_NOTECURVE_BREAK_NOTE,
-    ENCODER_NOTECURVE_AFTER
-};
-
-
+enum { ENCODER_NOTECURVE_BEFORE = 0, ENCODER_NOTECURVE_BREAK_NOTE, ENCODER_NOTECURVE_AFTER };
 
 typedef unsigned char uchar;
-
-
-
 
 enum OscShape {
     OSC_SHAPE_SIN = 0,
@@ -211,17 +124,7 @@ enum OscShape {
     OSC_SHAPE_LAST
 };
 
-enum LfoType {
-    LFO_SIN = 0,
-    LFO_SAW,
-    LFO_TRIANGLE,
-    LFO_SQUARE,
-    LFO_RANDOM,
-    LFO_BROWNIAN,
-    LFO_WANDERING,
-    LFO_FLOW,
-    LFO_TYPE_MAX
-};
+enum LfoType { LFO_SIN = 0, LFO_SAW, LFO_TRIANGLE, LFO_SQUARE, LFO_RANDOM, LFO_BROWNIAN, LFO_WANDERING, LFO_FLOW, LFO_TYPE_MAX };
 
 // const char* midiNoteCurves[] =  { "Flat", "+Ln ", "+Ln2", "+Exp", "-Ln ", "-Ln2", "-Exp" };
 
@@ -236,17 +139,9 @@ enum MidiNoteCurve {
     MIDI_NOTE_CURVE_MAX
 };
 
-enum OscFrequencyType {
-    OSC_FT_KEYBOARD = 0,
-    OSC_FT_FIXE,
-    OSC_FT_KEYHZ
-};
+enum OscFrequencyType { OSC_FT_KEYBOARD = 0, OSC_FT_FIXE, OSC_FT_KEYHZ };
 
-enum OscEnv2Loop {
-    LFO_ENV2_NOLOOP = 0,
-    LFO_ENV2_LOOP_SILENCE,
-    LFO_ENV2_LOOP_ATTACK
-};
+enum OscEnv2Loop { LFO_ENV2_NOLOOP = 0, LFO_ENV2_LOOP_SILENCE, LFO_ENV2_LOOP_ATTACK };
 
 enum CurveType {
     CURVE_TYPE_EXP = 0,
@@ -258,7 +153,6 @@ enum CurveType {
     CURVE_TYPE_USER4,
     CURVE_TYPE_MAX
 };
-
 
 enum FILTER_TYPE {
     FILTER_OFF = 0,
@@ -335,7 +229,6 @@ struct FilterRowDisplay {
     const char* paramName[3];
 };
 
-
 struct ParameterRowDisplay {
     const char* rowName;
     const char* paramName[5];
@@ -347,14 +240,13 @@ struct AllParameterRowsDisplay {
     struct ParameterRowDisplay* row[NUMBER_OF_ROWS + 1];
 };
 
-
 // Class define to allow initalization
 enum EventType {
     MIDI_NOTE_OFF = 0x80,
     MIDI_NOTE_ON = 0x90,
     MIDI_POLY_AFTER_TOUCH = 0xA0,
     MIDI_CONTROL_CHANGE = 0xb0,
-    MIDI_PROGRAM_CHANGE =0xc0,
+    MIDI_PROGRAM_CHANGE = 0xc0,
     MIDI_AFTER_TOUCH = 0xd0,
     MIDI_PITCH_BEND = 0xe0,
     MIDI_SYSTEM_COMMON = 0xf0,
@@ -367,16 +259,7 @@ enum EventType {
     MIDI_SYSEX_END = 0xf7
 };
 
-enum EventState {
-    MIDI_EVENT_WAITING = 0,
-    MIDI_EVENT_IN_PROGRESS ,
-    MIDI_EVENT_SYSEX ,
-    MIDI_EVENT_COMPLETE
-};
-
-
-
-
+enum EventState { MIDI_EVENT_WAITING = 0, MIDI_EVENT_IN_PROGRESS, MIDI_EVENT_SYSEX, MIDI_EVENT_COMPLETE };
 
 class Hexter;
 class Timbre;
@@ -386,8 +269,7 @@ class ScreenMixer;
 class ScreenMenu;
 class ScreenSequencer;
 
-
-class SynthState: public EncodersListener {
+class SynthState : public EncodersListener {
 public:
     SynthState();
 
@@ -421,14 +303,14 @@ public:
 
     void setCurrentInstrument(int currentTimbre);
 
-    void insertParamListener(SynthParamListener *listener) {
+    void insertParamListener(SynthParamListener* listener) {
         if (firstParamListener_ != 0) {
             listener->nextListener_ = firstParamListener_;
         }
         firstParamListener_ = listener;
     }
 
-    void insertMenuListener(SynthMenuListener *listener) {
+    void insertMenuListener(SynthMenuListener* listener) {
         if (firstMenuListener_ != 0) {
             listener->nextListener_ = firstMenuListener_;
         }
@@ -504,7 +386,7 @@ public:
     }
 
     void propagateNewPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-            float newValue) {
+                                                float newValue) {
         for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
             listener->newPfm3ParamValueFromExternal(timbre, currentRow, encoder, param, oldValue, newValue);
         }
@@ -562,7 +444,8 @@ public:
     void restoreTestNote() {
         if (this->storedIsPlayingNote_) {
             for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
-                listener->playNote(this->storedPlayingTimbre_, this->storedPlayingNote_, fullState_.midiConfigValue[MIDICONFIG_TEST_VELOCITY]);
+                listener->playNote(this->storedPlayingTimbre_, this->storedPlayingNote_,
+                                   fullState_.midiConfigValue[MIDICONFIG_TEST_VELOCITY]);
             }
             this->isPlayingNote_ = this->storedIsPlayingNote_;
             this->playingTimbre_ = this->storedPlayingTimbre_;
@@ -582,16 +465,16 @@ public:
 
     void tempoClick();
 
-    void setParamsAndTimbre(struct Pfm3Preset *newParams, int newCurrentTimbre);
+    void setParamsAndTimbre(struct Pfm3Preset* newParams, int newCurrentTimbre);
 
     bool getIsPlayingNote() {
         return isPlayingNote_;
     }
-    void loadPreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params);
-    void savePreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params);
+    void loadPreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params);
+    void savePreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params);
     void loadNewPreset(int timbre);
-    void loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params);
-    void loadMixer(PFM3File const *bank, int patchNumber);
+    void loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params);
+    void loadMixer(PFM3File const* bank, int patchNumber);
     void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset* params);
 
     bool newRandomizerValue(int encoder, int ticks);
@@ -610,7 +493,7 @@ public:
 
     bool scalaSettingsChanged(int timbre);
 
-    struct Pfm3Preset *pfm3Preset_;
+    struct Pfm3Preset* pfm3Preset_;
     struct Pfm3Preset backupPfm3Preset_;
     MixerState mixerState_;
     struct FullState fullState_;
@@ -620,7 +503,6 @@ public:
     const char* getSequenceName();
 
 private:
-
     int currentTimbre_;
     char operatorNumber_;
 
@@ -637,9 +519,9 @@ private:
     SynthParamListener* firstParamListener_;
     SynthMenuListener* firstMenuListener_;
 
-    int getLength(const char *str) {
+    int getLength(const char* str) {
         int length = 0;
-        for (const char *c = str; *c != '\0'; c++) {
+        for (const char* c = str; *c != '\0'; c++) {
             length++;
         }
         return length;
@@ -659,6 +541,5 @@ private:
 // Global structure used all over the code
 extern struct FilterRowDisplay fx1RowDisplay[];
 extern struct FilterRowDisplay fx2RowDisplay[];
-
 
 #endif /* SYNTHSTATE_H_ */

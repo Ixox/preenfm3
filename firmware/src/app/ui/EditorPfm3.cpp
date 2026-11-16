@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <FirmwareTftDisplay.h>
 #include "EditorPfm3.h"
+#include "Pfm3ParameterRows.h"
+#include "Pfm3Preset.h"
 #include "ScreenEditor.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
-#include "Pfm3ParameterRows.h"
-#include "Timbre.h"
-#include "Pfm3Preset.h"
+#include <FirmwareTftDisplay.h>
 
 EditorPfm3::EditorPfm3() {
     for (int i = 0; i < NUMBER_OF_ENCODERS; i++) {
@@ -40,50 +39,273 @@ EditorPfm3::EditorPfm3() {
     }
 }
 
-static const char *nullNames[] = { };
-static const unsigned char *nullNamesOrder = 0;
+static const char* nullNames[] = {};
+static const unsigned char* nullNamesOrder = 0;
 
-const char *algoNames[] = {
-    "alg1",
-    "alg2",
-    "alg3",
-    "alg4",
-    "alg5",
-    "alg6",
-    "alg7",
-    "alg8",
-    "alg9",
-    "al10",
-    "al11",
-    "al12",
-    "al13",
-    "al14",
-    "al15",
-    "al16",
-    "al17",
-    "al18",
-    "al19",
-    "al20",
-    "al21",
-    "al22",
-    "al23",
-    "al24",
-    "al25",
-    "al26",
-    "al27",
-    "al28",
-    "al29",
-    "al30",
-    "al31",
-    "al32"
-     };
+const char* algoNames[] = {"alg1", "alg2", "alg3", "alg4", "alg5", "alg6", "alg7", "alg8", "alg9", "al10", "al11",
+                           "al12", "al13", "al14", "al15", "al16", "al17", "al18", "al19", "al20", "al21", "al22",
+                           "al23", "al24", "al25", "al26", "al27", "al28", "al29", "al30", "al31", "al32"};
 
-const char *polyMonoNames[] = {
-    "Mono",
-    "Poly",
-    "Unis"};
+const char* polyMonoNames[] = {"Mono", "Poly", "Unis"};
 
+const char* glideTypeNames[] = {
+    "Off    ",
+    "Overlap",
+    "Always ",
+};
 
+const char* syncNames[] = {"Int", "Ext"};
+
+const char* clockName[] = {"Off ", "Int ", "Ext "};
+const char* dirName[] = {"Up  ", "Down", "U&D ", "Play", "Rand", "Chrd", "RtUp", "RtDn", "RtUD", "ShUp", "ShDn", "ShUD"};
+
+//   192, 144, 96, 72, 64, 48, 36, 32, 24, 16, 12, 8, 6, 4, 3, 2, 1
+
+const char* divNames[] = {"2/1 ", "3/2 ", "1/1 ", "3/4 ", "2/3 ", "1/2 ", "3/8 ", "1/3 ", "1/4 ",
+                          "1/6 ", "1/8 ", "1/12", "1/16", "1/24", "1/32", "1/48", "1/96"};
+const char* activeName[] = {"Off ", "On  "};
+
+const char* patternName[] = {"1   ", "2   ", "3   ", "4   ", "5   ", "6   ", "7   ",  "8   ", "9   ", "10   ", "11  ", "12  ", "13  ",
+                             "14  ", "15  ", "16  ", "17  ", "18  ", "19  ", "20   ", "21  ", "22  ", "Usr1",  "Usr2", "Usr3", "Usr4"};
+
+const char* envCurveNames[] = {"Exp ", "Lin ", "Log ", "Usr1", "Usr2", "Usr3", "Usr4"};
+
+/* FILTER ORDER
+
+ 0   Off , -0-
+ 1   Mix , -1-
+ 2   LP  , -2-
+ 3   HP  , -3-
+ 4   Bass, -4-
+ 5   BP  , -5-
+ 6   Crsh, -6-
+ 7   Oryx, -38-
+ 8   Orx2, -39-
+ 9   Orx3, -40-
+ 10  h3o+, -46-
+ 11  Svh3, -47-
+ 12  Pann, -22-
+ 13  LP2 , -7-
+ 14  HP2 , -8-
+ 15  Lp3 , -10-
+ 16  Hp3 , -11-
+ 17  Bp3 , -12-
+ 18  Peak, -13-
+ 19  Notc, -14-
+ 20  Bell, -15-
+ 21  LowS, -16-
+ 22  HigS, -17-
+ 23  LpHp, -18-
+ 24  BpDs, -19-
+ 25  LPws, -20-
+ 26  Tilt, -21-
+ 27  Sat , -23-
+ 28  Sigm, -24-
+ 29  Fold, -25-
+ 30  Wrap, -26-
+ 31  LpSn, -32-
+ 32  HpSn, -33-
+ 33  Not4, -34-
+ 34  Ap4 , -35-
+ 35  Ap4b, -36-
+ 36  Ap4D, -37-
+ 37  18db, -41-
+ 38  La+d, -42-
+ 39  BP2 , -9-
+ 40  Lad+, -43-
+ 41  Diod, -44-
+ 42  L+d+, -45-
+ 43  Xor , -27-
+ 44  Txr1, -28-
+ 45  Txr2, -29-
+ 46  LPx1, -30-
+ 47  LPx2, -31-
+ 48  Alkx, -48-
+ 49  Flng, -49-
+ 50  Chor, -50-
+ 51  Dim , -51-
+ 52  Dblr, -52-
+ 53  Harm, -53-
+ 54  Bode, -54-
+ 55  Wide, -55-
+ 56  DelC, -56-
+ 57  Ping, -57-
+ 58  Diff, -58-
+ */
+
+const unsigned char filtersOrder[] = {0,  1,  2,  3,  4,  5,  6,  38, 39, 40, 46, 47, 22, 7,  8,  10, 11, 12, 13, 14,
+                                      15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 32, 33, 34, 35, 36, 37, 41, 42, 9,
+                                      43, 44, 45, 27, 28, 29, 30, 31, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58};
+
+const unsigned char filtersPosition[] = {0,  1,  2,  3,  4,  5,  6,  13, 14, 39, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                                         25, 26, 12, 27, 28, 29, 30, 43, 44, 45, 46, 47, 31, 32, 33, 34, 35, 36, 7,  8,
+                                         9,  37, 38, 40, 41, 42, 10, 11, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58};
+
+const char* fxName[] = {
+    "Off ", /*  0   */
+    "Mix ", /*  1   */
+    "LP  ", /*  2   */
+    "HP  ", /*  3   */
+    "Bass", /*  4   */
+    "BP  ", /*  5   */
+    "Crsh", /*  6   */
+    "LP2 ", /*  7   */
+    "HP2 ", /*  8   */
+    "BP2 ", /*  9   */
+    "Lp3 ", /*  10  */
+    "Hp3 ", /*  11  */
+    "Bp3 ", /*  12  */
+    "Peak", /*  13  */
+    "Notc", /*  14  */
+    "Bell", /*  15  */
+    "LowS", /*  16  */
+    "HigS", /*  17  */
+    "LpHp", /*  18  */
+    "BpDs", /*  19  */
+    "LPws", /*  20  */
+    "Tilt", /*  21  */
+    "Pann", /*  22  */
+    "Sat ", /*  23  */
+    "Sigm", /*  24  */
+    "Fold", /*  25  */
+    "Wrap", /*  26  */
+    "Xor ", /*  27  */
+    "Txr1", /*  28  */
+    "Txr2", /*  29  */
+    "LPx1", /*  30  */
+    "LPx2", /*  31  */
+    "LpSn", /*  32  */
+    "HpSn", /*  33  */
+    "Not4", /*  34  */
+    "Ap4 ", /*  35  */
+    "Ap4b", /*  36  */
+    "Ap4D", /*  37  */
+    "Oryx", /*  38  */
+    "Orx2", /*  39  */
+    "Orx3", /*  40  */
+    "18db", /*  41  */
+    "La+d", /*  42  */
+    "Lad+", /*  43  */
+    "Diod", /*  44  */
+    "L+d+", /*  45  */
+    "h3o+", /*  46  */
+    "Svh3", /*  47  */
+    "Alkx", /*  48  */
+};
+
+const char* fx2Name[] = {
+    "Off ", /* 0 */
+    "Flng", /* 1  */
+    "Dim ", /* 2  */
+    "Chor", /* 3  */
+    "Wide", /* 4  */
+    "Dblr", /* 5  */
+    "3Voi", /* 6  */
+    "Bode", /* 7  */
+    "Delc", /* 8  */
+    "Ping", /* 9  */
+    "Diff", /* 10 */
+    "Gra1", /* 11 */
+    "Gra2", /* 12 */
+};
+
+const char* oscShapeNames[] = {"sin ", "saw ", "squa", "s^2 ", "szer", "spos", "rand",
+                               "off ", "Usr1", "Usr2", "Usr3", "Usr4", "Usr5", "Usr6"};
+const unsigned char oscShapeNamesOrder[] = {7, 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13};
+//                                                 { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+const unsigned char oscShapeNamesPosition[] = {1, 2, 3, 4, 5, 6, 7, 0, 8, 9, 10, 11, 12, 13};
+
+const char* oscTypeNames[] = {"keyb", "fixe", "kehz"};
+const unsigned char oscTypeNamesOrder[] = {0, 2, 1};
+const unsigned char oscTypeNamesPosition[] = {0, 2, 1};
+
+const char* lofEnv2Loop[] = {"No  ", "Sile", "Attk"};
+
+const char* matrixSourceNames[MATRIX_SOURCE_MAX] = {/* 0 */ "none  ",  "Lfo 1 ", "Lfo 2 ", "Lfo 3 ", "Env 1 ", "Env 2 ", "Seq 1 ",
+                                                    "Seq 2 ",
+                                                    /* 8 */ "ModWel",  "PitBen", "AftTou", "Veloc ", "Note1 ", "Perf1 ", "Perf2 ",
+                                                    /* 15 */ "Perf3 ", "Perf4 ", "Note2 ", "Breath", "74 MPE", "RndKey", "PolyAT",
+                                                    /* 22 */ "UsrCC1", "UsrCC2", "UsrCC3", "UsrCC4",
+                                                    /* 26 */ "PB MPE", "AT MPE"};
+
+const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = {0,  1,  2,  3,  4,  5,  6,  7,  12, 17, 8,  9,  10, 21,
+                                                            11, 18, 13, 14, 15, 16, 20, 26, 27, 19, 22, 23, 24, 25};
+unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
+
+const char* matrixDestNames[DESTINATION_MAX] = {
+    "None ",
+    "Gate ",
+    "IM 1 ",
+    "IM 2 ",
+    "IM 3 ",
+    "IM 4 ",
+    "IMAll",
+    "Mix 1",
+    "Pan 1",
+    "Mix 2",
+    "Pan 2",
+    "Mix 3",
+    "Pan 3",
+    "Mix 4",
+    "Pan 4",
+    "Mix *",
+    "Pan *",
+    "o1 Fq",
+    "o2 Fq",
+    "o3 Fq",
+    "o4 Fq",
+    "o5 Fq",
+    "o6 Fq",
+    "o* Fq",
+    /*24*/ "Atk 1",
+    "Atk 2",
+    "Atk 3",
+    "Atk 4",
+    "Atk 5",
+    "Atk 6",
+    /*30*/ "Atk C",
+    "Rel C",
+    /*32*/ "mtx 1",
+    "mtx 2",
+    "mtx 3",
+    "mtx 4",
+    /*36*/ "lfo1F",
+    "lfo2F",
+    "lfo3F",
+    "env2S",
+    "stp1G",
+    "stp2G",
+    /*42*/ "Fx1 1",
+    /*43*/ "o* Fh",
+    "Dec C",
+    /*45*/ "Atk M",
+    "Dec M",
+    "Rel M",
+    /* 48 pfm3 feedback */ "FdBck",
+    /*filter param 2*/ "Fx1 2",
+    /*filter amp 2*/ "fx1Am",
+    /*filter2 param 1*/ "Fx2 1",
+    /*filter2 param 1*/ "Fx2 2",
+    /*filter2 amp*/ "Fx2Am",
+};
+const unsigned char matrixTargetOrder[DESTINATION_MAX] = {0,  1,  2,  3,  4,  5,  48, 6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
+                                                          17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29, 30, 45, 44, 46,
+                                                          31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53};
+
+unsigned char matrixTargetPosition[DESTINATION_MAX];
+
+const char* lfoOscMidiClock[] = {"C/16", "Ck/8", "Ck/4", "Ck/2", "Ck  ", "Ck*2", "Ck*3", "Ck*4", "Ck*8"};
+const char* lfoShapeNames[] = {"Sin ", "Saw ", "Tria", "Squa", "Rand", "Brwn", "Wndr", "Flow"};
+
+const char* lfoSeqMidiClock[] = {"Ck/4", "Ck/2", "Ck  ", "Ck*2", "Ck*4"};
+
+const char* midiNoteCurves[] = {"Flat", "+Lin", "+Ln8", "+Exp", "-Lin", "-Ln8", "-Exp"};
+
+// =================================================
+// constant for pfm3 editor
+// =================================================
+
+// clang-format off
 struct ParameterRowDisplay engine1ParameterRow = {
     "Engine",
     {
@@ -124,12 +346,6 @@ struct ParameterRowDisplay engine1ParameterRow = {
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
-
-const char *glideTypeNames[] = {
-    "Off    ",
-    "Overlap",
-    "Always ",
-};
 
 struct ParameterRowDisplay engine2ParameterRow = {
     "NewPfm3",
@@ -172,13 +388,6 @@ struct ParameterRowDisplay engine2ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-
-const char *syncNames[] = {
-    "Int",
-    "Ext"
-};
-
-
 struct ParameterRowDisplay lfoSyncParameterRow = {
     "",
     {
@@ -220,28 +429,6 @@ struct ParameterRowDisplay lfoSyncParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-
-
-
-
-const char *clockName[] = {
-    "Off ",
-    "Int ",
-    "Ext " };
-const char *dirName[] = {
-    "Up  ",
-    "Down",
-    "U&D ",
-    "Play",
-    "Rand",
-    "Chrd",
-    "RtUp",
-    "RtDn",
-    "RtUD",
-    "ShUp",
-    "ShDn",
-    "ShUD" };
-
 struct ParameterRowDisplay engineArp1ParameterRow = {
     "Arpeggiator",
     {
@@ -282,58 +469,6 @@ struct ParameterRowDisplay engineArp1ParameterRow = {
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
-
-//   192, 144, 96, 72, 64, 48, 36, 32, 24, 16, 12, 8, 6, 4, 3, 2, 1
-
-const char *divNames[] = {
-    "2/1 ",
-    "3/2 ",
-    "1/1 ",
-    "3/4 ",
-    "2/3 ",
-    "1/2 ",
-    "3/8 ",
-    "1/3 ",
-    "1/4 ",
-    "1/6 ",
-    "1/8 ",
-    "1/12",
-    "1/16",
-    "1/24",
-    "1/32",
-    "1/48",
-    "1/96" };
-const char *activeName[] = {
-    "Off ",
-    "On  " };
-
-const char *patternName[] = {
-    "1   ",
-    "2   ",
-    "3   ",
-    "4   ",
-    "5   ",
-    "6   ",
-    "7   ",
-    "8   ",
-    "9   ",
-    "10   ",
-    "11  ",
-    "12  ",
-    "13  ",
-    "14  ",
-    "15  ",
-    "16  ",
-    "17  ",
-    "18  ",
-    "19  ",
-    "20   ",
-    "21  ",
-    "22  ",
-    "Usr1",
-    "Usr2",
-    "Usr3",
-    "Usr4" };
 
 struct ParameterRowDisplay engineArp2ParameterRow = {
     "Arpeggiator",
@@ -663,9 +798,6 @@ struct ParameterRowDisplay engineMix3ParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *envCurveNames[] = { "Exp ", "Lin ", "Log ", "Usr1", "Usr2", "Usr3",
-        "Usr4" };
-
 struct ParameterRowDisplay engineCurveParameterRow = {
     "Curve",
     {
@@ -707,134 +839,6 @@ struct ParameterRowDisplay engineCurveParameterRow = {
             nullNamesOrder,
             nullNamesOrder }
     } };
-
-
-/* FILTER ORDER
-
- 0   Off , -0-
- 1   Mix , -1-
- 2   LP  , -2-
- 3   HP  , -3-
- 4   Bass, -4-
- 5   BP  , -5-
- 6   Crsh, -6-
- 7   Oryx, -38-
- 8   Orx2, -39-
- 9   Orx3, -40-
- 10  h3o+, -46-
- 11  Svh3, -47-
- 12  Pann, -22-
- 13  LP2 , -7-
- 14  HP2 , -8-
- 15  Lp3 , -10-
- 16  Hp3 , -11-
- 17  Bp3 , -12-
- 18  Peak, -13-
- 19  Notc, -14-
- 20  Bell, -15-
- 21  LowS, -16-
- 22  HigS, -17-
- 23  LpHp, -18-
- 24  BpDs, -19-
- 25  LPws, -20-
- 26  Tilt, -21-
- 27  Sat , -23-
- 28  Sigm, -24-
- 29  Fold, -25-
- 30  Wrap, -26-
- 31  LpSn, -32-
- 32  HpSn, -33-
- 33  Not4, -34-
- 34  Ap4 , -35-
- 35  Ap4b, -36-
- 36  Ap4D, -37-
- 37  18db, -41-
- 38  La+d, -42-
- 39  BP2 , -9-
- 40  Lad+, -43-
- 41  Diod, -44-
- 42  L+d+, -45-
- 43  Xor , -27-
- 44  Txr1, -28-
- 45  Txr2, -29-
- 46  LPx1, -30-
- 47  LPx2, -31-
- 48  Alkx, -48-
- 49  Flng, -49-
- 50  Chor, -50-
- 51  Dim , -51-
- 52  Dblr, -52-
- 53  Harm, -53-
- 54  Bode, -54-
- 55  Wide, -55-
- 56  DelC, -56-
- 57  Ping, -57-
- 58  Diff, -58-
- */
-
-const unsigned char filtersOrder[] = { 0, 1, 2, 3, 4, 5, 6, 38, 39, 40, 46, 47,
-        22, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25,
-        26, 32, 33, 34, 35, 36, 37, 41, 42, 9, 43, 44, 45, 27, 28, 29, 30, 31,
-        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58 };
-
-const unsigned char filtersPosition[] = { 0, 1, 2, 3, 4, 5, 6, 13, 14, 39, 15,
-        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 12, 27, 28, 29, 30, 43, 44,
-        45, 46, 47, 31, 32, 33, 34, 35, 36, 7, 8, 9, 37, 38, 40, 41, 42, 10, 11,
-        48, 49,  50, 51, 52, 53, 54, 55, 56, 57, 58 };
-
-const char *fxName[] = {
-    "Off ", /*  0   */
-    "Mix ", /*  1   */
-    "LP  ", /*  2   */
-    "HP  ", /*  3   */
-    "Bass", /*  4   */
-    "BP  ", /*  5   */
-    "Crsh", /*  6   */
-    "LP2 ", /*  7   */
-    "HP2 ", /*  8   */
-    "BP2 ", /*  9   */
-    "Lp3 ", /*  10  */
-    "Hp3 ", /*  11  */
-    "Bp3 ", /*  12  */
-    "Peak", /*  13  */
-    "Notc", /*  14  */
-    "Bell", /*  15  */
-    "LowS", /*  16  */
-    "HigS", /*  17  */
-    "LpHp", /*  18  */
-    "BpDs", /*  19  */
-    "LPws", /*  20  */
-    "Tilt", /*  21  */
-    "Pann", /*  22  */
-    "Sat ", /*  23  */
-    "Sigm", /*  24  */
-    "Fold", /*  25  */
-    "Wrap", /*  26  */
-    "Xor ", /*  27  */
-    "Txr1", /*  28  */
-    "Txr2", /*  29  */
-    "LPx1", /*  30  */
-    "LPx2", /*  31  */
-    "LpSn", /*  32  */
-    "HpSn", /*  33  */
-    "Not4", /*  34  */
-    "Ap4 ", /*  35  */
-    "Ap4b", /*  36  */
-    "Ap4D", /*  37  */
-    "Oryx", /*  38  */
-    "Orx2", /*  39  */
-    "Orx3", /*  40  */
-    "18db", /*  41  */
-    "La+d", /*  42  */
-    "Lad+", /*  43  */
-    "Diod", /*  44  */
-    "L+d+", /*  45  */
-    "h3o+", /*  46  */
-    "Svh3", /*  47  */
-    "Alkx", /*  48  */
-};
-
-
 
 struct ParameterRowDisplay fx1ParameterRow = {
     "FX1",
@@ -1078,26 +1082,6 @@ struct FilterRowDisplay fx1RowDisplay[FILTER_LAST] = {
 
 };
 
-
-const char *fx2Name[] = {
-    "Off ",  /* 0 */
-    "Flng", /* 1  */
-    "Dim ", /* 2  */
-    "Chor", /* 3  */
-    "Wide", /* 4  */
-    "Dblr", /* 5  */
-    "3Voi", /* 6  */
-    "Bode", /* 7  */
-    "Delc", /* 8  */
-    "Ping", /* 9  */
-    "Diff", /* 10 */
-    "Gra1", /* 11 */
-    "Gra2", /* 12 */
-};
-
-
-
-
 struct ParameterRowDisplay fx2ParameterRow = {
     "FX2",
     {
@@ -1193,69 +1177,6 @@ struct FilterRowDisplay fx2RowDisplay[FILTER2_LAST] = {
         "Sprd",
         "Mix " }
 };
-
-
-
-
-const char *oscShapeNames[] = {
-    "sin ",
-    "saw ",
-    "squa",
-    "s^2 ",
-    "szer",
-    "spos",
-    "rand",
-    "off ",
-    "Usr1",
-    "Usr2",
-    "Usr3",
-    "Usr4",
-    "Usr5",
-    "Usr6" };
-const unsigned char oscShapeNamesOrder[] = {
-    7,
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13 };
-//                                                 { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
-const unsigned char oscShapeNamesPosition[] = {
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    0,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13 };
-
-const char *oscTypeNames[] = {
-    "keyb",
-    "fixe",
-    "kehz" };
-const unsigned char oscTypeNamesOrder[] = {
-    0,
-    2,
-    1 };
-const unsigned char oscTypeNamesPosition[] = {
-    0,
-    2,
-    1 };
 
 struct ParameterRowDisplay oscParameterRow = {
     "Oscillator",
@@ -1421,10 +1342,6 @@ struct ParameterRowDisplay lfoEnvParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *lofEnv2Loop[] = {
-    "No  ",
-    "Sile",
-    "Attk" };
 struct ParameterRowDisplay lfoEnv2ParameterRow = {
     "Free Env",
     {
@@ -1465,38 +1382,6 @@ struct ParameterRowDisplay lfoEnv2ParameterRow = {
             lofEnv2Loop,
             nullNamesOrder,
             nullNamesOrder } } };
-
-
-
-const char *matrixSourceNames[MATRIX_SOURCE_MAX] = { /* 0 */ "none  ", "Lfo 1 ", "Lfo 2 ", "Lfo 3 ", "Env 1 ", "Env 2 ", "Seq 1 ", "Seq 2 ",
-    /* 8 */  "ModWel", "PitBen", "AftTou", "Veloc ", "Note1 ", "Perf1 ", "Perf2 ",
-    /* 15 */  "Perf3 ", "Perf4 ", "Note2 ", "Breath", "74 MPE", "RndKey", "PolyAT",
-    /* 22 */ "UsrCC1", "UsrCC2", "UsrCC3", "UsrCC4",
-    /* 26 */  "PB MPE", "AT MPE"};
-
-const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = { 0, 1, 2, 3, 4, 5, 6, 7, 12, 17, 8, 9, 10, 21, 11, 18, 13, 14, 15, 16, 20, 26, 27, 19, 22, 23, 24, 25 };
-unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
-
-const char *matrixDestNames[DESTINATION_MAX] = { "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4", "Pan 4",
-    "Mix *", "Pan *", "o1 Fq", "o2 Fq", "o3 Fq", "o4 Fq", "o5 Fq", "o6 Fq", "o* Fq",
-    /*24*/"Atk 1", "Atk 2", "Atk 3", "Atk 4", "Atk 5", "Atk 6",
-    /*30*/"Atk C", "Rel C",
-    /*32*/"mtx 1" , "mtx 2", "mtx 3", "mtx 4",
-    /*36*/"lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G",
-    /*42*/"Fx1 1",
-    /*43*/"o* Fh", "Dec C",
-    /*45*/"Atk M", "Dec M", "Rel M",
-    /* 48 pfm3 feedback */ "FdBck",
-    /*filter param 2*/  "Fx1 2",
-    /*filter amp 2*/  "fx1Am",
-    /*filter2 param 1*/  "Fx2 1",
-    /*filter2 param 1*/  "Fx2 2",
-    /*filter2 amp*/  "Fx2Am",
-    };
-const unsigned char matrixTargetOrder[DESTINATION_MAX] = { 0, 1, 2, 3, 4, 5, 48, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29,
-    30, 45, 44, 46, 31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53 };
-
-unsigned char matrixTargetPosition[DESTINATION_MAX];
 
 struct ParameterRowDisplay matrixParameterRow = {
     "Matrix",
@@ -1539,27 +1424,6 @@ struct ParameterRowDisplay matrixParameterRow = {
             matrixTargetOrder,
             matrixTargetPosition } } };
 
-const char *lfoOscMidiClock[] = {
-    "C/16",
-    "Ck/8",
-    "Ck/4",
-    "Ck/2",
-    "Ck  ",
-    "Ck*2",
-    "Ck*3",
-    "Ck*4",
-    "Ck*8" };
-const char *lfoShapeNames[] = {
-    "Sin ",
-    "Saw ",
-    "Tria",
-    "Squa",
-    "Rand",
-    "Brwn",
-    "Wndr",
-    "Flow"
-     };
-
 struct ParameterRowDisplay lfoParameterRow = {
     "LFO",
     {
@@ -1600,13 +1464,6 @@ struct ParameterRowDisplay lfoParameterRow = {
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
-
-const char *lfoSeqMidiClock[] = {
-    "Ck/4",
-    "Ck/2",
-    "Ck  ",
-    "Ck*2",
-    "Ck*4" };
 
 struct ParameterRowDisplay lfoStepParameterRow = {
     "Step Seq",
@@ -1731,16 +1588,6 @@ struct ParameterRowDisplay lfoPhaseParameterRow = {
             nullNamesOrder,
             nullNamesOrder } } };
 
-const char *midiNoteCurves[] = {
-    "Flat",
-    "+Lin",
-    "+Ln8",
-    "+Exp",
-    "-Lin",
-    "-Ln8",
-    "-Exp" };
-
-
 struct ParameterRowDisplay midiNote1ParameterRow = {
     "Note1 Midi Scaling",
     {
@@ -1863,11 +1710,6 @@ struct ParameterRowDisplay dummyParameterRow = {
             nullNames,
             nullNamesOrder,
             nullNamesOrder } } };
-
-
-// =================================================
-// constant for pfm3 editor
-// =================================================
 
 const struct EditorOneButtonState pfm3ButtonEngineState = {
     "Engine",
@@ -2028,8 +1870,6 @@ const struct EditorOneButton pfm3ButtonMixer = {
         &pfm3ButtonMixer123State,
         &pfm3ButtonMixer456State } };
 
-// ======================= OPERATOR ====================================
-
 const struct EditorOneButtonState pfm3ButtonOPEnvLevel = {
     "Env Level",
     {
@@ -2188,8 +2028,6 @@ const struct EditorOneButton pfm3ButtonOPPlus = {
     2,
     {
         &pfm3ButtonNoPage } };
-
-// ======================= MATRIX ====================================
 
 const struct EditorOneButtonState pfm3ButtonMatrix1State = {
     "Matrix 1",
@@ -2498,9 +2336,6 @@ const struct EditorOneButton pfm3ButtonMatrix6 = {
         &pfm3ButtonMatrix11State,
         &pfm3ButtonMatrix12State, } };
 
-// =================== MODULATOR ========================
-
-//{ , &pfm3ButtonLfo2, &pfm3ButtonLfo3, &pfm3ButtonEnvs, &pfm3ButtonStepSeq1, &pfm3ButtonStepSeq2}
 const struct EditorOneButtonState pfm3ButtonLfoState1 = {
     "LFO 1",
     {
@@ -2733,8 +2568,6 @@ const struct EditorOneButton pfm3ButtonMidiNotes = {
         &pfm3ButtonMidiState1,
         &pfm3ButtonMidiState2 } };
 
-//{ ROW_NONE, ENCODER_NONE }
-
 const struct EditorEditMenu operatorEditMenu = {
     "Oper",
     6,
@@ -2774,8 +2607,6 @@ const struct EditorEditMenu pfm3MatrixMenu = {
         &pfm3ButtonMatrix4,
         &pfm3ButtonMatrix5,
         &pfm3ButtonMatrix6, } };
-
-// Performance
 
 const struct EditorOneButtonState perfEditorState = {
     "Performance",
@@ -2820,8 +2651,9 @@ static const struct EditorMainMenu mainMenu = {
     nullptr,
     &pfm3PerfMenu,
 };
+// clang-format on
 
-void EditorPfm3::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
+void EditorPfm3::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
     parent_ = parent;
     synthState_ = synthState;
     tft_ = tft;
@@ -2859,10 +2691,10 @@ int EditorPfm3::getCommonPage(int page) const {
     return COMMON_PAGE_NONE;
 }
 
-void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-    ParameterDisplay *param, float oldValue, float newValue) {
+void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
+                                   float newValue) {
 
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
@@ -2937,7 +2769,7 @@ void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRo
 
         tft_->setCursor(x, encoder6 > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
 
-        struct ParameterDisplay *param = &allParameterRows.row[currentRow]->params[encoder];
+        struct ParameterDisplay* param = &allParameterRows.row[currentRow]->params[encoder];
 
         // Special cases
         switch (currentRow) {
@@ -2977,7 +2809,7 @@ void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRo
             if (hideParam_[encoder6]) {
                 return;
             }
-            struct ModulationIndex im = modulationIndex[(int) synthState_->pfm3Preset_->engine1.algo][encoder6];
+            struct ModulationIndex im = modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][encoder6];
             if (im.source != im.destination) {
                 tft_->highlightIM(encoder6, im.source, im.destination);
             } else {
@@ -2993,7 +2825,7 @@ void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRo
                 return;
             }
             int mixNumber = (currentRow - ROW_OSC_MIX1) * 2 + ((encoder & 0x2) >> 1);
-            int currentAlgo = (int) synthState_->pfm3Preset_->engine1.algo;
+            int currentAlgo = (int)synthState_->pfm3Preset_->engine1.algo;
             int operatorNumber = allAlgos[currentAlgo][mixNumber * 2 + 1] - 1;
 
             tft_->highlightOperator(operatorNumber);
@@ -3017,7 +2849,7 @@ void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRo
                 break;
             case ENCODER_OSC_FREQ: {
                 // Refresh Fine Tune
-                struct OscillatorParams *opParams = &synthState_->pfm3Preset_->osc1;
+                struct OscillatorParams* opParams = &synthState_->pfm3Preset_->osc1;
                 if (opParams[synthState_->fullState_.operatorNumber].frequencyType == OSC_FT_FIXE) {
                     refreshStatus = 9;
                 }
@@ -3025,7 +2857,7 @@ void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRo
             }
             case ENCODER_OSC_FTUNE: {
                 // Refresh Fine Tune
-                struct OscillatorParams *opParams = &synthState_->pfm3Preset_->osc1;
+                struct OscillatorParams* opParams = &synthState_->pfm3Preset_->osc1;
                 if (opParams[synthState_->fullState_.operatorNumber].frequencyType == OSC_FT_FIXE) {
                     refreshStatus = 10;
                 }
@@ -3056,23 +2888,21 @@ void EditorPfm3::newPfm3ParamValue(int &refreshStatus, int timbre, int currentRo
         valueChangedCounter_[encoder6] = 4;
         updateEncoderValueWithoutCursor(currentRow, encoder, param, oldValue, newValue);
     }
-
 }
 
 void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
-    const struct EditorEditMenu *editMenu = currentEditMenu();
+    const struct EditorEditMenu* editMenu = currentEditMenu();
     if (editMenu == nullptr) {
         return;
     }
-    const struct EditorOneButton *page = currentPage();
-    const struct RowEncoder rowEncoder =
-        page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder];
+    const struct EditorOneButton* page = currentPage();
+    const struct RowEncoder rowEncoder = page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder];
 
     if (!hideParam_[encoder] && rowEncoder.encoder == ENCODER_MODULATOR_SYNC_LFO) {
         tft_->setCursor(getEncoderX(encoder), encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
-        struct LfoParams * lfoParams = &synthState_->pfm3Preset_->lfoOsc1;
+        struct LfoParams* lfoParams = &synthState_->pfm3Preset_->lfoOsc1;
         int lfoButtonState = synthState_->fullState_.buttonState[BUTTONID_EDIT_LFOS];
         tft_->print(lfoSyncParameterRow.params[0].valueName[lfoParams[lfoButtonState].freq < 100.0f ? 0 : 1]);
         return;
@@ -3081,7 +2911,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
         tft_->setCursor(getEncoderX(encoder), encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
-        struct StepSequencerParams * stepParams = &synthState_->pfm3Preset_->lfoSeq1;
+        struct StepSequencerParams* stepParams = &synthState_->pfm3Preset_->lfoSeq1;
         int stepButtonState = synthState_->fullState_.buttonState[BUTTONID_EDIT_STEPS];
         tft_->print(lfoSyncParameterRow.params[0].valueName[stepParams[stepButtonState].bpm < 240.5f ? 0 : 1]);
         return;
@@ -3101,43 +2931,41 @@ void EditorPfm3::drawPageHeader() {
     }
 }
 
-void EditorPfm3::drawEditorButton(int button, const struct EditorEditMenu *editMenu,
-        const struct EditorOneButton *page) {
+void EditorPfm3::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
     if (unlikely(isInOperatorPage(synthState_->fullState_.mainPage) && button >= 3 && button <= 5)) {
         tft_->drawButtonBiState(270, 29, button, synthState_->fullState_.operatorNumber,
-            algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].osc - 1,
-            synthState_->fullState_.buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
-            (button - 3) * 2);
+                                algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].osc - 1,
+                                synthState_->fullState_.buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
     } else if (isInMatrixPage(synthState_->fullState_.mainPage)) {
         uint8_t currentSelection = synthState_->fullState_.editPage * 2 + synthState_->fullState_.buttonState[page->buttonId];
-        tft_->drawButtonBiState(270, 29, button, currentSelection, 12,
-            synthState_->fullState_.buttonState[BUTTONID_MATRIX_1_2 + button], button * 2);
+        tft_->drawButtonBiState(270, 29, button, currentSelection, 12, synthState_->fullState_.buttonState[BUTTONID_MATRIX_1_2 + button],
+                                button * 2);
     } else {
         EditorParamPage::drawEditorButton(button, editMenu, page);
     }
 }
 
-void EditorPfm3::drawParameterName(int button, const struct RowEncoder &rowEncoder,
-        const struct EditorEditMenu *editMenu, const struct EditorOneButton *page) {
+void EditorPfm3::drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
+                                   const struct EditorOneButton* page) {
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_MEDIUM_GRAY);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
     if (rowEncoder.row != ROW_NONE) {
-        const struct ParameterRowDisplay *paramRow = allParameterRows.row[rowEncoder.row];
+        const struct ParameterRowDisplay* paramRow = allParameterRows.row[rowEncoder.row];
         switch (rowEncoder.row) {
         case ROW_MODULATION1:
         case ROW_MODULATION2:
         case ROW_MODULATION3: {
-            struct ModulationIndex im = modulationIndex[(int) synthState_->pfm3Preset_->engine1.algo][button];
+            struct ModulationIndex im = modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][button];
             if (im.source == 0) {
                 hideParam_[button] = true;
             } else {
                 if (button < 5) {
-                    tft_->print((int) im.source);
+                    tft_->print((int)im.source);
                     tft_->print('-');
-                    tft_->print((int) im.destination);
+                    tft_->print((int)im.destination);
                 } else {
                     tft_->print("Fdbk");
                 }
@@ -3148,7 +2976,7 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder &rowEncod
         case ROW_OSC_MIX2:
         case ROW_OSC_MIX3: {
             int mixNumber = (rowEncoder.row - ROW_OSC_MIX1) * 2 + ((rowEncoder.encoder & 0x2) >> 1);
-            int currentAlgo = (int) synthState_->pfm3Preset_->engine1.algo;
+            int currentAlgo = (int)synthState_->pfm3Preset_->engine1.algo;
             int numberOfMix = algoInformation[currentAlgo].mix;
 
             if (mixNumber < numberOfMix) {
@@ -3165,8 +2993,8 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder &rowEncod
             return;
         }
         case ROW_ENGINE2:
-            if ((synthState_->pfm3Preset_->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE)
-                || (synthState_->pfm3Preset_->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD)) {
+            if ((synthState_->pfm3Preset_->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE) ||
+                (synthState_->pfm3Preset_->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD)) {
                 hideParam_[button] = true;
                 tft_->setCharColor(COLOR_DARK_GRAY);
                 tft_->print(paramRow->paramName[rowEncoder.encoder]);
@@ -3200,7 +3028,7 @@ void EditorPfm3::tempoClick() {
         if (imChangedCounter_[e] > 0) {
             imChangedCounter_[e]--;
             if (imChangedCounter_[e] == 0) {
-                struct ModulationIndex im = modulationIndex[(int) synthState_->pfm3Preset_->engine1.algo][e];
+                struct ModulationIndex im = modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][e];
                 if (im.source != im.destination) {
                     tft_->eraseHighlightIM(e, im.source, im.destination);
                 } else {
@@ -3224,45 +3052,42 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int bu
     switch (button) {
     case BUTTON_PREVIOUS_INSTRUMENT: {
         // Convert to legacy preenfm2 encoder and row
-        const struct EditorOneButton *page = currentPage();
+        const struct EditorOneButton* page = currentPage();
         if (page == nullptr) {
             return;
         }
-        struct RowEncoder rowEncoder =
-            page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder6];
+        struct RowEncoder rowEncoder = page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
         // Operator is a special case for row
         if (unlikely(synthState_->fullState_.mainPage == 1)) {
             rowEncoder.row += synthState_->fullState_.operatorNumber;
         }
 
-        struct ParameterDisplay *param = &(allParameterRows.row[rowEncoder.row]->params[rowEncoder.encoder]);
-        const struct Pfm3Preset *defaultParams = &defaultPreset;
+        struct ParameterDisplay* param = &(allParameterRows.row[rowEncoder.row]->params[rowEncoder.encoder]);
+        const struct Pfm3Preset* defaultParams = &defaultPreset;
         int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS_PFM2;
 
-        float *value = &((float*) synthState_->pfm3Preset_)[num];
+        float* value = &((float*)synthState_->pfm3Preset_)[num];
         float oldValue = *value;
-        float newValue = ((float*) defaultParams)[num];
+        float newValue = ((float*)defaultParams)[num];
         (*value) = newValue;
 
         synthState_->propagateNewPfm3ParamValue(synthState_->getCurrentTimbre(), rowEncoder.row, rowEncoder.encoder, param, oldValue,
-            newValue);
+                                                newValue);
         break;
     }
-    case BUTTON_PFM3_MENU:
-    {
+    case BUTTON_PFM3_MENU: {
 
         // All update must be in green
         multipleEdition_ = true;
 
         // Convert to legacy preenfm2 encoder and row
-        const struct EditorOneButton *page = currentPage();
+        const struct EditorOneButton* page = currentPage();
         if (page == nullptr) {
             return;
         }
 
-        struct RowEncoder rowEncoder =
-            page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder6];
+        struct RowEncoder rowEncoder = page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder6];
 
         // Operator is a special case for row
         if (unlikely(synthState_->fullState_.mainPage == 1)) {
@@ -3323,14 +3148,12 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int bu
         break;
     }
     }
-
 }
 
 void EditorPfm3::buttonPressed(int button) {
-    if (button >= BUTTON_PFM3_4 && button <= BUTTON_PFM3_6
-        && unlikely(isInOperatorPage(synthState_->fullState_.mainPage))) {
+    if (button >= BUTTON_PFM3_4 && button <= BUTTON_PFM3_6 && unlikely(isInOperatorPage(synthState_->fullState_.mainPage))) {
         // Operator page : button 4 to 6 change the current operator
-        const struct EditorEditMenu *editMenu = currentEditMenu();
+        const struct EditorEditMenu* editMenu = currentEditMenu();
         if (editMenu == nullptr || button >= editMenu->numberOfButtons) {
             return;
         }
@@ -3345,7 +3168,7 @@ void EditorPfm3::buttonPressed(int button) {
         uint8_t numberOfOsc = algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].osc - 1;
         uint8_t newOperatorSelect = buttonSelected * 2 + newButtonState;
         if (newOperatorSelect <= numberOfOsc) {
-            synthState_->fullState_.operatorNumber =  newOperatorSelect;
+            synthState_->fullState_.operatorNumber = newOperatorSelect;
             synthState_->fullState_.buttonState[buttonId] = newButtonState;
         }
         return;
@@ -3354,29 +3177,28 @@ void EditorPfm3::buttonPressed(int button) {
     EditorParamPage::buttonPressed(button);
 }
 
-
 void EditorPfm3::buttonLongPressed(int instrument, int button) {
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
         // Can be copied ?
-        bool canBeCopied = isInMatrixPage(synthState_->fullState_.mainPage) || isInOperatorPage(synthState_->fullState_.mainPage) || (isInModulatorPage(synthState_->fullState_.mainPage) && synthState_->fullState_.editPage == 0);
+        bool canBeCopied = isInMatrixPage(synthState_->fullState_.mainPage) || isInOperatorPage(synthState_->fullState_.mainPage) ||
+                           (isInModulatorPage(synthState_->fullState_.mainPage) && synthState_->fullState_.editPage == 0);
 
         if (canBeCopied) {
             bufferPageNumber_ = synthState_->fullState_.mainPage;
             bufferEditNumber_ = synthState_->fullState_.editPage;
 
-            const struct EditorOneButton *page = currentPage();
+            const struct EditorOneButton* page = currentPage();
             if (page == nullptr) {
                 return;
             }
             if (isInOperatorPage(synthState_->fullState_.mainPage) && synthState_->fullState_.editPage != 0) {
                 // Env : we only store the op number.
                 // We'll copy time, level and shape
-                bufferParam_[0] =  synthState_->fullState_.operatorNumber;
+                bufferParam_[0] = synthState_->fullState_.operatorNumber;
                 parent_->displayPopup(COLOR_GREEN, "Copy Env", 8);
             } else {
                 for (int e = 0; e < 6; e++) {
-                    const struct RowEncoder rowEncoder =
-                            page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[e];
+                    const struct RowEncoder rowEncoder = page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[e];
                     int row = rowEncoder.row;
                     if (row != ROW_NONE) {
                         int encoder4 = rowEncoder.encoder;
@@ -3384,7 +3206,7 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
                             row += synthState_->fullState_.operatorNumber;
                         }
                         int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
-                        bufferParam_[e] = ((float*) synthState_->pfm3Preset_)[num];
+                        bufferParam_[e] = ((float*)synthState_->pfm3Preset_)[num];
                     }
                 }
                 if (isInMatrixPage(synthState_->fullState_.mainPage)) {
@@ -3401,32 +3223,38 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
         // Can be pasted ?
         bool canBePasted = isInMatrixPage(synthState_->fullState_.mainPage) && isInMatrixPage(bufferPageNumber_);
         // Operator Osc
-        canBePasted |= isInOperatorPage(synthState_->fullState_.mainPage) && isInOperatorPage(bufferPageNumber_) && bufferEditNumber_ == 0 && synthState_->fullState_.editPage == 0;
+        canBePasted |= isInOperatorPage(synthState_->fullState_.mainPage) && isInOperatorPage(bufferPageNumber_) &&
+                       bufferEditNumber_ == 0 && synthState_->fullState_.editPage == 0;
         // Operator Env
-        canBePasted |= isInOperatorPage(synthState_->fullState_.mainPage) && isInOperatorPage(bufferPageNumber_) && bufferEditNumber_ != 0 && synthState_->fullState_.editPage != 0;
+        canBePasted |= isInOperatorPage(synthState_->fullState_.mainPage) && isInOperatorPage(bufferPageNumber_) &&
+                       bufferEditNumber_ != 0 && synthState_->fullState_.editPage != 0;
         // LFO
-        canBePasted |= isInModulatorPage(synthState_->fullState_.mainPage) && isInModulatorPage(bufferPageNumber_) && synthState_->fullState_.editPage == 0;
+        canBePasted |= isInModulatorPage(synthState_->fullState_.mainPage) && isInModulatorPage(bufferPageNumber_) &&
+                       synthState_->fullState_.editPage == 0;
 
         if (canBePasted) {
-            const struct EditorOneButton *page = currentPage();
+            const struct EditorOneButton* page = currentPage();
             if (page == nullptr) {
                 return;
             }
             if (isInOperatorPage(synthState_->fullState_.mainPage) && synthState_->fullState_.editPage != 0) {
                 if (bufferParam_[0] != synthState_->fullState_.operatorNumber) {
                     uint8_t opNum = bufferParam_[0];
-                    float* timeSource = (float*) (((EnvelopeTimeMemory *)&synthState_->pfm3Preset_->env1Time) + opNum);
-                    float* timeDest =  (float*) (((EnvelopeTimeMemory *)&synthState_->pfm3Preset_->env1Time) + synthState_->fullState_.operatorNumber);
+                    float* timeSource = (float*)(((EnvelopeTimeMemory*)&synthState_->pfm3Preset_->env1Time) + opNum);
+                    float* timeDest =
+                        (float*)(((EnvelopeTimeMemory*)&synthState_->pfm3Preset_->env1Time) + synthState_->fullState_.operatorNumber);
                     for (int i = 0; i < 4; i++) {
                         timeDest[i] = timeSource[i];
                     }
-                    float* levelSource = (float*) (((EnvelopeLevelMemory *)&synthState_->pfm3Preset_->env1Level) + opNum);
-                    float* levelDest =  (float*) (((EnvelopeLevelMemory *)&synthState_->pfm3Preset_->env1Level) + synthState_->fullState_.operatorNumber);
+                    float* levelSource = (float*)(((EnvelopeLevelMemory*)&synthState_->pfm3Preset_->env1Level) + opNum);
+                    float* levelDest =
+                        (float*)(((EnvelopeLevelMemory*)&synthState_->pfm3Preset_->env1Level) + synthState_->fullState_.operatorNumber);
                     for (int i = 0; i < 4; i++) {
                         levelDest[i] = levelSource[i];
                     }
-                    float* curveSource = (float*) (((EnvelopeCurveParams *)&synthState_->pfm3Preset_->env1Curve) + opNum);
-                    float* curveDest =  (float*) (((EnvelopeCurveParams *)&synthState_->pfm3Preset_->env1Curve) + synthState_->fullState_.operatorNumber);
+                    float* curveSource = (float*)(((EnvelopeCurveParams*)&synthState_->pfm3Preset_->env1Curve) + opNum);
+                    float* curveDest =
+                        (float*)(((EnvelopeCurveParams*)&synthState_->pfm3Preset_->env1Curve) + synthState_->fullState_.operatorNumber);
                     for (int i = 0; i < 4; i++) {
                         curveDest[i] = curveSource[i];
                     }
@@ -3434,8 +3262,7 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
                 parent_->displayPopup(COLOR_GREEN, "Paste Env", 9);
             } else {
                 for (int e = 0; e < 6; e++) {
-                    const struct RowEncoder rowEncoder =
-                            page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[e];
+                    const struct RowEncoder rowEncoder = page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[e];
                     int row = rowEncoder.row;
                     if (row != ROW_NONE) {
                         int encoder4 = rowEncoder.encoder;
@@ -3443,7 +3270,7 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
                             row += synthState_->fullState_.operatorNumber;
                         }
                         int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
-                        ((float*) synthState_->pfm3Preset_)[num] = bufferParam_[e];
+                        ((float*)synthState_->pfm3Preset_)[num] = bufferParam_[e];
                     }
                 }
                 if (isInMatrixPage(synthState_->fullState_.mainPage)) {
@@ -3460,7 +3287,6 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
         }
     }
 }
-
 
 bool EditorPfm3::isInOperatorPage(uint8_t pageNumber) {
     return pageNumber == 1;
@@ -3497,13 +3323,13 @@ void EditorPfm3::refreshOscilloBG() {
 
 void EditorPfm3::refreshOscillatorOperatorShape() {
     int op = synthState_->fullState_.operatorNumber;
-    OscillatorParams *oscillatorParams = &synthState_->pfm3Preset_->osc1;
+    OscillatorParams* oscillatorParams = &synthState_->pfm3Preset_->osc1;
 
-    tft_->oscilloBgActionOperatorShape((int) oscillatorParams[op].shape);
+    tft_->oscilloBgActionOperatorShape((int)oscillatorParams[op].shape);
 }
 
 void EditorPfm3::refreshLfoOscillator() {
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
@@ -3513,16 +3339,16 @@ void EditorPfm3::refreshLfoOscillator() {
     }
     uint8_t lfoNumber = synthState_->fullState_.buttonState[page->buttonId];
 
-    LfoParams *lfoParam = &synthState_->pfm3Preset_->lfoOsc1;
-    float *lfoPhase = (float*) &synthState_->pfm3Preset_->lfoPhases;
+    LfoParams* lfoParam = &synthState_->pfm3Preset_->lfoOsc1;
+    float* lfoPhase = (float*)&synthState_->pfm3Preset_->lfoPhases;
 
-    tft_->oscilloBgSetLfo(lfoParam[lfoNumber].shape, lfoParam[lfoNumber].freq, lfoParam[lfoNumber].keybRamp,
-        lfoParam[lfoNumber].bias, lfoPhase[lfoNumber]);
+    tft_->oscilloBgSetLfo(lfoParam[lfoNumber].shape, lfoParam[lfoNumber].freq, lfoParam[lfoNumber].keybRamp, lfoParam[lfoNumber].bias,
+                          lfoPhase[lfoNumber]);
     tft_->oscilloBgActionLfo();
 }
 
 void EditorPfm3::refreshLfoEnv() {
-    const struct EditorOneButton *page = currentPage();
+    const struct EditorOneButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
@@ -3533,27 +3359,25 @@ void EditorPfm3::refreshLfoEnv() {
     uint8_t envNumber = synthState_->fullState_.buttonState[page->buttonId];
 
     if (envNumber == 0) {
-        EnvelopeLfoParams *envParam = &synthState_->pfm3Preset_->lfoEnv1;
-        tft_->oscilloBgSetLfoEnvelope(envParam->attack, envParam->decay, 1.0f, envParam->release, 1.0f,
-            envParam->sustain, envParam->sustain, 0.0f);
+        EnvelopeLfoParams* envParam = &synthState_->pfm3Preset_->lfoEnv1;
+        tft_->oscilloBgSetLfoEnvelope(envParam->attack, envParam->decay, 1.0f, envParam->release, 1.0f, envParam->sustain,
+                                      envParam->sustain, 0.0f);
         tft_->oscilloBgActionEnvelope();
     } else if (envNumber == 1) {
-        Envelope2LfoParams *envParam = &synthState_->pfm3Preset_->lfoEnv2;
-        tft_->oscilloBgSetLfoEnvelope(envParam->silence, envParam->attack, envParam->decay, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f);
+        Envelope2LfoParams* envParam = &synthState_->pfm3Preset_->lfoEnv2;
+        tft_->oscilloBgSetLfoEnvelope(envParam->silence, envParam->attack, envParam->decay, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
         tft_->oscilloBgActionEnvelope();
     }
-
 }
 
 void EditorPfm3::refreshOscillatorOperatorEnvelope() {
     int op = synthState_->fullState_.operatorNumber;
-    EnvelopeTimeMemory *envTime = &synthState_->pfm3Preset_->env1Time;
-    EnvelopeLevelMemory *envLevel = &synthState_->pfm3Preset_->env1Level;
-    EnvelopeCurveParams *envCurve = &synthState_->pfm3Preset_->env1Curve;
+    EnvelopeTimeMemory* envTime = &synthState_->pfm3Preset_->env1Time;
+    EnvelopeLevelMemory* envLevel = &synthState_->pfm3Preset_->env1Level;
+    EnvelopeCurveParams* envCurve = &synthState_->pfm3Preset_->env1Curve;
     tft_->oscilloBgSetEnvelope(envTime[op].attackTime, envTime[op].decayTime, envTime[op].sustainTime, envTime[op].releaseTime,
-            envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel,
-            envCurve[op].attackCurve, envCurve[op].decayCurve, envCurve[op].sustainCurve, envCurve[op].releaseCurve);
+                               envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel,
+                               envCurve[op].attackCurve, envCurve[op].decayCurve, envCurve[op].sustainCurve, envCurve[op].releaseCurve);
     tft_->oscilloBgActionEnvelope();
 }
 

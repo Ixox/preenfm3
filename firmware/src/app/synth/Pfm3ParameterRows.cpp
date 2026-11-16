@@ -38,6 +38,7 @@ extern struct ParameterRowDisplay midiNote1ParameterRow;
 extern struct ParameterRowDisplay midiNote2ParameterRow;
 extern struct ParameterRowDisplay dummyParameterRow;
 
+// clang-format off
 struct AllParameterRowsDisplay allParameterRows = {
     {
         &engine1ParameterRow,
@@ -104,3 +105,4 @@ struct AllParameterRowsDisplay allParameterRows = {
         &fx2ParameterRow
 
 } };
+// clang-format on

@@ -30,21 +30,21 @@ enum SequencerButtonMode {
     SEQ_MODE_REC,   // 1
     SEQ_MODE_MUTE,  // 2
     SEQ_MODE_CLEAR, // 3
-    SEQ_MODE_STEP,   // 4
-    SEQ_MOD_LAST // 5
+    SEQ_MODE_STEP,  // 4
+    SEQ_MOD_LAST    // 5
 };
 
 class ScreenSequencer {
 public:
     ScreenSequencer();
 
-    void init(SynthState *synthState, TftDisplay *tft) {
+    void init(SynthState* synthState, TftDisplay* tft) {
         synthState_ = synthState;
         tft_ = tft;
     }
-    void newTimbre(int instrument, int &refreshStatus, int &endRefreshStatus);
-    void setSequencer(Sequencer *sequencer);
-    void refreshSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus);
+    void newTimbre(int instrument, int& refreshStatus, int& endRefreshStatus);
+    void setSequencer(Sequencer* sequencer);
+    void refreshSequencerByStep(int instrument, int& refreshStatus, int& endRefreshStatus);
     void displayBeat();
     void tempoClick();
     void noteOn(int instrument, bool show);
@@ -53,7 +53,7 @@ public:
     void buttonLongPressed(int instrument, int button);
     void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
     void* getValuePointer(int valueType, int encoder);
-    void setRefreshStatusPointer(int *refreshStatus, int *endRefreshStatus) {
+    void setRefreshStatusPointer(int* refreshStatus, int* endRefreshStatus) {
         refreshStatusP_ = refreshStatus;
         endRefreshStatusP_ = endRefreshStatus;
     }
@@ -75,11 +75,10 @@ public:
         refresh(14, 7);
     }
 
-
     void refreshInstrument(int instrument) {
-    	if(seqMode_ != SEQ_MODE_STEP) {
-    		refresh(14 - instrument, 14 - instrument);
-    	}
+        if (seqMode_ != SEQ_MODE_STEP) {
+            refresh(14 - instrument, 14 - instrument);
+        }
     }
 
     void refreshActivated() {
@@ -111,17 +110,17 @@ public:
     void sequencerWasUpdated(uint8_t timbre, uint8_t seqValue, uint8_t newValue);
 
 private:
-    void refreshStepSequencerByStep(int instrument, int &refreshStatus, int &endRefreshStatus);
+    void refreshStepSequencerByStep(int instrument, int& refreshStatus, int& endRefreshStatus);
     bool refreshSequence(int instrument);
     void clearSequence(int start, int end);
     void newNoteInSequence(int instrument, int start, int end, bool moreThanOneNote);
 
-    TftDisplay *tft_;
-    SynthState *synthState_;
+    TftDisplay* tft_;
+    SynthState* synthState_;
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
-    Sequencer *sequencer_;
-    int *refreshStatusP_;
-    int *endRefreshStatusP_;
+    Sequencer* sequencer_;
+    int* refreshStatusP_;
+    int* endRefreshStatusP_;
     SequencerButtonMode seqMode_;
     int stepCursor_;
     int stepSize_;

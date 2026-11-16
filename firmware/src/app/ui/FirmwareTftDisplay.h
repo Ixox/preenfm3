@@ -15,27 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #ifndef HARDWARE_FIRMWARETFTDISPLAY_H_
 #define HARDWARE_FIRMWARETFTDISPLAY_H_
 
 #include "TftDisplay.h"
 
 // 14 is the number of op waveforms
-enum {
-    TFT_NUMBER_OF_WAVEFORM_EXT = 14,
-    TFT_DRAW_ENVELOPPE,
-    TFT_DRAW_LFO
-};
-
-
+enum { TFT_NUMBER_OF_WAVEFORM_EXT = 14, TFT_DRAW_ENVELOPPE, TFT_DRAW_LFO };
 
 struct WaveFormExt {
     float* waveForms;
     int size;
 };
-
 
 /*
  * Add specific firmware display features
@@ -53,13 +44,13 @@ public:
     void oscilloBgActionLfo();
     void oscilloBgActionClear();
 
-    void oscilloBgSetEnvelope(float a, float d, float s, float r, float aL, float dL, float sL, float rL, int8_t aCurve, int8_t dCurve, int8_t sCurve, int8_t rCurve);
+    void oscilloBgSetEnvelope(float a, float d, float s, float r, float aL, float dL, float sL, float rL, int8_t aCurve, int8_t dCurve,
+                              int8_t sCurve, int8_t rCurve);
     void oscilloBgSetLfoEnvelope(float a, float d, float s, float r, float aL, float dL, float sL, float rL);
     void oscilloBgSetLfo(float shape, float freq, float kSyn, float bias, float phase);
 
     void additionalActions();
     void clearActions();
-
 
 private:
     void oscilloBgDrawOperatorShape(float* waveForm, int size);

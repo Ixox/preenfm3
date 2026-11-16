@@ -12,13 +12,13 @@
 
 #include "Common.h"
 
-#include "Osc.h"
 #include "Env.h"
-#include "Matrix.h"
-#include "LfoOsc.h"
 #include "LfoEnv.h"
 #include "LfoEnv2.h"
+#include "LfoOsc.h"
 #include "LfoStepSeq.h"
+#include "Matrix.h"
+#include "Osc.h"
 
 /*
  * Per-voice state owned by the PFM3 engine.

@@ -21,12 +21,12 @@ extern char lineBuffer[64];
 
 // User curves
 extern float userEnvCurves[4][64];
-extern char *envCurveNames[];
+extern char* envCurveNames[];
 
 #include "UserEnvCurve.h"
 
 UserEnvCurve::UserEnvCurve() {
-    for (int k=0; k<4; k++) {
+    for (int k = 0; k < 4; k++) {
         userEnvCurveNames_[k][4] = 0;
     }
 }
@@ -40,7 +40,6 @@ const char* UserEnvCurve::getFolderName() {
 
 void UserEnvCurve::loadUserEnvCurves() {
     char fileName[30];
-
 
     for (int f = 0; f < 4; f++) {
         // Check if bin exists
@@ -60,7 +59,7 @@ void UserEnvCurve::loadUserEnvCurves() {
             if (sizeTxt == -1) {
                 // Does not exist. Neither Bin nor txt => Linear env
                 for (float s = 0; s < 64; s++) {
-                    userEnvCurves[f][(int) s] = s / 64;
+                    userEnvCurves[f][(int)s] = s / 64;
                 }
             } else {
                 numberOfSample_ = -1;
@@ -108,9 +107,9 @@ void UserEnvCurve::loadUserEnvCurveFromTxt(int f, const char* fileName, int size
 
     while (floatRead_ != numberOfSample_) {
         int toRead = (size - readIndex > LINE_BUFFER_SIZE) ? LINE_BUFFER_SIZE : size - readIndex;
-        load(fileName, readIndex,  (void*)&lineBuffer, toRead);
+        load(fileName, readIndex, (void*)&lineBuffer, toRead);
 
-        int used = fillUserEnvCurveFromTxt(f, lineBuffer, toRead, (readIndex+toRead) >= size);
+        int used = fillUserEnvCurveFromTxt(f, lineBuffer, toRead, (readIndex + toRead) >= size);
         if (used < 0) {
             return;
         }
@@ -131,11 +130,11 @@ int UserEnvCurve::fillUserEnvCurveFromTxt(int f, char* buffer, int filled, bool 
                 index++;
             }
             int b = 0;
-            while (b<4 && !fsu_->isSeparator(buffer[index])) {
+            while (b < 4 && !fsu_->isSeparator(buffer[index])) {
                 userEnvCurveNames_[f][b++] = buffer[index++];
             }
             // complete with space
-            while (b<4) {
+            while (b < 4) {
                 userEnvCurveNames_[f][b++] = ' ';
             }
         }
@@ -166,7 +165,7 @@ void UserEnvCurve::normalize(float* buffer, int numberOfSamples) {
     float min = 0;
     float max = 0;
     float average = 0;
-    for (int i=0; i < numberOfSamples; i++) {
+    for (int i = 0; i < numberOfSamples; i++) {
         average += buffer[i];
         if (buffer[i] < min) {
             min = buffer[i];
@@ -175,18 +174,18 @@ void UserEnvCurve::normalize(float* buffer, int numberOfSamples) {
             max = buffer[i];
         }
     }
-	
-    float m = (max-min) == 0 ? 1 / (max-min) : 1;
 
-    for (int i=0; i < numberOfSamples; i++) {
+    float m = (max - min) == 0 ? 1 / (max - min) : 1;
+
+    for (int i = 0; i < numberOfSamples; i++) {
         buffer[i] -= min;
         buffer[i] *= m;
-		if(buffer[i]>1) {
-			buffer[i] = 1;
-		}
-		if(buffer[i]<0) {
-			buffer[i] = 0;
-		}
+        if (buffer[i] > 1) {
+            buffer[i] = 1;
+        }
+        if (buffer[i] < 0) {
+            buffer[i] = 0;
+        }
     }
 }
 
@@ -197,7 +196,7 @@ int UserEnvCurve::numberOfSampleError(int f) {
 }
 
 void UserEnvCurve::interpolate(float* buffer, int sourceNumberOfSamples, int targetNumberOfSamples) {
-    for (int i = targetNumberOfSamples-1; i>=0; i--) {
+    for (int i = targetNumberOfSamples - 1; i >= 0; i--) {
         float pos = (float)i * (float)sourceNumberOfSamples / (float)targetNumberOfSamples;
         int iPos = pos;
         float decimal = pos - iPos;

@@ -15,85 +15,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
-#include "stm32h7xx_hal.h"
 #include "TftAlgo.h"
 #include "Common.h"
+#include "stm32h7xx_hal.h"
 
-#define RGB565_WHITE 0xffff
-#define RGB565_RED 0x00f8
-#define RGB565_BLUE 0x1f00
-#define RGB565_GREEN 0xe007
+#define RGB565_WHITE  0xffff
+#define RGB565_RED    0x00f8
+#define RGB565_BLUE   0x1f00
+#define RGB565_GREEN  0xe007
 #define RGB565_ORANGE 0x00fc
 #define RGB565_YELLOW 0xe0ff
-#define RGB565_CYAN 0xff07
+#define RGB565_CYAN   0xff07
 #define RGB565_PURPLE 0xBFE0
 
-const uint8_t digitBits[] = {
-    // 0
-    0b11111000,
-    0b10001000,
-    0b10001000,
-    0b10001000,
-    0b11111000,
-    // 1
-    0b00100000,
-    0b00100000,
-    0b00100000,
-    0b00100000,
-    0b00100000,
-    // 2
-    0b11111000,
-    0b00001000,
-    0b11111000,
-    0b10000000,
-    0b11111000,
-    // 3
-    0b11111000,
-    0b00001000,
-    0b00111000,
-    0b00001000,
-    0b11111000,
-    // 4
-    0b10001000,
-    0b10001000,
-    0b11111000,
-    0b00001000,
-    0b00001000,
-    // 5
-    0b11111000,
-    0b10000000,
-    0b11111000,
-    0b00001000,
-    0b11111000,
-    // 6
-    0b11111000,
-    0b10000000,
-    0b11111000,
-    0b10001000,
-    0b11111000,
-    // 7
-    0b11111000,
-    0b00001000,
-    0b00001000,
-    0b00001000,
-    0b00001000,
-    // 8
-    0b11111000,
-    0b10001000,
-    0b11111000,
-    0b10001000,
-    0b11111000,
-    // 9
-    0b11111000,
-    0b10001000,
-    0b11111000,
-    0b00001000,
-    0b11111000
-};
+const uint8_t digitBits[] = {// 0
+                             0b11111000, 0b10001000, 0b10001000, 0b10001000, 0b11111000,
+                             // 1
+                             0b00100000, 0b00100000, 0b00100000, 0b00100000, 0b00100000,
+                             // 2
+                             0b11111000, 0b00001000, 0b11111000, 0b10000000, 0b11111000,
+                             // 3
+                             0b11111000, 0b00001000, 0b00111000, 0b00001000, 0b11111000,
+                             // 4
+                             0b10001000, 0b10001000, 0b11111000, 0b00001000, 0b00001000,
+                             // 5
+                             0b11111000, 0b10000000, 0b11111000, 0b00001000, 0b11111000,
+                             // 6
+                             0b11111000, 0b10000000, 0b11111000, 0b10001000, 0b11111000,
+                             // 7
+                             0b11111000, 0b00001000, 0b00001000, 0b00001000, 0b00001000,
+                             // 8
+                             0b11111000, 0b10001000, 0b11111000, 0b10001000, 0b11111000,
+                             // 9
+                             0b11111000, 0b10001000, 0b11111000, 0b00001000, 0b11111000};
 
-
+// clang-format off
 const uint8_t algo1[] = {
     MIX, 1,
     OPERATOR, 1, 11,
@@ -1182,24 +1138,23 @@ const uint8_t* dx7Algos[NUMBER_OF_DX7_ALGOS] = { dx7algo1, dx7algo2, dx7algo3, d
         dx7algo9, dx7algo10, dx7algo11, dx7algo12, dx7algo13, dx7algo14, dx7algo15, dx7algo16, dx7algo17, dx7algo18,
         dx7algo19, dx7algo20, dx7algo21, dx7algo22, dx7algo23, dx7algo24, dx7algo25, dx7algo26, dx7algo27, dx7algo28,
         dx7algo29, dx7algo30, dx7algo31, dx7algo32 };
+// clang-format on
 
 struct ModulationIndex modulationIndex[ALGO_END][6];
 bool carrierOperator[ALGO_END][6];
 
+#define GETX1(o) (((o - 1) % 3) * 26 + 6)
+#define GETY1(o) (((o - 1) / 3) * 25 + 2)
 
+#define SETPIXEL(x, y) buffer_[(x) + (y) * 80] = color_
 
-#define GETX1(o) (((o-1) % 3)*26 + 6)
-#define GETY1(o) (((o-1)/3)*25 + 2)
-
-#define SETPIXEL(x, y) buffer_[(x)+(y)*80]=color_
-
-#define SETFGPIXEL(x, y) fgBuffer_[(x)+(y)*80]=0xff
-#define DELFGPIXEL(x, y) fgBuffer_[(x)+(y)*80]=0x00
+#define SETFGPIXEL(x, y) fgBuffer_[(x) + (y) * 80] = 0xff
+#define DELFGPIXEL(x, y) fgBuffer_[(x) + (y) * 80] = 0x00
 
 TftAlgo::TftAlgo() {
 
     for (int a = 0; a < NUMBER_OF_ALGOS; a++) {
-        const uint8_t *algoInfo = allAlgos[a];
+        const uint8_t* algoInfo = allAlgos[a];
         int idx = 0;
         for (int o = 0; o < 6; o++) {
             carrierOperator[a][o] = false;
@@ -1208,21 +1163,21 @@ TftAlgo::TftAlgo() {
         }
         while (algoInfo[idx] != END) {
             switch (algoInfo[idx++]) {
-                case OPERATORSYNC:
-                case OPERATOR:
-                    idx += 2;
-                    break;
-                case IM:
-                case IMSYNC:
-                case FEEDBACK:
-                    modulationIndex[a][algoInfo[idx] - 1].source = algoInfo[idx + 1];
-                    modulationIndex[a][algoInfo[idx] - 1].destination = algoInfo[idx + 2];
-                    idx += 3;
-                    break;
-                case MIX:
-                    carrierOperator[a][algoInfo[idx] - 1] = true;
-                    idx++;
-                    break;
+            case OPERATORSYNC:
+            case OPERATOR:
+                idx += 2;
+                break;
+            case IM:
+            case IMSYNC:
+            case FEEDBACK:
+                modulationIndex[a][algoInfo[idx] - 1].source = algoInfo[idx + 1];
+                modulationIndex[a][algoInfo[idx] - 1].destination = algoInfo[idx + 2];
+                idx += 3;
+                break;
+            case MIX:
+                carrierOperator[a][algoInfo[idx] - 1] = true;
+                idx++;
+                break;
             }
         }
     }
@@ -1231,11 +1186,11 @@ TftAlgo::TftAlgo() {
 TftAlgo::~TftAlgo() {
 }
 
-void TftAlgo::setBufferAdress(uint16_t *bufferAdress) {
+void TftAlgo::setBufferAdress(uint16_t* bufferAdress) {
     buffer_ = bufferAdress;
 }
 
-void TftAlgo::setFGBufferAdress(uint8_t *bufferAdress) {
+void TftAlgo::setFGBufferAdress(uint8_t* bufferAdress) {
     fgBuffer_ = bufferAdress;
 }
 
@@ -1248,7 +1203,8 @@ void TftAlgo::setColor(uint16_t col) {
  *
  */
 void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
-    int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0, curpixel = 0;
+    int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0,
+            curpixel = 0;
 
     deltax = ABS(x2 - x1);
     deltay = ABS(y2 - y1);
@@ -1289,15 +1245,15 @@ void TftAlgo::drawLine(uint8_t mode, int16_t x1, int16_t y1, int16_t x2, int16_t
 
     for (curpixel = 0; curpixel <= numpixels; curpixel++) {
         switch (mode) {
-            case 1:
-                SETPIXEL(x, y);
-                break;
-            case 2:
-                SETFGPIXEL(x, y);
-                break;
-            case 3:
-                DELFGPIXEL(x, y);
-                break;
+        case 1:
+            SETPIXEL(x, y);
+            break;
+        case 2:
+            SETFGPIXEL(x, y);
+            break;
+        case 3:
+            DELFGPIXEL(x, y);
+            break;
         }
         num += numadd;
         if (num >= den) {
@@ -1354,14 +1310,14 @@ void TftAlgo::highlightOperator(bool draw, uint8_t opNum) {
     }
 
     for (int x = x1; x < x1 + 20; x += 4) {
-        *((int32_t*) (&fgBuffer_[(x) + (y1) * 80])) = color32;
-        *((int32_t*) (&fgBuffer_[(x) + (y1 + 1) * 80])) = color32;
-        *((int32_t*) (&fgBuffer_[(x) + (y1 + 19) * 80])) = color32;
-        *((int32_t*) (&fgBuffer_[(x) + (y1 + 20) * 80])) = color32;
+        *((int32_t*)(&fgBuffer_[(x) + (y1) * 80])) = color32;
+        *((int32_t*)(&fgBuffer_[(x) + (y1 + 1) * 80])) = color32;
+        *((int32_t*)(&fgBuffer_[(x) + (y1 + 19) * 80])) = color32;
+        *((int32_t*)(&fgBuffer_[(x) + (y1 + 20) * 80])) = color32;
     }
     for (int y = y1; y < y1 + 20; y++) {
-        *((int16_t*) (&fgBuffer_[(x1) + (y) * 80])) = color16;
-        *((int16_t*) (&fgBuffer_[(x1 + 19) + (y) * 80])) = color16;
+        *((int16_t*)(&fgBuffer_[(x1) + (y) * 80])) = color16;
+        *((int16_t*)(&fgBuffer_[(x1 + 19) + (y) * 80])) = color16;
     }
 }
 
@@ -1389,17 +1345,17 @@ void TftAlgo::drawOperator(uint8_t opNum, uint8_t opPosition) {
         SETPIXEL(x1, y);
         SETPIXEL(x1 + 16, y);
     }
-//    setColor(0x00ff);
-//    drawNumber(x1 + 3, y1 + 3, opNum);
+    //    setColor(0x00ff);
+    //    drawNumber(x1 + 3, y1 + 3, opNum);
 }
 
 void TftAlgo::drawIM(uint8_t mode, uint8_t imNum, uint8_t opSource, uint8_t opDest) {
 
-    int xSource = GETX1(operatorPosition_[opSource-1]) + 8;
-    int ySource = GETY1(operatorPosition_[opSource-1]) + 17;
+    int xSource = GETX1(operatorPosition_[opSource - 1]) + 8;
+    int ySource = GETY1(operatorPosition_[opSource - 1]) + 17;
 
-    int xDest = GETX1(operatorPosition_[opDest-1]) + 8;
-    int yDest = GETY1(operatorPosition_[opDest-1]) - 1;
+    int xDest = GETX1(operatorPosition_[opDest - 1]) + 8;
+    int yDest = GETY1(operatorPosition_[opDest - 1]) - 1;
 
     drawLine(mode, xSource, ySource, xDest, yDest);
 }
@@ -1428,7 +1384,6 @@ void TftAlgo::drawMix(uint8_t imNum) {
     setColor(0x0ff0);
 }
 
-
 void TftAlgo::drawAlgo(int algo) {
     algo = algo % NUMBER_OF_ALGOS;
     drawAlgoFromTable(allAlgos[algo]);
@@ -1439,33 +1394,33 @@ void TftAlgo::drawDx7Algo(int algo) {
     drawAlgoFromTable(dx7Algos[algo]);
 }
 
-bool TftAlgo::getDx7Feedback(int algo, uint8_t &opSource, uint8_t &opDest) {
+bool TftAlgo::getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest) {
     algo = algo % NUMBER_OF_DX7_ALGOS;
-    const uint8_t *algoInfo = dx7Algos[algo];
+    const uint8_t* algoInfo = dx7Algos[algo];
     int idx = 0;
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
-            case OPERATORSYNC:
-            case OPERATOR:
-                idx += 2;
-                break;
-            case IM:
-            case IMSYNC:
-                idx += 3;
-                break;
-            case FEEDBACK:
-                opSource = algoInfo[idx + 1];
-                opDest = algoInfo[idx + 2];
-                return true;
-            case MIX:
-                idx++;
-                break;
+        case OPERATORSYNC:
+        case OPERATOR:
+            idx += 2;
+            break;
+        case IM:
+        case IMSYNC:
+            idx += 3;
+            break;
+        case FEEDBACK:
+            opSource = algoInfo[idx + 1];
+            opDest = algoInfo[idx + 2];
+            return true;
+        case MIX:
+            idx++;
+            break;
         }
     }
     return false;
 }
 
-void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
+void TftAlgo::drawAlgoFromTable(const uint8_t* algoInfo) {
     int idx = 0;
     for (int i = 0; i < 6; i++) {
         operatorPosition_[i] = 0;
@@ -1476,38 +1431,38 @@ void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
 
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
-            case OPERATORSYNC:
-                operatorMix_[algoInfo[idx] - 1] = OPERATORSYNC;
-            case OPERATOR:
-                operatorPosition_[algoInfo[idx] - 1] = algoInfo[idx + 1];
-                drawOperator(algoInfo[idx], algoInfo[idx + 1]);
-                idx += 2;
-                break;
-            case IM:
-                imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
-                imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
-                setColor(RGB565_RED);
-                drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
-                idx += 3;
-                break;
-            case IMSYNC:
-                imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
-                imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
-                setColor(RGB565_PURPLE);
-                drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
-                idx += 3;
-                break;
-            case FEEDBACK:
-                imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
-                imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
-                setColor(RGB565_RED);
-                drawFeedback(1, algoInfo[idx + 1], algoInfo[idx + 2]);
-                idx += 3;
-                break;
-            case MIX:
-                operatorMix_[algoInfo[idx] - 1] = MIX;
-                drawMix(algoInfo[idx++]);
-                break;
+        case OPERATORSYNC:
+            operatorMix_[algoInfo[idx] - 1] = OPERATORSYNC;
+        case OPERATOR:
+            operatorPosition_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+            drawOperator(algoInfo[idx], algoInfo[idx + 1]);
+            idx += 2;
+            break;
+        case IM:
+            imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+            imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
+            setColor(RGB565_RED);
+            drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
+            idx += 3;
+            break;
+        case IMSYNC:
+            imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+            imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
+            setColor(RGB565_PURPLE);
+            drawIM(1, algoInfo[idx], algoInfo[idx + 1], algoInfo[idx + 2]);
+            idx += 3;
+            break;
+        case FEEDBACK:
+            imSource_[algoInfo[idx] - 1] = algoInfo[idx + 1];
+            imDest_[algoInfo[idx] - 1] = algoInfo[idx + 2];
+            setColor(RGB565_RED);
+            drawFeedback(1, algoInfo[idx + 1], algoInfo[idx + 2]);
+            idx += 3;
+            break;
+        case MIX:
+            operatorMix_[algoInfo[idx] - 1] = MIX;
+            drawMix(algoInfo[idx++]);
+            break;
         }
     }
 
@@ -1516,24 +1471,23 @@ void TftAlgo::drawAlgoFromTable(const uint8_t *algoInfo) {
     idx = 0;
     while (algoInfo[idx] != END) {
         switch (algoInfo[idx++]) {
-            case OPERATORSYNC:
-            case OPERATOR:
-                x1 = GETX1(algoInfo[idx + 1]);
-                y1 = GETY1(algoInfo[idx + 1]);
-                drawNumber(x1 + 3, y1 + 3, algoInfo[idx]);
-                idx += 2;
-                break;
-            case IM:
-            case IMSYNC:
-            case FEEDBACK:
-                idx += 3;
-                break;
-            case MIX:
-                idx++;
-                break;
+        case OPERATORSYNC:
+        case OPERATOR:
+            x1 = GETX1(algoInfo[idx + 1]);
+            y1 = GETY1(algoInfo[idx + 1]);
+            drawNumber(x1 + 3, y1 + 3, algoInfo[idx]);
+            idx += 2;
+            break;
+        case IM:
+        case IMSYNC:
+        case FEEDBACK:
+            idx += 3;
+            break;
+        case MIX:
+            idx++;
+            break;
         }
     }
-
 }
 
 const uint8_t* TftAlgo::getDigitBits(uint8_t digit) {

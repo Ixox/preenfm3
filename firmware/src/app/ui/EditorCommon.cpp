@@ -20,6 +20,7 @@
 #include "EditorCommon.h"
 #include "SynthState.h"
 
+// clang-format off
 static const struct EditorOneButtonState pfm3ButtonArpeggiator1State = {
     "Arpeggiator",
     {
@@ -138,11 +139,12 @@ static const struct EditorEditMenu pfm3ArpFilterMenu = {
         &pfm3ButtonFx1,
         &pfm3ButtonFx2
     } };
+// clang-format on
 
 EditorCommon::EditorCommon() {
 }
 
-void EditorCommon::init(ScreenEditor *parent, SynthState *synthState, FirmwareTftDisplay *tft) {
+void EditorCommon::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
     parent_ = parent;
     synthState_ = synthState;
     tft_ = tft;
@@ -157,7 +159,7 @@ const char* EditorCommon::getEngineName() const {
 }
 
 const struct EditorEditMenu* EditorCommon::getEngineMenu(int page) const {
-    (void) page;
+    (void)page;
     return nullptr;
 }
 

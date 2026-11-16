@@ -15,23 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 void preenfm3Loop();
 void preenfm3Init();
 
 void preenfm3TftTic();
 void preenfm3_USART();
-void preenfm3_usbDataReceive(uint8_t *buffer);
+void preenfm3_usbDataReceive(uint8_t* buffer);
 void preenfm3StartSai();
 
 float getCompInstrumentVolume(int t);
 float getCompInstrumentGainReduction(int t);
-
 
 #ifdef __cplusplus
 }
