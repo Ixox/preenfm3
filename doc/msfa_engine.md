@@ -852,37 +852,46 @@ initializing voices.
 
 ### 7.2 MSFA patch data
 
-The current preset format stores `OneSynthParams` in a 1024-byte
-`ALIGNED_PATCH_SIZE` slot, with a 4-byte version at
-`ALIGNED_PATCH_SIZE - 5` (`PreenFMFileType.h:144-148`,
-`PatchBank.cpp:86-106` and `PatchBank.cpp:149-161`).
+The preset slot is `ALIGNED_PATCH_SIZE` (1024) bytes. PFM3 presets keep the
+existing layout: `FlashSynthParams` at offset 0 and the version at
+`ALIGNED_PATCH_SIZE - 5` (offset 1019), either `PRESET_VERSION1` or
+`PRESET_VERSION2`.
 
-There is **no magic number at offset 0 today**. Offset 0 is the first field of
-`FlashSynthParams` (`engine1`), and the version is read from
-`ALIGNED_PATCH_SIZE - 5` (offset 1019). `PRESET_VERSION1` is `0` and
-`PRESET_VERSION2` is the random-looking `292928062`, both stored at the end of
-the slot, not at the beginning.
+MSFA presets use the same slot with a different payload:
 
-Store the full 156-byte MSFA program in the preset. PFM3 presets keep the
-existing layout unchanged; only MSFA presets use offset 0 for a type marker:
+- `PRESET_MSFA = 981344537` at `ALIGNED_PATCH_SIZE - 5`;
+- the 156-byte DX7 program at offset 0;
+- the 12-byte preset name at offset 160.
 
-- add `PRESET_VERSION3` to `enum PRESET_VERSION` in `PatchBank.h:24-30`;
-- define a random 32-bit `PRESET_MSFA = 2504912210` (`0x954DED52`) in
-  `PatchBank.h`, using the same idea as `PRESET_VERSION2` so random SD-card
-  data is unlikely to match;
-- for an MSFA preset, write `PRESET_MSFA` at offset 0, followed by the
-  156-byte MSFA program, and `PRESET_VERSION3` at `ALIGNED_PATCH_SIZE - 5`;
-- PFM3 presets keep offset 0 as `engine1` and use `PRESET_VERSION1` or
-  `PRESET_VERSION2` at the end. No `PRESET_PFM3` marker is needed.
+There is **no separate `PRESET_VERSION3`**: `PRESET_MSFA` alone identifies the
+slot. PFM3 presets are still identified by `PRESET_VERSION1`/`PRESET_VERSION2`
+at the same trailing offset, so the two formats are unambiguous.
 
-Update `PatchBank::loadPatch()` (`PatchBank.cpp:86-106`),
-`PatchBank::savePatch()` (`PatchBank.cpp:149-161`) and
-`PatchBank::loadPatchName()` (`PatchBank.cpp:108-147`) to read the version
-first: if it is `PRESET_VERSION3`, read the magic at offset 0 and expect
-`PRESET_MSFA`; otherwise treat the slot as a legacy PFM3 preset.
+`PatchBank::loadPatch()` (`PatchBank.cpp:86`) reads the trailing 32-bit version
+first. If it is `PRESET_MSFA`, it copies the 156-byte program into the caller
+buffer, copies the name into `params->presetName`, sets
+`*engine = SYNTH_ENGINE_MSFA`, and returns. Otherwise it follows the existing
+PFM3 path and sets `*engine = SYNTH_ENGINE_PFM3`.
 
-This makes MSFA presets unambiguous while keeping existing PFM3 banks and the
-PFM3 payload layout unchanged.
+`PatchBank::savePatch()` (`PatchBank.cpp:149`) takes the engine and the
+156-byte program. For MSFA it zeroes the slot, writes the program at offset 0,
+the name at offset 160 and `PRESET_MSFA` at the end. For PFM3 it keeps
+`convertParamsToFlash()` and writes `PRESET_CURRENT_VERSION`.
+
+`PatchBank::loadPatchName()` (`PatchBank.cpp:108`) reads the version first; for
+`PRESET_MSFA` it reads the name at offset 160, falling back to `"MSFA"` if the
+name is empty.
+
+The mixer bank (`MixerBank.cpp`) uses the same per-timbre slot layout:
+`saveMixerData()` writes the MSFA program at offset 0, the name at offset 160
+and `PRESET_MSFA` at the end for MSFA timbres; `loadMixerData()` detects
+`PRESET_MSFA`, restores the program into the timbre's program buffer and the
+name into `presetName`, and falls back to `"MSFA"` when the name is empty.
+PFM3 timbres still use `convertParamsToFlash()`/`convertFlashToParams()`.
+
+Existing PFM3 banks are unchanged. MSFA mixers/presets saved with the earlier
+intermediate layout (program at offset 4) are not compatible and must be
+re-saved.
 
 ### 7.3 MIDI NRPN
 
@@ -927,10 +936,11 @@ added later if required.
    - Engine-aware menu selection in `FMDisplayEditor`.
    - DX7 algorithm/envelope drawing.
 
-7. **Add MSFA preset persistence.**
-   - `PRESET_VERSION3`, random `PRESET_MSFA` magic at offset 0.
-   - Full 156-byte MSFA program in the preset.
-   - Test load/save round trips and legacy PFM3 banks.
+7. **Add MSFA preset persistence.** *(done)*
+   - `PRESET_MSFA` marker at `ALIGNED_PATCH_SIZE - 5` (no `PRESET_VERSION3`).
+   - Full 156-byte MSFA program at offset 0, name at offset 160.
+   - Same slot layout in mixer banks, per timbre.
+   - Load/save round trips and legacy PFM3 banks verified.
 
 8. **Profile and tune.**
    - CPU under worst-case load with 6×MSFA and 16 voices.
@@ -968,10 +978,10 @@ added later if required.
 4. **PFM3 features for MSFA:** do not expose the PFM3 `Matrix` or `Modul`
    pages. Keep the `Arp/Fx` page so the arpeggiator, FX1 and FX2 remain usable
    with MSFA timbres.
-5. **Preset format:** store the full 156-byte MSFA program in the preset and
-   mark MSFA presets with a random 32-bit `PRESET_MSFA = 0x954DED52` at
-   offset 0, using `PRESET_VERSION3`. PFM3 presets keep their existing
-   `PRESET_VERSION1`/`PRESET_VERSION2` layout; no new PFM3 magic is needed.
+5. **Preset format:** store the full 156-byte MSFA program at offset 0 and
+   mark MSFA presets with `PRESET_MSFA = 981344537` at
+   `ALIGNED_PATCH_SIZE - 5`; the name is stored at offset 160. PFM3 presets
+   keep their existing `PRESET_VERSION1`/`PRESET_VERSION2` layout.
 6. **Voice model:** keep the existing 16 global voices and allow MSFA per
    timbre. No separate MSFA voice pool.
 7. **Operator on/off:** support the Dexed operator on/off bitmask.
