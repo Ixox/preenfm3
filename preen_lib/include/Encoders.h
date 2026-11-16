@@ -38,8 +38,6 @@ enum EncoderActionType {
 	ENCODER_BUTTON_CLICKED,
 	ENCODER_TWO_BUTTON_PRESSED,
 	ENCODER_LONG_BUTTON_PRESSED,
-    ENCODER_BUTTON_DOWN,
-    ENCODER_BUTTON_UP,
 };
 
 
@@ -71,13 +69,6 @@ public:
      *  ENCODER_LONG_BUTTON_PRESSED
      */
     void checkStatus(uint8_t encoderType, uint8_t encoderPush);
-    /**
-     * checkStatusUpDown Stacks the following actions :
-     *  ENCODER_TURNED
-     *  ENCODER_BUTTON_DOWN
-     *  ENCODER_BUTTON_UP
-     */
-    void checkStatusUpDown(uint8_t encoderType, uint8_t encoderPush);
     void checkSimpleStatus();
     uint32_t getRegisterBits(uint8_t encoderPush);
     void processActions();
@@ -121,20 +112,7 @@ public:
         }
     }
 
-    void buttonUp(int button) {
-        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
-            listener->buttonUp(button);
-        }
-    }
-
-    void buttonDown(int button) {
-        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
-            listener->buttonDown(button);
-        }
-    }
-
-
-private:
+    private:
     uint8_t action_[2][16];
     uint32_t encoderBit1_[NUMBER_OF_ENCODERS];
     uint32_t encoderBit2_[NUMBER_OF_ENCODERS];

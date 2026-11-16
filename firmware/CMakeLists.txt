@@ -21,7 +21,6 @@ target_include_directories(preenfm3_firmware PRIVATE
     ${FIRMWARE_DIR}/include
     ${FIRMWARE_DIR}/src/app
     ${FIRMWARE_DIR}/src/app/midi
-    ${FIRMWARE_DIR}/src/app/midi_controller
     ${FIRMWARE_DIR}/src/app/storage
     ${FIRMWARE_DIR}/src/app/synth
     ${FIRMWARE_DIR}/src/app/synth/SimpleEffect

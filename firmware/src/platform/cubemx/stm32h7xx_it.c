@@ -55,14 +55,12 @@ extern DMA_HandleTypeDef hdma_spi2_tx;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern uint8_t midiControllerMode;
 extern void tftSpiError(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void preenfm3Tic();
-void preenfm3MidiControllerTic();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -207,17 +205,7 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  switch (midiControllerMode) {
-  case 0:
-      preenfm3Tic();
-      break;
-  case 1:
-      preenfm3MidiControllerTic();
-      break;
-  case 2:
-  // Do nothing
-      break;
-  }
+  preenfm3Tic();
   /* USER CODE END SysTick_IRQn 1 */
 }
 

@@ -235,9 +235,6 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
                 propagateNewPfm3Page();
                 break;
             }
-            case BUTTON_PFM3_SEQUENCER:
-                preenfm3SwitchToMidiController();
-                break;
             case BUTTON_PFM3_MIXER:
                 break;
         }
