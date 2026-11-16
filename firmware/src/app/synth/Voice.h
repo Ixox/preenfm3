@@ -36,6 +36,8 @@
  })
 
 class Timbre;
+struct MsfaVoiceState;
+struct MsfaTimbreState;
 
 class Voice {
     friend class Timbre;
@@ -95,6 +97,14 @@ public:
         this->holdedByPedal = holded;
     }
     void setCurrentTimbre(Timbre *timbre);
+
+    void setMsfaState(MsfaVoiceState *state) {
+        msfaState_ = state;
+    }
+    void msfaNoteOn(const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index, MsfaTimbreState *ts);
+    void msfaNoteOff();
+    void msfaNextBlock(MsfaTimbreState *ts);
+    void msfaUpdateProgram(const uint8_t *program);
 
     Timbre* getCurrentTimbre() {
         return currentTimbre;
@@ -303,6 +313,9 @@ public:
     }
 
     void prepareMatrixForNewBlock() {
+        if (unlikely(currentTimbre != nullptr && currentTimbre->getEngine() == SYNTH_ENGINE_MSFA)) {
+            return;
+        }
 
         // first 3 LFO can be free running
         if (likely(currentTimbre->isLfoUsed(0))) {
@@ -336,8 +349,7 @@ public:
     }
 
     void afterNewParamsLoad() {
-        this->matrix.resetSources();
-        this->matrix.resetAllDestination();
+        resetMatrix();
         for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
             this->lfoOsc[0].valueChanged(j);
             this->lfoOsc[1].valueChanged(j);
@@ -350,6 +362,11 @@ public:
         }
         v0L = v1L = 0.0f;
         v0R = v1R = 0.0f;
+    }
+
+    void resetMatrix() {
+        this->matrix.resetSources();
+        this->matrix.resetAllDestination();
     }
 
     void lfoValueChange(int currentRow, int encoder, float newValue) {
@@ -447,6 +464,7 @@ private:
     float env6ValueMem;
 
     Timbre *currentTimbre;
+    MsfaVoiceState *msfaState_;
 
     // glide phase increment
     static float glidePhaseInc[13];

@@ -19,6 +19,7 @@
 
 #include "Voice.h"
 #include "Timbre.h"
+#include "MsfaEngine.h"
 
 
 float Voice::glidePhaseInc[13];
@@ -389,6 +390,7 @@ Voice::~Voice(void) {
 
 void Voice::init() {
     this->currentTimbre = 0;
+    this->msfaState_ = nullptr;
     this->playing = false;
     this->isFullOfZero = false;
     this->newNotePending = false;
@@ -418,6 +420,9 @@ void Voice::glideToNote(short newNote, float newNoteFrequency) {
 }
 
 void Voice::noteOnWithoutPop(short newNote, float newNoteFrequency, short velocity, uint32_t index, float phase) {
+    if (unlikely(msfaVoiceIsActive(msfaState_))) {
+        msfaVoiceReset(msfaState_);
+    }
     // Update index : so that few chance to be chosen again during the quick dying
     this->index = index;
     // We can glide in mono and unison
@@ -483,6 +488,9 @@ float Voice::getNoteRealFrequencyEstimation(float newNoteFrequency) {
 
 void Voice::noteOn(short newNote, float newNoteFrequency, short velocity, uint32_t index, float phase) {
 
+    if (unlikely(msfaVoiceIsActive(msfaState_))) {
+        msfaVoiceReset(msfaState_);
+    }
 
     // On noteOn we can only glide in mono and unison with glideType ALWAYS
     if (unlikely(currentTimbre->params_.engine1.playMode != PLAY_MODE_POLY
@@ -571,6 +579,11 @@ void Voice::glideFirstNoteOff() {
 
 void Voice::noteOff() {
 
+    if (unlikely(msfaVoiceIsActive(msfaState_))) {
+        msfaNoteOff();
+        return;
+    }
+
     if (unlikely(!this->playing)) {
         return;
     }
@@ -602,6 +615,11 @@ void Voice::noteOff() {
 // Called when loading new preset
 void Voice::noteOffQuick() {
 
+    if (unlikely(msfaVoiceIsActive(msfaState_))) {
+        killNow();
+        return;
+    }
+
     if (unlikely(!this->playing)) {
         return;
     }
@@ -626,6 +644,7 @@ void Voice::noteOffQuick() {
 }
 
 void Voice::killNow() {
+    msfaVoiceReset(msfaState_);
     this->newNotePlayed = false;
     this->playing = false;
     this->newNotePending = false;
@@ -639,6 +658,49 @@ void Voice::killNow() {
     this->env4ValueMem = 0;
     this->env5ValueMem = 0;
     this->env6ValueMem = 0;
+}
+
+void Voice::msfaNoteOn(const uint8_t *program, uint8_t note, uint8_t velocity, uint32_t index, MsfaTimbreState *ts) {
+    killNow();
+
+    this->note = note;
+    this->midiVelocity = velocity;
+    this->index = index;
+    this->playing = true;
+    this->released = false;
+    this->isFullOfZero = false;
+    this->newNotePending = false;
+    this->holdedByPedal = false;
+
+    msfaVoiceStart(msfaState_, program, note, velocity, 1, ts);
+}
+
+void Voice::msfaNoteOff() {
+    if (!msfaVoiceIsActive(msfaState_)) {
+        return;
+    }
+    msfaVoiceKeyUp(msfaState_);
+    this->released = true;
+    this->holdedByPedal = false;
+}
+
+void Voice::msfaNextBlock(MsfaTimbreState *ts) {
+    if (!msfaVoiceIsActive(msfaState_)) {
+        emptyBuffer();
+        return;
+    }
+
+    bool stillPlaying = msfaVoiceRender(msfaState_, ts, sampleBlock);
+    isFullOfZero = false;
+
+    if (!stillPlaying) {
+        this->playing = false;
+        this->released = false;
+    }
+}
+
+void Voice::msfaUpdateProgram(const uint8_t *program) {
+    msfaVoiceUpdateProgram(msfaState_, program);
 }
 
 void Voice::emptyBuffer() {

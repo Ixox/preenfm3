@@ -19,6 +19,7 @@
 #include "fatfs.h"
 #include "Synth.h"
 #include "SynthState.h"
+#include "MsfaEngine.h"
 #include "MidiDecoder.h"
 #include "FMDisplay3.h"
 #include "FMDisplayMixer.h"
@@ -99,11 +100,13 @@ void preenfm3Init() {
     tft.init(&tftAlgo);
     ILI9341_Init();
 
-    dependencyInjection();
-
     // MSFA uses static lookup tables built for the audio sample rate. This
-    // must happen once, before the SAI DMA callbacks start.
+    // must happen once, before the SAI DMA callbacks start, and before the
+    // MSFA voice/timbre state is initialized.
     msfaInit(PREENFM_FREQUENCY);
+    msfaEngineInit();
+
+    dependencyInjection();
 
     fmDisplay3.setRefreshStatus(20);
 

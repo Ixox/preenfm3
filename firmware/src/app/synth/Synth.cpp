@@ -19,6 +19,7 @@
 #include "Synth.h"
 #include "Menu.h"
 #include "Sequencer.h"
+#include "MsfaEngine.h"
 
 extern RNG_HandleTypeDef hrng;
 extern float noise[32];
@@ -57,6 +58,7 @@ void Synth::init(SynthState *synthState) {
     newTimbre(0);
     for (int k = 0; k < MAX_NUMBER_OF_VOICES; k++) {
         voices_[k].init();
+        voices_[k].setMsfaState(msfaGetVoiceState(k));
     }
     rebuidVoiceAllTimbre();
     // Here synthState is already initialized

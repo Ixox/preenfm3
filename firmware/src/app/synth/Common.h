@@ -19,6 +19,7 @@
 #define COMMON_H_
 
 #include <stdint.h>
+#include <string.h>
 
 // #define DEBUG 1
 
@@ -699,8 +700,6 @@ enum DestinationEnum {
     FILTER2_AMP,
     DESTINATION_MAX
 };
-
-int strcmp(const char *s1, const char *s2);
 
 
 
