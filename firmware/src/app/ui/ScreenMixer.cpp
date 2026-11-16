@@ -33,7 +33,8 @@ const char* outDisplay[] = { "1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "
 const char* compDisplay[]= { "Off", "Slow", "Medium", "Fast"};
 const char* engineDisplay[]= {
     SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
-    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_MSFA)
+    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_MSFA),
+    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS)
 };
 const char* enableNames[] = { "Off", "On" };
 const char* levelMeterWhere[] = { "Off", "Mix", "All" };

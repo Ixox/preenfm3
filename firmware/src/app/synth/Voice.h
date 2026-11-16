@@ -26,6 +26,7 @@ class Voice {
     friend class Timbre;
     friend class Preenfm3Engine;
     friend class MsfaSynthEngine;
+    friend class ByosEngine;
 
 public:
     Voice();

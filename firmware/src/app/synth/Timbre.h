@@ -41,6 +41,7 @@ enum {
 class Timbre {
     friend class MsfaSynthEngine;
     friend class Preenfm3Engine;
+    friend class ByosEngine;
 public:
     Timbre();
     virtual ~Timbre();

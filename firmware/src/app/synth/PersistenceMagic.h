@@ -16,7 +16,8 @@
 enum PRESET_VERSION {
     PRESET_VERSION1 = 0,
     PRESET_VERSION2 = 292928062, // random 32 bits number for the first preenfm3
-    PRESET_MSFA = 1297303090     // random 32 bits number for MSFA presets
+    PRESET_MSFA = 1297303090,    // random 32 bits number for MSFA presets
+    PRESET_BYOS = 0x42594F53     // "BYOS"
 };
 
 #define PRESET_CURRENT_VERSION PRESET_VERSION1

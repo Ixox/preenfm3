@@ -13,6 +13,7 @@
 
 Preenfm3Engine SynthEngineFactory::pfm3Engines_[NUMBER_OF_TIMBRES];
 MsfaSynthEngine SynthEngineFactory::msfaEngines_[NUMBER_OF_TIMBRES];
+ByosEngine SynthEngineFactory::byosEngines_[NUMBER_OF_TIMBRES];
 
 namespace {
 struct StorageMagicEntry {
@@ -24,6 +25,7 @@ const StorageMagicEntry storageMagics[] = {
     { PRESET_VERSION1, SYNTH_ENGINE_PFM3 },
     { PRESET_VERSION2, SYNTH_ENGINE_PFM3 },
     { PRESET_MSFA, SYNTH_ENGINE_MSFA },
+    { PRESET_BYOS, SYNTH_ENGINE_BYOS },
 };
 }
 
@@ -54,6 +56,8 @@ const char* SynthEngineFactory::getEngineDisplayName(SynthEngineType type) {
         return "PFM3";
     case SYNTH_ENGINE_MSFA:
         return "MSFA";
+    case SYNTH_ENGINE_BYOS:
+        return "BYOS";
     default:
         return "";
     }
@@ -63,11 +67,15 @@ void SynthEngineFactory::init(Timbre *timbre, SynthState *synthState) {
     int timbreNumber = timbre->getTimbreNumber();
     pfm3Engines_[timbreNumber].init(timbre, synthState);
     msfaEngines_[timbreNumber].init(timbre, synthState);
+    byosEngines_[timbreNumber].init(timbre, synthState);
 }
 
 SynthEngine* SynthEngineFactory::get(SynthEngineType type, int timbreNumber) {
     if (type == SYNTH_ENGINE_MSFA) {
         return static_cast<SynthEngine*>(&msfaEngines_[timbreNumber]);
+    }
+    if (type == SYNTH_ENGINE_BYOS) {
+        return static_cast<SynthEngine*>(&byosEngines_[timbreNumber]);
     }
     return static_cast<SynthEngine*>(&pfm3Engines_[timbreNumber]);
 }
