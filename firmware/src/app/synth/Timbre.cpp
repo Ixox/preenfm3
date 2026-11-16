@@ -428,7 +428,7 @@ int Timbre::allocateVoice(int note) {
     for (int k = 0; k < count; k++) {
         int n = voiceNumber_[k];
         if (likely(voices_[n]->isPlaying())) {
-            if (unlikely(voices_[n]->getNote() == note)) {
+            if (unlikely(voices_[n]->getNote() == note && engineImpl_->reusesSameNoteVoice())) {
                 return n;
             }
             uint32_t index = voices_[n]->getIndex();
@@ -2779,6 +2779,18 @@ void Timbre::resetPfm3PresetToDefault() {
 void Timbre::setPresetNameChar(int index, char c) {
     sharedParams().presetName[index] = c;
     pfm3Preset_.presetName[index] = c;
+}
+
+void Timbre::setPresetName(const char *name) {
+    int length = 0;
+    while (length < 12 && name[length] != 0) {
+        length++;
+    }
+    for (int k = 0; k < 13; k++) {
+        char c = k < length ? name[k] : 0;
+        sharedParams().presetName[k] = c;
+        pfm3Preset_.presetName[k] = c;
+    }
 }
 
 uint32_t Timbre::getStorageMagic() const {

@@ -387,6 +387,11 @@ void SynthState::loadPreset(int timbre, PFM3File const *bank, int patchNumber, s
 }
 
 void SynthState::savePreset(int timbre, PFM3File const *bank, int patchNumber, struct Pfm3Preset* params) {
+    if (params != nullptr) {
+        // The save dialog edits presetName in the Pfm3Preset mirror; keep the
+        // persisted name in sync for every engine.
+        timbres[timbre].setPresetName(params->presetName);
+    }
     storage->getPatchBank()->savePatch(bank, patchNumber, &timbres[timbre]);
 }
 
@@ -404,6 +409,11 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const *bank, int patchNumber,
         timbres[timbre].loadDx7Patch(packed);
         // Keep PFM3 params in sync for display/backward compatibility.
         hexter->loadHexterPatch(packed, params);
+        if (params != nullptr) {
+            // The DX7 program name must also be the persisted name (preset
+            // and mixer storage read the shared params).
+            timbres[timbre].setPresetName(params->presetName);
+        }
     }
 
     propagateAfterNewParamsLoad(timbre);

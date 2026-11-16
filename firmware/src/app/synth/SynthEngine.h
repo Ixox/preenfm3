@@ -126,6 +126,11 @@ public:
     // the new timbre starts (deferred cross-timbre transfer).
     virtual bool supportsDeferredSteal() const { return false; }
 
+    // True if a repeated note may restart the still-playing voice in place
+    // (the engine implements a soft retrigger). When false,
+    // Timbre::allocateVoice() prefers a free voice so the release tail rings on.
+    virtual bool reusesSameNoteVoice() const { return false; }
+
     // Engine-owned parameter CC. Return true when the CC was consumed.
     virtual bool midiControlChange(int timbre, uint8_t cc, uint8_t value) { return false; }
 

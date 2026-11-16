@@ -98,6 +98,9 @@ public:
     bool supportsDeferredSteal() const override {
         return true;
     }
+    bool reusesSameNoteVoice() const override {
+        return true;
+    }
     bool midiControlChange(int timbre, uint8_t cc, uint8_t value) override;
     bool midiNrpn(int timbre, uint16_t param, uint16_t value) override;
     bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage &out) const override;

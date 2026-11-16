@@ -67,6 +67,7 @@ public:
     void handleNullFlatParam(int row);
     void resetPfm3PresetToDefault();
     void setPresetNameChar(int index, char c);
+    void setPresetName(const char *name);
     void engineParamChanged(int paramId, int context, float oldValue, float newValue);
     void serializePfm3Preset(struct Pfm3Preset &out) const;
     void deserializePfm3Preset(const struct Pfm3Preset &in);
