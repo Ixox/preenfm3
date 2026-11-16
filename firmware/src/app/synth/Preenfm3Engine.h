@@ -47,7 +47,7 @@ struct Pfm3TimbreContext {
  */
 class Preenfm3Engine : public SynthEngine {
 public:
-    Preenfm3Engine() : timbre_(nullptr) {}
+    Preenfm3Engine() : timbre_(nullptr), synthState_(nullptr) {}
 
     void init(Timbre *timbre, SynthState *synthState) override;
     void afterNewParamsLoad() override;
@@ -98,6 +98,10 @@ public:
     bool supportsDeferredSteal() const override {
         return true;
     }
+    bool midiControlChange(int timbre, uint8_t cc, uint8_t value) override;
+    bool midiNrpn(int timbre, uint16_t param, uint16_t value) override;
+    bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage &out) const override;
+    bool midiPatchParam(int timbre, int index, struct MidiParamMessage &out) const override;
 
     Osc& osc(int index) {
         return osc_[index];
@@ -138,6 +142,8 @@ private:
     void lfoNoteOn(Voice *voice);
     void lfoNoteOff(Voice *voice);
     void afterParamsLoadVoice(Voice *voice);
+    void setPfm3ValueFromMidi(int row, int encoder, float newValue);
+    void setStepValueFromMidi(int whichStepSeq, int step, int newValue);
     void resetMatrix(Voice *voice);
     void lfoValueChangeOnVoice(Voice *voice, int currentRow, int encoder, float newValue);
     void midiClockSongPositionStepOnVoice(Voice *voice, int songPosition, bool recomputeNext);
@@ -146,6 +152,7 @@ private:
     void renderVoice(Voice *voice);
 
     Timbre *timbre_;
+    SynthState *synthState_;
     Pfm3TimbreContext *context_;
     int timbreNumber_;
     static Pfm3TimbreParams pfm3Params_[NUMBER_OF_TIMBRES];

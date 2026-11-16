@@ -79,6 +79,9 @@ public:
 
     void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay *param, float oldValue, float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
+    void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
+        newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+    }
     void newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton) {
     }
@@ -113,11 +116,8 @@ public:
         return timbres_;
     }
 
-    void setNewValueFromMidi(int timbre, int row, int encoder, float newValue);
     void setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue);
     void setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue);
-    void setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int value);
-    void setNewSymbolInPresetName(int timbre, int index, char newchar);
     void loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber);
     void setHoldPedal(int timbre, int value);
 

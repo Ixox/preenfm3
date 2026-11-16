@@ -22,6 +22,15 @@ class Voice;
 class VoicePool;
 class SynthState;
 
+// One outgoing MIDI representation of an engine parameter change.
+struct MidiParamMessage {
+    bool isNrpn;
+    uint8_t cc;
+    uint8_t ccValue;
+    uint16_t nrpn;
+    uint16_t nrpnValue;
+};
+
 /*
  * Per-timbre sound engine interface.
  *
@@ -98,34 +107,14 @@ public:
     virtual void noteOnMpe(uint8_t channel, uint8_t note, uint8_t velocity) = 0;
     virtual void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) = 0;
 
-    // A parameter changed: refresh cached/derived state if needed
-    // (PFM3 only refreshes on algorithm, pan and filter changes).
-    virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {}
     // Generic engine-owned parameter change (engine-specific paramId).
     virtual void engineParamChanged(int paramId, int context, float oldValue, float newValue) {}
-
-    // Write a flat parameter value into the engine's owner storage.
-    // `index` is the flat index used by the editor/MIDI path (row * 4 + encoder).
-    virtual void setParamValue(int index, float value) {}
-
-    // Engine-specific helpers used by the shared timbre code.
-    virtual bool isUnisonMode() const { return false; }
-    virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) {}
-    // DX7 SysEx import. Only the DX7/MSFA engine implements it.
-    virtual void loadDx7Patch(const uint8_t *packedPatch) {}
 
     // Engine-owned editor/patch memory (nullptr/0 when the engine has none).
     virtual uint8_t* getPatchMemory() { return nullptr; }
 
     // Reload the engine after direct edits to getPatchMemory().
     virtual void patchMemoryChanged() {}
-
-    // Flat Pfm3Preset mirror (PFM3 UI/storage layout). Engines that do not
-    // use the mirror keep the default no-op implementations.
-    virtual void serializePfm3Preset(struct Pfm3Preset &out) const {}
-    virtual void deserializePfm3Preset(const struct Pfm3Preset &in) {}
-    // Does this engine use the shared Pfm3Preset mirror?
-    virtual bool usesPfm3PresetMirror() const { return false; }
 
     // Prepare a voice's FX matrix before rendering (once per block).
     virtual void prepareFxMatrix(Voice *voice) {}
@@ -137,25 +126,21 @@ public:
     // the new timbre starts (deferred cross-timbre transfer).
     virtual bool supportsDeferredSteal() const { return false; }
 
-    // Accept a flat-parameter edit coming from MIDI for `row`.
-    // Rejecting rows also protects the shared Pfm3Preset mirror
-    // (the hidden PFM3 patch).
-    virtual bool acceptsFlatParamFromMidi(int row) const { return true; }
+    // Engine-owned parameter CC. Return true when the CC was consumed.
+    virtual bool midiControlChange(int timbre, uint8_t cc, uint8_t value) { return false; }
 
-    // Does the engine provide the PFM3-style step sequencer?
-    virtual bool supportsStepSequencer() const { return true; }
+    // Engine-owned NRPN. `param` and `value` are the packed 14-bit values.
+    // Return true when the NRPN was consumed.
+    virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) { return false; }
 
-    // An LFO/step parameter changed: forward the new value to the voices.
-    virtual void lfoValueChange(int row, int encoder, float value) {}
+    // Map a generic engine-parameter change to an outgoing CC/NRPN message.
+    // `paramId` and `context` are engine-defined (e.g. MSFA parameter/operator).
+    virtual bool midiParamFeedback(int paramId, int context, float newValue,
+                                   struct MidiParamMessage &out) const { return false; }
 
-    // Recompute the MIDI note curve table (scale 0 or 1) used by matrix sources.
-    virtual void updateMidiNoteScale(int scale) {}
-
-    // Recompute which LFOs the matrix actually uses (CPU optimisation).
-    virtual void verifyLfoUsed(int encoder, float oldValue, float newValue) {}
-
-    // Whether an LFO is used by the matrix (skip its processing when unused).
-    virtual bool isLfoUsed(int lfo) { return false; }
+    // Enumerate the patch as outgoing NRPN messages. `index` starts at 0 and
+    // is advanced by the caller; return false when the patch is exhausted.
+    virtual bool midiPatchParam(int timbre, int index, struct MidiParamMessage &out) const { return false; }
 
     // MIDI clock sync for LFOs, step sequencers and arpeggiators.
     virtual void midiClockContinue(int songPosition) {}
@@ -198,6 +183,60 @@ public:
     // `magic` lets the engine accept its legacy formats.
     // Return false on unknown/invalid data; storage then keeps the current preset.
     virtual bool loadStorageBlob(const uint8_t *in, uint32_t size, uint32_t magic) = 0;
+
+    /*
+     * PFM3 only.
+     *
+     * Flat row/encoder model, the shared Pfm3Preset mirror and PFM3-only
+     * features (unison, step sequencer, note curves, LFO usage). Other engines
+     * leave the defaults untouched.
+     */
+
+    // A PFM3 row/encoder parameter changed.
+    virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {}
+
+    // Write a flat parameter value into the PFM3 owner storage.
+    // `index` is the flat index used by the editor/MIDI path (row * 4 + encoder).
+    virtual void setParamValue(int index, float value) {}
+
+    virtual bool isUnisonMode() const { return false; }
+    virtual bool supportsStepSequencer() const { return true; }
+    virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps &steps) {}
+
+    // Flat Pfm3Preset mirror (PFM3 UI/storage layout).
+    virtual void serializePfm3Preset(struct Pfm3Preset &out) const {}
+    virtual void deserializePfm3Preset(const struct Pfm3Preset &in) {}
+    // Does this engine use the shared Pfm3Preset mirror?
+    virtual bool usesPfm3PresetMirror() const { return false; }
+
+    // Accept a flat-parameter edit coming from MIDI for `row`.
+    // Rejecting rows also protects the shared Pfm3Preset mirror
+    // (the hidden PFM3 patch).
+    virtual bool acceptsFlatParamFromMidi(int row) const { return true; }
+
+    // Map a PFM3 row/encoder change to an outgoing CC/NRPN message.
+    // Return false when the parameter has no MIDI representation.
+    virtual bool midiPfm3ParamFeedback(int row, int encoder, float newValue,
+                                       struct MidiParamMessage &out) const { return false; }
+
+    // An LFO/step parameter changed: forward the new value to the voices.
+    virtual void lfoValueChange(int row, int encoder, float value) {}
+
+    // Recompute the MIDI note curve table (scale 0 or 1) used by matrix sources.
+    virtual void updateMidiNoteScale(int scale) {}
+
+    // Recompute which LFOs the matrix actually uses (CPU optimisation).
+    virtual void verifyLfoUsed(int encoder, float oldValue, float newValue) {}
+
+    // Whether an LFO is used by the matrix (skip its processing when unused).
+    virtual bool isLfoUsed(int lfo) { return false; }
+
+    /*
+     * MSFA only.
+     */
+
+    // DX7 SysEx import (156-byte packed DX7 program).
+    virtual void loadDx7Patch(const uint8_t *packedPatch) {}
 };
 
 #endif

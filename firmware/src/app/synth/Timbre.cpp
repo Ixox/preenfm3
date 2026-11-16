@@ -20,6 +20,7 @@
 #include <string.h>
 #include "Timbre.h"
 #include "SynthState.h"
+#include "MidiControlChange.h"
 #include "SynthEngineFactory.h"
 #include "VoicePool.h"
 #include "Voice.h"
@@ -239,6 +240,7 @@ const float delayBufStereoSizeInv = 1.0f / delayBufStereoSize;
 
 Timbre::Timbre() {
 
+    synthState_ = nullptr;
     engine_ = SYNTH_ENGINE_PFM3;
     engineImpl_ = nullptr;
     maxVoices_ = 0;
@@ -271,6 +273,7 @@ Timbre::~Timbre() {
 void Timbre::init(SynthState *synthState, int timbreNumber) {
 
     mixerState_ = &synthState->mixerState;
+    synthState_ = synthState;
     timbreNumber_ = timbreNumber;
 
     SynthEngineFactory::init(this, synthState);
@@ -2525,6 +2528,176 @@ void Timbre::resetArpeggiator() {
     note_stack_.Clear();
     setArpeggiatorClock(sharedParams().engineArp1.clock);
     setLatchMode(sharedParams().engineArp2.latche);
+}
+
+bool Timbre::decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId &param, float &scaledValue) const {
+    switch (cc) {
+    case CC_FILTER_TYPE:
+        param = SHARED_PARAM_EFFECT1_TYPE;
+        scaledValue = (float) value;
+        return true;
+    case CC_FILTER_PARAM1:
+        param = SHARED_PARAM_EFFECT1_PARAM1;
+        scaledValue = (float) value * INV127;
+        return true;
+    case CC_FILTER_PARAM2:
+        param = SHARED_PARAM_EFFECT1_PARAM2;
+        scaledValue = (float) value * INV127;
+        return true;
+    case CC_FILTER_GAIN:
+        param = SHARED_PARAM_EFFECT1_PARAM3;
+        scaledValue = (float) value * .01f;
+        return true;
+    case CC_FILTER2_TYPE:
+        param = SHARED_PARAM_EFFECT2_TYPE;
+        scaledValue = (float) value;
+        return true;
+    case CC_FILTER2_PARAM1:
+        param = SHARED_PARAM_EFFECT2_PARAM1;
+        scaledValue = (float) value * INV127;
+        return true;
+    case CC_FILTER2_PARAM2:
+        param = SHARED_PARAM_EFFECT2_PARAM2;
+        scaledValue = (float) value * INV127;
+        return true;
+    case CC_FILTER2_MIX:
+        param = SHARED_PARAM_EFFECT2_PARAM3;
+        scaledValue = (float) value * .01f;
+        return true;
+    case CC_ARP_CLOCK:
+        param = SHARED_PARAM_ARP_CLOCK;
+        scaledValue = (float) value;
+        return true;
+    case CC_ARP_DIRECTION:
+        param = SHARED_PARAM_ARP_DIRECTION;
+        scaledValue = (float) value;
+        return true;
+    case CC_ARP_OCTAVE:
+        param = SHARED_PARAM_ARP_OCTAVE;
+        scaledValue = (float) value;
+        return true;
+    case CC_ARP_PATTERN:
+        param = SHARED_PARAM_ARP_PATTERN;
+        scaledValue = (float) value;
+        return true;
+    case CC_ARP_DIVISION:
+        param = SHARED_PARAM_ARP_DIVISION;
+        scaledValue = (float) value;
+        return true;
+    case CC_ARP_DURATION:
+        param = SHARED_PARAM_ARP_DURATION;
+        scaledValue = (float) value;
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool Timbre::midiControlChange(uint8_t cc, uint8_t value) {
+    SharedParamId param;
+    float scaledValue;
+    if (decodeSharedControlChange(cc, value, param, scaledValue)) {
+        int row;
+        int encoder;
+        getSharedParamRowEncoder(param, row, encoder);
+        setFlatParamFromMidi(row, encoder, scaledValue);
+        return true;
+    }
+    return engineImpl_->midiControlChange(timbreNumber_, cc, value);
+}
+
+void Timbre::setFlatParamFromMidi(int row, int encoder, float newValue) {
+    if (!acceptsFlatParamFromMidi(row)) {
+        return;
+    }
+    struct ParameterDisplay *param = &(allParameterRows.row[row]->params[encoder]);
+    int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
+    float oldValue = ((float*) &pfm3Preset_)[index];
+
+    if (newValue > param->maxValue) {
+        // in v2, matrix target were removed so some values are > to max value but we need to accept it
+        bool mustConstraint = true;
+        if (param->valueNameOrder != NULL) {
+            for (int v = 0; v < param->numberOfValues; v++) {
+                if ((int) param->valueNameOrder[v] == (int) (newValue + .01)) {
+                    mustConstraint = false;
+                }
+            }
+        }
+        if (mustConstraint) {
+            newValue = param->maxValue;
+        }
+    } else if (newValue < param->minValue) {
+        newValue = param->minValue;
+    }
+    ((float*) &pfm3Preset_)[index] = newValue;
+
+    if (oldValue != newValue) {
+        synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, row, encoder, param, oldValue, newValue);
+    }
+}
+
+bool Timbre::getSharedParamRowEncoder(SharedParamId param, int &row, int &encoder) const {
+    switch (param) {
+    case SHARED_PARAM_ARP_CLOCK:
+        row = ROW_ARPEGGIATOR1;
+        encoder = ENCODER_ARPEGGIATOR_CLOCK;
+        return true;
+    case SHARED_PARAM_ARP_DIRECTION:
+        row = ROW_ARPEGGIATOR1;
+        encoder = ENCODER_ARPEGGIATOR_DIRECTION;
+        return true;
+    case SHARED_PARAM_ARP_OCTAVE:
+        row = ROW_ARPEGGIATOR1;
+        encoder = ENCODER_ARPEGGIATOR_OCTAVE;
+        return true;
+    case SHARED_PARAM_ARP_PATTERN:
+        row = ROW_ARPEGGIATOR2;
+        encoder = ENCODER_ARPEGGIATOR_PATTERN;
+        return true;
+    case SHARED_PARAM_ARP_DIVISION:
+        row = ROW_ARPEGGIATOR2;
+        encoder = ENCODER_ARPEGGIATOR_DIVISION;
+        return true;
+    case SHARED_PARAM_ARP_DURATION:
+        row = ROW_ARPEGGIATOR2;
+        encoder = ENCODER_ARPEGGIATOR_DURATION;
+        return true;
+    case SHARED_PARAM_EFFECT1_TYPE:
+        row = ROW_EFFECT1;
+        encoder = ENCODER_EFFECT_TYPE;
+        return true;
+    case SHARED_PARAM_EFFECT1_PARAM1:
+        row = ROW_EFFECT1;
+        encoder = ENCODER_EFFECT_PARAM1;
+        return true;
+    case SHARED_PARAM_EFFECT1_PARAM2:
+        row = ROW_EFFECT1;
+        encoder = ENCODER_EFFECT_PARAM2;
+        return true;
+    case SHARED_PARAM_EFFECT1_PARAM3:
+        row = ROW_EFFECT1;
+        encoder = ENCODER_EFFECT_PARAM3;
+        return true;
+    case SHARED_PARAM_EFFECT2_TYPE:
+        row = ROW_EFFECT2;
+        encoder = ENCODER_EFFECT_TYPE;
+        return true;
+    case SHARED_PARAM_EFFECT2_PARAM1:
+        row = ROW_EFFECT2;
+        encoder = ENCODER_EFFECT_PARAM1;
+        return true;
+    case SHARED_PARAM_EFFECT2_PARAM2:
+        row = ROW_EFFECT2;
+        encoder = ENCODER_EFFECT_PARAM2;
+        return true;
+    case SHARED_PARAM_EFFECT2_PARAM3:
+        row = ROW_EFFECT2;
+        encoder = ENCODER_EFFECT_PARAM3;
+        return true;
+    default:
+        return false;
+    }
 }
 
 void Timbre::setParamValue(int index, float oldValue, float newValue) {

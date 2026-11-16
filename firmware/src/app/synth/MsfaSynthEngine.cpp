@@ -10,6 +10,8 @@
 #include <string.h>
 
 #include "MsfaSynthEngine.h"
+#include "SynthState.h"
+#include "MsfaControlChange.h"
 #include "Timbre.h"
 #include "Voice.h"
 #include "Hexter.h"
@@ -22,8 +24,8 @@ uint8_t MsfaSynthEngine::packedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE]
 uint8_t MsfaSynthEngine::program_[NUMBER_OF_TIMBRES][MSFA_PROGRAM_SIZE] __attribute__((section(".ram_d1")));
 
 void MsfaSynthEngine::init(Timbre *timbre, SynthState *synthState) {
-    (void) synthState;
     timbre_ = timbre;
+    synthState_ = synthState;
     timbreNumber_ = timbre->getTimbreNumber();
     msfaState_ = getMsfaTimbreState(timbreNumber_);
 
@@ -62,6 +64,105 @@ void MsfaSynthEngine::engineParamChanged(int paramId, int context, float oldValu
         Voice *voice = timbre_->voices_[timbre_->voiceNumber_[k]];
         msfaVoiceUpdateParam(getMsfaVoiceState(voice->slot()), paramId, context);
     }
+}
+
+bool MsfaSynthEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
+    (void) timbre;
+
+    int paramId;
+    switch (cc) {
+    case CC_MSFA_ALGORITHM:
+        paramId = MSFA_ALGORITHM;
+        break;
+    case CC_MSFA_FEEDBACK:
+        paramId = MSFA_FEEDBACK;
+        break;
+    case CC_MSFA_LFO_SPEED:
+        paramId = MSFA_LFO_SPEED;
+        break;
+    case CC_MSFA_LFO_DELAY:
+        paramId = MSFA_LFO_DELAY;
+        break;
+    case CC_MSFA_LFO_PITCH_MOD_DEPTH:
+        paramId = MSFA_LFO_PITCH_MOD_DEPTH;
+        break;
+    case CC_MSFA_LFO_AMP_MOD_DEPTH:
+        paramId = MSFA_LFO_AMP_MOD_DEPTH;
+        break;
+    case CC_MSFA_LFO_KEY_SYNC:
+        paramId = MSFA_LFO_KEY_SYNC;
+        break;
+    case CC_MSFA_LFO_WAVEFORM:
+        paramId = MSFA_LFO_WAVEFORM;
+        break;
+    case CC_MSFA_LFO_PITCH_MOD_SENSITIVITY:
+        paramId = MSFA_LFO_PITCH_MOD_SENSITIVITY;
+        break;
+    default:
+        return false;
+    }
+
+    const struct MsfaParamDesc *desc = &msfaParams[paramId];
+    int newValue = desc->minValue
+        + (((int) value * (desc->maxValue - desc->minValue)) + 63) / 127;
+    int oldValue = getMsfaParamValue(program_[timbreNumber_], paramId, 0);
+
+    if (newValue != oldValue) {
+        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, paramId, 0, oldValue, newValue);
+    }
+    return true;
+}
+
+bool MsfaSynthEngine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage &out) const {
+    (void) context;
+
+    uint8_t cc;
+    switch (paramId) {
+    case MSFA_ALGORITHM:
+        cc = CC_MSFA_ALGORITHM;
+        break;
+    case MSFA_FEEDBACK:
+        cc = CC_MSFA_FEEDBACK;
+        break;
+    case MSFA_LFO_SPEED:
+        cc = CC_MSFA_LFO_SPEED;
+        break;
+    case MSFA_LFO_DELAY:
+        cc = CC_MSFA_LFO_DELAY;
+        break;
+    case MSFA_LFO_PITCH_MOD_DEPTH:
+        cc = CC_MSFA_LFO_PITCH_MOD_DEPTH;
+        break;
+    case MSFA_LFO_AMP_MOD_DEPTH:
+        cc = CC_MSFA_LFO_AMP_MOD_DEPTH;
+        break;
+    case MSFA_LFO_KEY_SYNC:
+        cc = CC_MSFA_LFO_KEY_SYNC;
+        break;
+    case MSFA_LFO_WAVEFORM:
+        cc = CC_MSFA_LFO_WAVEFORM;
+        break;
+    case MSFA_LFO_PITCH_MOD_SENSITIVITY:
+        cc = CC_MSFA_LFO_PITCH_MOD_SENSITIVITY;
+        break;
+    default:
+        return false;
+    }
+
+    const struct MsfaParamDesc *desc = &msfaParams[paramId];
+    int range = desc->maxValue - desc->minValue;
+    int value = (int) (newValue + .5f);
+    if (value < desc->minValue) {
+        value = desc->minValue;
+    } else if (value > desc->maxValue) {
+        value = desc->maxValue;
+    }
+    int ccValue = range == 0 ? 0 : ((value - desc->minValue) * 127 + range / 2) / range;
+
+    out.isNrpn = false;
+    out.cc = cc;
+    out.ccValue = (uint8_t) ccValue;
+    return true;
 }
 
 void MsfaSynthEngine::afterNewParamsLoad() {

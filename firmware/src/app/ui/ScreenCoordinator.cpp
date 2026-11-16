@@ -167,6 +167,10 @@ void ScreenCoordinator::newEngineParamValue(int timbre, int paramId, int context
     }
 }
 
+void ScreenCoordinator::newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
+    newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+}
+
 void ScreenCoordinator::newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
     // Filter MIXER mode here and filter page in displayMixer
     if (this->synthState_->getSynthMode() == SYNTH_MODE_MIXER) {

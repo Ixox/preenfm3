@@ -525,198 +525,8 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
 
     // Receive CC enabled?
     if (receives & 0x01) {
+        // Global mixer/MPE/sequencer CCs.
         switch (midiEvent.value[0]) {
-        case CC_ALGO:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENGINE, ENCODER_ENGINE_ALGO, (float) midiEvent.value[1]);
-            break;
-        case CC_IM1:
-        case CC_IM2:
-            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION1, ENCODER_ENGINE_IM1 + (midiEvent.value[0] - CC_IM1) * 2,
-                    (float) midiEvent.value[1] * .1f);
-            break;
-        case CC_IM3:
-        case CC_IM4:
-            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION2, ENCODER_ENGINE_IM3 + (midiEvent.value[0] - CC_IM3) * 2,
-                    (float) midiEvent.value[1] * .1f);
-            break;
-        case CC_IM5:
-            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION3, ENCODER_ENGINE_IM5,
-                    (float) midiEvent.value[1] * .1f);
-            break;
-        case CC_IM_FEEDBACK:
-            this->synth->setNewValueFromMidi(timbre, ROW_MODULATION3, ENCODER_ENGINE_IM6,
-                    (float) midiEvent.value[1] * INV127);
-            break;
-        case CC_MIX1:
-        case CC_MIX2:
-            this->synth->setNewValueFromMidi(timbre, ROW_OSC_MIX1, ENCODER_ENGINE_MIX1 + (midiEvent.value[0] - CC_MIX1),
-                    (float) midiEvent.value[1] * .00787401574803149606f);
-            break;
-        case CC_MIX3:
-        case CC_MIX4:
-            this->synth->setNewValueFromMidi(timbre, ROW_OSC_MIX2, ENCODER_ENGINE_MIX3 + (midiEvent.value[0] - CC_MIX3),
-                    (float) midiEvent.value[1] * .00787401574803149606f);
-            break;
-        case CC_PAN1:
-        case CC_PAN2:
-            this->synth->setNewValueFromMidi(timbre, ROW_OSC_MIX1, ENCODER_ENGINE_PAN1 + (midiEvent.value[0] - CC_PAN1),
-                    (float) midiEvent.value[1] * .00787401574803149606f * 2.0f - 1.0f);
-            break;
-        case CC_PAN3:
-        case CC_PAN4:
-            this->synth->setNewValueFromMidi(timbre, ROW_OSC_MIX2, ENCODER_ENGINE_PAN3 + (midiEvent.value[0] - CC_PAN3),
-                    (float) midiEvent.value[1] * .00787401574803149606f * 2.0f - 1.0f);
-            break;
-        case CC_OSC1_FREQ:
-        case CC_OSC2_FREQ:
-        case CC_OSC3_FREQ:
-        case CC_OSC4_FREQ:
-        case CC_OSC5_FREQ:
-        case CC_OSC6_FREQ:
-            this->synth->setNewValueFromMidi(timbre, ROW_OSC1 + midiEvent.value[0] - CC_OSC1_FREQ, ENCODER_OSC_FREQ,
-                    (float) midiEvent.value[1] * .0833333333333333f);
-            break;
-        case CC_MATRIXROW1_MUL:
-        case CC_MATRIXROW2_MUL:
-        case CC_MATRIXROW3_MUL:
-        case CC_MATRIXROW4_MUL:
-            // cc.value[1] = newValue * 5.0f + 50.1f;
-            this->synth->setNewValueFromMidi(timbre, ROW_MATRIX1 + midiEvent.value[0] - CC_MATRIXROW1_MUL, ENCODER_MATRIX_MUL,
-                    (float) midiEvent.value[1] * .2f - 10.0f);
-            break;
-        case CC_LFO1_FREQ:
-        case CC_LFO2_FREQ:
-        case CC_LFO3_FREQ:
-            // cc.value[1] = newValue * 5.0f + .1f;
-            this->synth->setNewValueFromMidi(timbre, ROW_LFOOSC1 + midiEvent.value[0] - CC_LFO1_FREQ, ENCODER_LFO_FREQ,
-                    (float) midiEvent.value[1] * .2f);
-            break;
-        case CC_LFO_ENV2_SILENCE:
-            this->synth->setNewValueFromMidi(timbre, ROW_LFOENV2, ENCODER_LFO_ENV2_SILENCE, (float) midiEvent.value[1] * .125f);
-            break;
-        case CC_STEPSEQ5_GATE:
-        case CC_STEPSEQ6_GATE:
-            // cc.value[1] = newValue * 100.0f + .1f;
-            this->synth->setNewValueFromMidi(timbre, ROW_LFOSEQ1 + midiEvent.value[0] - CC_STEPSEQ5_GATE, ENCODER_STEPSEQ_GATE,
-                    (float) midiEvent.value[1] * .01f);
-            break;
-        case CC_MATRIX_SOURCE_CC1:
-        case CC_MATRIX_SOURCE_CC2:
-        case CC_MATRIX_SOURCE_CC3:
-        case CC_MATRIX_SOURCE_CC4:
-            // cc.value[1] = newValue * 5.0f + 50.1f;
-            this->synth->setNewValueFromMidi(timbre, ROW_PERFORMANCE1, midiEvent.value[0] - CC_MATRIX_SOURCE_CC1,
-                    (float) (midiEvent.value[1] - 64) * INV127 * 2.0);
-            break;
-
-            break;
-        case CC_FILTER_TYPE:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, ENCODER_EFFECT_TYPE, (float) midiEvent.value[1]);
-            break;
-        case CC_FILTER_PARAM1:
-        case CC_FILTER_PARAM2:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
-                    (float) midiEvent.value[1] * INV127);
-            break;
-        case CC_FILTER_GAIN:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT1, midiEvent.value[0] - CC_FILTER_PARAM1 + 1,
-                    (float) midiEvent.value[1] * .01f);
-            break;
-
-        case CC_FILTER2_TYPE:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT2, ENCODER_EFFECT_TYPE, (float) midiEvent.value[1]);
-            break;
-        case CC_FILTER2_PARAM1:
-        case CC_FILTER2_PARAM2:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT2, midiEvent.value[0] - CC_FILTER2_PARAM1 + 1,
-                    (float) midiEvent.value[1] * INV127);
-            break;
-        case CC_FILTER2_MIX:
-            this->synth->setNewValueFromMidi(timbre, ROW_EFFECT2, midiEvent.value[0] - CC_FILTER2_PARAM1 + 1,
-                    (float) midiEvent.value[1] * .01f);
-            break;
-        case CC_ENV_ATK_OP1:
-            // ATK_OP1 is not consecutive to the other ones
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME, ENCODER_ENV_A,
-                    (float) midiEvent.value[1] * .01562500000000000000f);
-            break;
-        case CC_ENV_ATK_OP2:
-        case CC_ENV_ATK_OP3:
-        case CC_ENV_ATK_OP4:
-        case CC_ENV_ATK_OP5:
-        case CC_ENV_ATK_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV2_TIME + (midiEvent.value[0] - CC_ENV_ATK_OP2), ENCODER_ENV_A,
-            		(float) midiEvent.value[1] * .01562500000000000000f);
-            break;
-        case CC_ENV_ATK_ALL_CARRIER:
-        case CC_ENV_ATK_ALL_MODULATOR: {
-            int currentAlgo = (int) this->synthState_->pfm3Preset->engine1.algo;
-            int type = midiEvent.value[0] == CC_ENV_ATK_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
-            for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
-                if (algoOpInformation[currentAlgo][e] == type) {
-                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + e, ENCODER_ENV_A,
-                            (float) midiEvent.value[1] * .01562500000000000000f);
-                }
-            }
-            break;
-        }
-        case CC_ENV_REL_OP1:
-        case CC_ENV_REL_OP2:
-        case CC_ENV_REL_OP3:
-        case CC_ENV_REL_OP4:
-        case CC_ENV_REL_OP5:
-        case CC_ENV_REL_OP6:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + (midiEvent.value[0] - CC_ENV_REL_OP1), ENCODER_ENV_R,
-                    (float) midiEvent.value[1] * .03125000000000000000f);
-            break;
-        case CC_ENV_REL_ALL_MODULATOR:
-        case CC_ENV_REL_ALL_CARRIER: {
-            int currentAlgo = (int) this->synthState_->pfm3Preset->engine1.algo;
-            int type = midiEvent.value[0] == CC_ENV_REL_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
-            for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
-                if (algoOpInformation[currentAlgo][e] == type) {
-                    this->synth->setNewValueFromMidi(timbre, ROW_ENV1_TIME + e, ENCODER_ENV_R,
-                            (float) midiEvent.value[1] * .03125000000000000000f);
-                }
-            }
-            break;
-        }
-        case CC_LFO1_PHASE:
-        case CC_LFO2_PHASE:
-        case CC_LFO3_PHASE:
-            this->synth->setNewValueFromMidi(timbre, ROW_LFOPHASES, ENCODER_LFO_PHASE1 + midiEvent.value[0] - CC_LFO1_PHASE,
-                    (float) midiEvent.value[1] * .01f);
-            break;
-        case CC_LFO1_BIAS:
-        case CC_LFO2_BIAS:
-        case CC_LFO3_BIAS:
-            this->synth->setNewValueFromMidi(timbre, ROW_LFOOSC1 + midiEvent.value[0] - CC_LFO1_BIAS, ENCODER_LFO_BIAS,
-                    (float) midiEvent.value[1] * .01f);
-            break;
-        case CC_LFO1_SHAPE:
-        case CC_LFO2_SHAPE:
-        case CC_LFO3_SHAPE:
-            this->synth->setNewValueFromMidi(timbre, ROW_LFOOSC1 + midiEvent.value[0] - CC_LFO1_SHAPE, ENCODER_LFO_SHAPE,
-                    (float) midiEvent.value[1]);
-            break;
-        case CC_ARP_CLOCK:
-            this->synth->setNewValueFromMidi(timbre, ROW_ARPEGGIATOR1, ENCODER_ARPEGGIATOR_CLOCK, (float) midiEvent.value[1]);
-            break;
-        case CC_ARP_DIRECTION:
-            this->synth->setNewValueFromMidi(timbre, ROW_ARPEGGIATOR1, ENCODER_ARPEGGIATOR_DIRECTION, (float) midiEvent.value[1]);
-            break;
-        case CC_ARP_OCTAVE:
-            this->synth->setNewValueFromMidi(timbre, ROW_ARPEGGIATOR1, ENCODER_ARPEGGIATOR_OCTAVE, (float) midiEvent.value[1]);
-            break;
-        case CC_ARP_PATTERN:
-            this->synth->setNewValueFromMidi(timbre, ROW_ARPEGGIATOR2, ENCODER_ARPEGGIATOR_PATTERN, (float) midiEvent.value[1]);
-            break;
-        case CC_ARP_DIVISION:
-            this->synth->setNewValueFromMidi(timbre, ROW_ARPEGGIATOR2, ENCODER_ARPEGGIATOR_DIVISION, (float) midiEvent.value[1]);
-            break;
-        case CC_ARP_DURATION:
-            this->synth->setNewValueFromMidi(timbre, ROW_ARPEGGIATOR2, ENCODER_ARPEGGIATOR_DURATION, (float) midiEvent.value[1]);
-            break;
         case CC_MIXER_VOLUME:
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_VOLUME, (float) midiEvent.value[1] * INV127);
             break;
@@ -727,18 +537,11 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
             this->synth->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, (float) midiEvent.value[1] * INV127);
             break;
         case CC_MPE_SLIDE_CC74:
-        	// No CC74 on global midi channel
-        	if (!(this->synthState_->mixerState.MPE_inst1_ > 0) || timbre != 0) {
-        		this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
-        	}
+            // No CC74 on global midi channel
+            if (!(this->synthState_->mixerState.MPE_inst1_ > 0) || timbre != 0) {
+                this->synth->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+            }
             break;
-        case CC_UNISON_DETUNE:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_DETUNE,
-                    ((float)midiEvent.value[1]) * INV64 - 1.0f);
-            break;
-        case CC_UNISON_SPREAD:
-            this->synth->setNewValueFromMidi(timbre, ROW_ENGINE2, ENCODER_ENGINE2_UNISON_SPREAD,
-                    (float)midiEvent.value[1] * INV127);
         case CC_SEQ_START_ALL:
             this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_ALL, midiEvent.value[1]);
             break;
@@ -754,8 +557,12 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_SEQ_SET_SEQUENCE:
             this->synth->setNewSeqValueFromMidi(timbre, SEQ_VALUE_SEQUENCE_NUMBER, midiEvent.value[1]);
             break;
-
+        default:
+            break;
         }
+
+        // Engine-owned parameter CCs.
+        this->synth->getTimbre(timbre)->midiControlChange(midiEvent.value[0], midiEvent.value[1]);
     }
 
     // Do we accept NRPN in the menu
@@ -799,18 +606,27 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         }
 
         if (this->currentNrpn[timbre].readyToSend) {
-            decodeNrpn(timbre);
+            uint16_t param = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
+            uint16_t value = (this->currentNrpn[timbre].valueMSB << 7) + this->currentNrpn[timbre].valueLSB;
             this->currentNrpn[timbre].readyToSend = false;
+
+            if (param == (127 << 7) + 127) {
+                AsyncAction asyncAction;
+                asyncAction.fullBytes = 0l;
+                asyncAction.action.actionType = SEND_PATCH_AS_NRPN;
+                asyncAction.action.timbre = timbre;
+                asyncActions.insert(asyncAction);
+            } else {
+                this->synth->getTimbre(timbre)->midiNrpn(param, value);
+            }
         }
     }
 }
 
 void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     struct MidiEvent cc;
-
-    Pfm3Preset * paramsToSend = this->synth->getTimbre(timbre)->getPfm3Preset();
-
     cc.eventType = MIDI_CONTROL_CHANGE;
+
     // Si channel = ALL envoie sur 1
     int channel = this->synthState_->mixerState.instrumentState_[timbre].midiChannel - 1;
     if (channel == -1) {
@@ -818,20 +634,27 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     }
     cc.channel = channel;
 
-    // Send the title
-    for (int k = 0; k < 12; k++) {
-        int valueToSend = paramsToSend->presetName[k];
+    int index = 0;
+    struct MidiParamMessage message;
+    while (this->synth->getTimbre(timbre)->midiPatchParam(timbre, index, message)) {
+        index++;
+
+        if (!message.isNrpn) {
+            continue;
+        }
+
+        // NRPN is 4 control change
         cc.value[0] = 99;
-        cc.value[1] = 1;
+        cc.value[1] = (unsigned char) (message.nrpn >> 7);
         writeMidiCCOut(&cc);
         cc.value[0] = 98;
-        cc.value[1] = 100 + k;
+        cc.value[1] = (unsigned char) (message.nrpn & 0x7F);
         writeMidiCCOut(&cc);
         cc.value[0] = 6;
-        cc.value[1] = (unsigned char) (valueToSend >> 7);
+        cc.value[1] = (unsigned char) (message.nrpnValue >> 7);
         writeMidiCCOut(&cc);
         cc.value[0] = 38;
-        cc.value[1] = (unsigned char) (valueToSend & 0x7f);
+        cc.value[1] = (unsigned char) (message.nrpnValue & 0x7F);
         writeMidiCCOut(&cc);
 
         sendMidiDin5Out();
@@ -841,112 +664,8 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
         }
     }
 
-    // flush all parameters
-    for (int currentrow = 0; currentrow < NUMBER_OF_ROWS_FOR_EDITOR; currentrow++) {
-        for (int encoder = 0; encoder < NUMBER_OF_ENCODERS_PFM2; encoder++) {
-            struct ParameterDisplay* param = &allParameterRows.row[currentrow]->params[encoder];
-            int memoryIndex = currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder;
-            float floatValue = ((float*) paramsToSend)[memoryIndex];
-
-            int valueToSend;
-
-            if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY
-                    || param->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || param->displayType == DISPLAY_TYPE_LFO_KSYN) {
-                valueToSend = (floatValue - param->minValue) * 100.0f + .1f;
-            } else {
-                valueToSend = floatValue + .1f;
-            }
-            // MSB / LSB
-            int midiIndex = getMidiIndexFromMemory(memoryIndex);
-            // Value to send must be positive
-
-            // NRPN is 4 control change
-            cc.value[0] = 99;
-            cc.value[1] = (unsigned char) (midiIndex >> 7);
-            writeMidiCCOut(&cc);
-            cc.value[0] = 98;
-            cc.value[1] = (unsigned char) (midiIndex & 0x7F);
-            writeMidiCCOut(&cc);
-            cc.value[0] = 6;
-            cc.value[1] = (unsigned char) (valueToSend >> 7);
-            writeMidiCCOut(&cc);
-            cc.value[0] = 38;
-            cc.value[1] = (unsigned char) (valueToSend & 0x7F);
-            writeMidiCCOut(&cc);
-
-            sendMidiDin5Out();
-            sendMidiUsbOutIfBufferFull();
-            // Wait for midi (USART) to be all sent
-            while (usartBufferOut.getCount() > 0) {
-            }
-        }
-    }
-
-    // Step Seq
-    for (int whichStepSeq = 0; whichStepSeq < 2; whichStepSeq++) {
-        for (int step = 0; step < 16; step++) {
-            cc.value[0] = 99;
-            cc.value[1] = whichStepSeq + 2;
-            writeMidiCCOut(&cc);
-            cc.value[0] = 98;
-            cc.value[1] = step;
-            writeMidiCCOut(&cc);
-            cc.value[0] = 6;
-            cc.value[1] = 0;
-            writeMidiCCOut(&cc);
-            cc.value[0] = 38;
-            StepSequencerSteps * seqSteps = &((StepSequencerSteps *) (&paramsToSend->lfoSteps1))[whichStepSeq];
-            cc.value[1] = seqSteps->steps[step];
-            writeMidiCCOut(&cc);
-
-            sendMidiDin5Out();
-            sendMidiUsbOutIfBufferFull();
-            // Wait for midi (USART) to be all sent
-            while (usartBufferOut.getCount() > 0) {
-            }
-        }
-    }
-
     // send Usb Anyway
     sendMidiUsbOut();
-}
-
-void MidiDecoder::decodeNrpn(int timbre) {
-    if (this->currentNrpn[timbre].paramMSB < 2) {
-        float value = (this->currentNrpn[timbre].valueMSB << 7) + this->currentNrpn[timbre].valueLSB;
-        int index = (this->currentNrpn[timbre].paramMSB << 7) + this->currentNrpn[timbre].paramLSB;
-        int memoryIndex = getMemoryIndexFromMidi(index);
-        int row = memoryIndex >> 2;
-        int encoder = memoryIndex % 4;
-
-        struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
-
-        if (row < NUMBER_OF_ROWS_FOR_EDITOR) {
-            if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY
-                    || param->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || param->displayType == DISPLAY_TYPE_LFO_KSYN) {
-                value = value * .01f + param->minValue;
-            }
-
-            this->synth->setNewValueFromMidi(timbre, row, encoder, value);
-        } else if (index >= 228 && index < 240) {
-            this->synth->setNewSymbolInPresetName(timbre, index - 228, (char)value);
-            if (index == 239) {
-                this->synthState_->propagateNewPresetName(timbre);
-            }
-        }
-    } else if (this->currentNrpn[timbre].paramMSB < 4) {
-        unsigned int whichStepSeq = this->currentNrpn[timbre].paramMSB - 2;
-        unsigned int step = this->currentNrpn[timbre].paramLSB;
-        unsigned int value = this->currentNrpn[timbre].valueLSB;
-
-        this->synth->setNewStepValueFromMidi(timbre, whichStepSeq, step, value);
-    } else if (this->currentNrpn[timbre].paramMSB == 127 && this->currentNrpn[timbre].paramLSB == 127) {
-        AsyncAction asyncAction;
-        asyncAction.fullBytes = 0l;
-        asyncAction.action.actionType = SEND_PATCH_AS_NRPN;
-        asyncAction.action.timbre = timbre;
-        asyncActions.insert(asyncAction);
-    }
 }
 
 void MidiDecoder::newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue,
@@ -959,8 +678,21 @@ void MidiDecoder::newMixerValueFromExternal(int timbre, int mixerValueType, floa
 }
 
 void MidiDecoder::newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
-    int sendCCOrNRPN = this->synthState_->fullState.midiConfigValue[MIDICONFIG_SENDS];
-    int channel = this->synthState_->mixerState.instrumentState_[timbre].midiChannel -1;
+    struct MidiParamMessage message;
+    if (this->synth->getTimbre(timbre)->midiPfm3ParamFeedback(currentrow, encoder, newValue, message)) {
+        sendMidiParamFeedback(timbre, message);
+    }
+}
+
+void MidiDecoder::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    struct MidiParamMessage message;
+    if (this->synth->getTimbre(timbre)->midiParamFeedback(paramId, context, newValue, message)) {
+        sendMidiParamFeedback(timbre, message);
+    }
+}
+
+void MidiDecoder::sendMidiParamFeedback(int timbre, const struct MidiParamMessage &message) {
+    int channel = this->synthState_->mixerState.instrumentState_[timbre].midiChannel - 1;
 
     struct MidiEvent cc;
     cc.eventType = MIDI_CONTROL_CHANGE;
@@ -970,249 +702,32 @@ void MidiDecoder::newPfm3ParamValue(int timbre, int currentrow, int encoder, Par
     }
     cc.channel = channel;
 
-    // Do we send NRPN ?
-    if (sendCCOrNRPN == 2) {
-        // Special case for Step sequencer
-        if ((currentrow == ROW_LFOSEQ1 || currentrow == ROW_LFOSEQ2) && encoder >= 2) {
-            if (encoder == 2) {
-                return;
-            }
-            if (encoder == 3) {
-                // We modify a step value, we want to send that
-                int currentStepSeq = currentrow - ROW_LFOSEQ1;
-                // NRPN is 4 control change
-                cc.value[0] = 99;
-                cc.value[1] = currentStepSeq + 2;
-                writeMidiCCOut(&cc);
-                cc.value[0] = 98;
-                cc.value[1] = this->synthState_->stepSelect[currentStepSeq];
-                writeMidiCCOut(&cc);
-                cc.value[0] = 6;
-                cc.value[1] = 0;
-                writeMidiCCOut(&cc);
-                cc.value[0] = 38;
-                cc.value[1] = (unsigned char) newValue;
-                writeMidiCCOut(&cc);
+    if (message.isNrpn) {
+        // NRPN is 4 control change
+        cc.value[0] = 99;
+        cc.value[1] = (unsigned char) (message.nrpn >> 7);
+        writeMidiCCOut(&cc);
+        cc.value[0] = 98;
+        cc.value[1] = (unsigned char) (message.nrpn & 0x7F);
+        writeMidiCCOut(&cc);
+        cc.value[0] = 6;
+        cc.value[1] = (unsigned char) (message.nrpnValue >> 7);
+        writeMidiCCOut(&cc);
+        cc.value[0] = 38;
+        cc.value[1] = (unsigned char) (message.nrpnValue & 0x7F);
+        writeMidiCCOut(&cc);
 
-                sendMidiDin5Out();
-                sendMidiUsbOut();
-            }
-        } else {
-            int valueToSend;
+        sendMidiDin5Out();
+        sendMidiUsbOut();
+    } else {
+        cc.value[0] = message.cc;
+        cc.value[1] = message.ccValue;
 
-            if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY
-                    || param->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || param->displayType == DISPLAY_TYPE_LFO_KSYN) {
-                valueToSend = (newValue - param->minValue) * 100.0f + .1f;
-            } else {
-                valueToSend = newValue + .1f;
-            }
-            // MSB / LSB
-            int midiIndex = getMidiIndexFromMemory(currentrow * NUMBER_OF_ENCODERS_PFM2 + encoder);
-
-            // NRPN is 4 control change
-            cc.value[0] = 99;
-            cc.value[1] = (unsigned char) (midiIndex >> 7);
+        if (lastSentCC.value[1] != cc.value[1] || lastSentCC.value[0] != cc.value[0] || lastSentCC.channel != cc.channel) {
             writeMidiCCOut(&cc);
-            cc.value[0] = 98;
-            cc.value[1] = (unsigned char) (midiIndex & 0x7F);
-            writeMidiCCOut(&cc);
-            cc.value[0] = 6;
-            cc.value[1] = (unsigned char) (valueToSend >> 7);
-            writeMidiCCOut(&cc);
-            cc.value[0] = 38;
-            cc.value[1] = (unsigned char) (valueToSend & 0x7F);
-            writeMidiCCOut(&cc);
-
             sendMidiDin5Out();
             sendMidiUsbOut();
-        }
-    }
-
-    // Do we send control change
-    if (sendCCOrNRPN == 1) {
-        cc.value[0] = 0;
-
-        switch (currentrow) {
-        case ROW_ENGINE:
-            if (encoder == ENCODER_ENGINE_ALGO) {
-                cc.value[1] = newValue;
-                cc.value[0] = CC_ALGO;
-            }
-            break;
-        case ROW_MODULATION1:
-            if ((encoder & 0x1) == 0) {
-                cc.value[1] = newValue * 10 + .001f;
-                cc.value[0] = CC_IM1 + (encoder >> 1);
-            }
-            break;
-        case ROW_MODULATION2:
-            if ((encoder & 0x1) == 0) {
-                cc.value[1] = newValue * 10 + .001f;
-                cc.value[0] = CC_IM3 + encoder;
-            }
-            break;
-        case ROW_MODULATION3:
-            if ((encoder & 0x1) == 0) {
-                cc.value[1] = newValue * 10 + .001f;
-                cc.value[0] = CC_IM5 + encoder;
-            }
-            break;
-        case ROW_OSC_MIX1:
-            cc.value[0] = CC_MIX1 + encoder;
-            if ((encoder & 0x1) == 0) {
-                // mix
-                cc.value[1] = newValue * 100.0f + .1f;
-            } else {
-                cc.value[1] = (newValue + 1.0f) * 50.0f + .1f;
-            }
-            break;
-        case ROW_OSC_MIX2:
-            cc.value[0] = CC_MIX3 + encoder;
-            if ((encoder & 0x1) == 0) {
-                // mix
-                cc.value[1] = newValue * 100.0f + .1f;
-            } else {
-                cc.value[1] = (newValue + 1.0f) * 50.0f + .1f;
-            }
-            break;
-        case ROW_OSC_FIRST ... ROW_OSC_LAST:
-            if (encoder == ENCODER_OSC_FREQ) {
-                cc.value[0] = CC_OSC1_FREQ + (currentrow - ROW_OSC_FIRST);
-                cc.value[1] = newValue * 12.0f + .1f;
-            }
-            break;
-        case ROW_MATRIX_FIRST ... ROW_MATRIX4:
-            if (encoder == ENCODER_MATRIX_MUL) {
-                cc.value[0] = CC_MATRIXROW1_MUL + currentrow - ROW_MATRIX_FIRST;
-                cc.value[1] = newValue * 5.0f + 50.1f;
-            }
-            break;
-        case ROW_LFO_FIRST ... ROW_LFOOSC3:
-            switch (encoder) {
-            case ENCODER_LFO_SHAPE:
-                cc.value[0] = CC_LFO1_SHAPE + (currentrow - ROW_LFO_FIRST);
-                cc.value[1] = newValue + .1f;
-                break;
-            case ENCODER_LFO_FREQ:
-                cc.value[0] = CC_LFO1_FREQ + (currentrow - ROW_LFO_FIRST);
-                cc.value[1] = newValue * 5.0f + .1f;
-                break;
-            case ENCODER_LFO_BIAS:
-                cc.value[0] = CC_LFO1_BIAS + (currentrow - ROW_LFO_FIRST);
-                cc.value[1] = newValue * 100.0f + .1f;
-                break;
-            }
-            break;
-        case ROW_LFOENV2:
-            if (encoder == ENCODER_LFO_ENV2_SILENCE) {
-                cc.value[0] = CC_LFO_ENV2_SILENCE;
-                cc.value[1] = newValue * 8.0f + .1f;
-            }
-            break;
-        case ROW_LFOSEQ1 ... ROW_LFOSEQ2:
-            if (encoder == ENCODER_STEPSEQ_GATE) {
-                cc.value[0] = CC_STEPSEQ5_GATE + (currentrow - ROW_LFOSEQ1);
-                cc.value[1] = newValue * 100.0f + .1f;
-            }
-            break;
-        case ROW_EFFECT1:
-            if (encoder == ENCODER_EFFECT_TYPE) {
-                cc.value[0] = CC_FILTER_TYPE;
-                cc.value[1] = newValue + .1f;
-            } else {
-                cc.value[0] = CC_FILTER_PARAM1 + encoder - 1;
-                if (encoder == ENCODER_EFFECT_PARAM3) {
-                    cc.value[1] = newValue * 100.0f + .1f;
-                } else {
-                    cc.value[1] = newValue * 128.0f + .1f;
-                }
-            }
-            break;
-        case ROW_EFFECT2:
-            if (encoder == ENCODER_EFFECT_TYPE) {
-                cc.value[0] = CC_FILTER2_TYPE;
-                cc.value[1] = newValue + .1f;
-            } else {
-                cc.value[0] = CC_FILTER2_PARAM1 + encoder - 1;
-                if (encoder == ENCODER_EFFECT_PARAM3) {
-                    cc.value[1] = newValue * 100.0f + .1f;
-                } else {
-                    cc.value[1] = newValue * 128.0f + .1f;
-                }
-            }
-            break;
-        case ROW_ENV1_TIME:
-            if (encoder == ENCODER_ENV_A) {
-                // CC_ENV_ATK_OP1 is separate from the rest
-                cc.value[0] = CC_ENV_ATK_OP1;
-                cc.value[1] = newValue * 64.0f + .1f;
-            } else  if (encoder == ENCODER_ENV_R) {
-                cc.value[0] = CC_ENV_REL_OP1;
-                cc.value[1] = newValue * 32.0f + .1f;
-            }
-            break;
-        case ROW_ENV2_TIME:
-        case ROW_ENV3_TIME:
-        case ROW_ENV4_TIME:
-        case ROW_ENV5_TIME:
-        case ROW_ENV6_TIME:
-            if (encoder == ENCODER_ENV_A) {
-                cc.value[0] = CC_ENV_ATK_OP2 + (currentrow - ROW_ENV2_TIME);
-                cc.value[1] = newValue * 64.0f + .1f;
-            } else  if (encoder == ENCODER_ENV_R) {
-                cc.value[0] = CC_ENV_REL_OP2 + (currentrow - ROW_ENV2_TIME);
-                cc.value[1] = newValue * 32.0f + .1f;
-            }
-            break;
-        case ROW_LFOPHASES:
-            cc.value[0] = CC_LFO1_PHASE + encoder;
-            cc.value[1] = newValue * 100.0f + .1f;
-            break;
-        case ROW_ARPEGGIATOR1:
-            switch (encoder) {
-            case ENCODER_ARPEGGIATOR_CLOCK:
-                cc.value[0] = CC_ARP_CLOCK;
-                cc.value[1] = newValue + .1f;
-                break;
-            case ENCODER_ARPEGGIATOR_DIRECTION:
-                cc.value[0] = CC_ARP_DIRECTION;
-                cc.value[1] = newValue + .1f;
-                break;
-            case ENCODER_ARPEGGIATOR_OCTAVE:
-                cc.value[0] = CC_ARP_OCTAVE;
-                cc.value[1] = newValue + .1f;
-                break;
-            }
-            break;
-        case ROW_ARPEGGIATOR2:
-            switch (encoder) {
-            case ENCODER_ARPEGGIATOR_PATTERN:
-                cc.value[0] = CC_ARP_PATTERN;
-                cc.value[1] = newValue + .1f;
-                break;
-            case ENCODER_ARPEGGIATOR_DIVISION:
-                cc.value[0] = CC_ARP_DIVISION;
-                cc.value[1] = newValue + .1f;
-                break;
-            case ENCODER_ARPEGGIATOR_DURATION:
-                cc.value[0] = CC_ARP_DURATION;
-                cc.value[1] = newValue + .1f;
-                break;
-            }
-        }
-
-        if (cc.value[0] != 0) {
-            // CC limited to 127
-            if (cc.value[1] > 127) {
-                cc.value[1] = 127;
-            }
-
-            if (lastSentCC.value[1] != cc.value[1] || lastSentCC.value[0] != cc.value[0] || lastSentCC.channel != cc.channel) {
-                writeMidiCCOut(&cc);
-                sendMidiDin5Out();
-                sendMidiUsbOut();
-                lastSentCC = cc;
-            }
+            lastSentCC = cc;
         }
     }
 }
@@ -1260,87 +775,6 @@ void MidiDecoder::sendMidiUsbOut() {
 /*
  * Allow to conserve same MIDI nrpn even when order are changed
  */
-int MidiDecoder::getMidiIndexFromMemory(int index) {
-    int paramRow = index >> 2;
-    int encoder = index % 4;
-
-    switch (paramRow) {
-    case ROW_LFOPHASES:
-        // Move after ROW_LFOSEQ2
-        paramRow += 4;
-        break;
-    case ROW_LFOENV1:
-    case ROW_LFOENV2:
-    case ROW_LFOSEQ1:
-    case ROW_LFOSEQ2:
-        // Move before ROW_LFOPHASE
-        paramRow -= 1;
-        break;
-    // TIME and LEVEL have been grouped in december 2022
-    case ROW_ENV1_TIME:
-    case ROW_ENV2_TIME:
-    case ROW_ENV3_TIME:
-    case ROW_ENV4_TIME:
-    case ROW_ENV5_TIME:
-    case ROW_ENV6_TIME:
-        paramRow = ROW_ENV1_TIME + (paramRow - ROW_ENV1_TIME) * 2;
-        encoder *= 2;
-        break;
-    case ROW_ENV1_LEVEL:
-    case ROW_ENV2_LEVEL:
-    case ROW_ENV3_LEVEL:
-    case ROW_ENV4_LEVEL:
-    case ROW_ENV5_LEVEL:
-    case ROW_ENV6_LEVEL:
-        paramRow = ROW_ENV1_TIME + (paramRow - ROW_ENV1_LEVEL) * 2;
-        encoder = encoder * 2 + 1;
-        break;
-    }
-
-    return paramRow  * NUMBER_OF_ENCODERS_PFM2 + encoder;
-}
-
-int MidiDecoder::getMemoryIndexFromMidi(int index) {
-    int row = index >> 2;
-    int encoder = index % 4;
-    // Move back row
-    switch (row) {
-    case ROW_LFOPHASES + 4:
-        row = ROW_LFOPHASES;
-        break;
-    case ROW_LFOENV1 - 1:
-    case ROW_LFOENV2 - 1:
-    case ROW_LFOSEQ1 - 1:
-    case ROW_LFOSEQ2 - 1:
-        row++;
-        break;
-    case ROW_ENV1_TIME:
-    case ROW_ENV2_TIME:
-    case ROW_ENV3_TIME:
-    case ROW_ENV4_TIME:
-    case ROW_ENV5_TIME:
-    case ROW_ENV6_TIME:
-    case ROW_ENV1_LEVEL:
-    case ROW_ENV2_LEVEL:
-    case ROW_ENV3_LEVEL:
-    case ROW_ENV4_LEVEL:
-    case ROW_ENV5_LEVEL:
-    case ROW_ENV6_LEVEL: {
-        bool isLevel = encoder & 0x1;
-        if (isLevel)
-            encoder --;
-        // num is the number of the value.. More than 4 => next operator
-        int num = (row - ROW_ENV1_TIME) * 2  + (encoder >> 1);
-        // Convert to new row/encoder
-        row = (isLevel ? ROW_ENV1_LEVEL : ROW_ENV1_TIME) + (num >> 2);
-        encoder = num % 4;
-        break;
-    }
-    }
-    return row * 4 + encoder;
-}
-
-
 uint8_t MidiDecoder::analyseSysexBuffer(uint8_t *sysexBuffer, uint16_t size) {
     if (sysexBuffer[0] == 0x7d) {
         switch (sysexBuffer[1]) {

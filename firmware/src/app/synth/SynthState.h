@@ -485,6 +485,12 @@ public:
         }
     }
 
+    void propagateNewEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
+        for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
+            listener->newEngineParamValueFromExternal(timbre, paramId, context, oldValue, newValue);
+        }
+    }
+
     void propagateNewMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
         for (SynthParamListener* listener = firstParamListener; listener != 0; listener = listener->nextListener) {
             listener->newMixerValue(valueType, timbre, oldValue, newValue);

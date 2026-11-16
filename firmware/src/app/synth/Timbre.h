@@ -25,6 +25,7 @@
 #include "note_stack.h"
 #include "event_scheduler.h"
 #include "Pfm3Preset.h"
+#include "SharedParams.h"
 
 extern float panTable[];
 class Voice;
@@ -57,6 +58,9 @@ public:
     // PFM3 implementations called by Preenfm3Engine.
     void afterNewParamsLoad();
     void setParamValue(int index, float oldValue, float newValue);
+    void setFlatParamFromMidi(int row, int encoder, float newValue);
+    bool getSharedParamRowEncoder(SharedParamId param, int &row, int &encoder) const;
+    bool decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId &param, float &scaledValue) const;
     void syncArpUserPatterns();
     void setStepSequencerSteps(int whichStepSeq);
     void handleNullFlatParam(int row);
@@ -111,6 +115,24 @@ public:
 
     bool supportsStepSequencer() const {
         return engineImpl_->supportsStepSequencer();
+    }
+
+    bool midiControlChange(uint8_t cc, uint8_t value);
+
+    bool midiNrpn(uint16_t param, uint16_t value) {
+        return engineImpl_->midiNrpn(timbreNumber_, param, value);
+    }
+
+    bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage &out) const {
+        return engineImpl_->midiPfm3ParamFeedback(row, encoder, newValue, out);
+    }
+
+    bool midiPatchParam(int timbre, int index, struct MidiParamMessage &out) const {
+        return engineImpl_->midiPatchParam(timbre, index, out);
+    }
+
+    bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage &out) const {
+        return engineImpl_->midiParamFeedback(paramId, context, newValue, out);
     }
 
     void loadDx7Patch(const uint8_t *packedPatch) {
@@ -391,6 +413,7 @@ private:
     // Note-to-frequency scale (MTS) table for this instrument. Engines need
     // it to start notes, so it is the only MixerState they read.
     struct MixerState *mixerState_;
+    SynthState *synthState_;
     float sampleBlock_[BLOCK_SIZE * 2];
     float *sbMax_;
     float numberOfVoiceInverse_;

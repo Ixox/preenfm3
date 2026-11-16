@@ -69,9 +69,6 @@ public:
     virtual void preparePage() {}
     // Print the value of encoder `encoder`.
     virtual void displayParamValue(int encoder, TFT_COLOR color) = 0;
-    // A flat parameter changed (editor/MIDI path); update UI feedback.
-    virtual void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
-        ParameterDisplay *param, float oldValue, float newValue) {}
     // An engine-specific parameter changed (MSFA paramId); update UI feedback.
     virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {}
     // Tempo clock tick: refresh time-synced value feedback.
@@ -88,6 +85,10 @@ public:
     virtual void refreshOscilloBG() = 0;
     // Called when the UI switches to another timbre.
     virtual void newTimbre() {}
+
+    // PFM3 only: a flat parameter changed (editor/MIDI path); update UI feedback.
+    virtual void newPfm3ParamValue(int &refreshStatus, int timbre, int currentRow, int encoder,
+        ParameterDisplay *param, float oldValue, float newValue) {}
 
     // Linked list of registered editors (owned by ScreenEditor).
     EditorEngine *nextEditor = nullptr;

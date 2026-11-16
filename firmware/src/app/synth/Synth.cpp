@@ -659,37 +659,6 @@ void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patc
     this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, timbres_[timbre].getPfm3Preset());
 }
 
-void Synth::setNewValueFromMidi(int timbre, int row, int encoder, float newValue) {
-    if (!this->timbres_[timbre].acceptsFlatParamFromMidi(row)) {
-        return;
-    }
-    struct ParameterDisplay *param = &(allParameterRows.row[row]->params[encoder]);
-    int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
-    float oldValue = ((float*) this->timbres_[timbre].getPfm3Preset())[index];
-
-    if (newValue > param->maxValue) {
-        // in v2, matrix target were removed so some values are > to max value but we need to accept it
-        bool mustConstraint = true;
-        if (param->valueNameOrder != NULL) {
-            for (int v = 0; v < param->numberOfValues; v++) {
-                if ((int) param->valueNameOrder[v] == (int) (newValue + .01)) {
-                    mustConstraint = false;
-                }
-            }
-        }
-        if (mustConstraint) {
-            newValue = param->maxValue;
-        }
-    } else if (newValue < param->minValue) {
-        newValue = param->minValue;
-    }
-    ((float*) this->timbres_[timbre].getPfm3Preset())[index] = newValue;
-
-    if (oldValue != newValue) {
-        this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, row, encoder, param, oldValue, newValue);
-    }
-}
-
 void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue) {
     switch (mixerValue) {
         case MIXER_VALUE_VOLUME: {
@@ -726,38 +695,6 @@ void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue)
 
 void Synth::setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue) {
     sequencer_->setNewSeqValueFromMidi(timbre, seqValue, newValue);
-}
-
-void Synth::setNewStepValueFromMidi(int timbre, int whichStepSeq, int step, int newValue) {
-
-    if (!this->timbres_[timbre].supportsStepSequencer()) {
-        return;
-    }
-
-    if (whichStepSeq < 0 || whichStepSeq > 1 || step < 0 || step > 15 || newValue < 0 || newValue > 15) {
-        return;
-    }
-
-    int oldValue = this->timbres_[timbre].getSeqStepValue(whichStepSeq, step);
-
-    if (oldValue != newValue) {
-        int oldStep = this->synthState_->stepSelect[whichStepSeq];
-        this->synthState_->stepSelect[whichStepSeq] = step;
-        if (oldStep != step) {
-            this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep,
-                step);
-        }
-        this->timbres_[timbre].setSeqStepValue(whichStepSeq, step, newValue);
-        int newNewValue = this->timbres_[timbre].getSeqStepValue(whichStepSeq, step);
-        if (oldValue != newNewValue) {
-            this->synthState_->propagateNewPfm3ParamValueFromExternal(timbre, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue,
-                newValue);
-        }
-    }
-}
-
-void Synth::setNewSymbolInPresetName(int timbre, int index, char newchar) {
-    timbres_[timbre].setPresetNameChar(index, newchar);
 }
 
 void Synth::setCurrentInstrument(int value) {

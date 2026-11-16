@@ -25,7 +25,7 @@ struct MsfaTimbreState;
  */
 class MsfaSynthEngine : public SynthEngine {
 public:
-    MsfaSynthEngine() : timbre_(nullptr), msfaState_(nullptr), timbreNumber_(0) {}
+    MsfaSynthEngine() : timbre_(nullptr), synthState_(nullptr), msfaState_(nullptr), timbreNumber_(0) {}
 
     void init(Timbre *timbre, SynthState *synthState) override;
     void afterNewParamsLoad() override;
@@ -57,6 +57,8 @@ public:
         return program_[timbreNumber_];
     }
     void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
+    bool midiControlChange(int timbre, uint8_t cc, uint8_t value) override;
+    bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage &out) const override;
     bool acceptsFlatParamFromMidi(int row) const override;
     bool supportsStepSequencer() const override {
         return false;
@@ -78,6 +80,7 @@ private:
     void renderVoice(Voice *voice);
 
     Timbre *timbre_;
+    SynthState *synthState_;
     MsfaTimbreState *msfaState_;
     int timbreNumber_;
     static uint8_t packedPatch_[NUMBER_OF_TIMBRES][MSFA_PACKED_PATCH_SIZE] __attribute__((section(".ram_d1")));
