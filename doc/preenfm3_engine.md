@@ -16,7 +16,7 @@ PFM3 is a 6-operator FM synthesizer:
 - 3 LFOs, 2 free envelope LFOs, 2 step sequencers,
 - 2 effects (FX1, FX2),
 - a post-FX amplitude gate,
-- 16 voices shared by all timbres (a voice belongs to one timbre at a time).
+- 20 voices shared by all timbres (a voice belongs to one timbre at a time).
 
 Audio is computed per block at 47,916 Hz. Notes, matrix values and LFOs are
 updated per block, not per sample.

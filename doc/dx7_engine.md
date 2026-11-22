@@ -36,7 +36,7 @@ current tree and are intended as integration anchors, not as stable API.
 
 ### 1.1 Top-level audio path
 
-`Synth` owns six `Timbre` objects and sixteen global `Voice` objects:
+`Synth` owns six `Timbre` objects and twenty global `Voice` objects:
 
 - `firmware/src/app/synth/Synth.h:158-159`
 - `firmware/src/app/synth/Synth.cpp:46-84` (`Synth::init`)
@@ -166,7 +166,7 @@ without changing the rest of `Synth`.
 The global voice pool stays shared by all six timbres. Each timbre receives a
 subset of global voice indices through `Timbre::setVoiceNumber()`
 (`Timbre.cpp:302-307`) and `Synth::rebuidVoiceAllTimbre()` (`Synth.cpp:777-791`).
-Keep the existing 16 global voices and allow each timbre to select MSFA
+Keep the existing 20 global voices and allow each timbre to select MSFA
 independently; do not create a separate MSFA voice pool per timbre.
 
 Yes: extract the PFM3-only per-voice DSP state into a `Pfm3VoiceState` so both
@@ -228,7 +228,7 @@ of these designs:
 3. Keep both engine states as ordinary members if RAM allows. This is the
    simplest and safest, but uses more RAM.
 
-Do **not** allocate a separate 16-voice MSFA pool per timbre: that would
+Do **not** allocate a separate 20-voice MSFA pool per timbre: that would
 multiply RAM by six and duplicate the existing allocation logic.
 
 ---
@@ -447,9 +447,9 @@ RAM_D2B: 55.01%
 ```
 
 `Dx7Note` per voice adds six envelopes, six `FmOpParams`, a pitch envelope,
-feedback buffers and controller state. With sixteen global voices this is
+feedback buffers and controller state. With twenty global voices this is
 manageable, but must be measured. Avoid a separate MSFA voice array per
-timbre. The existing 16 global voices remain the allocation unit.
+timbre. The existing 20 global voices remain the allocation unit.
 
 CPU must be profiled under real load, not only at idle. The reported ~6.4% is
 the idle load; a fully loaded PFM3 patch with 16 voices, FX and arpeggiator can
@@ -1406,7 +1406,7 @@ If sysex bank loading is required:
    - Load/save round trips and legacy PFM3 banks verified.
 
 8. **Profile and tune.**
-   - CPU under worst-case load with 6×MSFA and 16 voices.
+   - CPU under worst-case load with 6×MSFA and 20 voices.
    - RAM with MSFA state in all voices.
    - Confirm FX1/FX2 and `Arp/Fx` remain usable with MSFA.
 
@@ -1445,7 +1445,7 @@ If sysex bank loading is required:
    mark MSFA presets with `PRESET_MSFA = 981344537` at
    `ALIGNED_PATCH_SIZE - 5`; the name is stored at offset 160. PFM3 presets
    keep their existing `PRESET_VERSION1`/`PRESET_VERSION2` layout.
-6. **Voice model:** keep the existing 16 global voices and allow MSFA per
+6. **Voice model:** keep the existing 20 global voices and allow MSFA per
    timbre. No separate MSFA voice pool.
 7. **Operator on/off:** support the Dexed operator on/off bitmask.
 8. **License:** MSFA is the engine from Google's

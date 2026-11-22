@@ -42,7 +42,7 @@ float Preenfm3Engine::glidePhaseInc[13] = {1.0f / 2.0f,   1.0f / 5.0f,    1.0f /
 
 float Preenfm3Engine::mpeBitchBend[6] = {0.0f, 480.0f, 360.0f, 240.0f, 120.0f, 0.0f};
 
-Pfm3VoiceState Preenfm3Engine::pfm3VoiceStates_[MAX_NUMBER_OF_VOICES];
+Pfm3VoiceState Preenfm3Engine::pfm3VoiceStates_[MAX_NUMBER_OF_VOICES] __attribute__((section(".ram_d1")));
 
 Pfm3VoiceState& Preenfm3Engine::voiceState(int slot) {
     return pfm3VoiceStates_[slot];

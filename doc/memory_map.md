@@ -10,7 +10,7 @@ across the D1/D2/D3 domains, plus 128 KB DTCM and 64 KB ITCM. The firmware is
 linked at `0x08020000`, after the 128 KB bootloader, and the linker script is
 [firmware/preenfm3_2MB.ld](../firmware/preenfm3_2MB.ld).
 
-All numbers below are from a single LTO build of firmware 1.04. Treat them as
+All numbers below are from a single non-LTO build of firmware 1.99. Treat them as
 a snapshot; the build prints the current values, and the budget check fails
 above 95 % in any RAM region.
 
@@ -32,16 +32,16 @@ above 95 % in any RAM region.
 | Region | Origin | Size | MPU / cache | Startup init | Intended use | Used | % |
 |---|---|---|---|---|---|---|---|
 | ITCMRAM | `0x00000004` | 63 KB | none configured; never cached | none (zeroed) | hot FM tables, user waveforms, time-critical code | 51,464 B | 79.77 |
-| DTCMRAM | `0x20000000` | 128 KB | none configured; never cached | `.data` copied, `.bss` zeroed | hot per-sample state, waveform tables, user buffers, stack | 117,776 B | 89.86 |
-| RAM_D1 | `0x24000000` | 512 KB | MPU R1, write-through | none (zeroed) | display buffers, engine state, FX lines | 367,888 B | 70.17 |
+| DTCMRAM | `0x20000000` | 128 KB | none configured; never cached | `.data` copied, `.bss` zeroed | hot per-sample state, waveform tables, user buffers, stack | 96,920 B | 73.94 |
+| RAM_D1 | `0x24000000` | 512 KB | MPU R1, write-through | none (zeroed) | display buffers, engine state, FX lines | 400,448 B | 76.38 |
 | RAM_D2 | `0x30000000` | 128 KB | MPU R2, write-through | none (zeroed) | SAI audio buffers, FX scratch | 121,992 B | 93.07 |
 | RAM_D2B | `0x30020000` | 128 KB | MPU R3, write-through | none (zeroed) | CPU-only audio: FX2 delay and diffusers | 72,100 B | 55.01 |
 | RAM_D2C | `0x30040000` | 32 KB | MPU R5, non-cacheable, shareable | none (zeroed) | SD/SPI2 DMA and FatFs buffers | 24,144 B | 73.68 |
 | RAM_D3 | `0x38000000` | 64 KB | MPU R4, write-back | none (zeroed) | cold data: sequencer, preset mirrors | 48,040 B | 73.30 |
-| FLASH | `0x08020000` | 1920 KB | — | — | code, `.rodata`, `.data` load image | 578,790 B | 29.44 |
+| FLASH | `0x08020000` | 1920 KB | — | — | code, `.rodata`, `.data` load image | 570,126 B | 29.00 |
 
-Total SRAM used is 803,404 B (about 74.4 % of the 1,055 KB available). DTCM is
-at 89.86 %, RAM_D2 is at 93.07 %, and RAM_D1 is at 70.17 %.
+Total SRAM used is 815,108 B (about 75.5 % of the 1,055 KB available). DTCM is
+at 73.94 %, RAM_D2 is at 93.07 %, and RAM_D1 is at 76.38 %.
 
 DTCM and ITCM are not described by the MPU: the Cortex-M7 TCMs are accessed
 directly and are never cached. That is why hot tables in ITCM gave a large
@@ -121,14 +121,13 @@ Two rules follow:
 ## Current contents
 
 Largest symbols per region, from
-`arm-none-eabi-nm --print-size --size-sort` on the LTO ELF.
+`arm-none-eabi-nm --print-size --size-sort` on the firmware ELF.
 
-**DTCM** — 110,888 B
+**DTCM** — 90,032 B
 
 | Bytes | Symbol |
 |---|---|
-| 22,592 | `Preenfm3Engine::pfm3VoiceStates_` (16 × PFM3 voice state) |
-| 15,604 | `synth` (contains `Timbre timbres_[6]`) |
+| 17,320 | `synth` (contains `Timbre timbres_[6]` and 20 `Voice`) |
 | 8,196 | `sinTable` |
 | 8,192 ×2 | `squareTable`, `sawTable` |
 | 6,240 | `SynthEngineFactory::pfm3Engines_` (6 × PFM3 engine) |
@@ -150,7 +149,7 @@ Largest symbols per region, from
 | 6,404 | `Pfm3Env::incTab` |
 | 4,100 | MSFA `lut` |
 
-**RAM_D1** — 367,888 B
+**RAM_D1** — 400,448 B
 
 | Bytes | Symbol |
 |---|---|
@@ -158,13 +157,14 @@ Largest symbols per region, from
 | 56,032 | `tftForeground` |
 | 55,488 | `tftBackground` |
 | 28,676 | `FxBus::delay1Buffer` |
+| 28,240 | `Preenfm3Engine::pfm3VoiceStates_` (20 × PFM3 voice state) |
 | 23,956 | `FxBus::delay2Buffer` |
-| 16,256 | `dx7VoiceStates` |
+| 20,320 | `dx7VoiceStates` |
 | 8,192 | `Pfm3Lfo::invTab` |
 | 6,732 | `tft` (`FirmwareTftDisplay`) |
 | 6,144 | `midiNoteScale` |
 | 5,472 | `Preenfm3Engine::pfm3Params_` |
-| 1,024 | `ByosEngine::voiceStates_` |
+| 1,280 | `ByosEngine::voiceStates_` |
 | 1,008 | `pfm3PresetTmp` |
 | 512 ×2 | `Porta::rates`, `Porta::rates_glissando` |
 | 936 | `Dx7SynthEngine::program_` |
@@ -239,10 +239,14 @@ region, so the current budget is visible in every build.
 
 ## Remaining tight spots
 
-- **DTCM (89.86 %)** holds the six waveform tables and the hot per-sample
+- **DTCM (73.94 %)** holds the six waveform tables and the hot per-sample
   state; ITCM has ~13 KB free for hot code and small tables.
-- **RAM_D2 (93 %)** is the tightest region now; **RAM_D1 is at 70 %** and has
-  about 153 KB free. A new large buffer must either fit in RAM_D3/DTCM/RAM_D1 or
+- **`Preenfm3Engine::pfm3VoiceStates_` lives in RAM_D1** (28,240 B for 20
+  voices). Only `OscState::index`/`frequency` are touched per sample; the lines
+  stay cache-resident. Moving it there cost 31.5 % → 31.7 % CPU at 10 voices
+  (no FX) and freed 22.6 KB of DTCM at 16 voices.
+- **RAM_D2 (93 %)** is the tightest region now; **RAM_D1 is at 76 %** and has
+  about 121 KB free. A new large buffer must either fit in RAM_D3/DTCM/RAM_D1 or
   replace an existing one. The post-build check turns a silent overflow into a
   build failure.
 - **`userWaveform` is in ITCM** (24.6 KB). If ITCM is ever needed for code,

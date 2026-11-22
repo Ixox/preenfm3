@@ -8,25 +8,25 @@ pluggable sound engines.
 
 ```
 Synth                                   global audio engine + transport
-├── Voice voices_[16]                   neutral per-voice state + FX1 + sample buffer
+├── Voice voices_[20]                   neutral per-voice state + FX1 + sample buffer
 ├── VoicePool                           "which timbre owns each voice" bookkeeping
-└── Timbre timbres_[4]                  one synth part / instrument
-    ├── TimbreSharedParams sharedParams_[4]  Arp + FX1 + FX2 + preset name (engine-neutral)
+└── Timbre timbres_[6]                  one synth part / instrument
+    ├── TimbreSharedParams sharedParams_[6]  Arp + FX1 + FX2 + preset name (engine-neutral)
     ├── SynthEngine *engineImpl_        selected engine
     │   └── SynthEngineFactory          per-timbre engine instances
-    │       ├── Preenfm3Engine [4]      PFM3 engine
-    │       │   ├── Pfm3Preset [4]           flat preset+UI mirror
-    │       │   ├── Pfm3TimbreParams [4]     static, indexed by timbre
-    │       │   ├── Pfm3TimbreContext [4]    static, indexed by timbre
+    │       ├── Preenfm3Engine [6]      PFM3 engine
+    │       │   ├── Pfm3Preset [6]           flat preset+UI mirror
+    │       │   ├── Pfm3TimbreParams [6]     static, indexed by timbre
+    │       │   ├── Pfm3TimbreContext [6]    static, indexed by timbre
     │       │   ├── Osc osc_[6] / Env env_[6]
-    │       │   └── Pfm3VoiceState [16]      static, indexed by voice slot
-    │       └── Dx7SynthEngine [4]     DX7/DX7 engine
-    │           ├── program_[4][156] / packedPatch_[4]
-    │           ├── Dx7TimbreState [4]      static, indexed by timbre
-    │           └── Dx7VoiceState [16]      static, indexed by voice slot
+    │       │   └── Pfm3VoiceState [20]      static, indexed by voice slot
+    │       └── Dx7SynthEngine [6]     DX7/DX7 engine
+    │           ├── program_[6][156] / packedPatch_[6]
+    │           ├── Dx7TimbreState [6]      static, indexed by timbre
+    │           └── Dx7VoiceState [20]      static, indexed by voice slot
 ```
 
-The 16 voices form a single global pool shared by all four timbres. A voice is
+The 20 voices form a single global pool shared by all six timbres. A voice is
 only ever rendered by the engine of the timbre that currently owns it.
 
 The per-timbre and per-voice engine arrays (`Pfm3TimbreParams`,

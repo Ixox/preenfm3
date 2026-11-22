@@ -88,7 +88,7 @@ const struct Pfm3MixerButton outButton = {
 
 const struct Pfm3MixerButtonState voiceButtonState = {
       "Max voices", MIXER_VALUE_NUMBER_OF_VOICES,
-        {0, 16, 17, DISPLAY_TYPE_INT, nullNames}
+        {0, MAX_NUMBER_OF_VOICES, MAX_NUMBER_OF_VOICES + 1, DISPLAY_TYPE_INT, nullNames}
 };
 
 const struct Pfm3MixerButtonState engineButtonState = {
@@ -447,7 +447,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
                 tft_->setCharColor(COLOR_RED);
             }
             tft_->print("1-");
-            tft_->print(numberOfVoice > 16 ? 16 : numberOfVoice);
+            tft_->print(numberOfVoice > MAX_NUMBER_OF_VOICES ? MAX_NUMBER_OF_VOICES : numberOfVoice);
             return;
         }
     } else {
