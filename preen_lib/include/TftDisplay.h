@@ -94,8 +94,13 @@ struct TFTAction {
     const uint8_t* algoTable = nullptr;
 };
 
-#define OSCILLO_WIDTH       160
-#define OSCILLO_BUFFER_SIZE 1024
+#define OSCILLO_WIDTH 160
+// Two periods, so the displayed trace never has to wrap inside the buffer.
+#define OSCILLO_BUFFER_SIZE 2048
+// Stored frames for the phosphor trail (1 = no trail; max 5 with trailAlpha).
+#define OSCILLO_TRAIL_FRAMES 3
+// Fill baseline in Y units. 0 = centre line, 49 = lowest visible row.
+#define OSCILLO_FILL_BASELINE_Y 49
 
 #define PFM_IS_DMA2D_READY() (hdma2d.Instance->CR & DMA2D_CR_START) == 0
 #define PFM_START_DMA2D()                                                                                                                  \
@@ -188,6 +193,7 @@ public:
 
     void oscilloForceNextDisplay() {
         flatOscilloAlreadyDisplayed_ = false;
+        oscilloSmoothedValid_ = false;
     }
 
     bool hasJustBeenCleared() {
@@ -206,6 +212,10 @@ public:
 
 protected:
     int8_t oscilloYValue_[OSCILLO_WIDTH];
+    int8_t oscilloSmoothedY_[OSCILLO_WIDTH];
+    int8_t oscilloHistory_[OSCILLO_TRAIL_FRAMES][OSCILLO_WIDTH];
+    uint8_t oscilloHistoryIndex_;
+    bool oscilloSmoothedValid_;
     uint16_t* bgOscillo_;
     RingBuffer<TFTAction, TFTACTION_BUFFER_SIZE> tftActions_;
     TFTAction currentAction_;

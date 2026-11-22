@@ -226,7 +226,7 @@ void preenfm3Loop() {
 
     if (synthState.fullState_.synthMode == SYNTH_MODE_EDITOR) {
         // Oscillo refresh: 20 Hz = 50 ms
-        if (unlikely((currentMillis - oscilloMillis) >= 50)) {
+        if (unlikely((currentMillis - oscilloMillis) >= 100)) {
             oscilloMillis = currentMillis;
             tft.oscilloRrefresh();
             float lf = synth.getLowerNoteFrequency(synthState.getCurrentTimbre());

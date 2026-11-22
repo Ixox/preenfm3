@@ -87,6 +87,9 @@ TftDisplay::TftDisplay() {
     oscilloSamplePeriod_ = PREENFM_FREQUENCY / 440;
     oscilloSampleInc_ = oscilloSamplePeriod_ / OSCILLO_WIDTH;
     oscilloPhaseIndex_ = 0.0f;
+    oscilloLowerFrequency_ = 440.0f;
+    oscilloSmoothedValid_ = false;
+    oscilloHistoryIndex_ = 0;
 
     for (int o = 0; o < OSCILLO_BUFFER_SIZE; o++) {
         oscilloFullPeriodSampl_[o] = 0.0f;
@@ -493,7 +496,6 @@ void TftDisplay::processActionStep() {
             // Display Oscilloscope
             if (PFM_IS_DMA2D_READY()) {
                 uint32_t currentTic = HAL_GetTick();
-                MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
 
                 // Keep red color for 5 refreshes after saturation detected
                 // param param1 == 1 means last oscillo refresh saturated
@@ -503,8 +505,9 @@ void TftDisplay::processActionStep() {
                 if (unlikely(currentAction_.param1 == 1 || (currentTic < (lastOscilloSaturateTic_ + 10)))) {
                     WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_RED]);
                 } else {
-                    WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_GREEN]);
+                    WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_CYAN]);
                 }
+                MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
 
                 offset = TFT_OSCILLO_Y * 240 + TFT_OSCILLO_X;
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 160);
@@ -1045,10 +1048,34 @@ void TftDisplay::oscilloRrefresh() {
         }
 
         oscilloSampleReadPtr += oscilloSampleInc_;
-        if (oscilloSampleReadPtr > oscilloSamplePeriod_) {
-            oscilloSampleReadPtr -= oscilloSamplePeriod_;
+    }
+
+    bool resetTrace = (!oscilloSmoothedValid_ || total == 0);
+
+    // Low-pass the displayed trace per column (alpha = 0.5). Reset on the
+    // first frame or when the trace goes flat, so it never fades from zeros.
+    if (resetTrace) {
+        for (int x = 0; x < OSCILLO_WIDTH; x++) {
+            oscilloSmoothedY_[x] = oscilloYValue_[x];
+        }
+        oscilloSmoothedValid_ = (total > 0);
+    } else {
+        for (int x = 0; x < OSCILLO_WIDTH; x++) {
+            oscilloSmoothedY_[x] = (int8_t)(oscilloSmoothedY_[x] + (oscilloYValue_[x] - oscilloSmoothedY_[x]) / 2);
         }
     }
+
+    // Keep the last frames for the phosphor trail.
+    if (resetTrace) {
+        for (int h = 0; h < OSCILLO_TRAIL_FRAMES; h++) {
+            memcpy(oscilloHistory_[h], oscilloSmoothedY_, OSCILLO_WIDTH);
+        }
+        oscilloHistoryIndex_ = 0;
+    } else {
+        memcpy(oscilloHistory_[oscilloHistoryIndex_], oscilloSmoothedY_, OSCILLO_WIDTH);
+        oscilloHistoryIndex_ = (oscilloHistoryIndex_ + 1) % OSCILLO_TRAIL_FRAMES;
+    }
+    uint8_t latestSlot = (oscilloHistoryIndex_ + OSCILLO_TRAIL_FRAMES - 1) % OSCILLO_TRAIL_FRAMES;
 
     // flatOscillo must be displayed only once
     if (total == 0) {
@@ -1063,17 +1090,30 @@ void TftDisplay::oscilloRrefresh() {
     if (total > 0) {
         int indexMiddle = 50 * 160;
 
+        // Draw the older frames first (oldest to newest) as dim points.
+#ifdef OSCILLO_TRAIL_FRAMES_NO
+        static const uint8_t trailAlpha[5] = {0xff, 0x50, 0x40, 0x30, 0x20};
+        static_assert(OSCILLO_TRAIL_FRAMES <= 5, "trailAlpha table too small");
+        for (int age = OSCILLO_TRAIL_FRAMES - 1; age >= 1; age--) {
+            uint8_t slot = (latestSlot + OSCILLO_TRAIL_FRAMES - age) % OSCILLO_TRAIL_FRAMES;
+            uint8_t alpha = trailAlpha[age];
+            for (int x = 0; x < OSCILLO_WIDTH; x++) {
+                fgOscillo_[indexMiddle + x + oscilloHistory_[slot][x] * 160] = alpha;
+            }
+        }
+#endif
+
         for (int x = 0; x < 159; x++) {
-            if (oscilloYValue_[x] < (oscilloYValue_[x + 1] - 1)) {
-                for (int oy = oscilloYValue_[x]; oy < oscilloYValue_[x + 1]; oy++) {
+            if (oscilloSmoothedY_[x] < (oscilloSmoothedY_[x + 1] - 1)) {
+                for (int oy = oscilloSmoothedY_[x]; oy < oscilloSmoothedY_[x + 1]; oy++) {
                     fgOscillo_[indexMiddle + x + oy * 160] = 0xff;
                 }
-            } else if (oscilloYValue_[x] > (oscilloYValue_[x + 1] + 1)) {
-                for (int oy = oscilloYValue_[x]; oy > oscilloYValue_[x + 1]; oy--) {
+            } else if (oscilloSmoothedY_[x] > (oscilloSmoothedY_[x + 1] + 1)) {
+                for (int oy = oscilloSmoothedY_[x]; oy > oscilloSmoothedY_[x + 1]; oy--) {
                     fgOscillo_[indexMiddle + x + oy * 160] = 0xff;
                 }
             } else {
-                fgOscillo_[indexMiddle + x + oscilloYValue_[x] * 160] = 0xff;
+                fgOscillo_[indexMiddle + x + oscilloSmoothedY_[x] * 160] = 0xff;
             }
         }
         // Ask for tft push and refresh
@@ -1111,10 +1151,17 @@ void TftDisplay::fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height,
 
 void TftDisplay::oscilloNewLowerFrequency(float lf) {
     oscilloSamplePeriod_ = PREENFM_FREQUENCY / lf;
-    if (oscilloSamplePeriod_ > OSCILLO_BUFFER_SIZE) {
-        oscilloSamplePeriod_ = OSCILLO_BUFFER_SIZE;
+    // The buffer holds two periods; the trace uses one of them.
+    if (oscilloSamplePeriod_ > OSCILLO_BUFFER_SIZE / 2) {
+        oscilloSamplePeriod_ = OSCILLO_BUFFER_SIZE / 2;
     }
     oscilloSampleInc_ = (float)oscilloSamplePeriod_ / OSCILLO_WIDTH;
+
+    // Re-anchor the display low-pass on a note change (> 5%).
+    if (oscilloLowerFrequency_ > 0.0f && (lf > oscilloLowerFrequency_ * 1.05f || lf < oscilloLowerFrequency_ * 0.95f)) {
+        oscilloSmoothedValid_ = false;
+    }
+    oscilloLowerFrequency_ = lf;
 
     // oscilloPhaseIndexToUse = oscilloSamplePeriod - (oscilloPhaseIndex % ((int)oscilloSamplePeriod + 1));
     int divInt = oscilloPhaseIndex_ / oscilloSamplePeriod_;
@@ -1124,7 +1171,8 @@ void TftDisplay::oscilloNewLowerFrequency(float lf) {
 
 void TftDisplay::oscilloRecord32Samples(float* samples) {
     oscilloPhaseIndex_ += 32.0f;
-    if (oscilloDataWritePtr_ < oscilloSamplePeriod_) {
+    // Record two periods so the displayed window is always contiguous.
+    if (oscilloDataWritePtr_ < oscilloSamplePeriod_ * 2.0f) {
         for (int r = 0; r < 32; r++) {
             oscilloFullPeriodSampl_[oscilloDataWritePtr_++] = samples[r * 2];
         }
