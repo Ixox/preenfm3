@@ -67,8 +67,9 @@ public:
     uint8_t* getPatchMemory() override {
         return program_[timbreNumber_];
     }
+    char* getPresetName() override;
     void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
-    bool midiControlChange(int timbre, uint8_t cc, uint8_t value) override;
+    bool midiData(int timbre, const struct MidiData& data) override;
     bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const override;
     bool acceptsFlatParamFromMidi(int row) const override;
     bool supportsStepSequencer() const override {
@@ -86,6 +87,7 @@ public:
     bool loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t magic) override;
 
 private:
+    bool midiCcData(uint8_t cc, uint8_t value);
     void startVoice(Voice* voice, const uint8_t* program, uint8_t note, uint8_t velocity, uint32_t index);
     void updateVoiceProgram(Voice* voice, const uint8_t* program);
     void renderVoice(Voice* voice);

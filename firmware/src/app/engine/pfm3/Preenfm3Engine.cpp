@@ -8,6 +8,7 @@
  */
 
 #include "Preenfm3Engine.h"
+#include "Hexter.h"
 #include "MidiControlChange.h"
 #include "Pfm3ControlChange.h"
 #include "Pfm3FlashFormat.h"
@@ -18,6 +19,8 @@
 #include "Timbre.h"
 #include "Voice.h"
 #include "VoicePool.h"
+
+extern RNG_HandleTypeDef hrng;
 
 /* Unsigned saturation, used by the PFM3 oscillator mix code. */
 #define __USAT(ARG1, ARG2)                                                                                                                 \
@@ -30,6 +33,7 @@
 static Pfm3TimbreContext pfm3Contexts[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
 Pfm3TimbreParams Preenfm3Engine::pfm3Params_[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
 Pfm3Preset pfm3PresetTmp __attribute__((section(".ram_d1")));
+static Hexter hexter;
 
 float Preenfm3Engine::glidePhaseInc[13] = {1.0f / 2.0f,   1.0f / 5.0f,    1.0f / 9.0f,   1.0f / 15.0f,  1.0f / 22.0f,
                                            1.0f / 35.0f,  1.0f / 50.0f,   1.0f / 90.0f,  1.0f / 140.0f, 1.0f / 200.0f,
@@ -67,6 +71,9 @@ void Preenfm3Engine::init(Timbre* timbre, SynthState* synthState) {
     timbre_ = timbre;
     synthState_ = synthState;
     timbreNumber_ = timbre->getTimbreNumber();
+    stepSelect_[0] = 0;
+    stepSelect_[1] = 0;
+    hexter_ = &hexter;
     context_ = &pfm3Contexts[timbreNumber_];
     for (int lfo = 0; lfo < NUMBER_OF_LFO; lfo++) {
         lfoUSed_[lfo] = 0;
@@ -4769,6 +4776,335 @@ bool Preenfm3Engine::loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t 
     return true;
 }
 
+void Preenfm3Engine::loadHexterPatch(const uint8_t* packedPatch) {
+    hexter_->loadHexterPatch(const_cast<uint8_t*>(packedPatch), timbre_->getPfm3Preset());
+}
+
+char* Preenfm3Engine::getPresetName() {
+    return timbre_->sharedParams().presetName;
+}
+
+void Preenfm3Engine::loadNewPreset() {
+    *timbre_->getPfm3Preset() = newPresetParams;
+}
+
+int Preenfm3Engine::getStepSelection(int which) const {
+    return (which == 0 || which == 1) ? stepSelect_[which] : 0;
+}
+
+void Preenfm3Engine::setStepSelection(int which, int step) {
+    if (which == 0 || which == 1) {
+        stepSelect_[which] = step;
+    }
+}
+
+static int getRandomInt(int max) {
+    uint32_t rnd;
+    HAL_RNG_GenerateRandomNumber(&hrng, &rnd);
+    return rnd % max;
+}
+
+static float getRandomFloat(float min, float max) {
+    uint32_t rnd;
+    HAL_RNG_GenerateRandomNumber(&hrng, &rnd);
+    float f = ((float)(rnd % 100000)) / 100000.0f;
+    return f * (max - min) + min;
+}
+
+static float getRandomShape(int operatorRandom) {
+    int shape = getRandomInt(7);
+    switch (operatorRandom) {
+    case 1:
+        if (shape > 2) {
+            shape = 0;
+        }
+        break;
+    case 2:
+        shape = getRandomInt(8);
+        if (shape == 6) { // Rand
+            shape = 0;
+        }
+        break;
+    case 3:
+        break;
+    }
+    return shape;
+}
+
+static float getRandomFrequencyType(int operatorRandom) {
+    int freqType = getRandomInt(32);
+    if (freqType > 1) { // Keyboard 5 times out of 6
+        freqType = 0;
+    }
+    return freqType;
+}
+
+static float getRandomFrequency(int operatorRandom) {
+    float random1Frequency[] = {.5f, 1.0f, 2.0f, 4.0f};
+    float random2Frequency[] = {.25, .5f, 1.0f, 1.5, 2.0f, 3.0f, 4.0f};
+    float freq = 0;
+    switch (operatorRandom) {
+    case 1:
+        freq = random1Frequency[getRandomInt(4)];
+        break;
+    case 2:
+        freq = random2Frequency[getRandomInt(7)];
+        break;
+    case 3:
+        freq = getRandomInt(24) * .25 + .25;
+        break;
+    }
+    return freq;
+}
+
+static float getFineTune(int operatorRandom) {
+    float fineTune = 0;
+    switch (operatorRandom) {
+    case 2:
+        fineTune = getRandomInt(10) * .01 - .05;
+        if (fineTune < 0.03 || fineTune > 0.03) {
+            fineTune = 0;
+        }
+        break;
+    case 3:
+        fineTune = getRandomInt(20) * .01 - .05;
+        if (fineTune < 0.07 || fineTune > 0.07) {
+            fineTune = 0;
+        }
+        break;
+    }
+    return fineTune;
+}
+
+void Preenfm3Engine::randomizePreset(int operatorRandom, int envelopeTypeRandom, int imRandom, int modulationRandom) {
+    Pfm3Preset* preset = timbre_->getPfm3Preset();
+
+    // general
+
+    preset->engine1.velocity = 8;
+
+    if (operatorRandom > 0) {
+        preset->engineMix1.mixOsc1 = getRandomFloat(0.6f, 1.0f);
+        preset->engineMix1.mixOsc2 = getRandomFloat(0.6f, 1.0f);
+        preset->engineMix2.mixOsc3 = getRandomFloat(0.6f, 1.0f);
+        preset->engineMix2.mixOsc4 = getRandomFloat(0.6f, 1.0f);
+        preset->engineMix3.mixOsc5 = getRandomFloat(0.6f, 1.0f);
+        preset->engineMix3.mixOsc6 = getRandomFloat(0.6f, 1.0f);
+
+        preset->engineMix1.panOsc1 = 0.0;
+        preset->engineMix1.panOsc2 = getRandomFloat(-0.3f, 0.3f);
+        preset->engineMix2.panOsc3 = getRandomFloat(-0.3f, 0.3f);
+        preset->engineMix2.panOsc4 = getRandomFloat(-0.5f, 0.5f);
+        preset->engineMix3.panOsc5 = getRandomFloat(-0.5f, 0.5f);
+        preset->engineMix3.panOsc6 = getRandomFloat(-0.7f, 0.7f);
+
+        preset->engine1.algo = getRandomInt(ALGO_END);
+
+        for (int o = 0; o < 6; o++) {
+            struct OscillatorParams* currentOsc = &((struct OscillatorParams*)&preset->osc1)[o];
+            currentOsc->shape = getRandomShape(operatorRandom);
+            currentOsc->frequencyMul = getRandomFrequency(operatorRandom);
+            currentOsc->frequencyType = getRandomFrequencyType(operatorRandom);
+            currentOsc->detune = getFineTune(operatorRandom);
+        }
+
+        // FX
+        preset->effect1.param1 = getRandomFloat(0.2f, 0.8f);
+        preset->effect1.param2 = getRandomFloat(0.2f, 0.8f);
+        int effect = getRandomInt(15);
+        if (effect == 1 || effect > 6) {
+            preset->effect1.param3 = 1.0;
+            preset->effect1.type = 0;
+        } else {
+            preset->effect1.param3 = 0.6;
+            preset->effect1.type = effect;
+        }
+    }
+
+    for (int e = 0; e < 6; e++) {
+        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*)&preset->env1Time)[e * 2];
+        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*)&preset->env1Level)[e * 2];
+
+        switch (envelopeTypeRandom) {
+        case 1:
+            enva->attackLevel = 1.0;
+            enva->attackTime = getRandomFloat(0, 0.3f);
+            enva->decayLevel = getRandomFloat(0.5f, 1.0f);
+            enva->decayTime = getRandomFloat(0.05, 0.5f);
+
+            envb->sustainLevel = getRandomFloat(0.0f, 1.0f);
+            envb->sustainTime = getRandomFloat(0.02, 1.0f);
+            envb->releaseLevel = 0.0f;
+            envb->releaseTime = getRandomFloat(0.2, 5.0f);
+
+            break;
+        case 2:
+            enva->attackLevel = getRandomFloat(0.25f, 1.0f);
+            enva->attackTime = getRandomFloat(0.5f, 3.0f);
+            enva->decayLevel = getRandomFloat(0.5f, 1.0f);
+            enva->decayTime = getRandomFloat(1.0f, 5.0f);
+
+            envb->sustainLevel = getRandomFloat(0.0f, 1.0f);
+            envb->sustainTime = getRandomFloat(2.0f, 5.0f);
+            envb->releaseLevel = 0.0f;
+            envb->releaseTime = getRandomFloat(1.0f, 8.0f);
+            break;
+        case 3:
+            enva->attackLevel = getRandomFloat(0, 1.0f);
+            enva->attackTime = getRandomFloat(0, 1.0f);
+            enva->decayLevel = getRandomFloat(0, 1.0f);
+            enva->decayTime = getRandomFloat(0, 1.0f);
+
+            envb->sustainLevel = getRandomFloat(0, 1.0f);
+            envb->sustainTime = getRandomFloat(0, 1.0f);
+            envb->releaseLevel = getRandomFloat(0, 1.0f);
+            envb->releaseTime = getRandomFloat(0, 4.0f);
+            break;
+        }
+    }
+
+    if (imRandom > 0) {
+        struct EngineIm1* im1 = (struct EngineIm1*)&preset->engineIm1;
+        struct EngineIm2* im2 = (struct EngineIm2*)&preset->engineIm2;
+        struct EngineIm3* im3 = (struct EngineIm3*)&preset->engineIm3;
+
+        float min = 0;
+        float max = 0;
+        float minVelo = 0;
+        float maxVelo = 0;
+
+        switch (imRandom) {
+        case 1:
+            min = 0.25f;
+            max = 2.0f;
+            minVelo = 0.2f;
+            maxVelo = 1.0f;
+            break;
+        case 2:
+            min = .5f;
+            max = 3.0f;
+            minVelo = 1.0f;
+            maxVelo = 2.0f;
+            break;
+        case 3:
+            min = 1.0f;
+            max = 5.0f;
+            minVelo = 1.0f;
+            maxVelo = 4.0f;
+            break;
+        }
+        im1->modulationIndex1 = getRandomFloat(min, max);
+        im1->modulationIndexVelo1 = getRandomFloat(minVelo, maxVelo);
+        im1->modulationIndex2 = getRandomFloat(min, max);
+        im1->modulationIndexVelo2 = getRandomFloat(minVelo, maxVelo);
+        im2->modulationIndex3 = getRandomFloat(min, max);
+        im2->modulationIndexVelo3 = getRandomFloat(minVelo, maxVelo);
+        im2->modulationIndex4 = getRandomFloat(min, max);
+        im2->modulationIndexVelo4 = getRandomFloat(minVelo, maxVelo);
+        im3->modulationIndex5 = getRandomFloat(min, max);
+        im3->modulationIndexVelo5 = getRandomFloat(minVelo, maxVelo);
+    }
+
+    if (modulationRandom > 0) {
+
+        preset->matrixRowState1.source = MATRIX_SOURCE_LFO1;
+        preset->matrixRowState2.source = MATRIX_SOURCE_LFO1;
+        preset->matrixRowState3.source = MATRIX_SOURCE_LFO2;
+        preset->matrixRowState4.source = MATRIX_SOURCE_LFO2;
+        preset->matrixRowState5.source = MATRIX_SOURCE_LFO3;
+        preset->matrixRowState6.source = MATRIX_SOURCE_LFOENV1;
+        preset->matrixRowState7.source = MATRIX_SOURCE_LFOENV2;
+        preset->matrixRowState8.source = MATRIX_SOURCE_LFOSEQ1;
+        preset->matrixRowState9.source = MATRIX_SOURCE_LFOSEQ2;
+
+        preset->matrixRowState10.source = MATRIX_SOURCE_MODWHEEL;
+        preset->matrixRowState10.mul = 2.0f;
+        preset->matrixRowState10.dest1 = INDEX_ALL_MODULATION;
+
+        preset->matrixRowState11.source = MATRIX_SOURCE_PITCHBEND;
+        preset->matrixRowState11.mul = 1.0f;
+        preset->matrixRowState11.dest1 = ALL_OSC_FREQ;
+
+        preset->matrixRowState12.source = MATRIX_SOURCE_AFTERTOUCH;
+        preset->matrixRowState12.mul = 1.0f;
+        preset->matrixRowState12.dest1 = INDEX_MODULATION1;
+
+        for (int m = 1; m <= 9; m++) {
+            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&preset->matrixRowState1)[m - 1];
+            matrixRow->mul = 0;
+            matrixRow->dest1 = 0;
+        }
+
+        float dest[] = {INDEX_ALL_MODULATION, OSC1_FREQ, ALL_PAN, OSC2_FREQ, INDEX_MODULATION1, PAN_OSC1, INDEX_ALL_MODULATION};
+        for (int i = 0; i < 2; i++) {
+            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&preset->matrixRowState1)[getRandomInt(10)];
+            matrixRow->mul = getRandomFloat(0.2f, 3.0f);
+            matrixRow->dest1 = dest[getRandomInt(7)];
+        }
+
+        if (modulationRandom >= 2) {
+            for (int i = 0; i < 3; i++) {
+                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&preset->matrixRowState1)[getRandomInt(10)];
+                matrixRow->mul = getRandomFloat(1.0f, 3.0f);
+                matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
+            }
+        }
+
+        if (modulationRandom >= 3) {
+            for (int i = 0; i < 6; i++) {
+                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&preset->matrixRowState1)[getRandomInt(10)];
+                float mm = getRandomFloat(2.0f, 5.0f);
+                matrixRow->mul = getRandomFloat(-mm, mm);
+                matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
+            }
+        }
+
+        for (int o = 0; o < 3; o++) {
+            struct LfoParams* osc = &((struct LfoParams*)&preset->lfoOsc1)[o];
+            osc->shape = getRandomInt(5);
+            osc->freq = getRandomFloat(0.2, 3 + modulationRandom * 2);
+            if (getRandomInt(4) > 1) {
+                osc->bias = 0;
+            } else {
+                osc->bias = getRandomFloat(-1.0f, 1.0f);
+            }
+            // PAD
+            if (envelopeTypeRandom == 2) {
+                osc->keybRamp = getRandomFloat(0.0f, 4.0f);
+            } else {
+                osc->keybRamp = getRandomFloat(0.0f, 1.0f);
+            }
+        }
+        for (int e = 0; e < 2; e++) {
+            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*)&preset->lfoEnv1)[e];
+            env->attack = getRandomFloat(0.05f, 1.0f);
+            env->decay = getRandomFloat(0.05f, 1.0f);
+            env->sustain = getRandomFloat(0.05f, 1.0f);
+            if (e == 0) {
+                env->release = getRandomFloat(0.05f, 1.0f);
+            } else {
+                preset->lfoEnv2.loop = getRandomInt(2) + 1;
+            }
+        }
+
+        int bpm = getRandomInt(120) + 60;
+        for (int s = 0; s < 2; s++) {
+            struct StepSequencerParams* stepSeq = &((struct StepSequencerParams*)&preset->lfoSeq1)[s];
+            stepSeq->bpm = bpm;
+            stepSeq->gate = getRandomFloat(0.25, 1);
+
+            struct StepSequencerSteps* steps = &((struct StepSequencerSteps*)&preset->lfoSteps1)[s];
+            for (int k = 0; k < 16; k++) {
+                if ((k % 4) == 0) {
+                    steps->steps[k] = getRandomInt(5) + 11;
+                } else {
+                    steps->steps[k] = getRandomInt(10);
+                }
+            }
+        }
+    }
+}
+
 void Preenfm3Engine::serializePfm3Preset(struct Pfm3Preset& out) const {
     const Pfm3TimbreParams& pfm3 = pfm3Params();
 
@@ -4921,8 +5257,55 @@ void Preenfm3Engine::setPfm3ValueFromMidi(int row, int encoder, float newValue) 
     }
 }
 
-bool Preenfm3Engine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
+bool Preenfm3Engine::midiData(int timbre, const MidiData& data) {
     (void)timbre;
+    switch (data.type) {
+    case MIDI_DATA_CC:
+        switch (data.cc) {
+        case CC_MODWHEEL:
+            setMatrixSource(MATRIX_SOURCE_MODWHEEL, INV127 * data.ccValue);
+            return true;
+        case CC_BREATH:
+            setMatrixSource(MATRIX_SOURCE_BREATH, INV127 * data.ccValue);
+            return true;
+        case CC_MPE_SLIDE_CC74:
+            if (!(synthState_->mixerState_.MPE_inst1_ > 0) || timbreNumber_ != 0) {
+                setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * data.ccValue);
+            }
+            return true;
+        default:
+            return midiCcData(data.cc, data.ccValue);
+        }
+    case MIDI_DATA_USER_CC:
+        for (int i = 0; i < 4; i++) {
+            if (synthState_->mixerState_.userCC_[i] == data.cc) {
+                setMatrixSource((SourceEnum)(MATRIX_SOURCE_USER_CC1 + i), INV127 * data.ccValue);
+                return true;
+            }
+        }
+        return false;
+    case MIDI_DATA_NRPN:
+        return midiNrpnData(data.nrpnParam, data.nrpnValue);
+    case MIDI_DATA_AFTERTOUCH:
+        setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, data.value);
+        return true;
+    case MIDI_DATA_PITCHBEND:
+        setMatrixSource(MATRIX_SOURCE_PITCHBEND, data.value);
+        return true;
+    case MIDI_DATA_MPE_AFTERTOUCH:
+        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, data.value);
+        return true;
+    case MIDI_DATA_MPE_PITCHBEND:
+        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_PITCHBEND_MPE, data.value);
+        return true;
+    case MIDI_DATA_MPE_SLIDE:
+        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_MPESLIDE, data.value);
+        return true;
+    }
+    return false;
+}
+
+bool Preenfm3Engine::midiCcData(uint8_t cc, uint8_t value) {
     switch (cc) {
     case CC_ALGO:
         setPfm3ValueFromMidi(ROW_ENGINE, ENCODER_ENGINE_ALGO, (float)value);
@@ -5067,8 +5450,8 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
 
     int oldValue = timbre_->getSeqStepValue(whichStepSeq, step);
     if (oldValue != newValue) {
-        int oldStep = synthState_->stepSelect_[whichStepSeq];
-        synthState_->stepSelect_[whichStepSeq] = step;
+        int oldStep = stepSelect_[whichStepSeq];
+        stepSelect_[whichStepSeq] = step;
         if (oldStep != step) {
             synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep, step);
         }
@@ -5080,8 +5463,7 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
     }
 }
 
-bool Preenfm3Engine::midiNrpn(int timbre, uint16_t param, uint16_t value) {
-    (void)timbre;
+bool Preenfm3Engine::midiNrpnData(uint16_t param, uint16_t value) {
     uint8_t paramMSB = param >> 7;
     uint8_t paramLSB = param & 0x7f;
     uint8_t valueMSB = value >> 7;
@@ -5127,7 +5509,7 @@ bool Preenfm3Engine::midiPfm3ParamFeedback(int row, int encoder, float newValue,
                 return false;
             }
             int currentStepSeq = row - ROW_LFOSEQ1;
-            out.nrpn = ((currentStepSeq + 2) << 7) | synthState_->stepSelect_[currentStepSeq];
+            out.nrpn = ((currentStepSeq + 2) << 7) | stepSelect_[currentStepSeq];
             out.nrpnValue = (unsigned char)newValue;
             return true;
         }

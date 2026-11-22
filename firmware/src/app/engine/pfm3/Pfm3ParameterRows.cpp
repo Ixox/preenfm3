@@ -106,3 +106,19 @@ struct AllParameterRowsDisplay allParameterRows = {
 
 } };
 // clang-format on
+
+static struct ParameterRowsInitializer {
+    ParameterRowsInitializer() {
+        for (int row = 0; row < NUMBER_OF_ROWS; row++) {
+            for (int param = 0; param < NUMBER_OF_ENCODERS_PFM2; param++) {
+                struct ParameterDisplay* paramDisplay = &(allParameterRows.row[row]->params[param]);
+                if (paramDisplay->numberOfValues > 1.0) {
+                    paramDisplay->incValue =
+                        ((paramDisplay->maxValue - paramDisplay->minValue) / (paramDisplay->numberOfValues - 1.0f));
+                } else {
+                    paramDisplay->incValue = 0.0f;
+                }
+            }
+        }
+    }
+} parameterRowsInitializer;

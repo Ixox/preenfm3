@@ -2812,7 +2812,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
             if (hideParam_[encoder6]) {
                 return;
             }
-            struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][encoder6];
+            struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)pfm3Preset()->engine1.algo][encoder6];
             if (im.source != im.destination) {
                 tft_->highlightIM(encoder6, im.source, im.destination);
             } else {
@@ -2828,7 +2828,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
                 return;
             }
             int mixNumber = (currentRow - ROW_OSC_MIX1) * 2 + ((encoder & 0x2) >> 1);
-            int currentAlgo = (int)synthState_->pfm3Preset_->engine1.algo;
+            int currentAlgo = (int)pfm3Preset()->engine1.algo;
             int operatorNumber = EditorPfm3Algo::table(currentAlgo)[mixNumber * 2 + 1] - 1;
 
             tft_->highlightOperator(operatorNumber);
@@ -2852,7 +2852,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
                 break;
             case ENCODER_OSC_FREQ: {
                 // Refresh Fine Tune
-                struct OscillatorParams* opParams = &synthState_->pfm3Preset_->osc1;
+                struct OscillatorParams* opParams = &pfm3Preset()->osc1;
                 if (opParams[synthState_->fullState_.operatorNumber].frequencyType == OSC_FT_FIXE) {
                     refreshStatus = 9;
                 }
@@ -2860,7 +2860,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
             }
             case ENCODER_OSC_FTUNE: {
                 // Refresh Fine Tune
-                struct OscillatorParams* opParams = &synthState_->pfm3Preset_->osc1;
+                struct OscillatorParams* opParams = &pfm3Preset()->osc1;
                 if (opParams[synthState_->fullState_.operatorNumber].frequencyType == OSC_FT_FIXE) {
                     refreshStatus = 10;
                 }
@@ -2905,7 +2905,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
         tft_->setCursor(getEncoderX(encoder), encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
-        struct LfoParams* lfoParams = &synthState_->pfm3Preset_->lfoOsc1;
+        struct LfoParams* lfoParams = &pfm3Preset()->lfoOsc1;
         int lfoButtonState = synthState_->fullState_.buttonState[BUTTONID_EDIT_LFOS];
         tft_->print(lfoSyncParameterRow.params[0].valueName[lfoParams[lfoButtonState].freq < 100.0f ? 0 : 1]);
         return;
@@ -2914,7 +2914,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
         tft_->setCursor(getEncoderX(encoder), encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
-        struct StepSequencerParams* stepParams = &synthState_->pfm3Preset_->lfoSeq1;
+        struct StepSequencerParams* stepParams = &pfm3Preset()->lfoSeq1;
         int stepButtonState = synthState_->fullState_.buttonState[BUTTONID_EDIT_STEPS];
         tft_->print(lfoSyncParameterRow.params[0].valueName[stepParams[stepButtonState].bpm < 240.5f ? 0 : 1]);
         return;
@@ -2923,7 +2923,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
 }
 
 void EditorPfm3::drawAlgorithm() {
-    tft_->drawAlgoTable(EditorPfm3Algo::table(synthState_->pfm3Preset_->engine1.algo));
+    tft_->drawAlgoTable(EditorPfm3Algo::table(pfm3Preset()->engine1.algo));
 }
 
 void EditorPfm3::drawPageHeader() {
@@ -2937,7 +2937,7 @@ void EditorPfm3::drawPageHeader() {
 void EditorPfm3::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
     if (unlikely(isInOperatorPage(synthState_->fullState_.mainPage) && button >= 3 && button <= 5)) {
         tft_->drawButtonBiState(270, 29, button, synthState_->fullState_.operatorNumber,
-                                algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].osc - 1,
+                                algoInformation[(int)pfm3Preset()->engine1.algo].osc - 1,
                                 synthState_->fullState_.buttonState[BUTTONID_OPERATOR_1_2 + button - 3], (button - 3) * 2);
     } else if (isInMatrixPage(synthState_->fullState_.mainPage)) {
         uint8_t currentSelection = synthState_->fullState_.editPage * 2 + synthState_->fullState_.buttonState[page->buttonId];
@@ -2961,7 +2961,7 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder& rowEncod
         case ROW_MODULATION1:
         case ROW_MODULATION2:
         case ROW_MODULATION3: {
-            struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][button];
+            struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)pfm3Preset()->engine1.algo][button];
             if (im.source == 0) {
                 hideParam_[button] = true;
             } else {
@@ -2979,7 +2979,7 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder& rowEncod
         case ROW_OSC_MIX2:
         case ROW_OSC_MIX3: {
             int mixNumber = (rowEncoder.row - ROW_OSC_MIX1) * 2 + ((rowEncoder.encoder & 0x2) >> 1);
-            int currentAlgo = (int)synthState_->pfm3Preset_->engine1.algo;
+            int currentAlgo = (int)pfm3Preset()->engine1.algo;
             int numberOfMix = algoInformation[currentAlgo].mix;
 
             if (mixNumber < numberOfMix) {
@@ -2996,8 +2996,8 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder& rowEncod
             return;
         }
         case ROW_ENGINE2:
-            if ((synthState_->pfm3Preset_->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE) ||
-                (synthState_->pfm3Preset_->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD)) {
+            if ((pfm3Preset()->engine1.playMode == PLAY_MODE_POLY && rowEncoder.encoder == ENCODER_ENGINE2_GLIDE_TYPE) ||
+                (pfm3Preset()->engine1.playMode != PLAY_MODE_UNISON && rowEncoder.encoder >= ENCODER_ENGINE2_UNISON_SPREAD)) {
                 hideParam_[button] = true;
                 tft_->setCharColor(COLOR_DARK_GRAY);
                 tft_->print(paramRow->paramName[rowEncoder.encoder]);
@@ -3031,7 +3031,7 @@ void EditorPfm3::tempoClick() {
         if (imChangedCounter_[e] > 0) {
             imChangedCounter_[e]--;
             if (imChangedCounter_[e] == 0) {
-                struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][e];
+                struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)pfm3Preset()->engine1.algo][e];
                 if (im.source != im.destination) {
                     tft_->eraseHighlightIM(e, im.source, im.destination);
                 } else {
@@ -3070,7 +3070,7 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int bu
         const struct Pfm3Preset* defaultParams = &defaultPreset;
         int num = rowEncoder.encoder + rowEncoder.row * NUMBER_OF_ENCODERS_PFM2;
 
-        float* value = &((float*)synthState_->pfm3Preset_)[num];
+        float* value = &((float*)pfm3Preset())[num];
         float oldValue = *value;
         float newValue = ((float*)defaultParams)[num];
         (*value) = newValue;
@@ -3106,7 +3106,7 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int bu
             if (row >= ROW_ENV1_LEVEL) {
                 firstRow = ROW_ENV1_LEVEL;
             }
-            int currentAlgo = (int)synthState_->pfm3Preset_->engine1.algo;
+            int currentAlgo = (int)pfm3Preset()->engine1.algo;
             int currentOpType = algoOpInformation[currentAlgo][(row - firstRow)];
 
             for (int op = 0; op < NUMBER_OF_OPERATORS; op++) {
@@ -3116,7 +3116,7 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int bu
                 }
             }
         } else if (row >= ROW_MODULATION1 && row <= ROW_MODULATION3) {
-            int imMax = algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].im;
+            int imMax = algoInformation[(int)pfm3Preset()->engine1.algo].im;
             // Im or v ?
             if ((encoder4 & 0x1) == 0) {
                 for (int m = 0; m < imMax; m++) {
@@ -3129,7 +3129,7 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int bu
             }
         } else if (row >= ROW_OSC_MIX1 && row <= ROW_OSC_MIX3) {
             // Mix or Pan ?
-            int algoNumber = (int)synthState_->pfm3Preset_->engine1.algo;
+            int algoNumber = (int)pfm3Preset()->engine1.algo;
             if ((encoder4 & 0x1) == 0) {
                 for (int m = 0; m < NUMBER_OF_OPERATORS; m++) {
                     if (algoOpInformation[algoNumber][m] == 1) {
@@ -3168,7 +3168,7 @@ void EditorPfm3::buttonPressed(int button) {
         if (buttonSelected == currentButton) {
             newButtonState = (newButtonState + 1) & 0x1;
         }
-        uint8_t numberOfOsc = algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].osc - 1;
+        uint8_t numberOfOsc = algoInformation[(int)pfm3Preset()->engine1.algo].osc - 1;
         uint8_t newOperatorSelect = buttonSelected * 2 + newButtonState;
         if (newOperatorSelect <= numberOfOsc) {
             synthState_->fullState_.operatorNumber = newOperatorSelect;
@@ -3209,7 +3209,7 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
                             row += synthState_->fullState_.operatorNumber;
                         }
                         int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
-                        bufferParam_[e] = ((float*)synthState_->pfm3Preset_)[num];
+                        bufferParam_[e] = ((float*)pfm3Preset())[num];
                     }
                 }
                 if (isInMatrixPage(synthState_->fullState_.mainPage)) {
@@ -3243,21 +3243,21 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
             if (isInOperatorPage(synthState_->fullState_.mainPage) && synthState_->fullState_.editPage != 0) {
                 if (bufferParam_[0] != synthState_->fullState_.operatorNumber) {
                     uint8_t opNum = bufferParam_[0];
-                    float* timeSource = (float*)(((EnvelopeTimeMemory*)&synthState_->pfm3Preset_->env1Time) + opNum);
+                    float* timeSource = (float*)(((EnvelopeTimeMemory*)&pfm3Preset()->env1Time) + opNum);
                     float* timeDest =
-                        (float*)(((EnvelopeTimeMemory*)&synthState_->pfm3Preset_->env1Time) + synthState_->fullState_.operatorNumber);
+                        (float*)(((EnvelopeTimeMemory*)&pfm3Preset()->env1Time) + synthState_->fullState_.operatorNumber);
                     for (int i = 0; i < 4; i++) {
                         timeDest[i] = timeSource[i];
                     }
-                    float* levelSource = (float*)(((EnvelopeLevelMemory*)&synthState_->pfm3Preset_->env1Level) + opNum);
+                    float* levelSource = (float*)(((EnvelopeLevelMemory*)&pfm3Preset()->env1Level) + opNum);
                     float* levelDest =
-                        (float*)(((EnvelopeLevelMemory*)&synthState_->pfm3Preset_->env1Level) + synthState_->fullState_.operatorNumber);
+                        (float*)(((EnvelopeLevelMemory*)&pfm3Preset()->env1Level) + synthState_->fullState_.operatorNumber);
                     for (int i = 0; i < 4; i++) {
                         levelDest[i] = levelSource[i];
                     }
-                    float* curveSource = (float*)(((EnvelopeCurveParams*)&synthState_->pfm3Preset_->env1Curve) + opNum);
+                    float* curveSource = (float*)(((EnvelopeCurveParams*)&pfm3Preset()->env1Curve) + opNum);
                     float* curveDest =
-                        (float*)(((EnvelopeCurveParams*)&synthState_->pfm3Preset_->env1Curve) + synthState_->fullState_.operatorNumber);
+                        (float*)(((EnvelopeCurveParams*)&pfm3Preset()->env1Curve) + synthState_->fullState_.operatorNumber);
                     for (int i = 0; i < 4; i++) {
                         curveDest[i] = curveSource[i];
                     }
@@ -3273,7 +3273,7 @@ void EditorPfm3::buttonLongPressed(int instrument, int button) {
                             row += synthState_->fullState_.operatorNumber;
                         }
                         int num = encoder4 + row * NUMBER_OF_ENCODERS_PFM2;
-                        ((float*)synthState_->pfm3Preset_)[num] = bufferParam_[e];
+                        ((float*)pfm3Preset())[num] = bufferParam_[e];
                     }
                 }
                 if (isInMatrixPage(synthState_->fullState_.mainPage)) {
@@ -3326,7 +3326,7 @@ void EditorPfm3::refreshOscilloBG() {
 
 void EditorPfm3::refreshOscillatorOperatorShape() {
     int op = synthState_->fullState_.operatorNumber;
-    OscillatorParams* oscillatorParams = &synthState_->pfm3Preset_->osc1;
+    OscillatorParams* oscillatorParams = &pfm3Preset()->osc1;
 
     tft_->oscilloBgActionOperatorShape((int)oscillatorParams[op].shape);
 }
@@ -3342,8 +3342,8 @@ void EditorPfm3::refreshLfoOscillator() {
     }
     uint8_t lfoNumber = synthState_->fullState_.buttonState[page->buttonId];
 
-    LfoParams* lfoParam = &synthState_->pfm3Preset_->lfoOsc1;
-    float* lfoPhase = (float*)&synthState_->pfm3Preset_->lfoPhases;
+    LfoParams* lfoParam = &pfm3Preset()->lfoOsc1;
+    float* lfoPhase = (float*)&pfm3Preset()->lfoPhases;
 
     tft_->oscilloBgSetLfo(lfoParam[lfoNumber].shape, lfoParam[lfoNumber].freq, lfoParam[lfoNumber].keybRamp, lfoParam[lfoNumber].bias,
                           lfoPhase[lfoNumber]);
@@ -3362,12 +3362,12 @@ void EditorPfm3::refreshLfoEnv() {
     uint8_t envNumber = synthState_->fullState_.buttonState[page->buttonId];
 
     if (envNumber == 0) {
-        EnvelopeLfoParams* envParam = &synthState_->pfm3Preset_->lfoEnv1;
+        EnvelopeLfoParams* envParam = &pfm3Preset()->lfoEnv1;
         tft_->oscilloBgSetLfoEnvelope(envParam->attack, envParam->decay, 1.0f, envParam->release, 1.0f, envParam->sustain,
                                       envParam->sustain, 0.0f);
         tft_->oscilloBgActionEnvelope();
     } else if (envNumber == 1) {
-        Envelope2LfoParams* envParam = &synthState_->pfm3Preset_->lfoEnv2;
+        Envelope2LfoParams* envParam = &pfm3Preset()->lfoEnv2;
         tft_->oscilloBgSetLfoEnvelope(envParam->silence, envParam->attack, envParam->decay, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
         tft_->oscilloBgActionEnvelope();
     }
@@ -3375,9 +3375,9 @@ void EditorPfm3::refreshLfoEnv() {
 
 void EditorPfm3::refreshOscillatorOperatorEnvelope() {
     int op = synthState_->fullState_.operatorNumber;
-    EnvelopeTimeMemory* envTime = &synthState_->pfm3Preset_->env1Time;
-    EnvelopeLevelMemory* envLevel = &synthState_->pfm3Preset_->env1Level;
-    EnvelopeCurveParams* envCurve = &synthState_->pfm3Preset_->env1Curve;
+    EnvelopeTimeMemory* envTime = &pfm3Preset()->env1Time;
+    EnvelopeLevelMemory* envLevel = &pfm3Preset()->env1Level;
+    EnvelopeCurveParams* envCurve = &pfm3Preset()->env1Curve;
     tft_->oscilloBgSetEnvelope(envTime[op].attackTime, envTime[op].decayTime, envTime[op].sustainTime, envTime[op].releaseTime,
                                envLevel[op].attackLevel, envLevel[op].decayLevel, envLevel[op].sustainLevel, envLevel[op].releaseLevel,
                                envCurve[op].attackCurve, envCurve[op].decayCurve, envCurve[op].sustainCurve, envCurve[op].releaseCurve);
@@ -3391,7 +3391,7 @@ void EditorPfm3::newTimbre() {
 }
 
 void EditorPfm3::checkOperatorNumber() {
-    int numberOfOsc = algoInformation[(int)synthState_->pfm3Preset_->engine1.algo].osc;
+    int numberOfOsc = algoInformation[(int)pfm3Preset()->engine1.algo].osc;
 
     if (unlikely(numberOfOsc == 3)) {
         // Special case for 3 operators

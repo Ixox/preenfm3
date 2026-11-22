@@ -135,11 +135,3 @@ void PatchBank::savePatch(const struct PFM3File* bank, int patchNumber, Timbre* 
     // Save patch
     save(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);
 }
-
-void PatchBank::copyNewPreset(struct Pfm3Preset* params) {
-    char* source = (char*)&newPresetParams;
-    char* dest = (char*)params;
-    for (uint32_t k = 0; k < sizeof(struct Pfm3Preset); k++) {
-        dest[k] = source[k];
-    }
-}

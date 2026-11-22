@@ -34,6 +34,7 @@ Implement the core `SynthEngine` methods:
 - `setMatrixPolyAfterTouch()`
 - `noteOnMpe()` / `noteOffMpe()`
 - `getStorageMagic()`, `getStorageNameOffset()`, `getStorageDefaultName()`
+- `getPresetName()`
 - `getStorageBlob()` / `loadStorageBlob()`
 
 Most other `SynthEngine` methods have default no-op implementations and can be
@@ -83,21 +84,22 @@ notes and clock but has no parameter CC/NRPN.
 
 ### Receiving
 
-Override these when the engine has its own MIDI parameter map:
+Override `midiData(int timbre, const MidiData& data)` when the engine has its
+own MIDI parameter map. `MidiData` carries the event type (CC, user CC, NRPN,
+aftertouch, pitch bend, MPE aftertouch/pitch bend/slide), the channel and the
+relevant values. Return `true` when the event was consumed.
 
-- `midiControlChange(int timbre, uint8_t cc, uint8_t value)` — apply a CC to
-  the engine parameters and return `true`. Return `false` to ignore it.
-- `midiNrpn(int timbre, uint16_t param, uint16_t value)` — same for NRPN;
-  `param` and `value` are the packed 14-bit values.
-
-The defaults return `false`, so a new engine ignores parameter CC/NRPN until it
+The default returns `false`, so a new engine ignores parameter MIDI until it
 opts in. Shared controls (Arp, FX1/FX2, mixer, sequencer) are handled by
-`MidiDecoder` and never reach the engine. `Timbre::midiControlChange()`
-intercepts them (`decodeSharedControlChange()` + `getSharedParamRowEncoder()`
-using the ids in `SharedParams.h`) and applies them through
-`setFlatParamFromMidi()`. Only unhandled CCs are forwarded to the engine.
-Notes, pitch bend, aftertouch and MPE are also generic; do not parse them in
-the engine.
+`MidiDecoder` and `Timbre::midiData()`: `Timbre::midiData()` intercepts
+`MIDI_DATA_CC` events with `decodeSharedControlChange()` +
+`getSharedParamRowEncoder()` using the ids in `SharedParams.h` and applies them
+through `setFlatParamFromMidi()`. Only unhandled CCs are forwarded to the
+engine. `MIDI_DATA_USER_CC` bypasses the shared decode so user CCs keep
+priority.
+
+Notes and clock are generic. Pitch bend, aftertouch, NRPN and MPE are forwarded
+to the engine through `midiData()`.
 
 When applying a received CC/NRPN, propagate it with
 `SynthState::propagateNewEngineParamValueFromExternal()`. That applies the

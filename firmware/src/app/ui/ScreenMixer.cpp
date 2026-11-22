@@ -17,6 +17,7 @@
 #include "ScreenMixer.h"
 #include "SynthEngineFactory.h"
 #include "SynthState.h"
+#include "Timbre.h"
 #include "TftDisplay.h"
 
 // To access comp values
@@ -440,7 +441,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
             tft_->setCursorInPixel(238 - (numberOfVoice >= 10 ? 4 : 3) * 11, Y_MIXER);
 
             // RED if not poly play mode
-            if (synthState_->getTimbrePlayMode(timbre) == 1) {
+            if (synthState_->getTimbre(timbre)->getPlayMode() == 1) {
                 tft_->setCharColor(COLOR_GRAY);
             } else {
                 tft_->setCharColor(COLOR_RED);
@@ -497,7 +498,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
             }
         } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
             uint8_t numberOfVoice = *((int8_t*)valueP);
-            uint8_t polyMono = synthState_->getTimbrePlayMode(timbre);
+            uint8_t polyMono = synthState_->getTimbre(timbre)->getPlayMode();
             if (numberOfVoice == 0) {
                 tft_->setCharColor(COLOR_DARK_GRAY);
             } else if (numberOfVoice == 1) {

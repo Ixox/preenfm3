@@ -43,8 +43,15 @@ public:
     void buttonPressed(int button) override;
     void preparePage() override;
     void refreshOscilloBG() override;
+    int getStepSelection(int which) const override;
+    int getPatternSelection() const override {
+        return patternSelect_;
+    }
 
 protected:
+    void encoderTurnedForStepSequencer(int row, int encoder4, int encoder6, int ticks);
+    void encoderTurnedForArpPattern(int row, int num, int ticks);
+    struct Pfm3Preset* pfm3Preset() const;
     void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
     void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay* param, float oldValue, float newFloatValue);
     void resetHideParams();
@@ -52,6 +59,7 @@ protected:
     bool hideParam_[NUMBER_OF_ENCODERS];
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
     float lfoFreqPreviousValue_[5];
+    char patternSelect_;
 };
 
 #endif

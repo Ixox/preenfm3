@@ -26,7 +26,7 @@ public:
     virtual void menuBack(const MenuItem* oldMenuItem, FullState* fullState) = 0;
     virtual void newMenuState(FullState* fullState) = 0;
     virtual void newMenuSelect(FullState* fullState) = 0;
-    virtual void newPfm3Page(FullState* fullState) = 0;
+    virtual void newScreenPage(FullState* fullState) = 0;
 
     SynthMenuListener* nextListener_;
 };

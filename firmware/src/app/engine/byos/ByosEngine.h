@@ -63,8 +63,9 @@ public:
     void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
     uint8_t* getPatchMemory() override;
     void patchMemoryChanged() override;
+    char* getPresetName() override;
 
-    bool midiControlChange(int timbre, uint8_t cc, uint8_t value) override;
+    bool midiData(int timbre, const struct MidiData& data) override;
     bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const override;
     bool supportsStepSequencer() const override {
         return false;

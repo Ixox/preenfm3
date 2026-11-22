@@ -15,6 +15,7 @@
 #include "Common.h"
 #include "PersistenceMagic.h"
 #include "engine/pfm3/Pfm3Preset.h"
+#include "MidiData.h"
 #include "TimbreParams.h"
 
 class Timbre;
@@ -122,6 +123,9 @@ public:
         return nullptr;
     }
 
+    // Preset name shown by the mixer/sequencer.
+    virtual char* getPresetName() = 0;
+
     // Reload the engine after direct edits to getPatchMemory().
     virtual void patchMemoryChanged() {
     }
@@ -147,14 +151,8 @@ public:
         return false;
     }
 
-    // Engine-owned parameter CC. Return true when the CC was consumed.
-    virtual bool midiControlChange(int timbre, uint8_t cc, uint8_t value) {
-        return false;
-    }
-
-    // Engine-owned NRPN. `param` and `value` are the packed 14-bit values.
-    // Return true when the NRPN was consumed.
-    virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) {
+    // Engine-owned MIDI data (CC, NRPN, aftertouch, pitch bend, MPE).
+    virtual bool midiData(int timbre, const struct MidiData& data) {
         return false;
     }
 
@@ -238,10 +236,18 @@ public:
     virtual bool isUnisonMode() const {
         return false;
     }
+    virtual uint8_t getPlayMode() const {
+        return PLAY_MODE_POLY;
+    }
     virtual bool supportsStepSequencer() const {
         return true;
     }
     virtual void setStepSequencerSteps(int which, const struct StepSequencerSteps& steps) {
+    }
+    virtual int getStepSelection(int which) const {
+        return 0;
+    }
+    virtual void setStepSelection(int which, int step) {
     }
 
     // Flat Pfm3Preset mirror (PFM3 UI/storage layout).
@@ -290,6 +296,18 @@ public:
 
     // DX7 SysEx import (156-byte packed DX7 program).
     virtual void loadDx7Patch(const uint8_t* packedPatch) {
+    }
+
+    // Fill the engine's PFM3 preset mirror from a packed DX7 program.
+    virtual void loadHexterPatch(const uint8_t* packedPatch) {
+    }
+
+    // Initialize a fresh engine preset.
+    virtual void loadNewPreset() {
+    }
+
+    // PFM3-style randomizer (default no-op).
+    virtual void randomizePreset(int operatorRandom, int envelopeTypeRandom, int imRandom, int modulationRandom) {
     }
 };
 

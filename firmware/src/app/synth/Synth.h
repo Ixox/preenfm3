@@ -118,7 +118,7 @@ public:
 
     void setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue);
     void setNewSeqValueFromMidi(uint8_t timbre, uint8_t seqValue, uint8_t newValue);
-    void loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber);
+    void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber);
     void setHoldPedal(int timbre, int value);
 
     void setCurrentInstrument(int value);

@@ -21,6 +21,8 @@
 #include "ScreenMixer.h"
 #include "ScreenSequencer.h"
 #include "ScreenTypes.h"
+#include "SynthState.h"
+#include "Timbre.h"
 
 extern struct WaveTable waveTables[NUMBER_OF_WAVETABLES];
 
@@ -342,7 +344,7 @@ void ScreenCoordinator::newMixerValue(uint8_t valueType, uint8_t timbre, float o
     mixer_->newMixerValue(valueType, timbre, oldValue, newValue, refreshStatus_);
 }
 
-void ScreenCoordinator::newPfm3Page(FullState* fullState) {
+void ScreenCoordinator::newScreenPage(FullState* fullState) {
     if (unlikely(fullState->synthMode == SYNTH_MODE_REINIT_TFT)) {
         tft_->reset();
     } else {
@@ -373,7 +375,7 @@ void ScreenCoordinator::checkPresetModified(int timbre) {
     if (!editor_->isPresetModifed(timbre)) {
         editor_->setPresetModified(timbre, true);
         if (this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR && timbre == currentTimbre_) {
-            int length = getLength(this->synthState_->pfm3Preset_->presetName);
+            int length = getLength(synthState_->getTimbre(currentTimbre_)->getPfm3Preset()->presetName);
             tft_->setCursor(3 + length, 0);
             tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
             tft_->print('*');

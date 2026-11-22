@@ -1032,10 +1032,10 @@ PFM3 CCs and NRPNs have no effect.
 
 - **CC parameter map** (`receives & 0x01`) —
   `MidiDecoder::controlChange()` maps shared CCs (Arp/FX/mixer/sequencer) and
-  forwards the rest to `Timbre::midiControlChange()` →
-  `Preenfm3Engine::midiControlChange()`: algorithm, IM, mix/pan, oscillator
-  frequency, matrix, LFO, envelopes, unison, step sequencer.
-  `MsfaSynthEngine::midiControlChange()` adds a small global map:
+  forwards the rest to `Timbre::midiData()` → `Preenfm3Engine::midiData()`:
+  algorithm, IM, mix/pan, oscillator frequency, matrix, LFO, envelopes, unison,
+  step sequencer.
+  `MsfaSynthEngine::midiData()` adds a small global map:
 
   | CC | MSFA parameter |
   |---|---|
@@ -1056,8 +1056,9 @@ PFM3 CCs and NRPNs have no effect.
   with `propagateNewEngineParamValueFromExternal()`, so they update audio/UI
   but are not echoed back.
 - **NRPN** (`receives & 0x02`) — `MidiDecoder` accumulates NRPN and forwards
-  it to `Timbre::midiNrpn()` → `Preenfm3Engine::midiNrpn()`, which maps the
-  legacy indexes to PFM3 `allParameterRows`. MSFA ignores them.
+  it to `Timbre::midiData()` with `MIDI_DATA_NRPN` →
+  `Preenfm3Engine::midiData()`, which maps the legacy indexes to PFM3
+  `allParameterRows`. MSFA ignores them.
   `sendCurrentPatchAsNrpns()` enumerates the patch through
   `midiPatchParam()`; MSFA uses the default (nothing), so it no longer sends
   the PFM3 block.

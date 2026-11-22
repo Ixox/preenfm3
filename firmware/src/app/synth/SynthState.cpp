@@ -16,8 +16,6 @@
  */
 
 #include "SynthState.h"
-#include "Hexter.h"
-#include "engine/pfm3/Pfm3ParameterRows.h"
 #include "ScreenEditor.h"
 #include "ScreenMenu.h"
 #include "ScreenMixer.h"
@@ -29,11 +27,8 @@
 extern Synth synth;
 extern RNG_HandleTypeDef hrng;
 
-static Pfm3Preset backupPfm3PresetStorage_ __attribute__((section(".ram_d3")));
-
 SynthState::SynthState() {
     operatorNumber_ = 0;
-    backupPfm3Preset_ = &backupPfm3PresetStorage_;
 
     // First default preset
     fullState_.synthMode = SYNTH_MODE_MIXER;
@@ -78,22 +73,8 @@ SynthState::SynthState() {
 
     // edit with timbre 0
     currentTimbre_ = 0;
-    stepSelect_[0] = 0;
-    stepSelect_[1] = 0;
-    patternSelect_ = 0;
 
     isPlayingNote_ = false;
-
-    for (int row = 0; row < NUMBER_OF_ROWS; row++) {
-        for (int param = 0; param < NUMBER_OF_ENCODERS_PFM2; param++) {
-            struct ParameterDisplay* paramDisplay = &(allParameterRows.row[row]->params[param]);
-            if (paramDisplay->numberOfValues > 1.0) {
-                paramDisplay->incValue = ((paramDisplay->maxValue - paramDisplay->minValue) / (paramDisplay->numberOfValues - 1.0f));
-            } else {
-                paramDisplay->incValue = 0.0f;
-            }
-        }
-    }
 
     // Init mixer state with default values
     char mixerStateChars[sizeof(mixerState_)];
@@ -114,94 +95,6 @@ void SynthState::init(ScreenMixer* displayMixer, ScreenEditor* displayEditor, Sc
     this->displaySequencer_ = displaySequencer;
 
     mixerState_.fxBus_.init();
-}
-
-void SynthState::encoderTurnedForStepSequencer(int row, int encoder4, int encoder6, int ticks) {
-    int whichStepSeq = row - ROW_LFOSEQ1;
-    StepSequencerSteps* seqSteps = &((StepSequencerSteps*)(&pfm3Preset_->lfoSteps1))[whichStepSeq];
-
-    if (encoder6 == 3) {
-        int oldPos = stepSelect_[whichStepSeq];
-        int newValue = stepSelect_[whichStepSeq] + (ticks > 0 ? 1 : -1);
-
-        if (newValue > 15) {
-            newValue = 0;
-        } else if (newValue < 0) {
-            newValue = 15;
-        }
-
-        stepSelect_[whichStepSeq] = newValue;
-        propagateNewPfm3ParamValue(currentTimbre_, row, encoder4, (ParameterDisplay*)NULL, oldPos, stepSelect_[whichStepSeq]);
-
-    } else if (encoder6 == 4) {
-        char* step = &seqSteps->steps[(int)stepSelect_[whichStepSeq]];
-        int oldValue = (int)(*step);
-
-        int newValue = (*step) + ticks;
-
-        if (newValue > 15) {
-            newValue = 15;
-        } else if (newValue < 0) {
-            newValue = 0;
-        }
-        if ((*step) != newValue) {
-            (*step) = newValue;
-            propagateNewPfm3ParamValue(currentTimbre_, row, encoder4, (ParameterDisplay*)NULL, oldValue, (int)(*step));
-        }
-    }
-}
-
-void SynthState::encoderTurnedForArpPattern(int row, int encoder, int ticks) {
-    if (encoder == 0) {
-        // Encoder 0: move cursor
-        int oldPos = patternSelect_;
-        int newPos = oldPos;
-        newPos += (ticks > 0 ? 1 : -1);
-
-        if (newPos > 15) {
-            newPos = 0;
-        } else if (newPos < 0) {
-            newPos = 15;
-        }
-        if (newPos != oldPos) {
-            patternSelect_ = newPos;
-            propagateNewPfm3ParamValue(currentTimbre_, row, encoder, (ParameterDisplay*)NULL, oldPos, patternSelect_);
-        }
-
-    } else if (encoder == 1) {
-        // Change value(s)
-        if (pfm3Preset_->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
-            return;
-        }
-        arp_pattern_t pattern =
-            pfm3Preset_->engineArpUserPatterns.patterns[(int)pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT];
-        const uint16_t oldMask = ARP_PATTERN_GETMASK(pattern);
-        uint16_t newMask = oldMask;
-
-        uint16_t bitsToModify = 0;
-        switch (encoder) {
-        case 1:
-            bitsToModify = 0x1 << patternSelect_;
-            break; // modify single note
-        case 2:
-            bitsToModify = 0x1111 << (patternSelect_ & 3);
-            break; // modify all
-        case 3:
-            bitsToModify = 0xf << ((patternSelect_ >> 2) << 2);
-            break; // modify entire bar
-        }
-        if (ticks > 0) {
-            newMask |= bitsToModify;
-        } else {
-            newMask &= ~bitsToModify;
-        }
-
-        if (oldMask != newMask) {
-            ARP_PATTERN_SETMASK(pattern, newMask);
-            pfm3Preset_->engineArpUserPatterns.patterns[(int)pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
-            propagateNewPfm3ParamValue(currentTimbre_, row, encoder, (ParameterDisplay*)NULL, oldMask, newMask);
-        }
-    }
 }
 
 void SynthState::twoButtonsPressed(int button1, int button2) {
@@ -229,9 +122,9 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
         case BUTTON_PREVIOUS_INSTRUMENT: {
             SynthEditMode previousMode = fullState_.synthMode;
             fullState_.synthMode = SYNTH_MODE_REINIT_TFT;
-            propagateNewPfm3Page();
+            propagateNewScreenPage();
             fullState_.synthMode = previousMode;
-            propagateNewPfm3Page();
+            propagateNewScreenPage();
             break;
         }
         case BUTTON_PFM3_MIXER:
@@ -262,7 +155,7 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
     // Screenshot !!
     if (button1 == BUTTON_PFM3_MENU && button2 == BUTTON_NEXT_INSTRUMENT) {
         storage_->getPPMImage()->saveImage();
-        propagateNewPfm3Page();
+        propagateNewScreenPage();
     }
 #endif
 
@@ -364,12 +257,12 @@ void SynthState::loadNewPreset(int timbre) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
-    storage_->getPatchBank()->copyNewPreset(pfm3Preset_);
+    timbres_[timbre].loadNewPreset();
     propagateAfterNewParamsLoad(timbre);
     restoreTestNote();
 }
 
-void SynthState::loadPreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params) {
+void SynthState::loadPreset(int timbre, PFM3File const* bank, int patchNumber) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
@@ -384,16 +277,11 @@ void SynthState::loadPreset(int timbre, PFM3File const* bank, int patchNumber, s
     restoreTestNote();
 }
 
-void SynthState::savePreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params) {
-    if (params != nullptr) {
-        // The save dialog edits presetName in the Pfm3Preset mirror; keep the
-        // persisted name in sync for every engine.
-        timbres_[timbre].setPresetName(params->presetName);
-    }
+void SynthState::savePreset(int timbre, PFM3File const* bank, int patchNumber) {
     storage_->getPatchBank()->savePatch(bank, patchNumber, &timbres_[timbre]);
 }
 
-void SynthState::loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params) {
+void SynthState::loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber) {
     storeTestNote();
     propagateNoteOff();
     propagateBeforeNewParamsLoad(timbre);
@@ -403,20 +291,7 @@ void SynthState::loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber,
         // DX7 sysex patches always switch the target timbre to DX7.
         mixerState_.instrumentState_[timbre].engine = SYNTH_ENGINE_DX7;
         timbres_[timbre].setEngine(SYNTH_ENGINE_DX7);
-
-        // A DX7 sysex carries no arpeggiator/FX settings. Reset the shared
-        // params (and the PFM3 mirror) so the new instrument does not inherit
-        // the previous instrument's FX/arp.
-        timbres_[timbre].applyPfm3Preset(preenMainPreset);
-
         timbres_[timbre].loadDx7Patch(packed);
-        // Keep PFM3 params in sync for display/backward compatibility.
-        hexter_->loadHexterPatch(packed, params);
-        if (params != nullptr) {
-            // The DX7 program name must also be the persisted name (preset
-            // and mixer storage read the shared params).
-            timbres_[timbre].setPresetName(params->presetName);
-        }
     }
 
     propagateAfterNewParamsLoad(timbre);
@@ -432,14 +307,14 @@ void SynthState::loadMixer(PFM3File const* bank, int patchNumber) {
     propagateAfterNewMixerLoad();
 }
 
-void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset* params) {
+void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
     switch (bank) {
     case 0: {
         PFM3File const* bank = storage_->getPatchBank()->getFile(bankLSB);
         if (bank->fileType != FILE_EMPTY) {
             fullState_.preenFMBankNumber = bankLSB;
             fullState_.preenFMPresetNumber = patchNumber;
-            loadPreset(timbre, bank, patchNumber, params);
+            loadPreset(timbre, bank, patchNumber);
         }
         break;
     }
@@ -460,7 +335,7 @@ void SynthState::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patch
         if (bank->fileType != FILE_EMPTY) {
             fullState_.dx7BankNumber = bankLSB;
             fullState_.dx7PresetNumber = patchNumber;
-            loadDx7Patch(timbre, bank, patchNumber, params);
+            loadDx7Patch(timbre, bank, patchNumber);
         }
         break;
     }
@@ -603,324 +478,12 @@ void SynthState::tempoClick() {
     }
 }
 
-void SynthState::setParamsAndTimbre(struct Pfm3Preset* newParams, int newCurrentTimbre) {
-    this->pfm3Preset_ = newParams;
-    this->currentTimbre_ = newCurrentTimbre;
-}
-
-/*
- * Randomizer
- */
-
-int getRandomInt(int max) {
-    uint32_t rnd;
-    HAL_RNG_GenerateRandomNumber(&hrng, &rnd);
-    return rnd % max;
-}
-
-float getRandomFloat(float min, float max) {
-    uint32_t rnd;
-    HAL_RNG_GenerateRandomNumber(&hrng, &rnd);
-    float f = ((float)(rnd % 100000)) / 100000.0f;
-    return f * (max - min) + min;
-}
-
-float getRandomShape(int operatorRandom) {
-    int shape = getRandomInt(7);
-    switch (operatorRandom) {
-    case 1:
-        if (shape > 2) {
-            shape = 0;
-        }
-        break;
-    case 2:
-        shape = getRandomInt(8);
-        if (shape == 6) { // Rand
-            shape = 0;
-        }
-        break;
-    case 3:
-        break;
-    }
-    return shape;
-}
-
-float getRandomFrequencyType(int operatorRandom) {
-    int freqType = getRandomInt(32);
-    if (freqType > 1) { // Keyboard 5 times out of 6
-        freqType = 0;
-    }
-    return freqType;
-}
-
-float getRandomFrequency(int operatorRandom) {
-    float random1Frequency[] = {.5f, 1.0f, 2.0f, 4.0f};
-    float random2Frequency[] = {.25, .5f, 1.0f, 1.5, 2.0f, 3.0f, 4.0f};
-    float freq = 0;
-    switch (operatorRandom) {
-    case 1:
-        freq = random1Frequency[getRandomInt(4)];
-        break;
-    case 2:
-        freq = random2Frequency[getRandomInt(7)];
-        break;
-    case 3:
-        freq = getRandomInt(24) * .25 + .25;
-        break;
-    }
-    return freq;
-}
-
-float getFineTune(int operatorRandom) {
-    float fineTune = 0;
-    switch (operatorRandom) {
-    case 2:
-        fineTune = getRandomInt(10) * .01 - .05;
-        if (fineTune < 0.03 || fineTune > 0.03) {
-            fineTune = 0;
-        }
-        break;
-    case 3:
-        fineTune = getRandomInt(20) * .01 - .05;
-        if (fineTune < 0.07 || fineTune > 0.07) {
-            fineTune = 0;
-        }
-        break;
-    }
-    return fineTune;
-}
-
 void SynthState::randomizePreset() {
-    int operatorRandom = fullState_.randomizer.Oper;
-    int envelopeTypeRandom = fullState_.randomizer.EnvT;
-    int imRandom = fullState_.randomizer.IM;
-    int modulationRandom = fullState_.randomizer.Modl;
-
-    // general
-
-    pfm3Preset_->engine1.velocity = 8;
-
-    if (operatorRandom > 0) {
-        pfm3Preset_->engineMix1.mixOsc1 = getRandomFloat(0.6f, 1.0f);
-        pfm3Preset_->engineMix1.mixOsc2 = getRandomFloat(0.6f, 1.0f);
-        pfm3Preset_->engineMix2.mixOsc3 = getRandomFloat(0.6f, 1.0f);
-        pfm3Preset_->engineMix2.mixOsc4 = getRandomFloat(0.6f, 1.0f);
-        pfm3Preset_->engineMix3.mixOsc5 = getRandomFloat(0.6f, 1.0f);
-        pfm3Preset_->engineMix3.mixOsc6 = getRandomFloat(0.6f, 1.0f);
-
-        pfm3Preset_->engineMix1.panOsc1 = 0.0;
-        pfm3Preset_->engineMix1.panOsc2 = getRandomFloat(-0.3f, 0.3f);
-        pfm3Preset_->engineMix2.panOsc3 = getRandomFloat(-0.3f, 0.3f);
-        pfm3Preset_->engineMix2.panOsc4 = getRandomFloat(-0.5f, 0.5f);
-        pfm3Preset_->engineMix3.panOsc5 = getRandomFloat(-0.5f, 0.5f);
-        pfm3Preset_->engineMix3.panOsc6 = getRandomFloat(-0.7f, 0.7f);
-
-        pfm3Preset_->engine1.algo = getRandomInt(ALGO_END);
-
-        for (int o = 0; o < 6; o++) {
-            struct OscillatorParams* currentOsc = &((struct OscillatorParams*)&pfm3Preset_->osc1)[o];
-            currentOsc->shape = getRandomShape(operatorRandom);
-            currentOsc->frequencyMul = getRandomFrequency(operatorRandom);
-            currentOsc->frequencyType = getRandomFrequencyType(operatorRandom);
-            currentOsc->detune = getFineTune(operatorRandom);
-        }
-
-        // FX
-        pfm3Preset_->effect1.param1 = getRandomFloat(0.2f, 0.8f);
-        pfm3Preset_->effect1.param2 = getRandomFloat(0.2f, 0.8f);
-        int effect = getRandomInt(15);
-        if (effect == 1 || effect > 6) {
-            pfm3Preset_->effect1.param3 = 1.0;
-            pfm3Preset_->effect1.type = 0;
-        } else {
-            pfm3Preset_->effect1.param3 = 0.6;
-            pfm3Preset_->effect1.type = effect;
-        }
-    }
-
-    for (int e = 0; e < 6; e++) {
-        struct EnvelopeParamsA* enva = &((struct EnvelopeParamsA*)&pfm3Preset_->env1Time)[e * 2];
-        struct EnvelopeParamsB* envb = &((struct EnvelopeParamsB*)&pfm3Preset_->env1Level)[e * 2];
-
-        switch (envelopeTypeRandom) {
-        case 1:
-            enva->attackLevel = 1.0;
-            enva->attackTime = getRandomFloat(0, 0.3f);
-            enva->decayLevel = getRandomFloat(0.5f, 1.0f);
-            enva->decayTime = getRandomFloat(0.05, 0.5f);
-
-            envb->sustainLevel = getRandomFloat(0.0f, 1.0f);
-            envb->sustainTime = getRandomFloat(0.02, 1.0f);
-            envb->releaseLevel = 0.0f;
-            envb->releaseTime = getRandomFloat(0.2, 5.0f);
-            ;
-
-            break;
-        case 2:
-            enva->attackLevel = getRandomFloat(0.25f, 1.0f);
-            enva->attackTime = getRandomFloat(0.5f, 3.0f);
-            enva->decayLevel = getRandomFloat(0.5f, 1.0f);
-            enva->decayTime = getRandomFloat(1.0f, 5.0f);
-
-            envb->sustainLevel = getRandomFloat(0.0f, 1.0f);
-            envb->sustainTime = getRandomFloat(2.0f, 5.0f);
-            envb->releaseLevel = 0.0f;
-            envb->releaseTime = getRandomFloat(1.0f, 8.0f);
-            break;
-        case 3:
-            enva->attackLevel = getRandomFloat(0, 1.0f);
-            enva->attackTime = getRandomFloat(0, 1.0f);
-            enva->decayLevel = getRandomFloat(0, 1.0f);
-            enva->decayTime = getRandomFloat(0, 1.0f);
-
-            envb->sustainLevel = getRandomFloat(0, 1.0f);
-            envb->sustainTime = getRandomFloat(0, 1.0f);
-            envb->releaseLevel = getRandomFloat(0, 1.0f);
-            envb->releaseTime = getRandomFloat(0, 4.0f);
-            break;
-        }
-    }
-
-    if (imRandom > 0) {
-        struct EngineIm1* im1 = (struct EngineIm1*)&pfm3Preset_->engineIm1;
-        struct EngineIm2* im2 = (struct EngineIm2*)&pfm3Preset_->engineIm2;
-        struct EngineIm3* im3 = (struct EngineIm3*)&pfm3Preset_->engineIm3;
-
-        float min = 0;
-        float max = 0;
-        float minVelo = 0;
-        float maxVelo = 0;
-
-        switch (imRandom) {
-        case 1:
-            min = 0.25f;
-            max = 2.0f;
-            minVelo = 0.2f;
-            maxVelo = 1.0f;
-            break;
-        case 2:
-            min = .5f;
-            max = 3.0f;
-            minVelo = 1.0f;
-            maxVelo = 2.0f;
-            break;
-        case 3:
-            min = 1.0f;
-            max = 5.0f;
-            minVelo = 1.0f;
-            maxVelo = 4.0f;
-            break;
-        }
-        im1->modulationIndex1 = getRandomFloat(min, max);
-        im1->modulationIndexVelo1 = getRandomFloat(minVelo, maxVelo);
-        im1->modulationIndex2 = getRandomFloat(min, max);
-        im1->modulationIndexVelo2 = getRandomFloat(minVelo, maxVelo);
-        im2->modulationIndex3 = getRandomFloat(min, max);
-        im2->modulationIndexVelo3 = getRandomFloat(minVelo, maxVelo);
-        im2->modulationIndex4 = getRandomFloat(min, max);
-        im2->modulationIndexVelo4 = getRandomFloat(minVelo, maxVelo);
-        im3->modulationIndex5 = getRandomFloat(min, max);
-        im3->modulationIndexVelo5 = getRandomFloat(minVelo, maxVelo);
-    }
-
-    if (modulationRandom > 0) {
-
-        pfm3Preset_->matrixRowState1.source = MATRIX_SOURCE_LFO1;
-        pfm3Preset_->matrixRowState2.source = MATRIX_SOURCE_LFO1;
-        pfm3Preset_->matrixRowState3.source = MATRIX_SOURCE_LFO2;
-        pfm3Preset_->matrixRowState4.source = MATRIX_SOURCE_LFO2;
-        pfm3Preset_->matrixRowState5.source = MATRIX_SOURCE_LFO3;
-        pfm3Preset_->matrixRowState6.source = MATRIX_SOURCE_LFOENV1;
-        pfm3Preset_->matrixRowState7.source = MATRIX_SOURCE_LFOENV2;
-        pfm3Preset_->matrixRowState8.source = MATRIX_SOURCE_LFOSEQ1;
-        pfm3Preset_->matrixRowState9.source = MATRIX_SOURCE_LFOSEQ2;
-
-        pfm3Preset_->matrixRowState10.source = MATRIX_SOURCE_MODWHEEL;
-        pfm3Preset_->matrixRowState10.mul = 2.0f;
-        pfm3Preset_->matrixRowState10.dest1 = INDEX_ALL_MODULATION;
-
-        pfm3Preset_->matrixRowState11.source = MATRIX_SOURCE_PITCHBEND;
-        pfm3Preset_->matrixRowState11.mul = 1.0f;
-        pfm3Preset_->matrixRowState11.dest1 = ALL_OSC_FREQ;
-
-        pfm3Preset_->matrixRowState12.source = MATRIX_SOURCE_AFTERTOUCH;
-        pfm3Preset_->matrixRowState12.mul = 1.0f;
-        pfm3Preset_->matrixRowState12.dest1 = INDEX_MODULATION1;
-
-        for (int m = 1; m <= 9; m++) {
-            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[m - 1];
-            matrixRow->mul = 0;
-            matrixRow->dest1 = 0;
-        }
-
-        float dest[] = {INDEX_ALL_MODULATION, OSC1_FREQ, ALL_PAN, OSC2_FREQ, INDEX_MODULATION1, PAN_OSC1, INDEX_ALL_MODULATION};
-        for (int i = 0; i < 2; i++) {
-            struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[getRandomInt(10)];
-            matrixRow->mul = getRandomFloat(0.2f, 3.0f);
-            matrixRow->dest1 = dest[getRandomInt(7)];
-        }
-
-        if (modulationRandom >= 2) {
-            for (int i = 0; i < 3; i++) {
-                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[getRandomInt(10)];
-                matrixRow->mul = getRandomFloat(1.0f, 3.0f);
-                matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
-            }
-        }
-
-        if (modulationRandom >= 3) {
-            for (int i = 0; i < 6; i++) {
-                struct MatrixRowParams* matrixRow = &((struct MatrixRowParams*)&pfm3Preset_->matrixRowState1)[getRandomInt(10)];
-                float mm = getRandomFloat(2.0f, 5.0f);
-                matrixRow->mul = getRandomFloat(-mm, mm);
-                matrixRow->dest1 = getRandomInt(DESTINATION_MAX);
-            }
-        }
-
-        for (int o = 0; o < 3; o++) {
-            struct LfoParams* osc = &((struct LfoParams*)&pfm3Preset_->lfoOsc1)[o];
-            osc->shape = getRandomInt(5);
-            osc->freq = getRandomFloat(0.2, 3 + modulationRandom * 2);
-            if (getRandomInt(4) > 1) {
-                osc->bias = 0;
-            } else {
-                osc->bias = getRandomFloat(-1.0f, 1.0f);
-            }
-            // PAD
-            if (envelopeTypeRandom == 2) {
-                osc->keybRamp = getRandomFloat(0.0f, 4.0f);
-            } else {
-                osc->keybRamp = getRandomFloat(0.0f, 1.0f);
-            }
-        }
-        for (int e = 0; e < 2; e++) {
-            struct EnvelopeLfoParams* env = &((struct EnvelopeLfoParams*)&pfm3Preset_->lfoEnv1)[e];
-            env->attack = getRandomFloat(0.05f, 1.0f);
-            env->decay = getRandomFloat(0.05f, 1.0f);
-            env->sustain = getRandomFloat(0.05f, 1.0f);
-            if (e == 0) {
-                env->release = getRandomFloat(0.05f, 1.0f);
-            } else {
-                pfm3Preset_->lfoEnv2.loop = getRandomInt(2) + 1;
-            }
-        }
-
-        int bpm = getRandomInt(120) + 60;
-        for (int s = 0; s < 2; s++) {
-            struct StepSequencerParams* stepSeq = &((struct StepSequencerParams*)&pfm3Preset_->lfoSeq1)[s];
-            stepSeq->bpm = bpm;
-            stepSeq->gate = getRandomFloat(0.25, 1);
-
-            struct StepSequencerSteps* steps = &((struct StepSequencerSteps*)&pfm3Preset_->lfoSteps1)[s];
-            for (int k = 0; k < 16; k++) {
-                if ((k % 4) == 0) {
-                    steps->steps[k] = getRandomInt(5) + 11;
-                } else {
-                    steps->steps[k] = getRandomInt(10);
-                }
-            }
-        }
-    }
+    timbres_[currentTimbre_].randomizePreset(
+        fullState_.randomizer.Oper,
+        fullState_.randomizer.EnvT,
+        fullState_.randomizer.IM,
+        fullState_.randomizer.Modl);
 }
 
 Timbre* SynthState::getTimbre(int timbre) {
@@ -929,10 +492,6 @@ Timbre* SynthState::getTimbre(int timbre) {
 
 char* SynthState::getTimbreName(int t) {
     return timbres_[t].getPresetName();
-}
-
-uint8_t SynthState::getTimbrePlayMode(int t) {
-    return timbres_[t].getPfm3Preset()->engine1.playMode;
 }
 
 /*

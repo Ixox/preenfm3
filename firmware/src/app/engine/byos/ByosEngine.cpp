@@ -309,9 +309,14 @@ float ByosEngine::getParamValue(int paramId, int context) const {
     }
 }
 
-bool ByosEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
+bool ByosEngine::midiData(int timbre, const MidiData& data) {
     (void)timbre;
+    if (data.type != MIDI_DATA_CC) {
+        return false;
+    }
 
+    uint8_t cc = data.cc;
+    uint8_t value = data.ccValue;
     int paramId;
     int context = 0;
     float newValue;
@@ -409,6 +414,10 @@ int ByosEngine::getStorageNameOffset(uint32_t magic) const {
 
 const char* ByosEngine::getStorageDefaultName() const {
     return "BYOS";
+}
+
+char* ByosEngine::getPresetName() {
+    return timbre_->sharedParams().presetName;
 }
 
 uint32_t ByosEngine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {

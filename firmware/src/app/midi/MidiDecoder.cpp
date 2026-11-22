@@ -19,6 +19,7 @@ extern "C" {
 #include "usbd_midi.h"
 }
 
+#include "MidiData.h"
 #include "MidiDecoder.h"
 #include "RingBuffer.h"
 
@@ -309,13 +310,15 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
         break;
     case MIDI_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
-            this->synth_->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
+            struct MidiData data = {MIDI_DATA_AFTERTOUCH, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[0]};
+            this->synth_->getTimbre(timbres[tk])->midiData(data);
         }
         break;
     case MIDI_PITCH_BEND: {
         int pb = ((int)midiEvent.value[1] << 7) + (int)midiEvent.value[0] - 8192;
         for (int tk = 0; tk < timbreIndex; tk++) {
-            this->synth_->getTimbre(timbres[tk])->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float)pb * .00012207031250000000f);
+            struct MidiData data = {MIDI_DATA_PITCHBEND, midiEvent.channel, 0, 0, 0, 0, (float)pb * .00012207031250000000f};
+            this->synth_->getTimbre(timbres[tk])->midiData(data);
         }
         break;
     }
@@ -355,11 +358,13 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         case MIDI_PITCH_BEND: {
             int pb = ((int)midiEvent.value[1] << 7) + (int)midiEvent.value[0] - 8192;
             // PITCH BEND in MPE mode we devide by 819.2 and not 8192 to have a x10 value
-            this->synth_->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_PITCHBEND, (float)pb * .00012207031250000000f);
+            struct MidiData data = {MIDI_DATA_PITCHBEND, midiEvent.channel, 0, 0, 0, 0, (float)pb * .00012207031250000000f};
+            this->synth_->getTimbre(0)->midiData(data);
             break;
         }
         case MIDI_AFTER_TOUCH: {
-            this->synth_->getTimbre(0)->setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, INV127 * midiEvent.value[0]);
+            struct MidiData data = {MIDI_DATA_AFTERTOUCH, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[0]};
+            this->synth_->getTimbre(0)->midiData(data);
             break;
         }
         }
@@ -390,19 +395,24 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         break;
     }
     case MIDI_AFTER_TOUCH: {
-        this->synth_->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, INV127 * midiEvent.value[0]);
+        struct MidiData data = {MIDI_DATA_MPE_AFTERTOUCH, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[0]};
+        this->synth_->getTimbre(0)->midiData(data);
         break;
     }
     case MIDI_CONTROL_CHANGE:
         switch (midiEvent.value[0]) {
-        case CC_MPE_SLIDE_CC74:
-            this->synth_->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
+        case CC_MPE_SLIDE_CC74: {
+            struct MidiData data = {MIDI_DATA_MPE_SLIDE, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[1]};
+            this->synth_->getTimbre(0)->midiData(data);
         }
         break;
-    case MIDI_PITCH_BEND:
+        }
+    case MIDI_PITCH_BEND: {
         int pb = ((int)midiEvent.value[1] << 7) + (int)midiEvent.value[0] - 8192;
-        this->synth_->getTimbre(0)->setMatrixSourceMPE(midiEvent.channel, MATRIX_SOURCE_PITCHBEND_MPE, (float)pb * .00012207031250000000f);
+        struct MidiData data = {MIDI_DATA_MPE_PITCHBEND, midiEvent.channel, 0, 0, 0, 0, (float)pb * .00012207031250000000f};
+        this->synth_->getTimbre(0)->midiData(data);
         break;
+    }
     }
 }
 
@@ -410,21 +420,12 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     int receives = this->synthState_->fullState_.midiConfigValue[MIDICONFIG_RECEIVES];
 
     // User CC are higher priority even if they hide some important preenfm3 CC
-    if (unlikely(this->synthState_->mixerState_.userCC_[0] == midiEvent.value[0])) {
-        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC1, INV127 * midiEvent.value[1]);
-        return;
-    }
-    if (unlikely(this->synthState_->mixerState_.userCC_[1] == midiEvent.value[0])) {
-        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC2, INV127 * midiEvent.value[1]);
-        return;
-    }
-    if (unlikely(this->synthState_->mixerState_.userCC_[2] == midiEvent.value[0])) {
-        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC3, INV127 * midiEvent.value[1]);
-        return;
-    }
-    if (unlikely(this->synthState_->mixerState_.userCC_[3] == midiEvent.value[0])) {
-        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_USER_CC4, INV127 * midiEvent.value[1]);
-        return;
+    for (int i = 0; i < 4; i++) {
+        if (unlikely(this->synthState_->mixerState_.userCC_[i] == midiEvent.value[0])) {
+            struct MidiData data = {MIDI_DATA_USER_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+            this->synth_->getTimbre(timbre)->midiData(data);
+            return;
+        }
     }
 
     if (midiEvent.channel == this->synthState_->mixerState_.globalChannel_ - 1) {
@@ -466,12 +467,16 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     case CC_BANK_SELECT_LSB:
         bankNumberLSB_[timbre] = midiEvent.value[1];
         break;
-    case CC_MODWHEEL:
-        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MODWHEEL, INV127 * midiEvent.value[1]);
-        break;
-    case CC_BREATH:
-        this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_BREATH, INV127 * midiEvent.value[1]);
-        break;
+    case CC_MODWHEEL: {
+        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+        this->synth_->getTimbre(timbre)->midiData(data);
+        return;
+    }
+    case CC_BREATH: {
+        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+        this->synth_->getTimbre(timbre)->midiData(data);
+        return;
+    }
     case CC_ALL_NOTES_OFF:
         this->synth_->stopArpegiator(timbre);
         this->synth_->allNoteOff(timbre);
@@ -522,12 +527,6 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         case CC_MIXER_SEND:
             this->synth_->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, (float)midiEvent.value[1] * INV127);
             break;
-        case CC_MPE_SLIDE_CC74:
-            // No CC74 on global midi channel
-            if (!(this->synthState_->mixerState_.MPE_inst1_ > 0) || timbre != 0) {
-                this->synth_->getTimbre(timbre)->setMatrixSource(MATRIX_SOURCE_MPESLIDE, INV127 * midiEvent.value[1]);
-            }
-            break;
         case CC_SEQ_START_ALL:
             this->synth_->setNewSeqValueFromMidi(timbre, SEQ_VALUE_PLAY_ALL, midiEvent.value[1]);
             break;
@@ -548,7 +547,8 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         }
 
         // Engine-owned parameter CCs.
-        this->synth_->getTimbre(timbre)->midiControlChange(midiEvent.value[0], midiEvent.value[1]);
+        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+        this->synth_->getTimbre(timbre)->midiData(data);
     }
 
     // Do we accept NRPN in the menu
@@ -603,7 +603,8 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                 asyncAction.action.timbre = timbre;
                 asyncActions.insert(asyncAction);
             } else {
-                this->synth_->getTimbre(timbre)->midiNrpn(param, value);
+                struct MidiData data = {MIDI_DATA_NRPN, midiEvent.channel, 0, 0, param, value, 0.0f};
+                this->synth_->getTimbre(timbre)->midiData(data);
             }
         }
     }
@@ -784,7 +785,7 @@ void MidiDecoder::processAsyncActions() {
         case LOAD_PRESET:
             for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
                 if (((1 << t) & asyncAction.action.timbre) > 0) {
-                    synth_->loadPreenFMPatchFromMidi(t, asyncAction.action.param1, asyncAction.action.param2, asyncAction.action.param3);
+                    synth_->loadPresetFromMidi(t, asyncAction.action.param1, asyncAction.action.param2, asyncAction.action.param3);
                 }
             }
             break;

@@ -87,11 +87,9 @@ struct MidiParamMessage {
 On `SynthEngine`:
 
 ```cpp
-// Engine-owned parameter CC. Return true when the CC was consumed.
-virtual bool midiControlChange(int timbre, uint8_t cc, uint8_t value) { return false; }
-
-// Engine-owned NRPN. Return true when the NRPN was consumed.
-virtual bool midiNrpn(int timbre, uint16_t param, uint16_t value) { return false; }
+// Engine-owned MIDI data (CC, user CC, NRPN, aftertouch, pitch bend, MPE).
+// Return true when the event was consumed.
+virtual bool midiData(int timbre, const struct MidiData& data) { return false; }
 
 // Map a PFM3 row/encoder change to an outgoing CC/NRPN.
 // Return false when the parameter has no MIDI representation.
@@ -189,14 +187,14 @@ happens automatically; do not reuse PFM3 row indexes for DX7 parameters.
 
 Each phase must build and flash before the next one starts.
 
-1. **Incoming CC map — done.** Add `midiControlChange()`. Move the engine-owned CCs
-   from `controlChange()` into `Preenfm3Engine`. Keep shared Arp/FX/mixer/
-   sequencer CCs in the decoder. Remove the two `pfm3Preset->engine1.algo`
-   reads by reading `timbre_->getPfm3Preset()` inside the engine.
-2. **Incoming NRPN — done.** Add `midiNrpn()`. Move `decodeNrpn()`, the NRPN
-   translation helpers and the step-sequencer/preset-name mapping into
-   `Pfm3Midi`. Keep NRPN accumulation and the `SEND_PATCH_AS_NRPN` action in
-   the decoder.
+1. **Incoming MIDI — done.** Add `midiData()`. Move the engine-owned CCs from
+   `controlChange()` into `Preenfm3Engine`. Keep shared Arp/FX/mixer/sequencer
+   CCs in the decoder. Remove the two `pfm3Preset->engine1.algo` reads by
+   reading `timbre_->getPfm3Preset()` inside the engine.
+2. **Incoming NRPN — done.** Handle `MIDI_DATA_NRPN` in `midiData()`. Move
+   `decodeNrpn()`, the NRPN translation helpers and the step-sequencer/
+   preset-name mapping into `Pfm3Midi`. Keep NRPN accumulation and the
+   `SEND_PATCH_AS_NRPN` action in the decoder.
 3. **Outgoing feedback — done.** Add `midiPfm3ParamFeedback()` and the generic
    `midiParamFeedback()`. Reduce `MidiDecoder::newPfm3ParamValue()` and
    `newEngineParamValue()` to: ask the engine for a `MidiParamMessage`, then

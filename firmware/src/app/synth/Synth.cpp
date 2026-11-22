@@ -558,7 +558,7 @@ void Synth::newEngineParamValue(int timbre, int paramId, int context, float oldV
 
 // synth is the only one who knows timbres
 void Synth::newTimbre(int timbre) {
-    this->synthState_->setParamsAndTimbre(timbres_[timbre].getPfm3Preset(), timbre);
+    this->synthState_->setCurrentTimbre(timbre);
 }
 
 void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
@@ -644,8 +644,8 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
     }
 }
 
-void Synth::loadPreenFMPatchFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
-    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber, timbres_[timbre].getPfm3Preset());
+void Synth::loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber) {
+    this->synthState_->loadPresetFromMidi(timbre, bank, bankLSB, patchNumber);
 }
 
 void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue) {

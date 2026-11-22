@@ -22,7 +22,7 @@
 #include "EncodersListener.h"
 #include "Menu.h"
 #include "MixerState.h"
-#include "engine/pfm3/Pfm3Preset.h"
+#include "ScreenTypes.h"
 #include "Storage.h"
 #include "SynthMenuListener.h"
 #include "SynthParamListener.h"
@@ -261,7 +261,6 @@ enum EventType {
 
 enum EventState { MIDI_EVENT_WAITING = 0, MIDI_EVENT_IN_PROGRESS, MIDI_EVENT_SYSEX, MIDI_EVENT_COMPLETE };
 
-class Hexter;
 class Timbre;
 class MixerState;
 class ScreenEditor;
@@ -276,10 +275,6 @@ public:
     void setStorage(Storage* storage) {
         this->storage_ = storage;
     }
-    void setHexter(Hexter* hexter) {
-        this->hexter_ = hexter;
-    }
-
     void setTimbres(Timbre* timbres) {
         this->timbres_ = timbres;
     }
@@ -294,8 +289,6 @@ public:
     void buttonLongPressed(int button);
     void twoButtonsPressed(int button1, int button2);
     void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button);
-    void encoderTurnedForStepSequencer(int row, int encoder4, int encoder6, int ticks);
-    void encoderTurnedForArpPattern(int row, int num, int ticks);
 
     void setNewStepValue(int timbre, int whichStepSeq, int step, int newValue);
 
@@ -324,10 +317,10 @@ public:
         }
     }
 
-    void propagateNewPfm3Page() {
+    void propagateNewScreenPage() {
         propagateNoteOff();
         for (SynthMenuListener* listener = firstMenuListener_; listener != 0; listener = listener->nextListener_) {
-            listener->newPfm3Page(&fullState_);
+            listener->newScreenPage(&fullState_);
         }
     }
 
@@ -465,17 +458,19 @@ public:
 
     void tempoClick();
 
-    void setParamsAndTimbre(struct Pfm3Preset* newParams, int newCurrentTimbre);
+    void setCurrentTimbre(int timbre) {
+        currentTimbre_ = timbre;
+    }
 
     bool getIsPlayingNote() {
         return isPlayingNote_;
     }
-    void loadPreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params);
-    void savePreset(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params);
+    void loadPreset(int timbre, PFM3File const* bank, int patchNumber);
+    void savePreset(int timbre, PFM3File const* bank, int patchNumber);
     void loadNewPreset(int timbre);
-    void loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber, struct Pfm3Preset* params);
+    void loadDx7Patch(int timbre, PFM3File const* bank, int patchNumber);
     void loadMixer(PFM3File const* bank, int patchNumber);
-    void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber, struct Pfm3Preset* params);
+    void loadPresetFromMidi(int timbre, int bank, int bankLSB, int patchNumber);
 
     bool newRandomizerValue(int encoder, int ticks);
     void randomizePreset();
@@ -485,7 +480,6 @@ public:
     }
 
     char* getTimbreName(int t);
-    uint8_t getTimbrePlayMode(int t);
 
     Storage* getStorage() {
         return storage_;
@@ -493,12 +487,8 @@ public:
 
     bool scalaSettingsChanged(int timbre);
 
-    struct Pfm3Preset* pfm3Preset_;
-    struct Pfm3Preset* backupPfm3Preset_;
     MixerState mixerState_;
     struct FullState fullState_;
-    char stepSelect_[2];
-    char patternSelect_;
 
     const char* getSequenceName();
 
@@ -528,7 +518,6 @@ private:
     }
 
     Storage* storage_;
-    Hexter* hexter_;
     Timbre* timbres_;
 
     // One Display class per main page

@@ -21,6 +21,7 @@
 #include "engine/pfm3/EditorPfm3.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
+#include "Timbre.h"
 #include "engine/byos/EditorByos.h"
 #include "preenfm3.h"
 #include <FirmwareTftDisplay.h>
@@ -302,6 +303,10 @@ void ScreenEditor::displayLevelMeter() {
     }
 }
 
+struct Pfm3Preset* ScreenEditor::pfm3Preset() const {
+    return synthState_->getTimbre(currentTimbre_)->getPfm3Preset();
+}
+
 void ScreenEditor::displayPreset() {
 
     tft_->fillArea(0, 0, 240, 21, COLOR_DARK_BLUE);
@@ -317,7 +322,7 @@ void ScreenEditor::displayPreset() {
     tft_->print((char)('0' + currentTimbre_ + 1));
     tft_->print(' ');
     tft_->setCharColor(COLOR_WHITE);
-    tft_->print(synthState_->pfm3Preset_->presetName);
+    tft_->print(pfm3Preset()->presetName);
     tft_->setCharColor(COLOR_YELLOW);
     if (presetModifed_[currentTimbre_]) {
         tft_->print('*');
@@ -337,18 +342,20 @@ void ScreenEditor::setPresetModified(int timbre, bool state) {
 
 void ScreenEditor::updateArpPattern(int currentRow, int encoder, int oldValue, int newValue) {
 
-    const int index = (int)synthState_->pfm3Preset_->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
-    const arp_pattern_t user_pattern = synthState_->pfm3Preset_->engineArpUserPatterns.patterns[index];
+    const int index = (int)pfm3Preset()->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    const arp_pattern_t user_pattern = pfm3Preset()->engineArpUserPatterns.patterns[index];
 
-    if (synthState_->pfm3Preset_->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+    if (pfm3Preset()->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
         return;
     }
 
     if (encoder == 1) {
+        EditorEngine* editor = activeEditor();
+        int patternSelect = editor != nullptr ? editor->getPatternSelection() : 0;
         // new value to display
         tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(synthState_->patternSelect_, 6);
-        tft_->print((char)(127 + ((newValue >> (synthState_->patternSelect_)) & 0x1) * 15));
+        tft_->setCursor(patternSelect, 6);
+        tft_->print((char)(127 + ((newValue >> patternSelect) & 0x1) * 15));
     } else if (encoder == 0) {
         if ((oldValue % 4) == 0) {
             tft_->setCharColor(COLOR_WHITE);
@@ -366,14 +373,16 @@ void ScreenEditor::updateArpPattern(int currentRow, int encoder, int oldValue, i
 void ScreenEditor::updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue) {
     int whichStepSeq = currentRow - ROW_LFOSEQ1;
 
-    StepSequencerSteps* seqSteps = &((StepSequencerSteps*)(&synthState_->pfm3Preset_->lfoSteps1))[whichStepSeq];
+    StepSequencerSteps* seqSteps = &((StepSequencerSteps*)(&pfm3Preset()->lfoSteps1))[whichStepSeq];
 
     tft_->setCharBackgroundColor(COLOR_BLACK);
 
     if (encoder == 3) {
+        EditorEngine* editor = activeEditor();
+        int stepSelect = editor != nullptr ? editor->getStepSelection(whichStepSeq) : 0;
         // new value to display
         tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(synthState_->stepSelect_[whichStepSeq], 6);
+        tft_->setCursor(stepSelect, 6);
         tft_->print((char)(127 + newValue));
     } else if (encoder == 2) {
         if ((oldValue % 4) == 0) {
@@ -432,7 +441,7 @@ void ScreenEditor::buttonPressed(int button) {
         }
     }
 
-    synthState_->propagateNewPfm3Page();
+    synthState_->propagateNewScreenPage();
 }
 
 void ScreenEditor::buttonPressedMenuPage(int button) {
@@ -454,7 +463,7 @@ void ScreenEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) {
     tft_->setCursorInPixel(119 - ((length * 11) / 2), 75);
     tft_->print(text);
     tft_->waitCycle(500);
-    synthState_->propagateNewPfm3Page();
+    synthState_->propagateNewScreenPage();
 }
 
 void ScreenEditor::buttonLongPressed(int instrument, int button) {

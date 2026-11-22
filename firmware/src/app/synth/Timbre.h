@@ -115,11 +115,7 @@ public:
         return engineImpl_->supportsStepSequencer();
     }
 
-    bool midiControlChange(uint8_t cc, uint8_t value);
-
-    bool midiNrpn(uint16_t param, uint16_t value) {
-        return engineImpl_->midiNrpn(timbreNumber_, param, value);
-    }
+    bool midiData(const struct MidiData& data);
 
     bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const {
         return engineImpl_->midiPfm3ParamFeedback(row, encoder, newValue, out);
@@ -133,9 +129,7 @@ public:
         return engineImpl_->midiParamFeedback(paramId, context, newValue, out);
     }
 
-    void loadDx7Patch(const uint8_t* packedPatch) {
-        engineImpl_->loadDx7Patch(packedPatch);
-    }
+    void loadDx7Patch(const uint8_t* packedPatch);
     uint8_t* getPatchMemory() {
         return engineImpl_->getPatchMemory();
     }
@@ -213,6 +207,22 @@ public:
         return pfm3Preset_;
     }
 
+    uint8_t getPlayMode() const {
+        return engineImpl_->getPlayMode();
+    }
+    void loadNewPreset() {
+        engineImpl_->loadNewPreset();
+    }
+    void randomizePreset(int operatorRandom, int envelopeTypeRandom, int imRandom, int modulationRandom) {
+        engineImpl_->randomizePreset(operatorRandom, envelopeTypeRandom, imRandom, modulationRandom);
+    }
+    int getStepSelection(int which) const {
+        return engineImpl_->getStepSelection(which);
+    }
+    void setStepSelection(int which, int step) {
+        engineImpl_->setStepSelection(which, step);
+    }
+
     TimbreSharedParams& sharedParams() {
         return sharedParams_[timbreNumber_];
     }
@@ -251,7 +261,7 @@ public:
     }
 
     char* getPresetName() {
-        return pfm3Preset_->presetName;
+        return engineImpl_->getPresetName();
     }
 
     float getNumberOfVoiceInverse() {

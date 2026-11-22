@@ -266,3 +266,5 @@ can be bucketed by address range to find what fills each region. `cmake
   performance items.
 - [compilation.md](compilation.md) — build flags, LTO and the toolchain.
 - [hardware.md](hardware.md) — MCU, audio and display wiring.
+- [what_pfm3preset_is.md](what_pfm3preset_is.md) — how the flat PFM3 preset
+  mirror relates to the live engine parameters.

@@ -59,7 +59,7 @@ public:
     void newSynthMode(FullState* fullState);
     void newMenuState(FullState* fullState);
     void newMenuSelect(FullState* fullState);
-    void newPfm3Page(FullState* fullState);
+    void newScreenPage(FullState* fullState);
     void menuBack(const MenuItem* oldMenuItem, FullState* fullState);
     void refreshOscilloBG();
 

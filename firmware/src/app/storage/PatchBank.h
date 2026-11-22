@@ -42,7 +42,6 @@ public:
     const char* loadPatchName(const struct PFM3File* bank, int patchNumber);
 
     bool decodeBufferAndApplyPreset(uint8_t* buffer, struct Pfm3Preset* params);
-    void copyNewPreset(struct Pfm3Preset* params);
 
 protected:
     const char* getFolderName();

@@ -91,6 +91,14 @@ public:
     virtual void newTimbre() {
     }
 
+    // Step-sequencer / arp-pattern cursor positions (PFM3/shared Arp page).
+    virtual int getStepSelection(int which) const {
+        return 0;
+    }
+    virtual int getPatternSelection() const {
+        return 0;
+    }
+
     // PFM3 only: a flat parameter changed (editor/MIDI path); update UI feedback.
     virtual void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
                                    float newValue) {

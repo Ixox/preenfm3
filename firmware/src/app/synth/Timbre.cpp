@@ -288,6 +288,17 @@ void Timbre::setEngine(SynthEngineType engine) {
     engineImpl_->afterNewParamsLoad();
 }
 
+void Timbre::loadDx7Patch(const uint8_t* packedPatch) {
+    // A DX7 sysex carries no arpeggiator/FX settings. Reset the shared
+    // params (and the PFM3 mirror) so the new instrument does not inherit
+    // the previous instrument's FX/arp.
+    applyPfm3Preset(preenMainPreset);
+
+    engineImpl_->loadDx7Patch(packedPatch);
+    SynthEngineFactory::get(SYNTH_ENGINE_PFM3, timbreNumber_)->loadHexterPatch(packedPatch);
+    setPresetName(getPfm3Preset()->presetName);
+}
+
 void Timbre::noteOn(char note, char velocity) {
     if (sharedParams().engineArp1.clock) {
         arpeggiatorNoteOn(note, velocity);
@@ -2547,17 +2558,19 @@ bool Timbre::decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId&
     }
 }
 
-bool Timbre::midiControlChange(uint8_t cc, uint8_t value) {
-    SharedParamId param;
-    float scaledValue;
-    if (decodeSharedControlChange(cc, value, param, scaledValue)) {
-        int row;
-        int encoder;
-        getSharedParamRowEncoder(param, row, encoder);
-        setFlatParamFromMidi(row, encoder, scaledValue);
-        return true;
+bool Timbre::midiData(const MidiData& data) {
+    if (data.type == MIDI_DATA_CC) {
+        SharedParamId param;
+        float scaledValue;
+        if (decodeSharedControlChange(data.cc, data.ccValue, param, scaledValue)) {
+            int row;
+            int encoder;
+            getSharedParamRowEncoder(param, row, encoder);
+            setFlatParamFromMidi(row, encoder, scaledValue);
+            return true;
+        }
     }
-    return engineImpl_->midiControlChange(timbreNumber_, cc, value);
+    return engineImpl_->midiData(timbreNumber_, data);
 }
 
 void Timbre::setFlatParamFromMidi(int row, int encoder, float newValue) {

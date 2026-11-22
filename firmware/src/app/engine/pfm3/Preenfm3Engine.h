@@ -19,6 +19,7 @@
 #include "SynthEngine.h"
 #include "TimbreParams.h"
 
+class Hexter;
 class Timbre;
 class Voice;
 
@@ -47,7 +48,7 @@ struct Pfm3TimbreContext {
  */
 class Preenfm3Engine : public SynthEngine {
 public:
-    Preenfm3Engine() : timbre_(nullptr), synthState_(nullptr) {
+    Preenfm3Engine() : timbre_(nullptr), synthState_(nullptr), hexter_(nullptr) {
     }
 
     void init(Timbre* timbre, SynthState* synthState) override;
@@ -77,6 +78,15 @@ public:
     void setStepSequencerSteps(int which, const struct StepSequencerSteps& steps) override;
     void serializePfm3Preset(struct Pfm3Preset& out) const override;
     void deserializePfm3Preset(const struct Pfm3Preset& in) override;
+    void loadHexterPatch(const uint8_t* packedPatch) override;
+    char* getPresetName() override;
+    uint8_t getPlayMode() const override {
+        return pfm3Params().engine1.playMode;
+    }
+    void loadNewPreset() override;
+    void randomizePreset(int operatorRandom, int envelopeTypeRandom, int imRandom, int modulationRandom) override;
+    int getStepSelection(int which) const override;
+    void setStepSelection(int which, int step) override;
     bool usesPfm3PresetMirror() const override {
         return true;
     }
@@ -102,8 +112,7 @@ public:
     bool reusesSameNoteVoice() const override {
         return true;
     }
-    bool midiControlChange(int timbre, uint8_t cc, uint8_t value) override;
-    bool midiNrpn(int timbre, uint16_t param, uint16_t value) override;
+    bool midiData(int timbre, const struct MidiData& data) override;
     bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const override;
     bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const override;
 
@@ -148,6 +157,8 @@ private:
     void afterParamsLoadVoice(Voice* voice);
     void setPfm3ValueFromMidi(int row, int encoder, float newValue);
     void setStepValueFromMidi(int whichStepSeq, int step, int newValue);
+    bool midiCcData(uint8_t cc, uint8_t value);
+    bool midiNrpnData(uint16_t param, uint16_t value);
     void resetMatrix(Voice* voice);
     void lfoValueChangeOnVoice(Voice* voice, int currentRow, int encoder, float newValue);
     void midiClockSongPositionStepOnVoice(Voice* voice, int songPosition, bool recomputeNext);
@@ -157,8 +168,10 @@ private:
 
     Timbre* timbre_;
     SynthState* synthState_;
+    Hexter* hexter_;
     Pfm3TimbreContext* context_;
     int timbreNumber_;
+    int stepSelect_[2];
     static Pfm3TimbreParams pfm3Params_[NUMBER_OF_TIMBRES];
     static Pfm3VoiceState pfm3VoiceStates_[MAX_NUMBER_OF_VOICES];
     static float glidePhaseInc[13];

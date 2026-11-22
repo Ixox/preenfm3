@@ -78,6 +78,7 @@ public:
 private:
     void buttonPressedMenuPage(int button);
     void displayLevelMeter();
+    struct Pfm3Preset* pfm3Preset() const;
     FirmwareTftDisplay* tft_;
     SynthState* synthState_;
     EditorEngine* firstEditor_;

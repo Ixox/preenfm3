@@ -17,7 +17,6 @@
 
 #include "Encoders.h"
 #include "FirmwareTftDisplay.h"
-#include "Hexter.h"
 #include "MidiDecoder.h"
 #include "ScreenCoordinator.h"
 #include "ScreenEditor.h"
@@ -58,7 +57,6 @@ FirmwareTftDisplay tft RAM_D1_SECTION;
 TftAlgo tftAlgo;
 Synth synth;
 Storage sdCard;
-Hexter hexter;
 Sequencer sequencer;
 uint8_t saturatedOutput = 0;
 uint8_t saturatedOutputMem = 0;
@@ -457,7 +455,6 @@ void dependencyInjection() {
     //    synthState.insertMenuListener(&synth); <====== CVIN ONLY
 
     synthState.setStorage(&sdCard);
-    synthState.setHexter(&hexter);
 
     // pfm3 : synthState needs to know all timbre params names
     synthState.setTimbres(synth.getTimbres());

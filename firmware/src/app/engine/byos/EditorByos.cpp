@@ -295,7 +295,7 @@ void EditorByos::buttonPressed(int button) {
         break;
     }
 
-    synthState_->propagateNewPfm3Page();
+    synthState_->propagateNewScreenPage();
 }
 
 void EditorByos::drawAlgorithm() {

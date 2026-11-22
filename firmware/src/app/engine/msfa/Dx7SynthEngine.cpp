@@ -14,6 +14,7 @@
 #include "Dx7Params.h"
 #include "Dx7SynthEngine.h"
 #include "Hexter.h"
+#include "MidiControlChange.h"
 #include "SynthState.h"
 #include "Timbre.h"
 #include "Voice.h"
@@ -68,9 +69,32 @@ void Dx7SynthEngine::engineParamChanged(int paramId, int context, float oldValue
     }
 }
 
-bool Dx7SynthEngine::midiControlChange(int timbre, uint8_t cc, uint8_t value) {
+bool Dx7SynthEngine::midiData(int timbre, const MidiData& data) {
     (void)timbre;
+    switch (data.type) {
+    case MIDI_DATA_CC:
+        switch (data.cc) {
+        case CC_MODWHEEL:
+            dx7TimbreSetController(dx7State_, MATRIX_SOURCE_MODWHEEL, data.ccValue * (1.0f / 127.0f));
+            return true;
+        case CC_BREATH:
+            dx7TimbreSetController(dx7State_, MATRIX_SOURCE_BREATH, data.ccValue * (1.0f / 127.0f));
+            return true;
+        default:
+            return midiCcData(data.cc, data.ccValue);
+        }
+    case MIDI_DATA_AFTERTOUCH:
+        dx7TimbreSetController(dx7State_, MATRIX_SOURCE_AFTERTOUCH, data.value);
+        return true;
+    case MIDI_DATA_PITCHBEND:
+        dx7TimbreSetController(dx7State_, MATRIX_SOURCE_PITCHBEND, data.value);
+        return true;
+    default:
+        return false;
+    }
+}
 
+bool Dx7SynthEngine::midiCcData(uint8_t cc, uint8_t value) {
     int paramId;
     switch (cc) {
     case CC_DX7_ALGORITHM:
@@ -345,6 +369,10 @@ int Dx7SynthEngine::getStorageNameOffset(uint32_t magic) const {
 
 const char* Dx7SynthEngine::getStorageDefaultName() const {
     return "DX7";
+}
+
+char* Dx7SynthEngine::getPresetName() {
+    return timbre_->sharedParams().presetName;
 }
 
 uint32_t Dx7SynthEngine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {
