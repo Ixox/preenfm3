@@ -18,7 +18,9 @@
  */
 
 #include "EditorParamPage.h"
+#include "SynthEngineFactory.h"
 #include "engine/pfm3/Pfm3ParameterRows.h"
+#include "engine/pfm3/Preenfm3Engine.h"
 #include "ScreenEditor.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
@@ -27,7 +29,7 @@
 #include <FirmwareTftDisplay.h>
 
 struct Pfm3Preset* EditorParamPage::pfm3Preset() const {
-    return synthState_->getTimbre(currentTimbre())->getPfm3Preset();
+    return SynthEngineFactory::getPfm3(currentTimbre())->getPfm3Preset();
 }
 
 EditorParamPage::EditorParamPage() {

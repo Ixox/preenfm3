@@ -29,6 +29,7 @@ public:
     static void initDsp();
     static void init(Timbre* timbre, SynthState* synthState);
     static SynthEngine* get(SynthEngineType type, int timbreNumber);
+    static Preenfm3Engine* getPfm3(int timbreNumber);
     static const char* getEngineDisplayName(SynthEngineType type);
     // Map a preset/mixer storage magic to its engine, or COUNT if unknown.
     static SynthEngineType engineTypeForStorageMagic(uint32_t magic);

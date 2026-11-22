@@ -34,7 +34,6 @@ Implement the core `SynthEngine` methods:
 - `setMatrixPolyAfterTouch()`
 - `noteOnMpe()` / `noteOffMpe()`
 - `getStorageMagic()`, `getStorageNameOffset()`, `getStorageDefaultName()`
-- `getPresetName()`
 - `getStorageBlob()` / `loadStorageBlob()`
 
 Most other `SynthEngine` methods have default no-op implementations and can be
@@ -44,9 +43,9 @@ ignored until needed (`setParamValue`, `serializePfm3Preset`,
 Per-voice state: keep one static array indexed by `voice->slot()` and bind it
 from `bindVoice()`, like `Pfm3VoiceState` / the DX7 voice state.
 
-If the engine does not use the flat `Pfm3Preset` model, also check
-`Timbre::setEngine()`: it currently calls `deserializePfm3Preset(pfm3Preset_)` and
-`afterNewParamsLoad()`.
+The engine owns its own parameter state. `Timbre` only owns
+`TimbreSharedParams` (arp, FX1/FX2, preset name); it never touches
+engine-specific parameters.
 
 ## Arp/Fx (shared)
 
@@ -94,7 +93,7 @@ opts in. Shared controls (Arp, FX1/FX2, mixer, sequencer) are handled by
 `MidiDecoder` and `Timbre::midiData()`: `Timbre::midiData()` intercepts
 `MIDI_DATA_CC` events with `decodeSharedControlChange()` +
 `getSharedParamRowEncoder()` using the ids in `SharedParams.h` and applies them
-through `setFlatParamFromMidi()`. Only unhandled CCs are forwarded to the
+through `setSharedParamFromMidi()`. Only unhandled CCs are forwarded to the
 engine. `MIDI_DATA_USER_CC` bypasses the shared decode so user CCs keep
 priority.
 

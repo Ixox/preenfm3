@@ -50,10 +50,6 @@ void Dx7SynthEngine::init(Timbre* timbre, SynthState* synthState) {
     dx7TimbreLoadProgram(dx7State_, program);
 }
 
-bool Dx7SynthEngine::acceptsFlatParamFromMidi(int row) const {
-    return row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ARPEGGIATOR3 || row == ROW_EFFECT1 || row == ROW_EFFECT2;
-}
-
 void Dx7SynthEngine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
     uint8_t* program = program_[timbreNumber_];
     setDx7ParamValue(program, paramId, context, (uint8_t)newValue);
@@ -369,10 +365,6 @@ int Dx7SynthEngine::getStorageNameOffset(uint32_t magic) const {
 
 const char* Dx7SynthEngine::getStorageDefaultName() const {
     return "DX7";
-}
-
-char* Dx7SynthEngine::getPresetName() {
-    return timbre_->sharedParams().presetName;
 }
 
 uint32_t Dx7SynthEngine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {

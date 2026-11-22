@@ -11,11 +11,11 @@ Synth                                   global audio engine + transport
 ├── Voice voices_[16]                   neutral per-voice state + FX1 + sample buffer
 ├── VoicePool                           "which timbre owns each voice" bookkeeping
 └── Timbre timbres_[4]                  one synth part / instrument
-    ├── Pfm3Preset pfm3Preset_      flat preset+UI mirror (current layout)
     ├── TimbreSharedParams sharedParams_[4]  Arp + FX1 + FX2 + preset name (engine-neutral)
     ├── SynthEngine *engineImpl_        selected engine
     │   └── SynthEngineFactory          per-timbre engine instances
     │       ├── Preenfm3Engine [4]      PFM3 engine
+    │       │   ├── Pfm3Preset [4]           flat preset+UI mirror
     │       │   ├── Pfm3TimbreParams [4]     static, indexed by timbre
     │       │   ├── Pfm3TimbreContext [4]    static, indexed by timbre
     │       │   ├── Osc osc_[6] / Env env_[6]
@@ -54,9 +54,8 @@ the four engine instances rather than duplicated per instance.
 - **`Timbre`** represents one synth part. It selects the engine from
   `SynthEngineFactory` (`engineImpl_`), owns the list of voices it currently uses, performs voice
   allocation, stealing and deferred transfer, handles group note-off/kill for
-  its voices, runs the arpeggiator, applies GateFX and FX2, holds the flat
-  `pfm3Preset_` mirror and `TimbreSharedParams`, and dispatches preset
-  load/storage to its engine.
+  its voices, runs the arpeggiator, applies GateFX and FX2, holds
+  `TimbreSharedParams`, and dispatches preset load/storage to its engine.
 
 ### Per voice
 
@@ -176,9 +175,9 @@ The main boundaries are clear:
 
 Remaining coupling is localized:
 
-The only deliberate compromise left is the flat `Pfm3Preset` mirror in
-`Timbre` (`pfm3Preset_`). It is kept explicitly as an editor/storage cache;
-the PFM3 DSP state is owned by `Pfm3TimbreParams`.
+The flat `Pfm3Preset` mirror now lives in `Preenfm3Engine`. It is kept
+explicitly as an editor/storage cache; the PFM3 DSP state is owned by
+`Pfm3TimbreParams`, and `Timbre` only owns the shared Arp/FX/name block.
 
 Overall the separation is well respected at the important boundaries: global
 vs part vs voice vs engine, and DSP vs storage vs UI. A new engine can be

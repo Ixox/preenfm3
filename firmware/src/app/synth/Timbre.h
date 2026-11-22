@@ -55,28 +55,21 @@ public:
     // PFM3 implementations called by Preenfm3Engine.
     void afterNewParamsLoad();
     void setParamValue(int index, float oldValue, float newValue);
-    void setFlatParamFromMidi(int row, int encoder, float newValue);
+    void setSharedParamFromMidi(int row, int encoder, float newValue);
     bool getSharedParamRowEncoder(SharedParamId param, int& row, int& encoder) const;
     bool decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId& param, float& scaledValue) const;
-    void syncArpUserPatterns();
-    void setStepSequencerSteps(int whichStepSeq);
-    void handleNullFlatParam(int row);
-    void resetPfm3PresetToDefault(int timbreNumber);
+    void handleNullParamRow(int row);
     void setPresetNameChar(int index, char c);
     void setPresetName(const char* name);
     void engineParamChanged(int paramId, int context, float oldValue, float newValue);
-    void serializePfm3Preset(struct Pfm3Preset& out) const;
-    void deserializePfm3Preset(const struct Pfm3Preset& in);
     uint32_t getStorageMagic() const;
     uint32_t getStorageBlob(uint8_t* out, uint32_t maxSize);
     bool loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t magic);
+    bool loadStorageBlob(const uint8_t* in, uint32_t size, SynthEngineType engine, uint32_t magic);
     int getStorageNameOffset(uint32_t magic) const;
     const char* getStorageDefaultName(uint32_t magic) const;
-    void applyPfm3Preset(const struct Pfm3Preset& flat);
     void setSharedParams(const TimbreSharedParams& shared);
     void setNewEffectParam(int encoder);
-    int getSeqStepValue(int whichStepSeq, int step);
-    void setSeqStepValue(int whichStepSeq, int step, int value);
     // Arpegiator
     void arpeggiatorNoteOn(char note, char velocity);
     void arpeggiatorNoteOff(char note);
@@ -105,10 +98,6 @@ public:
 
     bool supportsDeferredSteal() const {
         return engineImpl_->supportsDeferredSteal();
-    }
-
-    bool acceptsFlatParamFromMidi(int row) const {
-        return engineImpl_->acceptsFlatParamFromMidi(row);
     }
 
     bool supportsStepSequencer() const {
@@ -203,10 +192,6 @@ public:
     void midiClockStart();
     void midiClockSongPositionStep(int songPosition);
 
-    struct Pfm3Preset* getPfm3Preset() {
-        return pfm3Preset_;
-    }
-
     uint8_t getPlayMode() const {
         return engineImpl_->getPlayMode();
     }
@@ -261,7 +246,7 @@ public:
     }
 
     char* getPresetName() {
-        return engineImpl_->getPresetName();
+        return sharedParams().presetName;
     }
 
     float getNumberOfVoiceInverse() {
@@ -395,10 +380,6 @@ private:
     int8_t timbreNumber_;
     SynthEngineType engine_;
     SynthEngine* engineImpl_;
-    // Flat Pfm3Preset mirror for the editor and storage.
-    // The PFM3 DSP state is owned by Pfm3TimbreParams in Preenfm3Engine.
-    // The mirror itself lives in .ram_d1 (see pfm3Presets_ in Timbre.cpp).
-    struct Pfm3Preset* pfm3Preset_;
     // Engine-neutral per-timbre parameters: arpeggiator, FX1/FX2 rows and
     // preset name. Static because Timbre lives in DTCMRAM and this block is
     // too large to inline; the array itself is placed in .ram_d1.

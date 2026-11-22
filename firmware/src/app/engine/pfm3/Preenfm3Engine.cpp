@@ -33,6 +33,7 @@ extern RNG_HandleTypeDef hrng;
 static Pfm3TimbreContext pfm3Contexts[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
 Pfm3TimbreParams Preenfm3Engine::pfm3Params_[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
 Pfm3Preset pfm3PresetTmp __attribute__((section(".ram_d1")));
+static Pfm3Preset pfm3Presets_[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d3")));
 static Hexter hexter;
 
 float Preenfm3Engine::glidePhaseInc[13] = {1.0f / 2.0f,   1.0f / 5.0f,    1.0f / 9.0f,   1.0f / 15.0f,  1.0f / 22.0f,
@@ -71,6 +72,8 @@ void Preenfm3Engine::init(Timbre* timbre, SynthState* synthState) {
     timbre_ = timbre;
     synthState_ = synthState;
     timbreNumber_ = timbre->getTimbreNumber();
+    pfm3Preset_ = &pfm3Presets_[timbreNumber_];
+    applyPfm3Preset(preenMainPreset);
     stepSelect_[0] = 0;
     stepSelect_[1] = 0;
     hexter_ = &hexter;
@@ -4670,6 +4673,14 @@ void Preenfm3Engine::setStepSequencerSteps(int which, const StepSequencerSteps& 
     }
 }
 
+void Preenfm3Engine::paramRowChanged(int row) {
+    if (row == ROW_ARPEGGIATOR3) {
+        timbre_->sharedParams().engineArpUserPatterns = pfm3Preset_->engineArpUserPatterns;
+    } else if (row == ROW_LFOSEQ1 || row == ROW_LFOSEQ2) {
+        syncStepSequencerSteps(row - ROW_LFOSEQ1);
+    }
+}
+
 void Preenfm3Engine::prepareFxMatrix(Voice* voice) {
     if (!voice->isPlaying()) {
         pfm3State(voice).matrix.computeAllDestinations();
@@ -4761,7 +4772,7 @@ const char* Preenfm3Engine::getStorageDefaultName() const {
 }
 
 uint32_t Preenfm3Engine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {
-    timbre_->serializePfm3Preset(pfm3PresetTmp);
+    serializePfm3Preset(pfm3PresetTmp);
     pfm3ParamsToFlash(&pfm3PresetTmp, (FlashSynthParams*)out, true);
     return sizeof(FlashSynthParams);
 }
@@ -4772,20 +4783,17 @@ bool Preenfm3Engine::loadStorageBlob(const uint8_t* in, uint32_t size, uint32_t 
     } else {
         pfm3FlashToParams((const FlashSynthParams*)in, &pfm3PresetTmp, true);
     }
-    timbre_->applyPfm3Preset(pfm3PresetTmp);
+    applyPfm3Preset(pfm3PresetTmp);
     return true;
 }
 
 void Preenfm3Engine::loadHexterPatch(const uint8_t* packedPatch) {
-    hexter_->loadHexterPatch(const_cast<uint8_t*>(packedPatch), timbre_->getPfm3Preset());
-}
-
-char* Preenfm3Engine::getPresetName() {
-    return timbre_->sharedParams().presetName;
+    hexter_->loadHexterPatch(const_cast<uint8_t*>(packedPatch), getPfm3Preset());
+    deserializePfm3Preset(*getPfm3Preset());
 }
 
 void Preenfm3Engine::loadNewPreset() {
-    *timbre_->getPfm3Preset() = newPresetParams;
+    applyPfm3Preset(newPresetParams);
 }
 
 int Preenfm3Engine::getStepSelection(int which) const {
@@ -4877,7 +4885,7 @@ static float getFineTune(int operatorRandom) {
 }
 
 void Preenfm3Engine::randomizePreset(int operatorRandom, int envelopeTypeRandom, int imRandom, int modulationRandom) {
-    Pfm3Preset* preset = timbre_->getPfm3Preset();
+    Pfm3Preset* preset = getPfm3Preset();
 
     // general
 
@@ -5103,6 +5111,42 @@ void Preenfm3Engine::randomizePreset(int operatorRandom, int envelopeTypeRandom,
             }
         }
     }
+
+    deserializePfm3Preset(*getPfm3Preset());
+}
+
+void Preenfm3Engine::applyPfm3Preset(const Pfm3Preset& flat) {
+    *pfm3Preset_ = flat;
+    deserializePfm3Preset(flat);
+}
+
+void Preenfm3Engine::syncSharedParams(const TimbreSharedParams& shared) {
+    pfm3Preset_->engineArp1 = shared.engineArp1;
+    pfm3Preset_->engineArp2 = shared.engineArp2;
+    pfm3Preset_->engineArpUserPatterns = shared.engineArpUserPatterns;
+    pfm3Preset_->effect1 = shared.effect1;
+    pfm3Preset_->effect2 = shared.effect2;
+    memcpy(pfm3Preset_->presetName, shared.presetName, sizeof(pfm3Preset_->presetName));
+}
+
+void Preenfm3Engine::syncStepSequencerSteps(int which) {
+    if (which == 0) {
+        setStepSequencerSteps(0, pfm3Preset_->lfoSteps1);
+    } else {
+        setStepSequencerSteps(1, pfm3Preset_->lfoSteps2);
+    }
+}
+
+int Preenfm3Engine::getSeqStepValue(int which, int step) const {
+    return which == 0 ? pfm3Preset_->lfoSteps1.steps[step] : pfm3Preset_->lfoSteps2.steps[step];
+}
+
+void Preenfm3Engine::setSeqStepValue(int which, int step, int value) {
+    if (which == 0) {
+        pfm3Preset_->lfoSteps1.steps[step] = value;
+    } else {
+        pfm3Preset_->lfoSteps2.steps[step] = value;
+    }
 }
 
 void Preenfm3Engine::serializePfm3Preset(struct Pfm3Preset& out) const {
@@ -5165,6 +5209,14 @@ void Preenfm3Engine::serializePfm3Preset(struct Pfm3Preset& out) const {
     out.env4Curve = pfm3.env4Curve;
     out.env5Curve = pfm3.env5Curve;
     out.env6Curve = pfm3.env6Curve;
+
+    const TimbreSharedParams& shared = timbre_->sharedParams();
+    out.engineArp1 = shared.engineArp1;
+    out.engineArp2 = shared.engineArp2;
+    out.engineArpUserPatterns = shared.engineArpUserPatterns;
+    out.effect1 = shared.effect1;
+    out.effect2 = shared.effect2;
+    memcpy(out.presetName, shared.presetName, sizeof(out.presetName));
 }
 
 void Preenfm3Engine::deserializePfm3Preset(const struct Pfm3Preset& in) {
@@ -5227,12 +5279,22 @@ void Preenfm3Engine::deserializePfm3Preset(const struct Pfm3Preset& in) {
     pfm3.env4Curve = in.env4Curve;
     pfm3.env5Curve = in.env5Curve;
     pfm3.env6Curve = in.env6Curve;
+
+    *pfm3Preset_ = in;
+    TimbreSharedParams shared;
+    shared.engineArp1 = in.engineArp1;
+    shared.engineArp2 = in.engineArp2;
+    shared.engineArpUserPatterns = in.engineArpUserPatterns;
+    shared.effect1 = in.effect1;
+    shared.effect2 = in.effect2;
+    memcpy(shared.presetName, in.presetName, sizeof(shared.presetName));
+    timbre_->setSharedParams(shared);
 }
 
 void Preenfm3Engine::setPfm3ValueFromMidi(int row, int encoder, float newValue) {
     struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
     int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
-    float oldValue = ((float*)timbre_->getPfm3Preset())[index];
+    float oldValue = ((float*)getPfm3Preset())[index];
 
     if (newValue > param->maxValue) {
         // in v2, matrix target were removed so some values are > to max value but we need to accept it
@@ -5250,7 +5312,7 @@ void Preenfm3Engine::setPfm3ValueFromMidi(int row, int encoder, float newValue) 
     } else if (newValue < param->minValue) {
         newValue = param->minValue;
     }
-    ((float*)timbre_->getPfm3Preset())[index] = newValue;
+    ((float*)getPfm3Preset())[index] = newValue;
 
     if (oldValue != newValue) {
         synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, row, encoder, param, oldValue, newValue);
@@ -5385,7 +5447,7 @@ bool Preenfm3Engine::midiCcData(uint8_t cc, uint8_t value) {
         break;
     case CC_ENV_ATK_ALL_CARRIER:
     case CC_ENV_ATK_ALL_MODULATOR: {
-        int currentAlgo = (int)timbre_->getPfm3Preset()->engine1.algo;
+        int currentAlgo = (int)getPfm3Preset()->engine1.algo;
         int type = cc == CC_ENV_ATK_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
         for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
             if (algoOpInformation[currentAlgo][e] == type) {
@@ -5404,7 +5466,7 @@ bool Preenfm3Engine::midiCcData(uint8_t cc, uint8_t value) {
         break;
     case CC_ENV_REL_ALL_MODULATOR:
     case CC_ENV_REL_ALL_CARRIER: {
-        int currentAlgo = (int)timbre_->getPfm3Preset()->engine1.algo;
+        int currentAlgo = (int)getPfm3Preset()->engine1.algo;
         int type = cc == CC_ENV_REL_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
         for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
             if (algoOpInformation[currentAlgo][e] == type) {
@@ -5448,15 +5510,15 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
         return;
     }
 
-    int oldValue = timbre_->getSeqStepValue(whichStepSeq, step);
+    int oldValue = getSeqStepValue(whichStepSeq, step);
     if (oldValue != newValue) {
         int oldStep = stepSelect_[whichStepSeq];
         stepSelect_[whichStepSeq] = step;
         if (oldStep != step) {
             synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep, step);
         }
-        timbre_->setSeqStepValue(whichStepSeq, step, newValue);
-        int newNewValue = timbre_->getSeqStepValue(whichStepSeq, step);
+        setSeqStepValue(whichStepSeq, step, newValue);
+        int newNewValue = getSeqStepValue(whichStepSeq, step);
         if (oldValue != newNewValue) {
             synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue, newValue);
         }
@@ -5727,7 +5789,7 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
     // Preset name.
     if (index < nameCount) {
         out.nrpn = (1 << 7) | (100 + index);
-        out.nrpnValue = timbre_->getPfm3Preset()->presetName[index];
+        out.nrpnValue = getPfm3Preset()->presetName[index];
         return true;
     }
     index -= nameCount;
@@ -5737,7 +5799,7 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
         int row = index / NUMBER_OF_ENCODERS_PFM2;
         int encoder = index % NUMBER_OF_ENCODERS_PFM2;
         const struct ParameterDisplay* param = &allParameterRows.row[row]->params[encoder];
-        float floatValue = ((float*)timbre_->getPfm3Preset())[index];
+        float floatValue = ((float*)getPfm3Preset())[index];
 
         int valueToSend;
         if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
@@ -5757,7 +5819,7 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
         int whichStepSeq = index / 16;
         int step = index % 16;
         out.nrpn = ((whichStepSeq + 2) << 7) | step;
-        out.nrpnValue = timbre_->getSeqStepValue(whichStepSeq, step);
+        out.nrpnValue = getSeqStepValue(whichStepSeq, step);
         return true;
     }
 

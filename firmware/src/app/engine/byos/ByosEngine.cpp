@@ -416,10 +416,6 @@ const char* ByosEngine::getStorageDefaultName() const {
     return "BYOS";
 }
 
-char* ByosEngine::getPresetName() {
-    return timbre_->sharedParams().presetName;
-}
-
 uint32_t ByosEngine::getStorageBlob(uint8_t* out, uint32_t maxSize, const TimbreSharedParams& shared) {
     const uint32_t nameOffset = sizeof(ByosParams);
     const uint32_t sharedOffset = nameOffset + 16;

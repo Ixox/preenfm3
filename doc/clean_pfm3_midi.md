@@ -32,7 +32,7 @@ Secondary leak: `allParameterRows` is defined in `EditorPfm3.cpp:1867` (a UI
 file) and declared in `SynthState.h:654`, yet `Synth::setNewValueFromMidi()`
 and `MidiDecoder` use it. The PFM3 parameter table is not an UI artefact.
 
-The PFM3 runtime API itself (`Timbre::getPfm3Preset()`,
+The PFM3 runtime API itself (`Preenfm3Engine::getPfm3Preset()`,
 `Timbre::setParamValue()`, `Synth::setNewValueFromMidi()`,
 `SynthState::propagateNewPfm3ParamValue*`) may stay; it is the MIDI *mapping*
 that moves.
@@ -125,7 +125,7 @@ implementation can write the preset mirror and propagate UI refreshes without
 new plumbing:
 
 ```cpp
-float oldValue = ((float*) timbre_->getPfm3Preset())[index];
+float oldValue = ((float*) getPfm3Preset())[index];
 timbre_->setParamValue(index, oldValue, newValue);
 synthState_->propagateNewPfm3ParamValueFromExternal(
     timbreNumber_, row, encoder, param, oldValue, newValue);
@@ -190,7 +190,7 @@ Each phase must build and flash before the next one starts.
 1. **Incoming MIDI — done.** Add `midiData()`. Move the engine-owned CCs from
    `controlChange()` into `Preenfm3Engine`. Keep shared Arp/FX/mixer/sequencer
    CCs in the decoder. Remove the two `pfm3Preset->engine1.algo` reads by
-   reading `timbre_->getPfm3Preset()` inside the engine.
+   reading `getPfm3Preset()` inside the engine.
 2. **Incoming NRPN — done.** Handle `MIDI_DATA_NRPN` in `midiData()`. Move
    `decodeNrpn()`, the NRPN translation helpers and the step-sequencer/
    preset-name mapping into `Pfm3Midi`. Keep NRPN accumulation and the

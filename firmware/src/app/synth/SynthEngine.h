@@ -123,9 +123,6 @@ public:
         return nullptr;
     }
 
-    // Preset name shown by the mixer/sequencer.
-    virtual char* getPresetName() = 0;
-
     // Reload the engine after direct edits to getPatchMemory().
     virtual void patchMemoryChanged() {
     }
@@ -249,22 +246,15 @@ public:
     }
     virtual void setStepSelection(int which, int step) {
     }
+    // A row was edited through a non-parameter control (arp pattern, steps).
+    virtual void paramRowChanged(int row) {
+        (void)row;
+    }
 
     // Flat Pfm3Preset mirror (PFM3 UI/storage layout).
     virtual void serializePfm3Preset(struct Pfm3Preset& out) const {
     }
     virtual void deserializePfm3Preset(const struct Pfm3Preset& in) {
-    }
-    // Does this engine use the shared Pfm3Preset mirror?
-    virtual bool usesPfm3PresetMirror() const {
-        return false;
-    }
-
-    // Accept a flat-parameter edit coming from MIDI for `row`.
-    // Rejecting rows also protects the shared Pfm3Preset mirror
-    // (the hidden PFM3 patch).
-    virtual bool acceptsFlatParamFromMidi(int row) const {
-        return true;
     }
 
     // Map a PFM3 row/encoder change to an outgoing CC/NRPN message.

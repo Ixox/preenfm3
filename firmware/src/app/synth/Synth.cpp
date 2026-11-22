@@ -46,7 +46,6 @@ void Synth::init(SynthState* synthState) {
 
     voicePool_.init();
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        timbres_[t].resetPfm3PresetToDefault(t);
         timbres_[t].initVoicePool(&voicePool_);
         timbres_[t].init(synthState, t);
         for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {
@@ -545,7 +544,7 @@ void Synth::afterNewMixerLoad() {
 
 void Synth::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
     if (param == NULL) {
-        timbres_[timbre].handleNullFlatParam(currentRow);
+        timbres_[timbre].handleNullParamRow(currentRow);
     } else {
         int index = currentRow * NUMBER_OF_ENCODERS_PFM2 + encoder;
         timbres_[timbre].setParamValue(index, oldValue, newValue);

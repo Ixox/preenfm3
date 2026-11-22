@@ -67,11 +67,9 @@ public:
     uint8_t* getPatchMemory() override {
         return program_[timbreNumber_];
     }
-    char* getPresetName() override;
     void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
     bool midiData(int timbre, const struct MidiData& data) override;
     bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const override;
-    bool acceptsFlatParamFromMidi(int row) const override;
     bool supportsStepSequencer() const override {
         return false;
     }

@@ -430,12 +430,14 @@ CPU % is the load reported by the firmware. The CubeIDE reference is included fo
 | — | `-Ofast -fwrapv` | **hangs** | — |
 | — | `-O3 -fwrapv` | **hangs** | — |
 
+A 10-note PFM3 load measured **36.1%** for `UL` and **36.2%** for `OU`.
+
 Conclusions:
 
 - GCC 16's **auto-vectorizer** causes the hangs. `-fno-tree-vectorize` lets `-O2`, `-O3` and `-Ofast` boot.
 - `-fwrapv` alone does **not** fix it; this is not only a signed-overflow problem.
 - `-Ofast` with vectorization disabled **and `-funroll-loops`** is the fastest verified configuration: **6.4%**, better than the GCC 7.3 CubeIDE build (6.7%). LTO alone (6.7%) and strict aliasing on (6.8%) were slower.
-- Adding LTO on top of unroll (`UL`) also measured **6.4%**, so `OU` remains the default: same speed with a smaller image (524 KB vs 658 KB) and no LTO complexity.
+- Adding LTO on top of unroll (`UL`) gives no measurable speed gain (36.1% vs 36.2% with 10 PFM3 notes) and costs about 120 KB of flash (~700 KB vs ~579 KB). LTO is therefore not used: `OU` is the default.
 - The C++ ABI flags must match CubeIDE: `-fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit`. Without them, global constructors call `__aeabi_atexit()` during `__libc_init_array()`, which can hang/crash before `main()`.
 
 ### Bootloader and static libraries
@@ -458,7 +460,7 @@ The default `Release` build uses:
 -Ofast -g0 -fno-strict-aliasing -fno-tree-vectorize -funroll-loops
 ```
 
-and produces `build/firmware/p3_<version>.bin` (plus `preenfm3_firmware.bin`/`.hex`). With the current header (`v1.04`) that is `p3_1_04.bin`. The firmware is flashed at `0x08020000`; the bootloader at `0x08000000`.
+LTO is deliberately not used; the build produces `build/firmware/p3_<version>.bin` (plus `preenfm3_firmware.bin`/`.hex`). With the current header (`v1.99`) that is `p3_1_99.bin`. The firmware is flashed at `0x08020000`; the bootloader at `0x08000000`.
 
 ## Caveats
 

@@ -48,7 +48,11 @@ struct Pfm3TimbreContext {
  */
 class Preenfm3Engine : public SynthEngine {
 public:
-    Preenfm3Engine() : timbre_(nullptr), synthState_(nullptr), hexter_(nullptr) {
+    Preenfm3Engine() : timbre_(nullptr), synthState_(nullptr), hexter_(nullptr), pfm3Preset_(nullptr) {
+    }
+
+    struct Pfm3Preset* getPfm3Preset() const {
+        return pfm3Preset_;
     }
 
     void init(Timbre* timbre, SynthState* synthState) override;
@@ -76,10 +80,15 @@ public:
     void setParamValue(int index, float value) override;
     bool isUnisonMode() const override;
     void setStepSequencerSteps(int which, const struct StepSequencerSteps& steps) override;
+    void paramRowChanged(int row) override;
     void serializePfm3Preset(struct Pfm3Preset& out) const override;
     void deserializePfm3Preset(const struct Pfm3Preset& in) override;
+    void applyPfm3Preset(const struct Pfm3Preset& flat);
+    void syncSharedParams(const struct TimbreSharedParams& shared);
+    void syncStepSequencerSteps(int which);
+    int getSeqStepValue(int which, int step) const;
+    void setSeqStepValue(int which, int step, int value);
     void loadHexterPatch(const uint8_t* packedPatch) override;
-    char* getPresetName() override;
     uint8_t getPlayMode() const override {
         return pfm3Params().engine1.playMode;
     }
@@ -87,9 +96,6 @@ public:
     void randomizePreset(int operatorRandom, int envelopeTypeRandom, int imRandom, int modulationRandom) override;
     int getStepSelection(int which) const override;
     void setStepSelection(int which, int step) override;
-    bool usesPfm3PresetMirror() const override {
-        return true;
-    }
     void prepareFxMatrix(Voice* voice) override;
     void updateVoiceMatrix(Voice* voice, int note, int velocity) override;
 
@@ -169,6 +175,7 @@ private:
     Timbre* timbre_;
     SynthState* synthState_;
     Hexter* hexter_;
+    Pfm3Preset* pfm3Preset_;
     Pfm3TimbreContext* context_;
     int timbreNumber_;
     int stepSelect_[2];

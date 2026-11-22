@@ -17,8 +17,10 @@
 
 #include "ScreenEditor.h"
 #include "EditorCommon.h"
+#include "SynthEngineFactory.h"
 #include "engine/msfa/EditorDx7.h"
 #include "engine/pfm3/EditorPfm3.h"
+#include "engine/pfm3/Preenfm3Engine.h"
 #include "ScreenTypes.h"
 #include "SynthState.h"
 #include "Timbre.h"
@@ -304,7 +306,7 @@ void ScreenEditor::displayLevelMeter() {
 }
 
 struct Pfm3Preset* ScreenEditor::pfm3Preset() const {
-    return synthState_->getTimbre(currentTimbre_)->getPfm3Preset();
+    return SynthEngineFactory::getPfm3(currentTimbre_)->getPfm3Preset();
 }
 
 void ScreenEditor::displayPreset() {

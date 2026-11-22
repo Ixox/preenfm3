@@ -79,3 +79,7 @@ SynthEngine* SynthEngineFactory::get(SynthEngineType type, int timbreNumber) {
     }
     return static_cast<SynthEngine*>(&pfm3Engines_[timbreNumber]);
 }
+
+Preenfm3Engine* SynthEngineFactory::getPfm3(int timbreNumber) {
+    return &pfm3Engines_[timbreNumber];
+}

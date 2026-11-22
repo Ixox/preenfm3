@@ -47,8 +47,8 @@ private:
     void copyAndTransformString(char* dest, const char* source);
     int copyStringAt(char* dest, int offset, const char* source);
     void moveExtensionAtTheEnd(char* fileName);
-    void copySynthParams(char* source, char* dest);
-    struct Pfm3Preset* pfm3Preset(int timbre) const;
+    void backupTimbre(int timbre);
+    bool restoreTimbre(int timbre);
     void displayBankSelect(int bankNumber, bool usable, const char* name);
     void displayPatchSelect(int presetNumber, const char* name);
     void printScalaFrequency(float value);
@@ -56,7 +56,6 @@ private:
     TftDisplay* tft_;
     SynthState* synthState_;
     Storage* storage_;
-    struct Pfm3Preset* backupPfm3Preset_;
 
     uint8_t previousConfigSetting_;
     uint8_t menuStateRow_;
