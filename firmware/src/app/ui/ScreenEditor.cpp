@@ -99,12 +99,12 @@ EditorEngine* ScreenEditor::editorForEngine() const {
     return nullptr;
 }
 
-const struct EditorEditMenu* ScreenEditor::getMainMenu(int page) const {
+const struct EditorMenu* ScreenEditor::getMainMenu(int page) const {
     EditorEngine* engine = editorForEngine();
     if (engine == nullptr) {
         return nullptr;
     }
-    const struct EditorEditMenu* menu = engine->getEngineMenu(page);
+    const struct EditorMenu* menu = engine->getEngineMenu(page);
     if (menu != nullptr) {
         return menu;
     }
@@ -115,12 +115,12 @@ const struct EditorEditMenu* ScreenEditor::getMainMenu(int page) const {
     return nullptr;
 }
 
-const struct EditorEditMenu* ScreenEditor::currentEditMenu() const {
+const struct EditorMenu* ScreenEditor::currentEditMenu() const {
     return getMainMenu(synthState_->fullState_.mainPage);
 }
 
 const char* ScreenEditor::mainMenuName(int button) const {
-    const struct EditorEditMenu* menu = getMainMenu(button);
+    const struct EditorMenu* menu = getMainMenu(button);
     return menu != nullptr ? menu->mainMenuName : "";
 }
 
@@ -146,14 +146,6 @@ void ScreenEditor::newTimbre(int timbre) {
     }
 }
 
-void ScreenEditor::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                                     float newValue) {
-    EditorEngine* editor = activeEditor();
-    if (editor != nullptr) {
-        editor->newPfm3ParamValue(refreshStatus, timbre, currentRow, encoder, param, oldValue, newValue);
-    }
-}
-
 void ScreenEditor::displayParamValue(int encoder, TFT_COLOR color) {
     EditorEngine* editor = activeEditor();
     if (editor != nullptr) {
@@ -171,7 +163,6 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
     // engine switch): fall back to the main menu instead of drawing nothing.
     if (synthState_->fullState_.mainPage >= 0 && activeEditor() == nullptr) {
         synthState_->fullState_.mainPage = -1;
-        synthState_->fullState_.editPage = 0;
         refreshStatus = 20;
         endRefreshStatus = 0;
         return;
@@ -210,14 +201,14 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
         }
     } else {
         EditorEngine* editor = activeEditor();
-        const struct EditorEditMenu* editMenu = currentEditMenu();
+        const struct EditorMenu* editMenu = currentEditMenu();
         if (editor == nullptr || editMenu == nullptr) {
             return;
         }
-        if (synthState_->fullState_.editPage >= editMenu->numberOfButtons) {
-            synthState_->fullState_.editPage = 0;
+        if (editor->editPage() >= editMenu->buttonCount) {
+            editor->setEditPage(0);
         }
-        const struct EditorOneButton* page = editMenu->pages[synthState_->fullState_.editPage];
+        const struct EditorPageButton* page = editMenu->buttons[editor->editPage()];
 
         switch (refreshStatus) {
         case 21:
@@ -234,7 +225,7 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
             tft_->setCursor(0, 2);
             tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCharColor(COLOR_CYAN);
-            editor->drawPageHeader();
+            editor->printPageHeader();
             tft_->print(page->states[synthState_->fullState_.buttonState[page->buttonId]]->stateLabel);
             editor->preparePage();
             break;
@@ -255,8 +246,8 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
         case 8:
         case 7: {
             int button = 12 - refreshStatus;
-            const struct RowEncoder rowEncoder = page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[button];
-            editor->drawParameterName(button, rowEncoder, editMenu, page);
+            const EditorSlot slot = editor->slotForEncoder(button);
+            editor->printParameterName(button, slot, editMenu, page);
             break;
         }
         case 6:
@@ -276,10 +267,10 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
     }
 }
 
-void ScreenEditor::tempoClick() {
+void ScreenEditor::slowTick() {
     EditorEngine* editor = activeEditor();
     if (editor != nullptr) {
-        editor->tempoClick();
+        editor->slowTick();
     }
     displayLevelMeter();
 }
@@ -342,65 +333,7 @@ void ScreenEditor::setPresetModified(int timbre, bool state) {
     presetModifed_[timbre] = state;
 }
 
-void ScreenEditor::updateArpPattern(int currentRow, int encoder, int oldValue, int newValue) {
-
-    const int index = (int)pfm3Preset()->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
-    const arp_pattern_t user_pattern = pfm3Preset()->engineArpUserPatterns.patterns[index];
-
-    if (pfm3Preset()->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
-        return;
-    }
-
-    if (encoder == 1) {
-        EditorEngine* editor = activeEditor();
-        int patternSelect = editor != nullptr ? editor->getPatternSelection() : 0;
-        // new value to display
-        tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(patternSelect, 6);
-        tft_->print((char)(127 + ((newValue >> patternSelect) & 0x1) * 15));
-    } else if (encoder == 0) {
-        if ((oldValue % 4) == 0) {
-            tft_->setCharColor(COLOR_WHITE);
-        } else {
-            tft_->setCharColor(COLOR_GRAY);
-        }
-        tft_->setCursor(oldValue, 6);
-        tft_->print((char)(127 + ((user_pattern >> (oldValue)) & 0x1) * 15));
-        tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(newValue, 6);
-        tft_->print((char)(127 + ((user_pattern >> (newValue)) & 0x1) * 15));
-    }
-}
-
-void ScreenEditor::updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue) {
-    int whichStepSeq = currentRow - ROW_LFOSEQ1;
-
-    StepSequencerSteps* seqSteps = &((StepSequencerSteps*)(&pfm3Preset()->lfoSteps1))[whichStepSeq];
-
-    tft_->setCharBackgroundColor(COLOR_BLACK);
-
-    if (encoder == 3) {
-        EditorEngine* editor = activeEditor();
-        int stepSelect = editor != nullptr ? editor->getStepSelection(whichStepSeq) : 0;
-        // new value to display
-        tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(stepSelect, 6);
-        tft_->print((char)(127 + newValue));
-    } else if (encoder == 2) {
-        if ((oldValue % 4) == 0) {
-            tft_->setCharColor(COLOR_WHITE);
-        } else {
-            tft_->setCharColor(COLOR_GRAY);
-        }
-        tft_->setCursor(oldValue, 6);
-        tft_->print((char)(127 + seqSteps->steps[oldValue]));
-        tft_->setCharColor(COLOR_YELLOW);
-        tft_->setCursor(newValue, 6);
-        tft_->print((char)(127 + seqSteps->steps[newValue]));
-    }
-}
-
-void ScreenEditor::encoderTurned(int encoder6, int ticks) {
+void ScreenEditor::encoderTurned(int encoder, int ticks) {
     struct FullState* fullState = &(synthState_->fullState_);
 
     if (unlikely(fullState->mainPage == -1)) {
@@ -409,22 +342,22 @@ void ScreenEditor::encoderTurned(int encoder6, int ticks) {
 
     EditorEngine* editor = activeEditor();
     if (editor != nullptr) {
-        editor->encoderTurned(encoder6, ticks);
+        editor->encoderTurned(encoder, ticks);
     }
 }
 
-void ScreenEditor::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+void ScreenEditor::newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) {
     EditorEngine* editor = activeEditor();
     if (editor != nullptr) {
-        editor->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+        editor->newEngineParamValue(refreshStatus, timbre, paramId, context, oldValue, newValue);
     }
 }
 
-void ScreenEditor::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void ScreenEditor::encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
 
     EditorEngine* editor = activeEditor();
     if (editor != nullptr) {
-        editor->encoderTurnedWhileButtonPressed(encoder6, ticks, button);
+        editor->encoderTurnedWhileButtonPressed(encoder, ticks, button);
     }
 }
 
@@ -439,7 +372,6 @@ void ScreenEditor::buttonPressed(int button) {
             // No editor for this page (e.g. engine switched while on a page
             // that the new engine does not provide): go back to the menu.
             synthState_->fullState_.mainPage = -1;
-            synthState_->fullState_.editPage = 0;
         }
     }
 
@@ -447,13 +379,17 @@ void ScreenEditor::buttonPressed(int button) {
 }
 
 void ScreenEditor::buttonPressedMenuPage(int button) {
-    if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6 && getMainMenu(button) != nullptr) {
+    if (button >= BUTTON_SWITCH_1 && button <= BUTTON_SWITCH_6 && getMainMenu(button) != nullptr) {
         synthState_->fullState_.mainPage = button;
-        int editPage = editPageSelected_[synthState_->fullState_.mainPage];
-        if (editPage >= currentEditMenu()->numberOfButtons) {
+        EditorEngine* editor = activeEditor();
+        int editPage = editor != nullptr ? editor->editPageSelected(button) : 0;
+        const struct EditorMenu* editMenu = currentEditMenu();
+        if (editMenu != nullptr && editPage >= editMenu->buttonCount) {
             editPage = 0;
         }
-        synthState_->fullState_.editPage = editPage;
+        if (editor != nullptr) {
+            editor->setEditPage(editPage);
+        }
     }
 }
 

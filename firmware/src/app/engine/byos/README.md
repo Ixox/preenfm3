@@ -46,9 +46,11 @@ PFM3 oscillator shapes are available (`sin`, `saw`, `square`, `sin²`,
 
 | Id | Name | Range | Default | UI |
 |---|---|---|---|---|
-| `BYOS_PARAM_WAVE` | operator waveform | `0..OSC_SHAPE_LAST-1` | op1 `SQUARE`, op2 `SAW` | OP row 1/2, encoder 0 |
-| `BYOS_PARAM_MULTIPLIER` | frequency multiplier | `0.25..4.0`, step `0.25` | op1 `1.0`, op2 `1.5` | OP row 1/2, encoder 1 |
-| `BYOS_PARAM_MIX` | `Mix 12` op1 ↔ op2 mix | `0..1`, step `0.05` | `0.5` | OP page, encoder 3 |
+| `BYOS_PARAM_OP1_WAVE` | op1 waveform | `0..OSC_SHAPE_LAST-1` | `SQUARE` | OP page, encoder 0 |
+| `BYOS_PARAM_OP1_MULTIPLIER` | op1 frequency multiplier | `0.25..4.0`, step `0.25` | `1.0` | OP page, encoder 1 |
+| `BYOS_PARAM_MIX` | `Mix 12` op1 ↔ op2 mix | `0..1`, step `0.05` | `0.5` | OP page, encoder 2 |
+| `BYOS_PARAM_OP2_WAVE` | op2 waveform | `0..OSC_SHAPE_LAST-1` | `SAW` | OP page, encoder 3 |
+| `BYOS_PARAM_OP2_MULTIPLIER` | op2 frequency multiplier | `0.25..4.0`, step `0.25` | `1.5` | OP page, encoder 4 |
 | `BYOS_PARAM_ATTACK` | attack time | `0..5 s` | `0.01 s` | ENV page, encoder 0 |
 | `BYOS_PARAM_RELEASE` | release time | `0..5 s` | `0.3 s` | ENV page, encoder 1 |
 
@@ -81,18 +83,20 @@ There is no NRPN map and no `midiPatchParam()` patch dump.
 `EditorByos` registers two main pages (menu buttons 1 and 2):
 
 - `Engine` (button 1)
-  - `OP` — row 1 is op1 (`Wave`, `Mult`, `Mix 12`), row 2 (encoders 4–6) is
-    op2 (`Wave`, `Mult`). `Mix 12` is the single global crossfade.
+  - `OP` — encoders 0–2 are op1 (`Wave`, `Mult`, `Mix 12`), encoders 3–4 are
+    op2 (`Wave`, `Mult`), encoder 5 is empty. `Mix 12` is the single global
+    crossfade.
   - `ENV` — `Attack`, `Release`.
 - `Arp/Fx` (button 2) — the common page shared with PFM3 and DX7
   (`Arp`, `Fx1`, `Fx2`). It is not implemented by BYOS: `EditorByos` maps main
   page 1 to `COMMON_PAGE_ARP_FX` in `getCommonPage()`, and `ScreenEditor`
   routes it to the shared `EditorCommon`/`EditorParamPage` editor.
 
-The engine page uses the shared `EditorOneButton`/`EditorEditMenu` structures
-and the `EditorEngine` helpers (`currentEditMenu()`, `currentPage()`,
-`rowEncoderFor()`, `getEncoderX()`). The engine parameters are read through
-`Timbre::getPatchMemory()` cast to `ByosParams*`.
+The engine page uses the shared `EditorPageButton`/`EditorMenu`/
+`EditorPageState` structures and the `EditorEngine` helpers
+(`currentEditMenu()`, `currentPage()`, `slotForEncoder()`, `getEncoderX()`).
+The engine parameters are read through `Timbre::getPatchMemory()` cast to
+`ByosParams*`.
 
 Where PFM3/DX7 draw their algorithm, BYOS leaves the 80×100 box empty.
 `EditorByos::drawAlgorithm()` uses it as a placeholder and prints

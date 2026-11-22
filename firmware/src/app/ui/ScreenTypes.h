@@ -19,10 +19,9 @@
 #define SCREEN_TYPES_H
 
 #include "Common.h"
+#include "engine/pfm3/Pfm3Param.h"
 #include "engine/pfm3/Pfm3Params.h"
 
-extern const char* lfoSeqMidiClock[];
-extern const char* lfoOscMidiClock[];
 extern const char* polyMonoNames[];
 
 #define MIN(X, Y)        (((X) < (Y)) ? (X) : (Y))
@@ -45,52 +44,47 @@ enum {
     LINE_MAIN_BUTTON2 = 9,
 };
 
-enum ParameterDisplayType {
-    DISPLAY_TYPE_NONE = 0,
-    DISPLAY_TYPE_FLOAT,
-    DISPLAY_TYPE_FLOAT_OSC_FREQUENCY,
-    DISPLAY_TYPE_FLOAT_LFO_FREQUENCY,
-    DISPLAY_TYPE_INT,
-    DISPLAY_TYPE_STRINGS,
-    DISPLAY_TYPE_STEP_SEQ1,
-    DISPLAY_TYPE_STEP_SEQ2,
-    DISPLAY_TYPE_STEP_SEQ_BPM,
-    DISPLAY_TYPE_LFO_KSYN,
-    DISPLAY_TYPE_ARP_PATTERN,
-    DISPLAY_TYPE_SCALA_SCALE
+enum class EditorSlotKind : uint8_t { Param, Action, Custom, Region, Empty };
+
+struct EditorParamRef {
+    uint16_t paramId;
+    uint8_t context;
 };
 
-struct ParameterDisplay {
-    float minValue;
-    float maxValue;
-    float numberOfValues;
-    ParameterDisplayType displayType;
-    const char** valueName;
-    const unsigned char* valueNameOrder;
-    const unsigned char* valueNameOrderReversed;
-    float incValue;
+struct EditorSlot {
+    EditorSlotKind kind;
+    uint16_t id;
+    uint8_t context;
 };
 
-struct EditorOneButtonState {
+// EditorPageState slot initializers. Context defaults to 0 (engine-owned).
+#define BUTTON_SIMPLE_PARAM(...) { EditorSlotKind::Param, __VA_ARGS__ }
+#define BUTTON_EMPTY()           { EditorSlotKind::Empty, 0, 0 }
+
+struct EditorPageState {
     const char* stateLabel;
-    const RowEncoder rowEncoder[6];
+    EditorSlot slots[NUMBER_OF_ENCODERS];
 };
 
-struct EditorOneButton {
+struct EditorPageButton {
     const char* buttonLabel;
-    const uint8_t buttonId;
-    const int numberOfStates;
-    const EditorOneButtonState* states[];
+    uint8_t buttonId;
+    uint8_t stateCount;
+    const EditorPageState* states[];
 };
 
-struct EditorEditMenu {
+struct EditorMenu {
     const char* mainMenuName;
-    const int numberOfButtons;
-    const EditorOneButton* pages[];
+    uint8_t buttonCount;
+    const EditorPageButton* buttons[];
+};
+
+struct Rect {
+    int16_t x, y, w, h;
 };
 
 struct EditorMainMenu {
-    const EditorEditMenu* editMenu[6];
+    const EditorMenu* editMenu[6];
 };
 
 #endif

@@ -85,9 +85,7 @@ public:
     void setSynth(Synth* synth);
     void setVisualInfo(VisualInfo* visualInfo);
 
-    void newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
-    void newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
     }

@@ -15,6 +15,7 @@
 #include "Lfo.h"
 #include "Osc.h"
 #include "Pfm3Preset.h"
+#include "Pfm3Param.h"
 #include "Pfm3VoiceState.h"
 #include "SynthEngine.h"
 #include "TimbreParams.h"
@@ -76,16 +77,17 @@ public:
     void setMatrixPolyAfterTouch(uint8_t note, float value) override;
     void noteOnMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
     void noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity) override;
-    void paramChanged(int row, int encoder, float oldValue, float newValue) override;
+    void paramChanged(int index, float oldValue, float newValue) override;
+    void paramChanged(Pfm3Param id, float oldValue, float newValue);
+    void engineParamChanged(int paramId, int context, float oldValue, float newValue) override;
     void setParamValue(int index, float value) override;
     bool isUnisonMode() const override;
     void setStepSequencerSteps(int which, const struct StepSequencerSteps& steps) override;
-    void paramRowChanged(int row) override;
     void serializePfm3Preset(struct Pfm3Preset& out) const override;
     void deserializePfm3Preset(const struct Pfm3Preset& in) override;
     void applyPfm3Preset(const struct Pfm3Preset& flat);
     void syncSharedParams(const struct TimbreSharedParams& shared);
-    void syncStepSequencerSteps(int which);
+    bool validateParamTables();
     int getSeqStepValue(int which, int step) const;
     void setSeqStepValue(int which, int step, int value);
     void loadHexterPatch(const uint8_t* packedPatch) override;
@@ -99,9 +101,9 @@ public:
     void prepareFxMatrix(Voice* voice) override;
     void updateVoiceMatrix(Voice* voice, int note, int velocity) override;
 
-    void lfoValueChange(int row, int encoder, float value) override;
+    void lfoValueChange(int paramId, int field, float value) override;
     void updateMidiNoteScale(int scale) override;
-    void verifyLfoUsed(int encoder, float oldValue, float newValue) override;
+    void verifyLfoUsed(int field, float oldValue, float newValue) override;
     bool isLfoUsed(int lfo) override;
     void midiClockContinue(int songPosition) override;
     void midiClockStart() override;
@@ -119,7 +121,7 @@ public:
         return true;
     }
     bool midiData(int timbre, const struct MidiData& data) override;
-    bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const override;
+    bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const override;
     bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const override;
 
     Osc& osc(int index) {
@@ -161,12 +163,12 @@ private:
     void lfoNoteOn(Voice* voice);
     void lfoNoteOff(Voice* voice);
     void afterParamsLoadVoice(Voice* voice);
-    void setPfm3ValueFromMidi(int row, int encoder, float newValue);
+    void setPfm3ValueFromMidi(int index, float newValue);
     void setStepValueFromMidi(int whichStepSeq, int step, int newValue);
     bool midiCcData(uint8_t cc, uint8_t value);
     bool midiNrpnData(uint16_t param, uint16_t value);
     void resetMatrix(Voice* voice);
-    void lfoValueChangeOnVoice(Voice* voice, int currentRow, int encoder, float newValue);
+    void lfoValueChangeOnVoice(Voice* voice, Pfm3Param id, int field, float newValue);
     void midiClockSongPositionStepOnVoice(Voice* voice, int songPosition, bool recomputeNext);
     void midiClockContinueOnVoice(Voice* voice, int songPosition);
     void midiClockStartOnVoice(Voice* voice);

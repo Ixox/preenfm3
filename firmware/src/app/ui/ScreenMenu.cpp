@@ -373,7 +373,7 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
     struct FullState* fullState = &synthState_->fullState_;
     int32_t length;
 
-    if (button == BUTTON_PFM3_MENU) {
+    if (button == BUTTON_SWITCH_MENU) {
         if (fullState->currentMenuItem->menuState != MAIN_MENU) {
             const MenuItem* oldMenuItem = fullState->currentMenuItem;
             fullState->currentMenuItem = getMenuBack(currentTimbre);
@@ -383,7 +383,7 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
         return;
     }
 
-    if (button < BUTTON_PFM3_1 || button > BUTTON_PFM3_6) {
+    if (button < BUTTON_SWITCH_1 || button > BUTTON_SWITCH_6) {
         return;
     }
 

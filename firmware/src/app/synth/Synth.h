@@ -69,15 +69,10 @@ public:
         }
     }
 
-    void newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
-        newPfm3ParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
-    }
-
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
         newMixerValue(mixerValueType, timbre, oldValue, newValue);
     }
 
-    void newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
     void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
         newEngineParamValue(timbre, paramId, context, oldValue, newValue);

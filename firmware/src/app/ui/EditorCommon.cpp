@@ -21,128 +21,61 @@
 #include "SynthState.h"
 
 // clang-format off
-static const struct EditorOneButtonState pfm3ButtonArpeggiator1State = {
+static const EditorPageState arp1GenericState = {
     "Arpeggiator",
     {
-        {
-            ROW_ARPEGGIATOR1,
-            ENCODER_ARPEGGIATOR_CLOCK },
-        {
-            ROW_ARPEGGIATOR1,
-            ENCODER_ARPEGGIATOR_BPM },
-        {
-            ROW_ARPEGGIATOR1,
-            ENCODER_ARPEGGIATOR_DIRECTION },
-        {
-            ROW_ARPEGGIATOR1,
-            ENCODER_ARPEGGIATOR_OCTAVE },
-        {
-            ROW_ARPEGGIATOR2,
-            ENCODER_ARPEGGIATOR_DIVISION },
-        {
-            ROW_ARPEGGIATOR2,
-            ENCODER_ARPEGGIATOR_DURATION } } };
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 0), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 1), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 2), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 3), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 1), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 2), 1),
+    } };
 
-static const struct EditorOneButtonState pfm3ButtonArpeggiator2State = {
+static const EditorPageState arp2GenericState = {
     "Arpeggiator",
     {
-        {
-            ROW_ARPEGGIATOR2,
-            ENCODER_ARPEGGIATOR_PATTERN },
-        {
-            ROW_ARPEGGIATOR2,
-            ENCODER_ARPEGGIATOR_LATCH },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
-        {
-            ROW_ARPEGGIATOR3,
-            0 },
-        {
-            ROW_ARPEGGIATOR3,
-            1 },
-        {
-            ROW_ARPEGGIATOR3,
-            2 } } };
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 0), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 3), 1),
+        BUTTON_EMPTY(),
+        { EditorSlotKind::Custom, 0, 0 },
+        { EditorSlotKind::Custom, 1, 0 },
+        { EditorSlotKind::Custom, 2, 0 },
+    } };
 
-static const struct EditorOneButton pfm3ButtonArpeggiator = {
-    "Arp",
-    BUTTONID_EDIT_ARPEGIATOR,
-    2,
-    {
-        &pfm3ButtonArpeggiator1State,
-        &pfm3ButtonArpeggiator2State } };
-
-static const struct EditorOneButtonState pfm3ButtonFx1State = {
+static const EditorPageState fx1GenericState = {
     "Voice FX",
     {
-        {
-            ROW_EFFECT1,
-            ENCODER_EFFECT_TYPE },
-        {
-            ROW_EFFECT1,
-            ENCODER_EFFECT_PARAM1 },
-        {
-            ROW_EFFECT1,
-            ENCODER_EFFECT_PARAM2 },
-        {
-            ROW_EFFECT1,
-            ENCODER_EFFECT_PARAM3 },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
-        {
-            ROW_NONE,
-            ENCODER_NONE } } };
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 0), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 1), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 2), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 3), 1),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
+    } };
 
-static const struct EditorOneButtonState pfm3ButtonFx2State = {
+static const EditorPageState fx2GenericState = {
     "Paraphonic FX",
     {
-        {
-            ROW_EFFECT2,
-            ENCODER_EFFECT_TYPE },
-        {
-            ROW_EFFECT2,
-            ENCODER_EFFECT_PARAM1 },
-        {
-            ROW_EFFECT2,
-            ENCODER_EFFECT_PARAM2 },
-        {
-            ROW_EFFECT2,
-            ENCODER_EFFECT_PARAM3 },
-        {
-            ROW_NONE,
-            ENCODER_NONE },
-        {
-            ROW_NONE,
-            ENCODER_NONE } } };
-
-static const struct EditorOneButton pfm3ButtonFx1 = {
-    "Fx1",
-    BUTTONID_ONLY_ONE_STATE,
-    1,
-    {
-        &pfm3ButtonFx1State } };
-
-static const struct EditorOneButton pfm3ButtonFx2 = {
-    "Fx2",
-    BUTTONID_ONLY_ONE_STATE,
-    1,
-    {
-        &pfm3ButtonFx2State } };
-
-static const struct EditorEditMenu pfm3ArpFilterMenu = {
-    "Arp/Fx",
-    3,
-    {
-        &pfm3ButtonArpeggiator,
-        &pfm3ButtonFx1,
-        &pfm3ButtonFx2
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 0), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 1), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 2), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 3), 1),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
     } };
 // clang-format on
 
 EditorCommon::EditorCommon() {
 }
+
+static const struct EditorPageButton pfm3ButtonArpeggiator = {"Arp", BUTTONID_EDIT_ARPEGIATOR, 2, {&arp1GenericState, &arp2GenericState}};
+
+static const struct EditorPageButton pfm3ButtonFx1 = {"Fx1", BUTTONID_ONLY_ONE_STATE, 1, {&fx1GenericState}};
+
+static const struct EditorPageButton pfm3ButtonFx2 = {"Fx2", BUTTONID_ONLY_ONE_STATE, 1, {&fx2GenericState}};
+
+static const struct EditorMenu pfm3ArpFilterMenu = {"Arp/Fx", 3, {&pfm3ButtonArpeggiator, &pfm3ButtonFx1, &pfm3ButtonFx2}};
 
 void EditorCommon::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
     parent_ = parent;
@@ -158,12 +91,12 @@ const char* EditorCommon::getEngineName() const {
     return "";
 }
 
-const struct EditorEditMenu* EditorCommon::getEngineMenu(int page) const {
+const struct EditorMenu* EditorCommon::getEngineMenu(int page) const {
     (void)page;
     return nullptr;
 }
 
-const struct EditorEditMenu* EditorCommon::getCommonMenu(int commonPage) const {
+const struct EditorMenu* EditorCommon::getCommonMenu(int commonPage) const {
     if (commonPage == COMMON_PAGE_ARP_FX) {
         return &pfm3ArpFilterMenu;
     }

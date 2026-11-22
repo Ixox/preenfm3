@@ -767,7 +767,7 @@ void ScreenMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, f
     }
 }
 
-void ScreenMixer::tempoClick() {
+void ScreenMixer::slowTick() {
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];
 
@@ -906,16 +906,16 @@ void ScreenMixer::encoderTurned(int encoder, int ticks) {
 /**
  * Mixer volume : ENCODER + MENU => modify volumes of all instruments on same DAC
  */
-void ScreenMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void ScreenMixer::encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
 
     switch (button) {
-    case BUTTON_PFM3_MENU: {
+    case BUTTON_SWITCH_MENU: {
         const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
         if (currentButton->state[0]->mixerValueType == MIXER_VALUE_VOLUME) {
             if (synthState_->fullState_.buttonState[BUTTONID_MIXER_MIX] == 0) {
                 // We're modifying volume
                 // We verify output/3 because each DAC can have 3 values (DAC 1 : 1, 1-2, 2)
-                int output = synthState_->mixerState_.instrumentState_[encoder6].out / 3;
+                int output = synthState_->mixerState_.instrumentState_[encoder].out / 3;
                 for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
                     if ((synthState_->mixerState_.instrumentState_[i].out / 3) == output) {
                         this->encoderTurned(i, ticks);
@@ -930,7 +930,7 @@ void ScreenMixer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int b
 void ScreenMixer::buttonPressed(int button) {
     struct FullState* fullState = &synthState_->fullState_;
 
-    if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {
+    if (button >= BUTTON_SWITCH_1 && button <= BUTTON_SWITCH_6) {
         if (fullState->mixerCurrentEdit != button) {
             synthState_->propagateNewMixerEdit(fullState->mixerCurrentEdit, button);
             fullState->mixerCurrentEdit = button;

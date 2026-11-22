@@ -23,6 +23,9 @@
 #include "Common.h"
 #include "EditorEngine.h"
 
+// Ids of the `Action` slots handled by EditorParamPage.
+enum class EditorActionId : uint8_t { LfoSync = 0, StepSync = 1 };
+
 /*
  * Generic menu/encoder page mechanics over the flat Pfm3Preset model.
  * Used by the PFM3 editor and by the shared Arp/Fx page. Engine-specific
@@ -32,13 +35,12 @@ class EditorParamPage : public EditorEngine {
 public:
     EditorParamPage();
 
-    void drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) override;
-    void drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
-                           const struct EditorOneButton* page) override;
+    void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
+    void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
+                           const struct EditorPageButton* page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                           float newValue) override;
-    void tempoClick() override;
+    void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) override;
+    void slowTick() override;
     void encoderTurned(int encoder, int ticks) override;
     void buttonPressed(int button) override;
     void preparePage() override;
@@ -48,12 +50,17 @@ public:
         return patternSelect_;
     }
 
+    // Bridge from the physical encoder index to the generic slot model.
+    EditorParamInfo paramInfoFor(int encoder) const;
+
 protected:
-    void encoderTurnedForStepSequencer(int row, int encoder4, int encoder6, int ticks);
-    void encoderTurnedForArpPattern(int row, int num, int ticks);
+    void encoderTurnedForStepSequencer(int whichStepSeq, int encoder, int ticks);
+    void encoderTurnedForArpPattern(int num, int ticks);
     struct Pfm3Preset* pfm3Preset() const;
-    void encoderTurnedPfm2(int row, int encoder4, int ticks, bool specialOpCase = true);
-    void updateEncoderValueWithoutCursor(int row, int encoder, ParameterDisplay* param, float oldValue, float newFloatValue);
+    void encoderTurnedFlat(int flatIndex, int ticks);
+    void encoderTurnedCustomAction(EditorActionId action, int ticks);
+    void applyTicks(int flatIndex, int ticks);
+    void updateEncoderValueWithoutCursor(int encoderInRow, int element, const EditorParamInfo& info, float oldValue, float newFloatValue);
     void resetHideParams();
 
     bool hideParam_[NUMBER_OF_ENCODERS];

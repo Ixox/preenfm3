@@ -13,12 +13,14 @@
 #include "Pfm3ControlChange.h"
 #include "Pfm3FlashFormat.h"
 #include "Pfm3Midi.h"
-#include "Pfm3ParameterRows.h"
 #include "Pfm3Preset.h"
 #include "SynthState.h"
+#include "Pfm3Param.h"
 #include "Timbre.h"
 #include "Voice.h"
 #include "VoicePool.h"
+
+extern volatile bool gPfm3ParamTablesValid;
 
 extern RNG_HandleTypeDef hrng;
 
@@ -86,10 +88,23 @@ void Preenfm3Engine::init(Timbre* timbre, SynthState* synthState) {
     initOscEnv(synthState);
     initContext();
     refreshContext();
+    if (timbreNumber_ == 0) {
+        validateParamTables();
+    }
 
     for (int slot = 0; slot < MAX_NUMBER_OF_VOICES; slot++) {
         initVoiceState(slot);
     }
+}
+
+bool Preenfm3Engine::validateParamTables() {
+    Pfm3Preset saved;
+    serializePfm3Preset(saved);
+    deserializePfm3Preset(defaultPreset);
+    bool ok = pfm3ValidateTables() && pfm3ValidateDefaults(pfm3Params(), timbre_->sharedParams());
+    gPfm3ParamTablesValid = ok;
+    deserializePfm3Preset(saved);
+    return ok;
 }
 
 void Preenfm3Engine::initOscEnv(SynthState* synthState) {
@@ -119,7 +134,7 @@ void Preenfm3Engine::afterNewParamsLoad() {
         afterParamsLoadVoice(timbre_->voices_[timbre_->voiceNumber_[k]]);
     }
 
-    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
+    for (int j = 0; j < PFM3_PARAMS_PER_ROW; j++) {
         for (int e = 0; e < 6; e++) {
             env_[e].reloadADSR(j);
         }
@@ -570,7 +585,7 @@ void Preenfm3Engine::lfoNoteOff(Voice* voice) {
 void Preenfm3Engine::afterParamsLoadVoice(Voice* voice) {
     resetMatrix(voice);
     Pfm3VoiceState& state = pfm3State(voice);
-    for (int j = 0; j < NUMBER_OF_ENCODERS_PFM2; j++) {
+    for (int j = 0; j < PFM3_PARAMS_PER_ROW; j++) {
         state.lfoOsc[0].valueChanged(j);
         state.lfoOsc[1].valueChanged(j);
         state.lfoOsc[2].valueChanged(j);
@@ -589,23 +604,22 @@ void Preenfm3Engine::resetMatrix(Voice* voice) {
     state.matrix.resetAllDestination();
 }
 
-void Preenfm3Engine::lfoValueChangeOnVoice(Voice* voice, int currentRow, int encoder, float newValue) {
+void Preenfm3Engine::lfoValueChangeOnVoice(Voice* voice, Pfm3Param id, int field, float newValue) {
     Pfm3VoiceState& state = pfm3State(voice);
-    switch (currentRow) {
-    case ROW_LFOOSC1:
-    case ROW_LFOOSC2:
-    case ROW_LFOOSC3:
-        state.lfoOsc[currentRow - ROW_LFOOSC1].valueChanged(encoder);
+    switch ((Pfm3Block)pfm3ParamBlockOf(id)) {
+    case Pfm3Block::LfoOsc:
+        state.lfoOsc[pfm3ParamElementOf(id)].valueChanged(field);
         break;
-    case ROW_LFOENV1:
-        state.lfoEnv[0].valueChanged(encoder);
+    case Pfm3Block::LfoEnv1:
+        state.lfoEnv[0].valueChanged(field);
         break;
-    case ROW_LFOENV2:
-        state.lfoEnv2[0].valueChanged(encoder);
+    case Pfm3Block::LfoEnv2:
+        state.lfoEnv2[0].valueChanged(field);
         break;
-    case ROW_LFOSEQ1:
-    case ROW_LFOSEQ2:
-        state.lfoStepSeq[currentRow - ROW_LFOSEQ1].valueChanged(encoder);
+    case Pfm3Block::LfoSeq:
+        state.lfoStepSeq[pfm3ParamElementOf(id)].valueChanged(field);
+        break;
+    default:
         break;
     }
 }
@@ -4567,84 +4581,66 @@ void Preenfm3Engine::noteOffMpe(uint8_t channel, uint8_t note, uint8_t velocity)
     }
 }
 
-void Preenfm3Engine::paramChanged(int row, int encoder, float oldValue, float newValue) {
-    switch (row) {
-    case ROW_ENV1_TIME:
-    case ROW_ENV1_LEVEL:
-        env_[0].reloadADSR(encoder);
+void Preenfm3Engine::paramChanged(int index, float oldValue, float newValue) {
+    Pfm3Param id = pfm3FlatToParam((uint16_t)index);
+    if ((uint16_t)id != PFM3_PARAM_NONE) {
+        paramChanged(id, oldValue, newValue);
+        return;
+    }
+    // Shared effect gain still needs a context refresh.
+    CommonParamId cid = commonFlatToParam((uint16_t)index);
+    if (cid != COMMON_PARAM_NONE && commonBlockOf(cid) == (uint8_t)CommonBlock::Effect1 && commonFieldOf(cid) == 3) {
+        refreshContext();
+    }
+}
+
+void Preenfm3Engine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
+    uint16_t flat = (context == 0) ? pfm3FlatIndex((Pfm3Param)paramId) : commonFlatIndex((CommonParamId)paramId);
+    if (flat != 0xFFFF) {
+        timbre_->setParamValue(flat, oldValue, newValue);
+    }
+}
+
+void Preenfm3Engine::paramChanged(Pfm3Param id, float oldValue, float newValue) {
+    const uint8_t block = pfm3ParamBlockOf(id);
+    const uint8_t element = pfm3ParamElementOf(id);
+    const uint8_t field = pfm3ParamFieldOf(id);
+
+    switch ((Pfm3Block)block) {
+    case Pfm3Block::EnvTime:
+    case Pfm3Block::EnvLevel:
+        env_[element].reloadADSR(field);
         break;
-    case ROW_ENV2_TIME:
-    case ROW_ENV2_LEVEL:
-        env_[1].reloadADSR(encoder);
+    case Pfm3Block::EnvCurve:
+        env_[element].applyCurves();
         break;
-    case ROW_ENV3_TIME:
-    case ROW_ENV3_LEVEL:
-        env_[2].reloadADSR(encoder);
-        break;
-    case ROW_ENV4_TIME:
-    case ROW_ENV4_LEVEL:
-        env_[3].reloadADSR(encoder);
-        break;
-    case ROW_ENV5_TIME:
-    case ROW_ENV5_LEVEL:
-        env_[4].reloadADSR(encoder);
-        break;
-    case ROW_ENV6_TIME:
-    case ROW_ENV6_LEVEL:
-        env_[5].reloadADSR(encoder);
-        break;
-    case ROW_ENV1_CURVE:
-        env_[0].applyCurves();
-        break;
-    case ROW_ENV2_CURVE:
-        env_[1].applyCurves();
-        break;
-    case ROW_ENV3_CURVE:
-        env_[2].applyCurves();
-        break;
-    case ROW_ENV4_CURVE:
-        env_[3].applyCurves();
-        break;
-    case ROW_ENV5_CURVE:
-        env_[4].applyCurves();
-        break;
-    case ROW_ENV6_CURVE:
-        env_[5].applyCurves();
-        break;
-    case ROW_MATRIX_FIRST ... ROW_MATRIX_LAST:
-        verifyLfoUsed(encoder, oldValue, newValue);
-        if (encoder == ENCODER_MATRIX_DEST1 || encoder == ENCODER_MATRIX_DEST2) {
+    case Pfm3Block::Matrix:
+        verifyLfoUsed(field, oldValue, newValue);
+        if (field == 2 || field == 3) { // Dest1 / Dest2
             resetMatrixDestination(oldValue);
         }
         break;
-    case ROW_LFOOSC1 ... ROW_LFOOSC3:
-    case ROW_LFOENV1 ... ROW_LFOENV2:
-    case ROW_LFOSEQ1 ... ROW_LFOSEQ2:
-        lfoValueChange(row, encoder, newValue);
+    case Pfm3Block::LfoOsc:
+    case Pfm3Block::LfoEnv1:
+    case Pfm3Block::LfoEnv2:
+    case Pfm3Block::LfoSeq: {
+        uint16_t flat = pfm3FlatIndex(id);
+        lfoValueChange(flat / PFM3_PARAMS_PER_ROW, flat % PFM3_PARAMS_PER_ROW, newValue);
         break;
-    case ROW_PERFORMANCE1:
-        setMatrixSource((SourceEnum)(MATRIX_SOURCE_CC1 + encoder), newValue);
+    }
+    case Pfm3Block::Performance:
+        setMatrixSource((SourceEnum)(MATRIX_SOURCE_CC1 + field), newValue);
         break;
-    case ROW_MIDINOTE1CURVE:
-        updateMidiNoteScale(0);
+    case Pfm3Block::MidiCurve:
+        updateMidiNoteScale(element);
         break;
-    case ROW_MIDINOTE2CURVE:
-        updateMidiNoteScale(1);
-        break;
-    case ROW_ENGINE:
-        if (encoder == ENCODER_ENGINE_ALGO) {
+    case Pfm3Block::Engine1:
+        if (field == 0) { // Algo
             refreshContext();
         }
         break;
-    case ROW_OSC_MIX1:
-    case ROW_OSC_MIX2:
-    case ROW_OSC_MIX3:
-        if (encoder == 1 || encoder == 3) {
-            refreshContext();
-        }
-        break;
-    case ROW_EFFECT1:
-        if (encoder == ENCODER_EFFECT_PARAM3) {
+    case Pfm3Block::OscMix:
+        if (field == 1) { // Pan
             refreshContext();
         }
         break;
@@ -4673,14 +4669,6 @@ void Preenfm3Engine::setStepSequencerSteps(int which, const StepSequencerSteps& 
     }
 }
 
-void Preenfm3Engine::paramRowChanged(int row) {
-    if (row == ROW_ARPEGGIATOR3) {
-        timbre_->sharedParams().engineArpUserPatterns = pfm3Preset_->engineArpUserPatterns;
-    } else if (row == ROW_LFOSEQ1 || row == ROW_LFOSEQ2) {
-        syncStepSequencerSteps(row - ROW_LFOSEQ1);
-    }
-}
-
 void Preenfm3Engine::prepareFxMatrix(Voice* voice) {
     if (!voice->isPlaying()) {
         pfm3State(voice).matrix.computeAllDestinations();
@@ -4698,9 +4686,9 @@ void Preenfm3Engine::updateVoiceMatrix(Voice* voice, int note, int velocity) {
     preenNoteOnUpdateMatrix(voiceIndex, note, velocity);
 }
 
-void Preenfm3Engine::lfoValueChange(int currentRow, int encoder, float newValue) {
+void Preenfm3Engine::lfoValueChange(int paramId, int field, float newValue) {
     for (int k = 0; k < (int)timbre_->numberOfVoices_; k++) {
-        lfoValueChangeOnVoice(timbre_->voices_[timbre_->voiceNumber_[k]], currentRow, encoder, newValue);
+        lfoValueChangeOnVoice(timbre_->voices_[timbre_->voiceNumber_[k]], (Pfm3Param)paramId, field, newValue);
     }
 }
 
@@ -4715,13 +4703,13 @@ float Preenfm3Engine::getMatrixDestination(int destination) {
     return 0.0f;
 }
 
-void Preenfm3Engine::verifyLfoUsed(int encoder, float oldValue, float newValue) {
+void Preenfm3Engine::verifyLfoUsed(int field, float oldValue, float newValue) {
     // No need to recompute
     if (timbre_->numberOfVoices_ == 0.0f) {
         return;
     }
     // We used it and still use it
-    if (encoder == ENCODER_MATRIX_MUL && oldValue != 0.0f && newValue != 0.0f) {
+    if (field == 1 && oldValue != 0.0f && newValue != 0.0f) { // Mul
         return;
     }
 
@@ -5129,14 +5117,6 @@ void Preenfm3Engine::syncSharedParams(const TimbreSharedParams& shared) {
     memcpy(pfm3Preset_->presetName, shared.presetName, sizeof(pfm3Preset_->presetName));
 }
 
-void Preenfm3Engine::syncStepSequencerSteps(int which) {
-    if (which == 0) {
-        setStepSequencerSteps(0, pfm3Preset_->lfoSteps1);
-    } else {
-        setStepSequencerSteps(1, pfm3Preset_->lfoSteps2);
-    }
-}
-
 int Preenfm3Engine::getSeqStepValue(int which, int step) const {
     return which == 0 ? pfm3Preset_->lfoSteps1.steps[step] : pfm3Preset_->lfoSteps2.steps[step];
 }
@@ -5291,31 +5271,51 @@ void Preenfm3Engine::deserializePfm3Preset(const struct Pfm3Preset& in) {
     timbre_->setSharedParams(shared);
 }
 
-void Preenfm3Engine::setPfm3ValueFromMidi(int row, int encoder, float newValue) {
-    struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
-    int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
+void Preenfm3Engine::setPfm3ValueFromMidi(int index, float newValue) {
+    const ParamDesc* d;
+    const ParamUiDesc* ui;
+    Pfm3Param topId = pfm3FlatToParam((uint16_t)index);
+    if ((uint16_t)topId != PFM3_PARAM_NONE) {
+        d = &pfm3Desc(topId);
+        ui = &pfm3FullDesc(topId).ui;
+    } else {
+        CommonParamId cid = commonFlatToParam((uint16_t)index);
+        if (cid == COMMON_PARAM_NONE) {
+            return;
+        }
+        d = &commonDesc(cid);
+        ui = &commonFullDesc(cid).ui;
+    }
     float oldValue = ((float*)getPfm3Preset())[index];
 
-    if (newValue > param->maxValue) {
+    if (newValue > d->max) {
         // in v2, matrix target were removed so some values are > to max value but we need to accept it
         bool mustConstraint = true;
-        if (param->valueNameOrder != NULL) {
-            for (int v = 0; v < param->numberOfValues; v++) {
-                if ((int)param->valueNameOrder[v] == (int)(newValue + .01)) {
+        if (ui->valueOrder != NULL) {
+            for (int v = 0; v < (int)ui->values; v++) {
+                if ((int)ui->valueOrder[v] == (int)(newValue + .01)) {
                     mustConstraint = false;
                 }
             }
         }
         if (mustConstraint) {
-            newValue = param->maxValue;
+            newValue = d->max;
         }
-    } else if (newValue < param->minValue) {
-        newValue = param->minValue;
+    } else if (newValue < d->min) {
+        newValue = d->min;
     }
     ((float*)getPfm3Preset())[index] = newValue;
 
     if (oldValue != newValue) {
-        synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, row, encoder, param, oldValue, newValue);
+        Pfm3Param pid = pfm3FlatToParam((uint16_t)index);
+        if ((uint16_t)pid != PFM3_PARAM_NONE) {
+            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pid, 0, oldValue, newValue);
+        } else {
+            CommonParamId cid = commonFlatToParam((uint16_t)index);
+            if (cid != COMMON_PARAM_NONE) {
+                synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)cid, 1, oldValue, newValue);
+            }
+        }
     }
 }
 
@@ -5368,138 +5368,46 @@ bool Preenfm3Engine::midiData(int timbre, const MidiData& data) {
 }
 
 bool Preenfm3Engine::midiCcData(uint8_t cc, uint8_t value) {
-    switch (cc) {
-    case CC_ALGO:
-        setPfm3ValueFromMidi(ROW_ENGINE, ENCODER_ENGINE_ALGO, (float)value);
-        break;
-    case CC_IM1:
-    case CC_IM2:
-        setPfm3ValueFromMidi(ROW_MODULATION1, ENCODER_ENGINE_IM1 + (cc - CC_IM1) * 2, (float)value * .1f);
-        break;
-    case CC_IM3:
-    case CC_IM4:
-        setPfm3ValueFromMidi(ROW_MODULATION2, ENCODER_ENGINE_IM3 + (cc - CC_IM3) * 2, (float)value * .1f);
-        break;
-    case CC_IM5:
-        setPfm3ValueFromMidi(ROW_MODULATION3, ENCODER_ENGINE_IM5, (float)value * .1f);
-        break;
-    case CC_IM_FEEDBACK:
-        setPfm3ValueFromMidi(ROW_MODULATION3, ENCODER_ENGINE_IM6, (float)value * INV127);
-        break;
-    case CC_MIX1:
-    case CC_MIX2:
-        setPfm3ValueFromMidi(ROW_OSC_MIX1, ENCODER_ENGINE_MIX1 + (cc - CC_MIX1), (float)value * .00787401574803149606f);
-        break;
-    case CC_MIX3:
-    case CC_MIX4:
-        setPfm3ValueFromMidi(ROW_OSC_MIX2, ENCODER_ENGINE_MIX3 + (cc - CC_MIX3), (float)value * .00787401574803149606f);
-        break;
-    case CC_PAN1:
-    case CC_PAN2:
-        setPfm3ValueFromMidi(ROW_OSC_MIX1, ENCODER_ENGINE_PAN1 + (cc - CC_PAN1), (float)value * .00787401574803149606f * 2.0f - 1.0f);
-        break;
-    case CC_PAN3:
-    case CC_PAN4:
-        setPfm3ValueFromMidi(ROW_OSC_MIX2, ENCODER_ENGINE_PAN3 + (cc - CC_PAN3), (float)value * .00787401574803149606f * 2.0f - 1.0f);
-        break;
-    case CC_OSC1_FREQ:
-    case CC_OSC2_FREQ:
-    case CC_OSC3_FREQ:
-    case CC_OSC4_FREQ:
-    case CC_OSC5_FREQ:
-    case CC_OSC6_FREQ:
-        setPfm3ValueFromMidi(ROW_OSC1 + cc - CC_OSC1_FREQ, ENCODER_OSC_FREQ, (float)value * .0833333333333333f);
-        break;
-    case CC_MATRIXROW1_MUL:
-    case CC_MATRIXROW2_MUL:
-    case CC_MATRIXROW3_MUL:
-    case CC_MATRIXROW4_MUL:
-        setPfm3ValueFromMidi(ROW_MATRIX1 + cc - CC_MATRIXROW1_MUL, ENCODER_MATRIX_MUL, (float)value * .2f - 10.0f);
-        break;
-    case CC_LFO1_FREQ:
-    case CC_LFO2_FREQ:
-    case CC_LFO3_FREQ:
-        setPfm3ValueFromMidi(ROW_LFOOSC1 + cc - CC_LFO1_FREQ, ENCODER_LFO_FREQ, (float)value * .2f);
-        break;
-    case CC_LFO_ENV2_SILENCE:
-        setPfm3ValueFromMidi(ROW_LFOENV2, ENCODER_LFO_ENV2_SILENCE, (float)value * .125f);
-        break;
-    case CC_STEPSEQ5_GATE:
-    case CC_STEPSEQ6_GATE:
-        setPfm3ValueFromMidi(ROW_LFOSEQ1 + cc - CC_STEPSEQ5_GATE, ENCODER_STEPSEQ_GATE, (float)value * .01f);
-        break;
-    case CC_MATRIX_SOURCE_CC1:
-    case CC_MATRIX_SOURCE_CC2:
-    case CC_MATRIX_SOURCE_CC3:
-    case CC_MATRIX_SOURCE_CC4:
-        setPfm3ValueFromMidi(ROW_PERFORMANCE1, cc - CC_MATRIX_SOURCE_CC1, (float)(value - 64) * INV127 * 2.0);
-        break;
-    case CC_ENV_ATK_OP1:
-        // ATK_OP1 is not consecutive to the other ones
-        setPfm3ValueFromMidi(ROW_ENV1_TIME, ENCODER_ENV_A, (float)value * .01562500000000000000f);
-        break;
-    case CC_ENV_ATK_OP2:
-    case CC_ENV_ATK_OP3:
-    case CC_ENV_ATK_OP4:
-    case CC_ENV_ATK_OP5:
-    case CC_ENV_ATK_OP6:
-        setPfm3ValueFromMidi(ROW_ENV2_TIME + (cc - CC_ENV_ATK_OP2), ENCODER_ENV_A, (float)value * .01562500000000000000f);
-        break;
-    case CC_ENV_ATK_ALL_CARRIER:
-    case CC_ENV_ATK_ALL_MODULATOR: {
-        int currentAlgo = (int)getPfm3Preset()->engine1.algo;
-        int type = cc == CC_ENV_ATK_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
-        for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
-            if (algoOpInformation[currentAlgo][e] == type) {
-                setPfm3ValueFromMidi(ROW_ENV1_TIME + e, ENCODER_ENV_A, (float)value * .01562500000000000000f);
-            }
-        }
-        break;
-    }
-    case CC_ENV_REL_OP1:
-    case CC_ENV_REL_OP2:
-    case CC_ENV_REL_OP3:
-    case CC_ENV_REL_OP4:
-    case CC_ENV_REL_OP5:
-    case CC_ENV_REL_OP6:
-        setPfm3ValueFromMidi(ROW_ENV1_TIME + (cc - CC_ENV_REL_OP1), ENCODER_ENV_R, (float)value * .03125000000000000000f);
-        break;
-    case CC_ENV_REL_ALL_MODULATOR:
-    case CC_ENV_REL_ALL_CARRIER: {
-        int currentAlgo = (int)getPfm3Preset()->engine1.algo;
-        int type = cc == CC_ENV_REL_ALL_CARRIER ? OPERATOR_CARRIER : OPERATOR_MODULATOR;
-        for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
-            if (algoOpInformation[currentAlgo][e] == type) {
-                setPfm3ValueFromMidi(ROW_ENV1_TIME + e, ENCODER_ENV_R, (float)value * .03125000000000000000f);
-            }
-        }
-        break;
-    }
-    case CC_LFO1_PHASE:
-    case CC_LFO2_PHASE:
-    case CC_LFO3_PHASE:
-        setPfm3ValueFromMidi(ROW_LFOPHASES, ENCODER_LFO_PHASE1 + cc - CC_LFO1_PHASE, (float)value * .01f);
-        break;
-    case CC_LFO1_BIAS:
-    case CC_LFO2_BIAS:
-    case CC_LFO3_BIAS:
-        setPfm3ValueFromMidi(ROW_LFOOSC1 + cc - CC_LFO1_BIAS, ENCODER_LFO_BIAS, (float)value * .01f);
-        break;
-    case CC_LFO1_SHAPE:
-    case CC_LFO2_SHAPE:
-    case CC_LFO3_SHAPE:
-        setPfm3ValueFromMidi(ROW_LFOOSC1 + cc - CC_LFO1_SHAPE, ENCODER_LFO_SHAPE, (float)value);
-        break;
-    case CC_UNISON_DETUNE:
-        setPfm3ValueFromMidi(ROW_ENGINE2, ENCODER_ENGINE2_UNISON_DETUNE, (float)value * .015625f - 1.0f);
-        break;
-    case CC_UNISON_SPREAD:
-        setPfm3ValueFromMidi(ROW_ENGINE2, ENCODER_ENGINE2_UNISON_SPREAD, (float)value * INV127);
-        break;
-    default:
+    const CcEntry* entry = pfm3CcEntry(cc);
+    if (entry == nullptr) {
         return false;
     }
-    return true;
+    const float transformed = pfm3ApplyMidiTransform(entry->transform, value);
+
+    switch (entry->kind) {
+    case CcKind::Engine: {
+        Pfm3Param id = (Pfm3Param)entry->id;
+        uint16_t flat = pfm3FlatIndex(id);
+        setPfm3ValueFromMidi(flat, transformed);
+        return true;
+    }
+    case CcKind::Shared: {
+        CommonParamId id = (CommonParamId)entry->id;
+        uint16_t flat = commonFlatIndex(id);
+        if (flat != 0xFFFF) {
+            setPfm3ValueFromMidi(flat, transformed);
+            return true;
+        }
+        return false;
+    }
+    case CcKind::EnvAllAttackModulator:
+    case CcKind::EnvAllAttackCarrier:
+    case CcKind::EnvAllReleaseModulator:
+    case CcKind::EnvAllReleaseCarrier: {
+        int currentAlgo = (int)getPfm3Preset()->engine1.algo;
+        int type = (entry->kind == CcKind::EnvAllAttackCarrier || entry->kind == CcKind::EnvAllReleaseCarrier)
+                       ? OPERATOR_CARRIER
+                       : OPERATOR_MODULATOR;
+        bool isAttack = entry->kind == CcKind::EnvAllAttackModulator || entry->kind == CcKind::EnvAllAttackCarrier;
+        for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
+            if (algoOpInformation[currentAlgo][e] == type) {
+                setPfm3ValueFromMidi(pfm3FlatIndex(pfm3Param(Pfm3Block::EnvTime, e, isAttack ? 0 : 3)), transformed);
+            }
+        }
+        return true;
+    }
+    }
+    return false;
 }
 
 void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newValue) {
@@ -5515,12 +5423,12 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
         int oldStep = stepSelect_[whichStepSeq];
         stepSelect_[whichStepSeq] = step;
         if (oldStep != step) {
-            synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, ROW_LFOSEQ1 + whichStepSeq, 2, NULL, oldStep, step);
+            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pfm3Param(Pfm3Block::StepSeq, whichStepSeq, 0), 0, oldStep, step);
         }
         setSeqStepValue(whichStepSeq, step, newValue);
         int newNewValue = getSeqStepValue(whichStepSeq, step);
         if (oldValue != newNewValue) {
-            synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, ROW_LFOSEQ1 + whichStepSeq, 3, NULL, oldValue, newValue);
+            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pfm3Param(Pfm3Block::StepSeq, whichStepSeq, 0), 0, oldValue, newValue);
         }
     }
 }
@@ -5532,59 +5440,71 @@ bool Preenfm3Engine::midiNrpnData(uint16_t param, uint16_t value) {
     uint8_t valueLSB = value & 0x7f;
 
     if (paramMSB < 2) {
-        float floatValue = (float)((valueMSB << 7) + valueLSB);
-        int index = param;
-        int memoryIndex = Pfm3Midi::getMemoryIndexFromMidi(index);
-        int row = memoryIndex >> 2;
-        int encoder = memoryIndex % 4;
+        const ParamRef& ref = pfm3NrpnToParam(param);
+        if (ref.id == PFM3_PARAM_NONE) {
+            return false;
+        }
 
-        if (row < NUMBER_OF_ROWS_FOR_EDITOR) {
-            struct ParameterDisplay* paramDisplay = &(allParameterRows.row[row]->params[encoder]);
-            if (paramDisplay->displayType == DISPLAY_TYPE_FLOAT || paramDisplay->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
-                paramDisplay->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || paramDisplay->displayType == DISPLAY_TYPE_LFO_KSYN) {
-                floatValue = floatValue * .01f + paramDisplay->minValue;
+        float floatValue = (float)((valueMSB << 7) + valueLSB);
+        if (ref.store == (uint8_t)ParamStore::Engine) {
+            Pfm3Param id = (Pfm3Param)ref.id;
+            const ParamDesc& d = pfm3Desc(id);
+            if (ref.transform == MidiTransform::Float100) {
+                floatValue = floatValue * .01f + d.min;
             }
-            setPfm3ValueFromMidi(row, encoder, floatValue);
-        } else if (index >= 228 && index < 240) {
-            timbre_->setPresetNameChar(index - 228, (char)floatValue);
-            if (index == 239) {
-                synthState_->propagateNewPresetName(timbreNumber_);
+            uint16_t flat = pfm3FlatIndex(id);
+            setPfm3ValueFromMidi(flat, floatValue);
+        } else {
+            CommonParamId id = (CommonParamId)ref.id;
+            const ParamDesc& d = commonDesc(id);
+            if (ref.transform == MidiTransform::Float100) {
+                floatValue = floatValue * .01f + d.min;
+            }
+            uint16_t flat = commonFlatIndex(id);
+            if (flat != 0xFFFF) {
+                setPfm3ValueFromMidi(flat, floatValue);
+            } else if (commonBlockOf(id) == (uint8_t)CommonBlock::PresetName) {
+                timbre_->setPresetNameChar(commonFieldOf(id), (char)floatValue);
+                if (commonFieldOf(id) == 11) {
+                    synthState_->propagateNewPresetName(timbreNumber_);
+                }
+            } else if (commonBlockOf(id) == (uint8_t)CommonBlock::ArpPattern) {
+                setPfm3ValueFromMidi(Pfm3PresetLayout::sharedBlockStart + 8 + commonFieldOf(id), floatValue);
+            } else {
+                return false;
             }
         }
-    } else if (paramMSB < 4) {
-        setStepValueFromMidi(paramMSB - 2, paramLSB, valueLSB);
-    } else {
-        return false;
+        return true;
     }
-    return true;
+
+    if (paramMSB < 4) {
+        setStepValueFromMidi(paramMSB - 2, paramLSB, valueLSB);
+        return true;
+    }
+    return false;
 }
 
-bool Preenfm3Engine::midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const {
+bool Preenfm3Engine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
     int sendCCOrNRPN = synthState_->fullState_.midiConfigValue[MIDICONFIG_SENDS];
 
     if (sendCCOrNRPN == 2) {
         out.isNrpn = true;
 
-        // Special case for the step sequencer.
-        if ((row == ROW_LFOSEQ1 || row == ROW_LFOSEQ2) && encoder >= 2) {
-            if (encoder == 2) {
-                return false;
-            }
-            int currentStepSeq = row - ROW_LFOSEQ1;
-            out.nrpn = ((currentStepSeq + 2) << 7) | stepSelect_[currentStepSeq];
-            out.nrpnValue = (unsigned char)newValue;
-            return true;
+        uint16_t flat = (context == 0) ? pfm3FlatIndex((Pfm3Param)paramId) : commonFlatIndex((CommonParamId)paramId);
+        if (flat == 0xFFFF) {
+            return false;
         }
+        const ParamFullDescription* full =
+            (context == 0) ? &pfm3FullDesc((Pfm3Param)paramId) : &commonFullDesc((CommonParamId)paramId);
 
-        const struct ParameterDisplay* param = &allParameterRows.row[row]->params[encoder];
         int valueToSend;
-        if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
-            param->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || param->displayType == DISPLAY_TYPE_LFO_KSYN) {
-            valueToSend = (newValue - param->minValue) * 100.0f + .1f;
+        if (full->ui.displayType == DISPLAY_TYPE_FLOAT || full->ui.displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
+            full->ui.displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || full->ui.displayType == DISPLAY_TYPE_LFO_KSYN) {
+            valueToSend = (newValue - full->desc.min) * 100.0f + .1f;
         } else {
             valueToSend = newValue + .1f;
         }
-        out.nrpn = Pfm3Midi::getMidiIndexFromMemory(row * NUMBER_OF_ENCODERS_PFM2 + encoder);
+        out.nrpn = Pfm3Midi::getMidiIndexFromMemory(flat);
         out.nrpnValue = valueToSend;
         return true;
     }
@@ -5597,174 +5517,150 @@ bool Preenfm3Engine::midiPfm3ParamFeedback(int row, int encoder, float newValue,
     out.cc = 0;
     out.ccValue = 0;
 
-    switch (row) {
-    case ROW_ENGINE:
-        if (encoder == ENCODER_ENGINE_ALGO) {
-            out.ccValue = newValue;
-            out.cc = CC_ALGO;
-        }
-        break;
-    case ROW_MODULATION1:
-        if ((encoder & 0x1) == 0) {
-            out.ccValue = newValue * 10 + .001f;
-            out.cc = CC_IM1 + (encoder >> 1);
-        }
-        break;
-    case ROW_MODULATION2:
-        if ((encoder & 0x1) == 0) {
-            out.ccValue = newValue * 10 + .001f;
-            out.cc = CC_IM3 + encoder;
-        }
-        break;
-    case ROW_MODULATION3:
-        if ((encoder & 0x1) == 0) {
-            out.ccValue = newValue * 10 + .001f;
-            out.cc = CC_IM5 + encoder;
-        }
-        break;
-    case ROW_OSC_MIX1:
-        out.cc = CC_MIX1 + encoder;
-        if ((encoder & 0x1) == 0) {
-            // mix
-            out.ccValue = newValue * 100.0f + .1f;
-        } else {
-            out.ccValue = (newValue + 1.0f) * 50.0f + .1f;
-        }
-        break;
-    case ROW_OSC_MIX2:
-        out.cc = CC_MIX3 + encoder;
-        if ((encoder & 0x1) == 0) {
-            // mix
-            out.ccValue = newValue * 100.0f + .1f;
-        } else {
-            out.ccValue = (newValue + 1.0f) * 50.0f + .1f;
-        }
-        break;
-    case ROW_OSC_FIRST ... ROW_OSC_LAST:
-        if (encoder == ENCODER_OSC_FREQ) {
-            out.cc = CC_OSC1_FREQ + (row - ROW_OSC_FIRST);
-            out.ccValue = newValue * 12.0f + .1f;
-        }
-        break;
-    case ROW_MATRIX_FIRST ... ROW_MATRIX4:
-        if (encoder == ENCODER_MATRIX_MUL) {
-            out.cc = CC_MATRIXROW1_MUL + row - ROW_MATRIX_FIRST;
-            out.ccValue = newValue * 5.0f + 50.1f;
-        }
-        break;
-    case ROW_LFO_FIRST ... ROW_LFOOSC3:
-        switch (encoder) {
-        case ENCODER_LFO_SHAPE:
-            out.cc = CC_LFO1_SHAPE + (row - ROW_LFO_FIRST);
-            out.ccValue = newValue + .1f;
-            break;
-        case ENCODER_LFO_FREQ:
-            out.cc = CC_LFO1_FREQ + (row - ROW_LFO_FIRST);
-            out.ccValue = newValue * 5.0f + .1f;
-            break;
-        case ENCODER_LFO_BIAS:
-            out.cc = CC_LFO1_BIAS + (row - ROW_LFO_FIRST);
-            out.ccValue = newValue * 100.0f + .1f;
-            break;
-        }
-        break;
-    case ROW_LFOENV2:
-        if (encoder == ENCODER_LFO_ENV2_SILENCE) {
-            out.cc = CC_LFO_ENV2_SILENCE;
-            out.ccValue = newValue * 8.0f + .1f;
-        }
-        break;
-    case ROW_LFOSEQ1 ... ROW_LFOSEQ2:
-        if (encoder == ENCODER_STEPSEQ_GATE) {
-            out.cc = CC_STEPSEQ5_GATE + (row - ROW_LFOSEQ1);
-            out.ccValue = newValue * 100.0f + .1f;
-        }
-        break;
-    case ROW_EFFECT1:
-        if (encoder == ENCODER_EFFECT_TYPE) {
-            out.cc = CC_FILTER_TYPE;
-            out.ccValue = newValue + .1f;
-        } else {
-            out.cc = CC_FILTER_PARAM1 + encoder - 1;
-            if (encoder == ENCODER_EFFECT_PARAM3) {
-                out.ccValue = newValue * 100.0f + .1f;
-            } else {
-                out.ccValue = newValue * 128.0f + .1f;
+    if (context == 0) {
+        Pfm3Param id = (Pfm3Param)paramId;
+        uint8_t block = pfm3ParamBlockOf(id);
+        uint8_t element = pfm3ParamElementOf(id);
+        uint8_t field = pfm3ParamFieldOf(id);
+
+        switch ((Pfm3Block)block) {
+        case Pfm3Block::Engine1:
+            if (field == 0) { // algo
+                out.ccValue = newValue;
+                out.cc = CC_ALGO;
             }
-        }
-        break;
-    case ROW_EFFECT2:
-        if (encoder == ENCODER_EFFECT_TYPE) {
-            out.cc = CC_FILTER2_TYPE;
-            out.ccValue = newValue + .1f;
-        } else {
-            out.cc = CC_FILTER2_PARAM1 + encoder - 1;
-            if (encoder == ENCODER_EFFECT_PARAM3) {
-                out.ccValue = newValue * 100.0f + .1f;
-            } else {
-                out.ccValue = newValue * 128.0f + .1f;
+            break;
+        case Pfm3Block::Mod:
+            if (field == 0) { // modulation element
+                out.ccValue = newValue * 10 + .001f;
+                out.cc = CC_IM1 + element;
             }
+            break;
+        case Pfm3Block::OscMix:
+            if (element < 4) {
+                out.cc = CC_MIX1 + element * 2 + field;
+                if (field == 0) { // mix
+                    out.ccValue = newValue * 100.0f + .1f;
+                } else {
+                    out.ccValue = (newValue + 1.0f) * 50.0f + .1f;
+                }
+            }
+            break;
+        case Pfm3Block::Osc:
+            if (field == 2) { // frequency
+                out.cc = CC_OSC1_FREQ + element;
+                out.ccValue = newValue * 12.0f + .1f;
+            }
+            break;
+        case Pfm3Block::Matrix:
+            if (element < 4 && field == 1) { // multiplier
+                out.cc = CC_MATRIXROW1_MUL + element;
+                out.ccValue = newValue * 5.0f + 50.1f;
+            }
+            break;
+        case Pfm3Block::LfoOsc:
+            switch (field) {
+            case 0: // shape
+                out.cc = CC_LFO1_SHAPE + element;
+                out.ccValue = newValue + .1f;
+                break;
+            case 1: // frequency
+                out.cc = CC_LFO1_FREQ + element;
+                out.ccValue = newValue * 5.0f + .1f;
+                break;
+            case 2: // bias
+                out.cc = CC_LFO1_BIAS + element;
+                out.ccValue = newValue * 100.0f + .1f;
+                break;
+            }
+            break;
+        case Pfm3Block::LfoPhase:
+            // LfoPhase uses element 0, field = LFO number.
+            out.cc = CC_LFO1_PHASE + field;
+            out.ccValue = newValue * 100.0f + .1f;
+            break;
+        case Pfm3Block::LfoEnv2:
+            if (field == 0) { // silence
+                out.cc = CC_LFO_ENV2_SILENCE;
+                out.ccValue = newValue * 8.0f + .1f;
+            }
+            break;
+        case Pfm3Block::LfoSeq:
+            if (field == 1) { // gate
+                out.cc = CC_STEPSEQ5_GATE + element;
+                out.ccValue = newValue * 100.0f + .1f;
+            }
+            break;
+        case Pfm3Block::EnvTime:
+            if (field == 0) { // attack
+                out.cc = (element == 0) ? CC_ENV_ATK_OP1 : (CC_ENV_ATK_OP2 + element - 1);
+                out.ccValue = newValue * 64.0f + .1f;
+            } else if (field == 3) { // release
+                out.cc = (element == 0) ? CC_ENV_REL_OP1 : (CC_ENV_REL_OP2 + element - 1);
+                out.ccValue = newValue * 32.0f + .1f;
+            }
+            break;
+        default:
+            break;
         }
-        break;
-    case ROW_ENV1_TIME:
-        if (encoder == ENCODER_ENV_A) {
-            // CC_ENV_ATK_OP1 is separate from the rest
-            out.cc = CC_ENV_ATK_OP1;
-            out.ccValue = newValue * 64.0f + .1f;
-        } else if (encoder == ENCODER_ENV_R) {
-            out.cc = CC_ENV_REL_OP1;
-            out.ccValue = newValue * 32.0f + .1f;
+    } else {
+        CommonBlock block = (CommonBlock)commonBlockOf((CommonParamId)paramId);
+        uint8_t field = commonFieldOf((CommonParamId)paramId);
+
+        switch (block) {
+        case CommonBlock::Arp1:
+            switch (field) {
+            case 0:
+                out.cc = CC_ARP_CLOCK;
+                break;
+            case 2:
+                out.cc = CC_ARP_DIRECTION;
+                break;
+            case 3:
+                out.cc = CC_ARP_OCTAVE;
+                break;
+            default:
+                break;
+            }
+            if (out.cc != 0) {
+                out.ccValue = newValue + .1f;
+            }
+            break;
+        case CommonBlock::Arp2:
+            switch (field) {
+            case 0:
+                out.cc = CC_ARP_PATTERN;
+                break;
+            case 1:
+                out.cc = CC_ARP_DIVISION;
+                break;
+            case 2:
+                out.cc = CC_ARP_DURATION;
+                break;
+            default:
+                break;
+            }
+            if (out.cc != 0) {
+                out.ccValue = newValue + .1f;
+            }
+            break;
+        case CommonBlock::Effect1:
+        case CommonBlock::Effect2:
+            if (field == 0) { // type
+                out.cc = (block == CommonBlock::Effect1) ? CC_FILTER_TYPE : CC_FILTER2_TYPE;
+                out.ccValue = newValue + .1f;
+            } else {
+                out.cc = (block == CommonBlock::Effect1) ? (CC_FILTER_PARAM1 + field - 1) : (CC_FILTER2_PARAM1 + field - 1);
+                if (field == 3) { // gain
+                    out.ccValue = newValue * 100.0f + .1f;
+                } else {
+                    out.ccValue = newValue * 128.0f + .1f;
+                }
+            }
+            break;
+        default:
+            break;
         }
-        break;
-    case ROW_ENV2_TIME:
-    case ROW_ENV3_TIME:
-    case ROW_ENV4_TIME:
-    case ROW_ENV5_TIME:
-    case ROW_ENV6_TIME:
-        if (encoder == ENCODER_ENV_A) {
-            out.cc = CC_ENV_ATK_OP2 + (row - ROW_ENV2_TIME);
-            out.ccValue = newValue * 64.0f + .1f;
-        } else if (encoder == ENCODER_ENV_R) {
-            out.cc = CC_ENV_REL_OP2 + (row - ROW_ENV2_TIME);
-            out.ccValue = newValue * 32.0f + .1f;
-        }
-        break;
-    case ROW_LFOPHASES:
-        out.cc = CC_LFO1_PHASE + encoder;
-        out.ccValue = newValue * 100.0f + .1f;
-        break;
-    case ROW_ARPEGGIATOR1:
-        switch (encoder) {
-        case ENCODER_ARPEGGIATOR_CLOCK:
-            out.cc = CC_ARP_CLOCK;
-            out.ccValue = newValue + .1f;
-            break;
-        case ENCODER_ARPEGGIATOR_DIRECTION:
-            out.cc = CC_ARP_DIRECTION;
-            out.ccValue = newValue + .1f;
-            break;
-        case ENCODER_ARPEGGIATOR_OCTAVE:
-            out.cc = CC_ARP_OCTAVE;
-            out.ccValue = newValue + .1f;
-            break;
-        }
-        break;
-    case ROW_ARPEGGIATOR2:
-        switch (encoder) {
-        case ENCODER_ARPEGGIATOR_PATTERN:
-            out.cc = CC_ARP_PATTERN;
-            out.ccValue = newValue + .1f;
-            break;
-        case ENCODER_ARPEGGIATOR_DIVISION:
-            out.cc = CC_ARP_DIVISION;
-            out.ccValue = newValue + .1f;
-            break;
-        case ENCODER_ARPEGGIATOR_DURATION:
-            out.cc = CC_ARP_DURATION;
-            out.ccValue = newValue + .1f;
-            break;
-        }
-        break;
     }
 
     if (out.cc == 0) {
@@ -5781,7 +5677,7 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
     (void)timbre;
 
     const int nameCount = 12;
-    const int paramCount = NUMBER_OF_ROWS_FOR_EDITOR * NUMBER_OF_ENCODERS_PFM2;
+    const int paramCount = pfm3FlatIndex(pfm3Param(Pfm3Block::Engine2, 0, 3)) + 1;
     const int stepCount = 2 * 16;
 
     out.isNrpn = true;
@@ -5796,15 +5692,23 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
 
     // Flat parameters.
     if (index < paramCount) {
-        int row = index / NUMBER_OF_ENCODERS_PFM2;
-        int encoder = index % NUMBER_OF_ENCODERS_PFM2;
-        const struct ParameterDisplay* param = &allParameterRows.row[row]->params[encoder];
+        Pfm3Param pid = pfm3FlatToParam((uint16_t)index);
+        const ParamFullDescription* full;
+        if ((uint16_t)pid != PFM3_PARAM_NONE) {
+            full = &pfm3FullDesc(pid);
+        } else {
+            CommonParamId cid = commonFlatToParam((uint16_t)index);
+            if (cid == COMMON_PARAM_NONE) {
+                return false;
+            }
+            full = &commonFullDesc(cid);
+        }
         float floatValue = ((float*)getPfm3Preset())[index];
 
         int valueToSend;
-        if (param->displayType == DISPLAY_TYPE_FLOAT || param->displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
-            param->displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || param->displayType == DISPLAY_TYPE_LFO_KSYN) {
-            valueToSend = (floatValue - param->minValue) * 100.0f + .1f;
+        if (full->ui.displayType == DISPLAY_TYPE_FLOAT || full->ui.displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
+            full->ui.displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || full->ui.displayType == DISPLAY_TYPE_LFO_KSYN) {
+            valueToSend = (floatValue - full->desc.min) * 100.0f + .1f;
         } else {
             valueToSend = floatValue + .1f;
         }

@@ -27,83 +27,6 @@
 #include "SynthMenuListener.h"
 #include "SynthParamListener.h"
 
-enum {
-    ENCODER_ENGINE_ALGO = 0,
-    ENCODER_ENGINE_VELOCITY,
-    ENCODER_ENGINE_PLAY_MODE,
-    ENCODER_ENGINE_GLIDE_SPEED,
-    ENCODER_NONE, // Define only once !
-    ENCODER_INVISIBLE,
-    ENCODER_MODULATOR_SYNC_LFO,
-    ENCODER_MODULATOR_SYNC_STEPS
-};
-
-enum {
-    ENCODER_ENGINE2_GLIDE_TYPE = 0,
-    ENCODER_ENGINE2_UNISON_SPREAD,
-    ENCODER_ENGINE2_UNISON_DETUNE,
-    ENCODER_USED_FOR_PFM3_VERSION,
-};
-
-enum { ENCODER_ARPEGGIATOR_CLOCK = 0, ENCODER_ARPEGGIATOR_BPM, ENCODER_ARPEGGIATOR_DIRECTION, ENCODER_ARPEGGIATOR_OCTAVE };
-
-enum { ENCODER_ARPEGGIATOR_PATTERN = 0, ENCODER_ARPEGGIATOR_DIVISION, ENCODER_ARPEGGIATOR_DURATION, ENCODER_ARPEGGIATOR_LATCH };
-
-enum { ENCODER_EFFECT_TYPE = 0, ENCODER_EFFECT_PARAM1, ENCODER_EFFECT_PARAM2, ENCODER_EFFECT_PARAM3 };
-
-enum { ENCODER_ENGINE_IM1 = 0, ENCODER_ENGINE_IM1_VELOCITY, ENCODER_ENGINE_IM2, ENCODER_ENGINE_IM2_VELOCITY };
-enum {
-    ENCODER_ENGINE_IM3 = 0,
-    ENCODER_ENGINE_IM3_VELOCITY,
-    ENCODER_ENGINE_IM4,
-    ENCODER_ENGINE_IM4_VELOCITY,
-};
-
-enum { ENCODER_ENGINE_IM5 = 0, ENCODER_ENGINE_IM5_VELOCITY, ENCODER_ENGINE_IM6, ENCODER_ENGINE_IM6_VELOCITY };
-
-enum {
-    ENCODER_ENGINE_MIX1 = 0,
-    ENCODER_ENGINE_PAN1,
-    ENCODER_ENGINE_MIX2,
-    ENCODER_ENGINE_PAN2,
-};
-
-enum { ENCODER_ENGINE_MIX3 = 0, ENCODER_ENGINE_PAN3, ENCODER_ENGINE_MIX4, ENCODER_ENGINE_PAN4 };
-
-enum { ENCODER_ENGINE_MIX5 = 0, ENCODER_ENGINE_PAN5, ENCODER_ENGINE_MIX6, ENCODER_ENGINE_PAN6 };
-
-enum { ENCODER_PERFORMANCE_CC1 = 0, ENCODER_PERFORMANCE_CC2, ENCODER_PERFORMANCE_CC3, ENCODER_PERFORMANCE_CC4 };
-
-enum { ENCODER_PERFORMANCE_CC5 = 0, ENCODER_PERFORMANCE_CC6 };
-
-enum { ENCODER_OSC_SHAP = 0, ENCODER_OSC_FTYPE, ENCODER_OSC_FREQ, ENCODER_OSC_FTUNE };
-
-enum {
-    ENCODER_ENV_A = 0,
-    ENCODER_ENV_D,
-    ENCODER_ENV_S,
-    ENCODER_ENV_R,
-};
-
-enum { ENCODER_ENV_A_CURVE = 0, ENCODER_ENV_D_CURVE, ENCODER_ENV_S_CURVE, ENCODER_ENV_R_CURVE };
-
-enum {
-    ENCODER_MATRIX_SOURCE = 0,
-    ENCODER_MATRIX_MUL,
-    ENCODER_MATRIX_DEST1,
-    ENCODER_MATRIX_DEST2,
-};
-
-enum { ENCODER_LFO_SHAPE = 0, ENCODER_LFO_FREQ, ENCODER_LFO_BIAS, ENCODER_LFO_KSYNC };
-
-enum { ENCODER_LFO_PHASE1 = 0, ENCODER_LFO_PHASE2, ENCODER_LFO_PHASE3 };
-
-enum { ENCODER_LFO_ENV2_SILENCE = 0, ENCODER_LFO_ENV2_ATTACK, ENCODER_LFO_ENV2_RELEASE, ENCODER_LFO_ENV2_LOOP };
-
-enum { ENCODER_STEPSEQ_BPM = 0, ENCODER_STEPSEQ_GATE };
-
-enum { ENCODER_NOTECURVE_BEFORE = 0, ENCODER_NOTECURVE_BREAK_NOTE, ENCODER_NOTECURVE_AFTER };
-
 typedef unsigned char uchar;
 
 enum OscShape {
@@ -229,17 +152,6 @@ struct FilterRowDisplay {
     const char* paramName[3];
 };
 
-struct ParameterRowDisplay {
-    const char* rowName;
-    const char* paramName[5];
-    struct ParameterDisplay params[4];
-};
-
-// +1 for dummy oscillator sync
-struct AllParameterRowsDisplay {
-    struct ParameterRowDisplay* row[NUMBER_OF_ROWS + 1];
-};
-
 // Class define to allow initalization
 enum EventType {
     MIDI_NOTE_OFF = 0x80,
@@ -348,12 +260,6 @@ public:
         }
     }
 
-    void propagateNewPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
-        for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
-            listener->newPfm3ParamValue(timbre, currentRow, encoder, param, oldValue, newValue);
-        }
-    }
-
     void propagateNewEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
         for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
             listener->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
@@ -375,13 +281,6 @@ public:
     void propagateNewPresetName(int timbre) {
         for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
             listener->newPresetName(timbre);
-        }
-    }
-
-    void propagateNewPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                                                float newValue) {
-        for (SynthParamListener* listener = firstParamListener_; listener != 0; listener = listener->nextListener_) {
-            listener->newPfm3ParamValueFromExternal(timbre, currentRow, encoder, param, oldValue, newValue);
         }
     }
 
@@ -456,7 +355,7 @@ public:
 
     void newSysexBankReady();
 
-    void tempoClick();
+    void slowTick();
 
     void setCurrentTimbre(int timbre) {
         currentTimbre_ = timbre;
@@ -526,9 +425,5 @@ private:
     ScreenEditor* displayEditor_;
     ScreenSequencer* displaySequencer_;
 };
-
-// Global structure used all over the code
-extern struct FilterRowDisplay fx1RowDisplay[];
-extern struct FilterRowDisplay fx2RowDisplay[];
 
 #endif /* SYNTHSTATE_H_ */

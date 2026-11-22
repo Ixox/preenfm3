@@ -21,31 +21,74 @@
 #include "ScreenEditor.h"
 #include "SynthState.h"
 
-const struct EditorEditMenu* EditorEngine::currentEditMenu() const {
+const struct EditorMenu* EditorEngine::currentEditMenu() const {
     return parent_->getMainMenu(synthState_->fullState_.mainPage);
 }
 
-const struct EditorOneButton* EditorEngine::currentPage() const {
-    const struct EditorEditMenu* editMenu = currentEditMenu();
+const struct EditorPageButton* EditorEngine::currentPage() const {
+    const struct EditorMenu* editMenu = currentEditMenu();
     if (editMenu == nullptr) {
         return nullptr;
     }
-    int editPage = synthState_->fullState_.editPage;
-    if (editPage >= editMenu->numberOfButtons) {
+    int editPage = editPage_;
+    if (editPage >= editMenu->buttonCount) {
         editPage = 0;
     }
-    return editMenu->pages[editPage];
+    return editMenu->buttons[editPage];
 }
 
-struct RowEncoder EditorEngine::rowEncoderFor(int encoder) const {
-    const struct EditorOneButton* page = currentPage();
+EditorSlot EditorEngine::slotForEncoder(int encoder) const {
+    const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
-        struct RowEncoder none = {ROW_NONE, ENCODER_NONE};
+        EditorSlot none = {EditorSlotKind::Empty, 0, 0};
         return none;
     }
-    return page->states[synthState_->fullState_.buttonState[page->buttonId]]->rowEncoder[encoder];
+    uint8_t state = synthState_->fullState_.buttonState[page->buttonId];
+    if (state >= (uint8_t)page->stateCount) {
+        state = 0;
+    }
+    return page->states[state]->slots[encoder];
 }
 
 int EditorEngine::currentTimbre() const {
     return synthState_->getCurrentTimbre();
+}
+
+void EditorEngine::drawOperatorSelector(int button, int maxOperator) {
+    const FullState& fs = synthState_->fullState_;
+    tft_->drawButtonBiState(270, 29, button, operatorNumber_, maxOperator, fs.buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
+                            (button - 3) * 2);
+}
+
+void EditorEngine::drawMatrixSelector(int button, uint8_t pageButtonId, int maxRow) {
+    const FullState& fs = synthState_->fullState_;
+    tft_->drawButtonBiState(270, 29, button, editPage_ * 2 + fs.buttonState[pageButtonId], maxRow,
+                            fs.buttonState[BUTTONID_MATRIX_1_2 + button], button * 2);
+}
+
+void EditorEngine::selectOperator(int button, int maxOperator) {
+    FullState& fs = synthState_->fullState_;
+    uint8_t buttonSelected = button - BUTTON_SWITCH_4;
+    uint8_t currentButton = operatorNumber_ >> 1;
+    uint8_t buttonId = BUTTONID_OPERATOR_1_2 + buttonSelected;
+    uint8_t newButtonState = fs.buttonState[buttonId];
+    if (buttonSelected == currentButton) {
+        newButtonState = (newButtonState + 1) & 0x1;
+    }
+    uint8_t newOperatorSelect = buttonSelected * 2 + newButtonState;
+    if (newOperatorSelect <= maxOperator) {
+        operatorNumber_ = newOperatorSelect;
+        fs.buttonState[buttonId] = newButtonState;
+        updatePage();
+    }
+}
+
+void EditorEngine::drawEditorButtonDefault(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) {
+    if (button < editMenu->buttonCount) {
+        const struct EditorPageButton* buttonPage = editMenu->buttons[button];
+        tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->stateCount,
+                         editPage_ == button ? synthState_->fullState_.buttonState[page->buttonId] + 1 : 0);
+    } else {
+        tft_->drawButton("", 270, 29, button, 0, 0);
+    }
 }

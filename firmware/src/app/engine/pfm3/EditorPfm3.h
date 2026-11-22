@@ -36,18 +36,19 @@ public:
     void init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) override;
     SynthEngineType getEngineType() const override;
     const char* getEngineName() const override;
-    const struct EditorEditMenu* getEngineMenu(int page) const override;
+    const struct EditorMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
     void drawAlgorithm() override;
-    void drawPageHeader() override;
-    void drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) override;
-    void drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
-                           const struct EditorOneButton* page) override;
+    void printPageHeader() override;
+    void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
+    EditorSelectorKind selectorKind(int button) const override;
+    void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
+                           const struct EditorPageButton* page) override;
     void preparePage() override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                           float newValue) override;
-    void tempoClick() override;
+    void encoderTurned(int encoder, int ticks) override;
+    void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) override;
+    void slowTick() override;
     void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) override;
     void buttonPressed(int button) override;
     void buttonLongPressed(int instrument, int button) override;
@@ -55,13 +56,16 @@ public:
     void newTimbre() override;
 
 private:
+    void updatePage() const override;
+    uint8_t currentElement() const;
+
     void checkOperatorNumber();
     void refreshOscillatorOperatorShape();
     void refreshOscillatorOperatorEnvelope();
     void refreshLfoOscillator();
     void refreshLfoEnv();
-    bool isInOperatorPage(uint8_t pageNumber);
-    bool isInMatrixPage(uint8_t pageNumber);
+    bool isInOperatorPage(uint8_t pageNumber) const;
+    bool isInMatrixPage(uint8_t pageNumber) const;
     bool isInModulatorPage(uint8_t pageNumber);
 
     uint8_t imChangedCounter_[NUMBER_OF_ENCODERS];

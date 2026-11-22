@@ -310,9 +310,8 @@ float Hexter::getRounded(float r) {
 void Hexter::voiceSetData(Pfm3Preset *params, uint8_t *patch)
 {
     for (int k=0; k<sizeof(Pfm3Preset)/sizeof(float); k++) {
-        int row = k >> 2;
-        if (row == ROW_ARPEGGIATOR1 || row == ROW_ARPEGGIATOR2 || row == ROW_ENGINE) {
-            // Don't override the arpeggiator neither the ENGINE
+        // Don't override the arpeggiator neither the ENGINE
+        if (k < 4 || (k >= Pfm3PresetLayout::sharedBlockStart && k < Pfm3PresetLayout::sharedBlockStart + 8)) {
     	} else {
     		((float*)params)[k] = ((float*)&defaultPreset)[k];
     	}

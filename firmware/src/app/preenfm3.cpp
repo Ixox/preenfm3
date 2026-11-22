@@ -300,8 +300,8 @@ void preenfm3Tic() {
     // Pfm3 Misc tics
     switch (tftCpt & 0xff) {
     case 0:
-        synthState.tempoClick();
-        fmDisplay3.tempoClick();
+        synthState.slowTick();
+        fmDisplay3.slowTick();
         break;
     case 1:
         ledCpt++;

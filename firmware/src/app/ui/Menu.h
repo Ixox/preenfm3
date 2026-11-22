@@ -171,9 +171,7 @@ struct FullState {
     // pfm3 edit page state
     // -1 means no main page selectec then index in mainMenu.
     int8_t mainPage;
-    uint8_t editPage;
     uint8_t buttonState[NUMBER_OF_BUTTONIDS];
-    uint8_t operatorNumber;
 };
 
 struct MidiConfig {

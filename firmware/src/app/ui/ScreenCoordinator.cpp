@@ -141,36 +141,20 @@ void ScreenCoordinator::newMixerEdit(int oldButton, int newButton) {
     tft_->clearMixerValues();
 }
 
-void ScreenCoordinator::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                                          float newValue) {
-    checkPresetModified(timbre);
-
-    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR) {
-        editor_->newPfm3ParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
-    }
-}
-
-void ScreenCoordinator::newPfm3ParamValueFromExternal(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                                                      float newValue) {
-    checkPresetModified(timbre);
-
-    // If Operator we must send
-    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR && this->synthState_->fullState_.mainPage != -1 &&
-        timbre == currentTimbre_) {
-
-        editor_->newPfm3ParamValue(refreshStatus_, timbre, currentRow, encoder, param, oldValue, newValue);
-    }
-}
-
 void ScreenCoordinator::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
     checkPresetModified(timbre);
     if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR) {
-        editor_->newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+        editor_->newEngineParamValue(refreshStatus_, timbre, paramId, context, oldValue, newValue);
     }
 }
 
 void ScreenCoordinator::newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {
-    newEngineParamValue(timbre, paramId, context, oldValue, newValue);
+    checkPresetModified(timbre);
+
+    if (this->synthState_->getSynthMode() == SYNTH_MODE_EDITOR && this->synthState_->fullState_.mainPage != -1 &&
+        timbre == currentTimbre_) {
+        editor_->newEngineParamValue(refreshStatus_, timbre, paramId, context, oldValue, newValue);
+    }
 }
 
 void ScreenCoordinator::newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
@@ -309,7 +293,7 @@ void ScreenCoordinator::noteOn(int timbre, bool show) {
     }
 }
 
-void ScreenCoordinator::tempoClick() {
+void ScreenCoordinator::slowTick() {
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         if (noteOnCounter_[timbre] > 0) {
             noteOnCounter_[timbre]--;
@@ -320,11 +304,11 @@ void ScreenCoordinator::tempoClick() {
     }
 
     if (this->synthState_->fullState_.synthMode == SYNTH_MODE_MIXER) {
-        mixer_->tempoClick();
+        mixer_->slowTick();
     } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR) {
-        editor_->tempoClick();
+        editor_->slowTick();
     } else if (this->synthState_->fullState_.synthMode == SYNTH_MODE_SEQUENCER) {
-        sequencer_->tempoClick();
+        sequencer_->slowTick();
     }
 }
 

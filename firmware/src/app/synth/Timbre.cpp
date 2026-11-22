@@ -16,8 +16,8 @@
  */
 
 #include "Timbre.h"
+#include "Pfm3Param.h"
 #include "MidiControlChange.h"
-#include "engine/pfm3/Pfm3ParameterRows.h"
 #include "SynthEngineFactory.h"
 #include "SynthState.h"
 #include "Voice.h"
@@ -2480,7 +2480,7 @@ void Timbre::afterNewParamsLoad() {
     engineImpl_->afterNewParamsLoad();
 
     resetArpeggiator();
-    for (int k = 0; k < NUMBER_OF_ENCODERS_PFM2; k++) {
+    for (int k = 0; k < PFM3_PARAMS_PER_ROW; k++) {
         setNewEffectParam(k);
     }
     // Update midi note scale
@@ -2564,19 +2564,20 @@ bool Timbre::midiData(const MidiData& data) {
         SharedParamId param;
         float scaledValue;
         if (decodeSharedControlChange(data.cc, data.ccValue, param, scaledValue)) {
-            int row;
-            int encoder;
-            getSharedParamRowEncoder(param, row, encoder);
-            setSharedParamFromMidi(row, encoder, scaledValue);
+            setSharedParamFromMidi(getSharedParamId(param), scaledValue);
             return true;
         }
     }
     return engineImpl_->midiData(timbreNumber_, data);
 }
 
-void Timbre::setSharedParamFromMidi(int row, int encoder, float newValue) {
-    struct ParameterDisplay* param = &(allParameterRows.row[row]->params[encoder]);
-    int index = row * NUMBER_OF_ENCODERS_PFM2 + encoder;
+void Timbre::setSharedParamFromMidi(CommonParamId cid, float newValue) {
+    uint16_t index = commonFlatIndex(cid);
+    if (index == 0xFFFF) {
+        return;
+    }
+    const ParamDesc& d = commonDesc(cid);
+    const ParamUiDesc& ui = commonFullDesc(cid).ui;
 
     int sharedIndex;
     if (index >= Pfm3PresetLayout::sharedBlockStart && index < Pfm3PresetLayout::sharedBlockEnd) {
@@ -2589,90 +2590,62 @@ void Timbre::setSharedParamFromMidi(int row, int encoder, float newValue) {
 
     float oldValue = ((float*)&sharedParams())[sharedIndex];
 
-    if (newValue > param->maxValue) {
+    if (newValue > d.max) {
         // in v2, matrix target were removed so some values are > to max value but we need to accept it
         bool mustConstraint = true;
-        if (param->valueNameOrder != NULL) {
-            for (int v = 0; v < param->numberOfValues; v++) {
-                if ((int)param->valueNameOrder[v] == (int)(newValue + .01)) {
+        if (ui.valueOrder != NULL) {
+            for (int v = 0; v < (int)ui.values; v++) {
+                if ((int)ui.valueOrder[v] == (int)(newValue + .01)) {
                     mustConstraint = false;
                 }
             }
         }
         if (mustConstraint) {
-            newValue = param->maxValue;
+            newValue = d.max;
         }
-    } else if (newValue < param->minValue) {
-        newValue = param->minValue;
+    } else if (newValue < d.min) {
+        newValue = d.min;
     }
     ((float*)&sharedParams())[sharedIndex] = newValue;
 
     if (oldValue != newValue) {
         SynthEngineFactory::getPfm3(timbreNumber_)->syncSharedParams(sharedParams());
-        synthState_->propagateNewPfm3ParamValueFromExternal(timbreNumber_, row, encoder, param, oldValue, newValue);
+        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)cid, 1, oldValue, newValue);
     }
 }
 
-bool Timbre::getSharedParamRowEncoder(SharedParamId param, int& row, int& encoder) const {
+CommonParamId Timbre::getSharedParamId(SharedParamId param) const {
     switch (param) {
     case SHARED_PARAM_ARP_CLOCK:
-        row = ROW_ARPEGGIATOR1;
-        encoder = ENCODER_ARPEGGIATOR_CLOCK;
-        return true;
+        return commonParam(CommonBlock::Arp1, 0, 0);
     case SHARED_PARAM_ARP_DIRECTION:
-        row = ROW_ARPEGGIATOR1;
-        encoder = ENCODER_ARPEGGIATOR_DIRECTION;
-        return true;
+        return commonParam(CommonBlock::Arp1, 0, 2);
     case SHARED_PARAM_ARP_OCTAVE:
-        row = ROW_ARPEGGIATOR1;
-        encoder = ENCODER_ARPEGGIATOR_OCTAVE;
-        return true;
+        return commonParam(CommonBlock::Arp1, 0, 3);
     case SHARED_PARAM_ARP_PATTERN:
-        row = ROW_ARPEGGIATOR2;
-        encoder = ENCODER_ARPEGGIATOR_PATTERN;
-        return true;
+        return commonParam(CommonBlock::Arp2, 0, 0);
     case SHARED_PARAM_ARP_DIVISION:
-        row = ROW_ARPEGGIATOR2;
-        encoder = ENCODER_ARPEGGIATOR_DIVISION;
-        return true;
+        return commonParam(CommonBlock::Arp2, 0, 1);
     case SHARED_PARAM_ARP_DURATION:
-        row = ROW_ARPEGGIATOR2;
-        encoder = ENCODER_ARPEGGIATOR_DURATION;
-        return true;
+        return commonParam(CommonBlock::Arp2, 0, 2);
     case SHARED_PARAM_EFFECT1_TYPE:
-        row = ROW_EFFECT1;
-        encoder = ENCODER_EFFECT_TYPE;
-        return true;
+        return commonParam(CommonBlock::Effect1, 0, 0);
     case SHARED_PARAM_EFFECT1_PARAM1:
-        row = ROW_EFFECT1;
-        encoder = ENCODER_EFFECT_PARAM1;
-        return true;
+        return commonParam(CommonBlock::Effect1, 0, 1);
     case SHARED_PARAM_EFFECT1_PARAM2:
-        row = ROW_EFFECT1;
-        encoder = ENCODER_EFFECT_PARAM2;
-        return true;
+        return commonParam(CommonBlock::Effect1, 0, 2);
     case SHARED_PARAM_EFFECT1_PARAM3:
-        row = ROW_EFFECT1;
-        encoder = ENCODER_EFFECT_PARAM3;
-        return true;
+        return commonParam(CommonBlock::Effect1, 0, 3);
     case SHARED_PARAM_EFFECT2_TYPE:
-        row = ROW_EFFECT2;
-        encoder = ENCODER_EFFECT_TYPE;
-        return true;
+        return commonParam(CommonBlock::Effect2, 0, 0);
     case SHARED_PARAM_EFFECT2_PARAM1:
-        row = ROW_EFFECT2;
-        encoder = ENCODER_EFFECT_PARAM1;
-        return true;
+        return commonParam(CommonBlock::Effect2, 0, 1);
     case SHARED_PARAM_EFFECT2_PARAM2:
-        row = ROW_EFFECT2;
-        encoder = ENCODER_EFFECT_PARAM2;
-        return true;
+        return commonParam(CommonBlock::Effect2, 0, 2);
     case SHARED_PARAM_EFFECT2_PARAM3:
-        row = ROW_EFFECT2;
-        encoder = ENCODER_EFFECT_PARAM3;
-        return true;
+        return commonParam(CommonBlock::Effect2, 0, 3);
     default:
-        return false;
+        return COMMON_PARAM_NONE;
     }
 }
 
@@ -2680,9 +2653,6 @@ void Timbre::setParamValue(int index, float oldValue, float newValue) {
     if (index >= Pfm3PresetLayout::presetNameStart) {
         return;
     }
-    int row = index / NUMBER_OF_ENCODERS_PFM2;
-    int encoder = index % NUMBER_OF_ENCODERS_PFM2;
-
     if (index >= Pfm3PresetLayout::sharedBlockStart && index < Pfm3PresetLayout::sharedBlockEnd) {
         ((float*)&sharedParams())[index - Pfm3PresetLayout::sharedBlockStart] = newValue;
     } else if (index >= Pfm3PresetLayout::effect2Start && index < Pfm3PresetLayout::presetNameStart) {
@@ -2691,42 +2661,43 @@ void Timbre::setParamValue(int index, float oldValue, float newValue) {
         engineImpl_->setParamValue(index, newValue);
     }
 
-    engineImpl_->paramChanged(row, encoder, oldValue, newValue);
+    engineImpl_->paramChanged(index, oldValue, newValue);
 
-    switch (row) {
-    case ROW_ARPEGGIATOR1:
-        switch (encoder) {
-        case ENCODER_ARPEGGIATOR_CLOCK:
-            allNoteOff();
-            setArpeggiatorClock((uint8_t)newValue);
+    CommonParamId commonId = commonFlatToParam(index);
+    if (commonId != COMMON_PARAM_NONE) {
+        switch ((CommonBlock)commonBlockOf(commonId)) {
+        case CommonBlock::Arp1:
+            switch (commonFieldOf(commonId)) {
+            case 0: // clock
+                allNoteOff();
+                setArpeggiatorClock((uint8_t)newValue);
+                break;
+            case 1: // BPM
+                setNewBPMValue((uint8_t)newValue);
+                break;
+            case 2: // direction
+                setDirection((uint8_t)newValue);
+                break;
+            default:
+                break;
+            }
             break;
-        case ENCODER_ARPEGGIATOR_BPM:
-            setNewBPMValue((uint8_t)newValue);
+        case CommonBlock::Arp2:
+            if (commonFieldOf(commonId) == 3) { // latch
+                setLatchMode((uint8_t)newValue);
+            }
             break;
-        case ENCODER_ARPEGGIATOR_DIRECTION:
-            setDirection((uint8_t)newValue);
+        case CommonBlock::Effect1:
+            setNewEffectParam(commonFieldOf(commonId));
+            break;
+        default:
             break;
         }
-        break;
-    case ROW_ARPEGGIATOR2:
-        if (encoder == ENCODER_ARPEGGIATOR_LATCH) {
-            setLatchMode((uint8_t)newValue);
-        }
-        break;
-    case ROW_EFFECT1:
-        setNewEffectParam(encoder);
-        break;
-    default:
-        break;
     }
 }
 
 void Timbre::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
     engineImpl_->engineParamChanged(paramId, context, oldValue, newValue);
-}
-
-void Timbre::handleNullParamRow(int row) {
-    engineImpl_->paramRowChanged(row);
 }
 
 void Timbre::setPresetNameChar(int index, char c) {

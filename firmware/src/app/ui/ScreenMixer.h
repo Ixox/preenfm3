@@ -63,11 +63,11 @@ public:
 
     void displayMixerValue(int timbre);
     void refreshMixerByStep(int currentTimbre, int& refreshStatus, int& endRefreshStatus);
-    void tempoClick();
+    void slowTick();
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue, int& refreshStatus);
     void newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
     void encoderTurned(int encoder, int ticks);
-    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
+    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button);
     void buttonPressed(int button);
     void* getValuePointer(int valueType, int encoder);
     void setRefreshStatusPointer(int* refreshStatus, int* endRefreshStatus) {

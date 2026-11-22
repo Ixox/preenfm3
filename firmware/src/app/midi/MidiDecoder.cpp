@@ -655,20 +655,8 @@ void MidiDecoder::sendCurrentPatchAsNrpns(int timbre) {
     sendMidiUsbOut();
 }
 
-void MidiDecoder::newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue,
-                                                float newValue) {
-    // Nothing to do
-}
-
 void MidiDecoder::newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
     // Nothing to do
-}
-
-void MidiDecoder::newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
-    struct MidiParamMessage message;
-    if (this->synth_->getTimbre(timbre)->midiPfm3ParamFeedback(currentrow, encoder, newValue, message)) {
-        sendMidiParamFeedback(timbre, message);
-    }
 }
 
 void MidiDecoder::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {

@@ -262,22 +262,23 @@ uint8_t ByosEngine::voicesNextBlock() {
 
 void ByosEngine::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
     (void)oldValue;
+    (void)context;
 
     switch (paramId) {
-    case BYOS_PARAM_WAVE:
-        if (context < 0 || context > 1) {
-            return;
-        }
-        params_.wave[context] = clampf(newValue, 0.0f, (float)(OSC_SHAPE_LAST - 1));
-        oscParams_[context].shape = params_.wave[context];
+    case BYOS_PARAM_OP1_WAVE:
+    case BYOS_PARAM_OP2_WAVE: {
+        int op = (paramId == BYOS_PARAM_OP2_WAVE) ? 1 : 0;
+        params_.wave[op] = clampf(newValue, 0.0f, (float)(OSC_SHAPE_LAST - 1));
+        oscParams_[op].shape = params_.wave[op];
         break;
-    case BYOS_PARAM_MULTIPLIER:
-        if (context < 0 || context > 1) {
-            return;
-        }
-        params_.multiplier[context] = clampf(newValue, 0.25f, 4.0f);
-        oscParams_[context].frequencyMul = params_.multiplier[context];
+    }
+    case BYOS_PARAM_OP1_MULTIPLIER:
+    case BYOS_PARAM_OP2_MULTIPLIER: {
+        int op = (paramId == BYOS_PARAM_OP2_MULTIPLIER) ? 1 : 0;
+        params_.multiplier[op] = clampf(newValue, 0.25f, 4.0f);
+        oscParams_[op].frequencyMul = params_.multiplier[op];
         break;
+    }
     case BYOS_PARAM_MIX:
         params_.mix = clampf(newValue, 0.0f, 1.0f);
         break;
@@ -293,11 +294,16 @@ void ByosEngine::engineParamChanged(int paramId, int context, float oldValue, fl
 }
 
 float ByosEngine::getParamValue(int paramId, int context) const {
+    (void)context;
     switch (paramId) {
-    case BYOS_PARAM_WAVE:
-        return (context >= 0 && context < 2) ? params_.wave[context] : 0.0f;
-    case BYOS_PARAM_MULTIPLIER:
-        return (context >= 0 && context < 2) ? params_.multiplier[context] : 0.0f;
+    case BYOS_PARAM_OP1_WAVE:
+        return params_.wave[0];
+    case BYOS_PARAM_OP2_WAVE:
+        return params_.wave[1];
+    case BYOS_PARAM_OP1_MULTIPLIER:
+        return params_.multiplier[0];
+    case BYOS_PARAM_OP2_MULTIPLIER:
+        return params_.multiplier[1];
     case BYOS_PARAM_MIX:
         return params_.mix;
     case BYOS_PARAM_ATTACK:
@@ -318,26 +324,23 @@ bool ByosEngine::midiData(int timbre, const MidiData& data) {
     uint8_t cc = data.cc;
     uint8_t value = data.ccValue;
     int paramId;
-    int context = 0;
     float newValue;
 
     switch (cc) {
     case BYOS_CC_OP1_WAVE:
-        paramId = BYOS_PARAM_WAVE;
+        paramId = BYOS_PARAM_OP1_WAVE;
         newValue = (float)((value * (OSC_SHAPE_LAST - 1) + 63) / 127);
         break;
     case BYOS_CC_OP1_MULTIPLIER:
-        paramId = BYOS_PARAM_MULTIPLIER;
+        paramId = BYOS_PARAM_OP1_MULTIPLIER;
         newValue = 0.25f + (float)((value * 15 + 63) / 127) * 0.25f;
         break;
     case BYOS_CC_OP2_WAVE:
-        paramId = BYOS_PARAM_WAVE;
-        context = 1;
+        paramId = BYOS_PARAM_OP2_WAVE;
         newValue = (float)((value * (OSC_SHAPE_LAST - 1) + 63) / 127);
         break;
     case BYOS_CC_OP2_MULTIPLIER:
-        paramId = BYOS_PARAM_MULTIPLIER;
-        context = 1;
+        paramId = BYOS_PARAM_OP2_MULTIPLIER;
         newValue = 0.25f + (float)((value * 15 + 63) / 127) * 0.25f;
         break;
     case BYOS_CC_MIX:
@@ -356,24 +359,33 @@ bool ByosEngine::midiData(int timbre, const MidiData& data) {
         return false;
     }
 
-    float oldValue = getParamValue(paramId, context);
+    float oldValue = getParamValue(paramId, 0);
     if (oldValue != newValue) {
-        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, paramId, context, oldValue, newValue);
+        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, paramId, 0, oldValue, newValue);
     }
     return true;
 }
 
 bool ByosEngine::midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
+    (void)context;
     int cc;
     int ccValue;
 
     switch (paramId) {
-    case BYOS_PARAM_WAVE:
-        cc = context == 0 ? BYOS_CC_OP1_WAVE : BYOS_CC_OP2_WAVE;
+    case BYOS_PARAM_OP1_WAVE:
+        cc = BYOS_CC_OP1_WAVE;
         ccValue = (int)(newValue * 127.0f / (OSC_SHAPE_LAST - 1) + 0.5f);
         break;
-    case BYOS_PARAM_MULTIPLIER:
-        cc = context == 0 ? BYOS_CC_OP1_MULTIPLIER : BYOS_CC_OP2_MULTIPLIER;
+    case BYOS_PARAM_OP2_WAVE:
+        cc = BYOS_CC_OP2_WAVE;
+        ccValue = (int)(newValue * 127.0f / (OSC_SHAPE_LAST - 1) + 0.5f);
+        break;
+    case BYOS_PARAM_OP1_MULTIPLIER:
+        cc = BYOS_CC_OP1_MULTIPLIER;
+        ccValue = (int)((newValue - 0.25f) / 0.25f * 127.0f / 15.0f + 0.5f);
+        break;
+    case BYOS_PARAM_OP2_MULTIPLIER:
+        cc = BYOS_CC_OP2_MULTIPLIER;
         ccValue = (int)((newValue - 0.25f) / 0.25f * 127.0f / 15.0f + 0.5f);
         break;
     case BYOS_PARAM_MIX:

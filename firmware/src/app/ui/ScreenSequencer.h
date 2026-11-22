@@ -46,12 +46,12 @@ public:
     void setSequencer(Sequencer* sequencer);
     void refreshSequencerByStep(int instrument, int& refreshStatus, int& endRefreshStatus);
     void displayBeat();
-    void tempoClick();
+    void slowTick();
     void noteOn(int instrument, bool show);
     void encoderTurned(int instrument, int encoder, int ticks);
     void buttonPressed(int instrument, int button);
     void buttonLongPressed(int instrument, int button);
-    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
+    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button);
     void* getValuePointer(int valueType, int encoder);
     void setRefreshStatusPointer(int* refreshStatus, int* endRefreshStatus) {
         refreshStatusP_ = refreshStatus;

@@ -23,11 +23,32 @@
 #include "Common.h"
 #include "FirmwareTftDisplay.h"
 #include "ScreenTypes.h"
+#include "engine/pfm3/Pfm3Param.h"
 
 class SynthState;
 class ScreenEditor;
 
 enum CommonPage { COMMON_PAGE_NONE = -1, COMMON_PAGE_ARP_FX = 0, COMMON_PAGE_COUNT };
+
+struct EditorParamInfo {
+    const char* name;
+    const char* const* names;
+    ParameterDisplayType displayType;
+    const char* const* valueNames;
+    const unsigned char* valueOrder;
+    const unsigned char* valueOrderReversed;
+    float min;
+    float max;
+    float step;
+    float incValue;
+    uint8_t nameCount;
+};
+
+enum class EditorSelectorKind : uint8_t {
+    None = 0,
+    Operator,
+    MatrixRow,
+};
 
 /*
  * Common interface for editor pages.
@@ -41,15 +62,47 @@ public:
     virtual ~EditorEngine() {
     }
 
+    // Generic slot for encoder `encoder` on the current page.
+    EditorSlot slotForEncoder(int encoder) const;
     // Engine implemented by this editor.
     virtual SynthEngineType getEngineType() const = 0;
     // Display name of the engine.
     virtual const char* getEngineName() const = 0;
     // Menu for an engine-owned main page, or nullptr.
-    virtual const struct EditorEditMenu* getEngineMenu(int page) const = 0;
+    virtual const struct EditorMenu* getEngineMenu(int page) const = 0;
     // Map an engine main page to a shared page, or COMMON_PAGE_NONE.
     virtual int getCommonPage(int page) const {
         return COMMON_PAGE_NONE;
+    }
+    // Type of bottom-row selector for `button`, if any.
+    virtual EditorSelectorKind selectorKind(int button) const {
+        (void)button;
+        return EditorSelectorKind::None;
+    }
+    uint8_t editPage() const {
+        return editPage_;
+    }
+    void setEditPage(uint8_t page) {
+        editPage_ = page;
+        updatePage();
+    }
+    uint8_t operatorNumber() const {
+        return operatorNumber_;
+    }
+    void setOperatorNumber(uint8_t op) {
+        operatorNumber_ = op;
+        updatePage();
+    }
+    void setEditPageSelected(int mainPage, int editPage) {
+        if (mainPage >= 0 && mainPage < 6) {
+            editPageSelected_[mainPage] = editPage;
+        }
+    }
+    int editPageSelected(int mainPage) const {
+        if (mainPage < 0 || mainPage >= 6) {
+            return 0;
+        }
+        return editPageSelected_[mainPage];
     }
 
     // Bind the editor to its owner, shared state and display.
@@ -58,23 +111,29 @@ public:
     virtual void drawAlgorithm() {
     }
     // Page header prefix ("Op N" on operator pages, ...).
-    virtual void drawPageHeader() {
+    virtual void printPageHeader() {
     }
     // Draw one page button.
-    virtual void drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) = 0;
+    virtual void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) = 0;
     // Draw one parameter name.
-    virtual void drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
-                                   const struct EditorOneButton* page) = 0;
+    virtual void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
+                                   const struct EditorPageButton* page) = 0;
     // Extra work after the page header (operator highlight, hidden params, ...).
     virtual void preparePage() {
     }
     // Print the value of encoder `encoder`.
     virtual void displayParamValue(int encoder, TFT_COLOR color) = 0;
     // An engine-specific parameter changed (engine-defined paramId); update UI feedback.
-    virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+    virtual void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) {
+        (void)refreshStatus;
+        (void)timbre;
+        (void)paramId;
+        (void)context;
+        (void)oldValue;
+        (void)newValue;
     }
     // Tempo clock tick: refresh time-synced value feedback.
-    virtual void tempoClick() = 0;
+    virtual void slowTick() = 0;
     // Encoder `encoder` moved by `ticks`.
     virtual void encoderTurned(int encoder, int ticks) = 0;
     // Encoder moved while `button` is held (fine edit / page change).
@@ -99,9 +158,48 @@ public:
         return 0;
     }
 
-    // PFM3 only: a flat parameter changed (editor/MIDI path); update UI feedback.
-    virtual void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                                   float newValue) {
+    // Generic page model (engine-neutral). Older editors may leave these unused.
+    virtual const struct EditorMenu* getMenu(int page) const {
+        (void)page;
+        return nullptr;
+    }
+    // Update the current page's slots before they are read.
+    virtual void updatePage() const {
+    }
+    virtual EditorParamInfo getParamInfo(EditorParamRef ref) const {
+        (void)ref;
+        EditorParamInfo info = {};
+        return info;
+    }
+    virtual float getParamValue(EditorParamRef ref) const {
+        (void)ref;
+        return 0.0f;
+    }
+    virtual void setParamValue(EditorParamRef ref, float value, ParamSource src) {
+        (void)ref;
+        (void)value;
+        (void)src;
+    }
+    virtual bool adjustParam(EditorParamRef ref, int ticks, ParamSource src) {
+        (void)ref;
+        (void)ticks;
+        (void)src;
+        return false;
+    }
+    virtual void drawRegion(uint16_t regionId, const Rect& rect) {
+        (void)regionId;
+        (void)rect;
+    }
+    virtual void customEncoderTurned(EditorSlot slot, int encoder, int ticks) {
+        (void)slot;
+        (void)encoder;
+        (void)ticks;
+    }
+    virtual void paramChanged(EditorParamRef ref, float oldValue, float newValue, ParamSource src) {
+        (void)ref;
+        (void)oldValue;
+        (void)newValue;
+        (void)src;
     }
 
     // Linked list of registered editors (owned by ScreenEditor).
@@ -117,14 +215,22 @@ protected:
     }
 
     // Helpers for the current page; defined in EditorEngine.cpp.
-    const struct EditorEditMenu* currentEditMenu() const;
-    const struct EditorOneButton* currentPage() const;
-    struct RowEncoder rowEncoderFor(int encoder) const;
+    const struct EditorMenu* currentEditMenu() const;
+    const struct EditorPageButton* currentPage() const;
     int currentTimbre() const;
+
+    void drawOperatorSelector(int button, int maxOperator);
+    void drawMatrixSelector(int button, uint8_t pageButtonId, int maxRow);
+    void selectOperator(int button, int maxOperator);
+    void drawEditorButtonDefault(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page);
 
     ScreenEditor* parent_ = nullptr;
     SynthState* synthState_ = nullptr;
     FirmwareTftDisplay* tft_ = nullptr;
+
+    uint8_t editPage_ = 0;
+    uint8_t operatorNumber_ = 0;
+    uint8_t editPageSelected_[6] = {0, 0, 0, 0, 0, 0};
 };
 
 #endif

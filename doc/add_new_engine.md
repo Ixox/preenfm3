@@ -92,8 +92,8 @@ The default returns `false`, so a new engine ignores parameter MIDI until it
 opts in. Shared controls (Arp, FX1/FX2, mixer, sequencer) are handled by
 `MidiDecoder` and `Timbre::midiData()`: `Timbre::midiData()` intercepts
 `MIDI_DATA_CC` events with `decodeSharedControlChange()` +
-`getSharedParamRowEncoder()` using the ids in `SharedParams.h` and applies them
-through `setSharedParamFromMidi()`. Only unhandled CCs are forwarded to the
+`getSharedParamId()` using the ids in `SharedParams.h` and applies them
+through `setSharedParamFromMidi(CommonParamId, value)`. Only unhandled CCs are forwarded to the
 engine. `MIDI_DATA_USER_CC` bypasses the shared decode so user CCs keep
 priority.
 
@@ -128,9 +128,9 @@ external controller/DAW. Implement:
 `MIDICONFIG_SENDS` CC/NRPN mode, the `lastSentCC` dedupe and the DIN5/USB
 transport, so the engine must not send MIDI itself.
 
-`midiPfm3ParamFeedback(row, encoder, value, out)` is the PFM3-only variant used
-by `newPfm3ParamValue()`. A new engine can ignore it; its editor changes arrive
-through `newEngineParamValue()` and the generic hook above.
+PFM3 uses the same `midiParamFeedback(paramId, context, value, out)` hook as
+other engines; there is no PFM3-only feedback variant. A new engine only needs
+to implement the generic hook.
 
 ### Patch dump for a PC editor
 
@@ -168,16 +168,16 @@ Add `EditorNewEngine` and implement the required `EditorEngine` methods:
 - `getEngineMenu(page)` → menu for each engine page, or `nullptr`
 - `init(parent, synthState, tft)` → must call `parent->insertEditor(this)`
 - `drawEditorButton()`
-- `drawParameterName()`
+- `printParameterName()`
 - `displayParamValue()`
-- `tempoClick()`
+- `slowTick()`
 - `encoderTurned()`
 - `buttonPressed()`
 - `refreshOscilloBG()`
 
 Optional hooks:
 
-- `drawAlgorithm()`, `drawPageHeader()`, `preparePage()`. If the engine draws
+- `drawAlgorithm()`, `printPageHeader()`, `preparePage()`. If the engine draws
   its algorithm diagram, put the command-stream tables in an `Editor<Engine>Algo`
   helper class (see `EditorPfm3Algo`, `EditorDx7Algo`) and call
   `tft_->drawAlgoTable(Editor<Engine>Algo::table(algo))`.
@@ -189,9 +189,16 @@ Optional hooks:
   engine also calls `voice->fxAfterBlock()` (see "Arp/Fx (shared)").
 - `buttonLongPressed()`, `newTimbre()`
 
-If the engine reuses the flat `Pfm3Preset` layout, derive from
-`EditorParamPage` and override only the engine-specific page behavior.
-Otherwise derive from `EditorEngine` and own the parameter pages.
+Pages are `EditorPageButton`/`EditorMenu` tables. Each button's `states[]`
+points at an `EditorPageState`; its `slots[]` are `BUTTON_SIMPLE_PARAM(id)`,
+`BUTTON_EMPTY()`, or `{EditorSlotKind::Action/Custom, ...}`. `EditorEngine`
+resolves the current page through `currentPage()` / `slotForEncoder()`, and
+`printParameterName()`, `displayParamValue()` and `encoderTurned()` receive the
+resolved `EditorSlot`.
+
+Derive from `EditorEngine` and define the page tables. An engine that reuses
+the flat `Pfm3Preset` layout can derive from `EditorParamPage` and reuse its
+common-page behavior.
 
 `ScreenEditor` routing is automatic: `activeEditor()` uses
 `getEngineMenu()` / `getCommonPage()`, and `editorForEngine()` uses

@@ -10,90 +10,83 @@
 #include "Pfm3Midi.h"
 
 #include "Common.h"
+#include "Pfm3Param.h"
 
 namespace Pfm3Midi {
 
 /*
  * Allow to conserve same MIDI NRPN even when parameter rows are reordered.
  */
+namespace {
+struct Rows {
+    int lfoPhase;
+    int lfoEnv1;
+    int lfoEnv2;
+    int lfoSeq1;
+    int lfoSeq2;
+    int envTime;
+    int envLevel;
+};
+
+Rows rows() {
+    return Rows{
+        pfm3FlatIndex(pfm3Param(Pfm3Block::LfoPhase, 0, 0)) / 4,
+        pfm3FlatIndex(pfm3Param(Pfm3Block::LfoEnv1, 0, 0)) / 4,
+        pfm3FlatIndex(pfm3Param(Pfm3Block::LfoEnv2, 0, 0)) / 4,
+        pfm3FlatIndex(pfm3Param(Pfm3Block::LfoSeq, 0, 0)) / 4,
+        pfm3FlatIndex(pfm3Param(Pfm3Block::LfoSeq, 1, 0)) / 4,
+        pfm3FlatIndex(pfm3Param(Pfm3Block::EnvTime, 0, 0)) / 4,
+        pfm3FlatIndex(pfm3Param(Pfm3Block::EnvLevel, 0, 0)) / 4,
+    };
+}
+} // namespace
+
+/*
+ * Allow to conserve same MIDI NRPN even when parameter rows are reordered.
+ */
 int getMidiIndexFromMemory(int index) {
+    const Rows r = rows();
     int paramRow = index >> 2;
     int encoder = index % 4;
 
-    switch (paramRow) {
-    case ROW_LFOPHASES:
-        // Move after ROW_LFOSEQ2
+    if (paramRow == r.lfoPhase) {
+        // Move after the step sequencers
         paramRow += 4;
-        break;
-    case ROW_LFOENV1:
-    case ROW_LFOENV2:
-    case ROW_LFOSEQ1:
-    case ROW_LFOSEQ2:
-        // Move before ROW_LFOPHASE
+    } else if (paramRow == r.lfoEnv1 || paramRow == r.lfoEnv2 || paramRow == r.lfoSeq1 || paramRow == r.lfoSeq2) {
+        // Move before the LFO phase row
         paramRow -= 1;
-        break;
-    // TIME and LEVEL have been grouped in december 2022
-    case ROW_ENV1_TIME:
-    case ROW_ENV2_TIME:
-    case ROW_ENV3_TIME:
-    case ROW_ENV4_TIME:
-    case ROW_ENV5_TIME:
-    case ROW_ENV6_TIME:
-        paramRow = ROW_ENV1_TIME + (paramRow - ROW_ENV1_TIME) * 2;
+    } else if (paramRow >= r.envTime && paramRow < r.envTime + NUMBER_OF_OPERATORS) {
+        // TIME and LEVEL have been grouped in december 2022
+        paramRow = r.envTime + (paramRow - r.envTime) * 2;
         encoder *= 2;
-        break;
-    case ROW_ENV1_LEVEL:
-    case ROW_ENV2_LEVEL:
-    case ROW_ENV3_LEVEL:
-    case ROW_ENV4_LEVEL:
-    case ROW_ENV5_LEVEL:
-    case ROW_ENV6_LEVEL:
-        paramRow = ROW_ENV1_TIME + (paramRow - ROW_ENV1_LEVEL) * 2;
+    } else if (paramRow >= r.envLevel && paramRow < r.envLevel + NUMBER_OF_OPERATORS) {
+        paramRow = r.envTime + (paramRow - r.envLevel) * 2;
         encoder = encoder * 2 + 1;
-        break;
     }
 
-    return paramRow * NUMBER_OF_ENCODERS_PFM2 + encoder;
+    return paramRow * PFM3_PARAMS_PER_ROW + encoder;
 }
 
 int getMemoryIndexFromMidi(int index) {
+    const Rows r = rows();
     int row = index >> 2;
     int encoder = index % 4;
-    // Move back row
-    switch (row) {
-    case ROW_LFOPHASES + 4:
-        row = ROW_LFOPHASES;
-        break;
-    case ROW_LFOENV1 - 1:
-    case ROW_LFOENV2 - 1:
-    case ROW_LFOSEQ1 - 1:
-    case ROW_LFOSEQ2 - 1:
+
+    if (row == r.lfoPhase + 4) {
+        row = r.lfoPhase;
+    } else if (row == r.lfoEnv1 - 1 || row == r.lfoEnv2 - 1 || row == r.lfoSeq1 - 1 || row == r.lfoSeq2 - 1) {
         row++;
-        break;
-    case ROW_ENV1_TIME:
-    case ROW_ENV2_TIME:
-    case ROW_ENV3_TIME:
-    case ROW_ENV4_TIME:
-    case ROW_ENV5_TIME:
-    case ROW_ENV6_TIME:
-    case ROW_ENV1_LEVEL:
-    case ROW_ENV2_LEVEL:
-    case ROW_ENV3_LEVEL:
-    case ROW_ENV4_LEVEL:
-    case ROW_ENV5_LEVEL:
-    case ROW_ENV6_LEVEL: {
+    } else if (row >= r.envTime && row < r.envTime + NUMBER_OF_OPERATORS * 2) {
         bool isLevel = encoder & 0x1;
-        if (isLevel)
+        if (isLevel) {
             encoder--;
-        // num is the number of the value.. More than 4 => next operator
-        int num = (row - ROW_ENV1_TIME) * 2 + (encoder >> 1);
-        // Convert to new row/encoder
-        row = (isLevel ? ROW_ENV1_LEVEL : ROW_ENV1_TIME) + (num >> 2);
+        }
+        int num = (row - r.envTime) * 2 + (encoder >> 1);
+        row = (isLevel ? r.envLevel : r.envTime) + (num >> 2);
         encoder = num % 4;
-        break;
     }
-    }
-    return row * 4 + encoder;
+
+    return row * PFM3_PARAMS_PER_ROW + encoder;
 }
 
 } // namespace Pfm3Midi

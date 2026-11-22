@@ -40,7 +40,6 @@ SynthState::SynthState() {
     fullState_.dx7PresetNumber = 0;
     // Default pfm3 edit page
     fullState_.mainPage = -1;
-    fullState_.editPage = 0;
 
     // https://en.wikipedia.org/wiki/C_(musical_note)
     // Frequency of note 60 C4 :
@@ -85,7 +84,6 @@ SynthState::SynthState() {
     for (int b = 0; b < NUMBER_OF_BUTTONIDS; b++) {
         fullState_.buttonState[b] = 0;
     }
-    fullState_.operatorNumber = 0;
 }
 
 void SynthState::init(ScreenMixer* displayMixer, ScreenEditor* displayEditor, ScreenMenu* displayMenu, ScreenSequencer* displaySequencer) {
@@ -99,24 +97,24 @@ void SynthState::init(ScreenMixer* displayMixer, ScreenEditor* displayEditor, Sc
 
 void SynthState::twoButtonsPressed(int button1, int button2) {
     switch (button1) {
-    case BUTTON_PFM3_MENU:
+    case BUTTON_SWITCH_MENU:
         switch (button2) {
-        case BUTTON_PFM3_1:
+        case BUTTON_SWITCH_1:
             propagateNoteOn(-2);
             break;
-        case BUTTON_PFM3_2:
+        case BUTTON_SWITCH_2:
             propagateNoteOn(0);
             break;
-        case BUTTON_PFM3_3:
+        case BUTTON_SWITCH_3:
             propagateNoteOn(2);
             break;
-        case BUTTON_PFM3_4:
+        case BUTTON_SWITCH_4:
             propagateNoteOn(-14);
             break;
-        case BUTTON_PFM3_5:
+        case BUTTON_SWITCH_5:
             propagateNoteOn(-12);
             break;
-        case BUTTON_PFM3_6:
+        case BUTTON_SWITCH_6:
             propagateNoteOn(-10);
             break;
         case BUTTON_PREVIOUS_INSTRUMENT: {
@@ -127,7 +125,7 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
             propagateNewScreenPage();
             break;
         }
-        case BUTTON_PFM3_MIXER:
+        case BUTTON_SWITCH_MIXER:
             break;
         }
         break;
@@ -153,7 +151,7 @@ void SynthState::twoButtonsPressed(int button1, int button2) {
 
 #ifdef PPMIMAGE_ENABLE
     // Screenshot !!
-    if (button1 == BUTTON_PFM3_MENU && button2 == BUTTON_NEXT_INSTRUMENT) {
+    if (button1 == BUTTON_SWITCH_MENU && button2 == BUTTON_NEXT_INSTRUMENT) {
         storage_->getPPMImage()->saveImage();
         propagateNewScreenPage();
     }
@@ -394,16 +392,16 @@ void SynthState::buttonPressed(int button) {
 
     // Anywhere these are main functions !!!!
     switch (button) {
-    case BUTTON_PFM3_EDIT:
+    case BUTTON_SWITCH_EDIT:
         fullState_.synthMode = SYNTH_MODE_EDITOR;
         break;
-    case BUTTON_PFM3_SEQUENCER:
+    case BUTTON_SWITCH_SEQUENCER:
         fullState_.synthMode = SYNTH_MODE_SEQUENCER;
         break;
-    case BUTTON_PFM3_MIXER:
+    case BUTTON_SWITCH_MIXER:
         fullState_.synthMode = SYNTH_MODE_MIXER;
         break;
-    case BUTTON_PFM3_MENU:
+    case BUTTON_SWITCH_MENU:
         if (swithToMenuIfBackButtonPressed) {
             if (fullState_.synthModeBeforeMenu != SYNTH_MODE_MENU) {
                 fullState_.synthModeBeforeMenu = fullState_.synthMode;
@@ -464,7 +462,7 @@ void SynthState::propagateNewTimbre(int timbre) {
     }
 }
 
-void SynthState::tempoClick() {
+void SynthState::slowTick() {
     if (fullState_.synthMode == SYNTH_MODE_MENU) {
         if (fullState_.currentMenuItem->menuType == MENUTYPE_TEMPORARY) {
             if (doneClick_ > 4) {

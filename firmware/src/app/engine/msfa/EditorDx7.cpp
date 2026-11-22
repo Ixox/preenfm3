@@ -63,175 +63,175 @@
  */
 
 // clang-format off
-static const struct EditorOneButtonState dx7EngineState = {
+static const struct EditorPageState dx7EngineState = {
     "Engine",
     {
-        { DX7_ALGORITHM, 0 },
-        { DX7_FEEDBACK, 0 },
-        { DX7_OSC_KEY_SYNC, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_ALGORITHM),
+        BUTTON_SIMPLE_PARAM(DX7_FEEDBACK),
+        BUTTON_SIMPLE_PARAM(DX7_OSC_KEY_SYNC),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7LfoModState = {
+static const struct EditorPageState dx7LfoModState = {
     "Modulation",
     {
-        { DX7_LFO_AMP_MOD_DEPTH, 0 },
-        { DX7_LFO_PITCH_MOD_DEPTH, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_LFO_AMP_MOD_DEPTH),
+        BUTTON_SIMPLE_PARAM(DX7_LFO_PITCH_MOD_DEPTH),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7LfoState = {
+static const struct EditorPageState dx7LfoState = {
     "LFO",
     {
-        { DX7_LFO_SPEED, 0 },
-        { DX7_LFO_DELAY, 0 },
-        { DX7_LFO_WAVEFORM, 0 },
-        { DX7_LFO_KEY_SYNC, 0 },
-        { DX7_LFO_PITCH_MOD_SENSITIVITY, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_LFO_SPEED),
+        BUTTON_SIMPLE_PARAM(DX7_LFO_DELAY),
+        BUTTON_SIMPLE_PARAM(DX7_LFO_WAVEFORM),
+        BUTTON_SIMPLE_PARAM(DX7_LFO_KEY_SYNC),
+        BUTTON_SIMPLE_PARAM(DX7_LFO_PITCH_MOD_SENSITIVITY),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7PitchRateState = {
+static const struct EditorPageState dx7PitchRateState = {
     "Pitch Rate",
     {
-        { DX7_PITCH_EG_RATE_1, 0 },
-        { DX7_PITCH_EG_RATE_2, 0 },
-        { DX7_PITCH_EG_RATE_3, 0 },
-        { DX7_PITCH_EG_RATE_4, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_RATE_1),
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_RATE_2),
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_RATE_3),
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_RATE_4),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7PitchLevelState = {
+static const struct EditorPageState dx7PitchLevelState = {
     "Pitch Level",
     {
-        { DX7_PITCH_EG_LEVEL_1, 0 },
-        { DX7_PITCH_EG_LEVEL_2, 0 },
-        { DX7_PITCH_EG_LEVEL_3, 0 },
-        { DX7_PITCH_EG_LEVEL_4, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_LEVEL_1),
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_LEVEL_2),
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_LEVEL_3),
+        BUTTON_SIMPLE_PARAM(DX7_PITCH_EG_LEVEL_4),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7AmpState = {
+static const struct EditorPageState dx7AmpState = {
     "Amp",
     {
-        { DX7_OPERATOR_ENABLED, 0 },
-        { DX7_OPERATOR_OUTPUT_LEVEL, 0 },
-        { DX7_KEY_VELOCITY_SENSITIVITY, 0 },
-        { DX7_AMPLITUDE_MOD_SENSITIVITY, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_OPERATOR_ENABLED),
+        BUTTON_SIMPLE_PARAM(DX7_OPERATOR_OUTPUT_LEVEL),
+        BUTTON_SIMPLE_PARAM(DX7_KEY_VELOCITY_SENSITIVITY),
+        BUTTON_SIMPLE_PARAM(DX7_AMPLITUDE_MOD_SENSITIVITY),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7ScalState = {
+static const struct EditorPageState dx7ScalState = {
     "Scaling",
     {
-        { DX7_LEVEL_SCALING_BREAK_POINT, 0 },
-        { DX7_LEVEL_SCALING_LEFT_DEPTH, 0 },
-        { DX7_LEVEL_SCALING_RIGHT_DEPTH, 0 },
-        { DX7_LEVEL_SCALING_LEFT_CURVE, 0 },
-        { DX7_LEVEL_SCALING_RIGHT_CURVE, 0 },
-        { DX7_RATE_SCALING, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_LEVEL_SCALING_BREAK_POINT),
+        BUTTON_SIMPLE_PARAM(DX7_LEVEL_SCALING_LEFT_DEPTH),
+        BUTTON_SIMPLE_PARAM(DX7_LEVEL_SCALING_RIGHT_DEPTH),
+        BUTTON_SIMPLE_PARAM(DX7_LEVEL_SCALING_LEFT_CURVE),
+        BUTTON_SIMPLE_PARAM(DX7_LEVEL_SCALING_RIGHT_CURVE),
+        BUTTON_SIMPLE_PARAM(DX7_RATE_SCALING)
     }
 };
 
-static const struct EditorOneButtonState dx7FreqState = {
+static const struct EditorPageState dx7FreqState = {
     "Frequency",
     {
-        { DX7_OSCILLATOR_MODE, 0 },
-        { DX7_COARSE_FREQUENCY, 0 },
-        { DX7_FINE_FREQUENCY, 0 },
-        { DX7_DETUNE, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_OSCILLATOR_MODE),
+        BUTTON_SIMPLE_PARAM(DX7_COARSE_FREQUENCY),
+        BUTTON_SIMPLE_PARAM(DX7_FINE_FREQUENCY),
+        BUTTON_SIMPLE_PARAM(DX7_DETUNE),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7EgRateState = {
+static const struct EditorPageState dx7EgRateState = {
     "Rate",
     {
-        { DX7_EG_RATE_1, 0 },
-        { DX7_EG_RATE_2, 0 },
-        { DX7_EG_RATE_3, 0 },
-        { DX7_EG_RATE_4, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_EG_RATE_1),
+        BUTTON_SIMPLE_PARAM(DX7_EG_RATE_2),
+        BUTTON_SIMPLE_PARAM(DX7_EG_RATE_3),
+        BUTTON_SIMPLE_PARAM(DX7_EG_RATE_4),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState dx7EgLevelState = {
+static const struct EditorPageState dx7EgLevelState = {
     "Level",
     {
-        { DX7_EG_LEVEL_1, 0 },
-        { DX7_EG_LEVEL_2, 0 },
-        { DX7_EG_LEVEL_3, 0 },
-        { DX7_EG_LEVEL_4, 0 },
-        { DX7_NONE, 0 },
-        { DX7_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(DX7_EG_LEVEL_1),
+        BUTTON_SIMPLE_PARAM(DX7_EG_LEVEL_2),
+        BUTTON_SIMPLE_PARAM(DX7_EG_LEVEL_3),
+        BUTTON_SIMPLE_PARAM(DX7_EG_LEVEL_4),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButton dx7ButtonEngine = {
+static const struct EditorPageButton dx7ButtonEngine = {
     "Engine",
     BUTTONID_ENGINE_PAGE_1,
     1,
     { &dx7EngineState }
 };
 
-static const struct EditorOneButton dx7ButtonLfo = {
+static const struct EditorPageButton dx7ButtonLfo = {
     "LFO",
     BUTTONID_ENGINE_PAGE_2,
     2,
     { &dx7LfoModState, &dx7LfoState }
 };
 
-static const struct EditorOneButton dx7ButtonPitchEnv = {
+static const struct EditorPageButton dx7ButtonPitchEnv = {
     "Pitch",
     BUTTONID_ENGINE_PAGE_3,
     2,
     { &dx7PitchRateState, &dx7PitchLevelState }
 };
 
-static const struct EditorOneButton dx7ButtonLevel = {
+static const struct EditorPageButton dx7ButtonLevel = {
     "Level",
     BUTTONID_ENGINE_PAGE_4,
     2,
     { &dx7AmpState, &dx7ScalState }
 };
 
-static const struct EditorOneButton dx7ButtonOsc = {
+static const struct EditorPageButton dx7ButtonOsc = {
     "Osc",
     BUTTONID_ENGINE_PAGE_6,
     1,
     { &dx7FreqState }
 };
 
-static const struct EditorOneButton dx7ButtonEnv = {
+static const struct EditorPageButton dx7ButtonEnv = {
     "Env",
     BUTTONID_ENGINE_PAGE_7,
     2,
     { &dx7EgRateState, &dx7EgLevelState }
 };
 
-static const struct EditorEditMenu dx7GlobalMenu = {
+static const struct EditorMenu dx7GlobalMenu = {
     "Global",
     3,
     { &dx7ButtonEngine, &dx7ButtonLfo, &dx7ButtonPitchEnv }
 };
 
-static const struct EditorEditMenu dx7OperMenu = {
+static const struct EditorMenu dx7OperMenu = {
     "Oper",
     3,
     { &dx7ButtonLevel, &dx7ButtonOsc, &dx7ButtonEnv }
@@ -265,7 +265,7 @@ const char* EditorDx7::getEngineName() const {
     return "DX7";
 }
 
-const struct EditorEditMenu* EditorDx7::getEngineMenu(int page) const {
+const struct EditorMenu* EditorDx7::getEngineMenu(int page) const {
     if (page == 0) {
         return &dx7GlobalMenu;
     }
@@ -282,10 +282,10 @@ int EditorDx7::getCommonPage(int page) const {
     return COMMON_PAGE_NONE;
 }
 
-void EditorDx7::drawPageHeader() {
+void EditorDx7::printPageHeader() {
     if (synthState_->fullState_.mainPage == 1) {
         tft_->print("Op ");
-        tft_->print(synthState_->fullState_.operatorNumber + 1);
+        tft_->print(operatorNumber_ + 1);
         tft_->print(" ");
     }
 }
@@ -320,19 +320,19 @@ void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
 
 void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
     struct FullState* fullState = &synthState_->fullState_;
-    const struct EditorOneButton* page = currentPage();
+    const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
-    const struct RowEncoder rowEncoder = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder];
+    const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[encoder];
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(color);
 
-    if (rowEncoder.row != DX7_NONE) {
-        displayValue(rowEncoder.row, getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, synthState_->fullState_.operatorNumber));
+    if (slot.id != DX7_NONE) {
+        displayValue(slot.id, getDx7ParamValue(timbre()->getPatchMemory(), slot.id, operatorNumber_));
     } else {
         tft_->print("     ");
     }
@@ -342,55 +342,56 @@ void EditorDx7::drawAlgorithm() {
     tft_->drawAlgoTable(EditorDx7Algo::table(timbre()->getPatchMemory()[134]));
 }
 
-void EditorDx7::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
-    struct FullState* fullState = &synthState_->fullState_;
-    if (fullState->mainPage == 1 && button >= 3 && button <= 5) {
-        tft_->drawButtonBiState(270, 29, button, fullState->operatorNumber, 5, fullState->buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
-                                (button - 3) * 2);
-    } else if (button < editMenu->numberOfButtons) {
-        const struct EditorOneButton* buttonPage = editMenu->pages[button];
-        tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
-                         fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
-    } else {
-        tft_->drawButton("", 270, 29, button, 0, 0);
+EditorSelectorKind EditorDx7::selectorKind(int button) const {
+    if (synthState_->fullState_.mainPage == 1 && button >= 3 && button <= 5) {
+        return EditorSelectorKind::Operator;
     }
+    return EditorSelectorKind::None;
 }
 
-void EditorDx7::drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
-                                  const struct EditorOneButton* page) {
+void EditorDx7::drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) {
+    if (selectorKind(button) == EditorSelectorKind::Operator) {
+        drawOperatorSelector(button, 5);
+        return;
+    }
+    drawEditorButtonDefault(button, editMenu, page);
+}
+
+void EditorDx7::printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
+                                  const struct EditorPageButton* page) {
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_MEDIUM_GRAY);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
-    if (rowEncoder.row != DX7_NONE) {
-        tft_->print(dx7Params[rowEncoder.row].name);
+    if (slot.id != DX7_NONE) {
+        tft_->print(dx7Params[slot.id].name);
     } else {
         tft_->print("     ");
     }
 }
 
-void EditorDx7::encoderTurned(int encoder6, int ticks) {
+void EditorDx7::encoderTurned(int encoder, int ticks) {
     struct FullState* fullState = &synthState_->fullState_;
 
     if (fullState->mainPage < 0) {
         return;
     }
 
-    const struct EditorOneButton* page = currentPage();
+    const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
-    const struct RowEncoder rowEncoder = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[encoder6];
+    const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[encoder];
 
-    if (rowEncoder.row == DX7_NONE) {
+    if (slot.id == DX7_NONE) {
         return;
     }
 
-    const struct Dx7ParamDesc* d = &dx7Params[rowEncoder.row];
-    const int operatorNumber = fullState->operatorNumber;
-    uint8_t oldValue = getDx7ParamValue(timbre()->getPatchMemory(), rowEncoder.row, operatorNumber);
+    const struct Dx7ParamDesc* d = &dx7Params[slot.id];
+    const int operatorNumber = operatorNumber_;
+    uint8_t oldValue = getDx7ParamValue(timbre()->getPatchMemory(), slot.id, operatorNumber);
     int newValue = oldValue;
 
     if (d->displayType == DX7_DISPLAY_STRINGS) {
@@ -408,10 +409,11 @@ void EditorDx7::encoderTurned(int encoder6, int ticks) {
         return;
     }
 
-    synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, operatorNumber, oldValue, newValue);
+    synthState_->propagateNewEngineParamValue(currentTimbre(), slot.id, operatorNumber, oldValue, newValue);
 }
 
-void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+void EditorDx7::newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) {
+    (void)refreshStatus;
     (void)timbre;
     (void)oldValue;
 
@@ -419,33 +421,34 @@ void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float 
     if (fullState->mainPage < 0 || fullState->mainPage > 1 || paramId <= DX7_NONE || paramId >= DX7_PARAM_COUNT) {
         return;
     }
-    const struct EditorOneButton* page = currentPage();
+    const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
 
-    int encoder = -1;
+    // Need to know where on the page the parameter is, to update it.
+    int slotPosition = -1;
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
-        const struct RowEncoder re = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[e];
-        if (re.row == paramId) {
-            encoder = e;
+        const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[e];
+        if (slot.id == paramId) {
+            slotPosition = e;
             break;
         }
     }
 
-    if (paramId == DX7_FEEDBACK && encoder >= 0) {
+    if (paramId == DX7_FEEDBACK && slotPosition >= 0) {
         uint8_t source = 0;
         uint8_t dest = 0;
         if (EditorDx7Algo::getFeedback(this->timbre()->getPatchMemory()[134], source, dest)) {
-            tft_->highlightFeedback(encoder, source, dest);
+            tft_->highlightFeedback(slotPosition, source, dest);
             feedbackChangedCounter_ = 4;
             feedbackSource_ = source;
             feedbackDest_ = dest;
         }
-    } else if ((dx7Params[paramId].kind == DX7_KIND_OPERATOR || dx7Params[paramId].kind == DX7_KIND_OP_ENABLED) && encoder >= 0) {
+    } else if ((dx7Params[paramId].kind == DX7_KIND_OPERATOR || dx7Params[paramId].kind == DX7_KIND_OP_ENABLED) && slotPosition >= 0) {
         tft_->highlightOperator(context);
-        operatorChangedCounter_[encoder] = 4;
-        highlightedOperator_[encoder] = context;
+        operatorChangedCounter_[slotPosition] = 4;
+        highlightedOperator_[slotPosition] = context;
     }
 
     if (paramId >= DX7_EG_RATE_1 && paramId <= DX7_EG_LEVEL_4) {
@@ -455,57 +458,48 @@ void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float 
         tft_->drawAlgoTable(EditorDx7Algo::table((int)newValue));
     }
 
-    if (encoder >= 0) {
-        valueChangedCounter_[encoder] = 4;
+    if (slotPosition >= 0) {
+        valueChangedCounter_[slotPosition] = 4;
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(COLOR_YELLOW);
-        displayParamValue(encoder, COLOR_YELLOW);
+        displayParamValue(slotPosition, COLOR_YELLOW);
     }
 }
 
-void EditorDx7::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void EditorDx7::encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
     // DX7 has no multiple-operator edition yet.
 }
 
 void EditorDx7::buttonPressed(int button) {
     struct FullState* fullState = &synthState_->fullState_;
     int mainPage = fullState->mainPage;
-    const struct EditorEditMenu* editMenu = currentEditMenu();
-    const struct EditorOneButton* page = currentPage();
+    const struct EditorMenu* editMenu = currentEditMenu();
+    const struct EditorPageButton* page = currentPage();
     if (editMenu == nullptr || page == nullptr) {
         return;
     }
 
     switch (button) {
-    case BUTTON_PFM3_EDIT:
-    case BUTTON_PFM3_MENU:
+    case BUTTON_SWITCH_EDIT:
+    case BUTTON_SWITCH_MENU:
         fullState->mainPage = -1;
         break;
-    case BUTTON_PFM3_1:
-    case BUTTON_PFM3_2:
-    case BUTTON_PFM3_3:
-    case BUTTON_PFM3_4:
-    case BUTTON_PFM3_5:
-    case BUTTON_PFM3_6:
-        if (mainPage == 1 && button >= BUTTON_PFM3_4) {
-            // Operator pages: buttons 4..6 select OP1/2, OP3/4, OP5/6.
-            uint8_t buttonSelected = button - BUTTON_PFM3_4;
-            uint8_t currentButton = fullState->operatorNumber >> 1;
-            int buttonId = BUTTONID_OPERATOR_1_2 + buttonSelected;
-            uint8_t newButtonState = fullState->buttonState[buttonId];
-            if (buttonSelected == currentButton) {
-                newButtonState = (newButtonState + 1) & 0x1;
+    case BUTTON_SWITCH_1:
+    case BUTTON_SWITCH_2:
+    case BUTTON_SWITCH_3:
+    case BUTTON_SWITCH_4:
+    case BUTTON_SWITCH_5:
+    case BUTTON_SWITCH_6:
+        if (selectorKind(button) == EditorSelectorKind::Operator) {
+            selectOperator(button, 5);
+        } else if (editPage_ == button) {
+            if (page->stateCount > 0) {
+                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->stateCount;
             }
-            fullState->operatorNumber = buttonSelected * 2 + newButtonState;
-            fullState->buttonState[buttonId] = newButtonState;
-        } else if (fullState->editPage == button) {
-            if (page->numberOfStates > 0) {
-                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->numberOfStates;
-            }
-        } else if (button < editMenu->numberOfButtons) {
-            if (editMenu->pages[button]->numberOfStates > 0) {
-                parent_->setEditPageSelected(mainPage, button);
-                fullState->editPage = button;
+        } else if (button < editMenu->buttonCount) {
+            if (editMenu->buttons[button]->stateCount > 0) {
+                setEditPageSelected(mainPage, button);
+                editPage_ = button;
             }
         }
         break;
@@ -522,7 +516,7 @@ void EditorDx7::buttonLongPressed(int instrument, int button) {
     }
 
     uint8_t* program = timbre()->getPatchMemory();
-    int block = (5 - synthState_->fullState_.operatorNumber) * 21;
+    int block = (5 - operatorNumber_) * 21;
 
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
         for (int i = 0; i < 21; i++) {
@@ -553,7 +547,7 @@ void EditorDx7::refreshOscilloBG() {
 }
 
 void EditorDx7::refreshOscillatorOperatorEnvelope() {
-    int op = synthState_->fullState_.operatorNumber;
+    int op = operatorNumber_;
     Dx7EnvelopeDisplay env;
     getDx7EnvelopeDisplay(timbre()->getPatchMemory(), op, &env);
 
@@ -562,7 +556,7 @@ void EditorDx7::refreshOscillatorOperatorEnvelope() {
     tft_->oscilloBgActionEnvelope();
 }
 
-void EditorDx7::tempoClick() {
+void EditorDx7::slowTick() {
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;

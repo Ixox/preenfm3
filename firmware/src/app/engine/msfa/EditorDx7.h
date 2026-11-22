@@ -37,21 +37,22 @@ public:
     void init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) override;
     SynthEngineType getEngineType() const override;
     const char* getEngineName() const override;
-    const struct EditorEditMenu* getEngineMenu(int page) const override;
+    const struct EditorMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
     void drawAlgorithm() override;
-    void drawPageHeader() override;
-    void drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) override;
-    void drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
-                           const struct EditorOneButton* page) override;
+    void printPageHeader() override;
+    void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
+    EditorSelectorKind selectorKind(int button) const override;
+    void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
+                           const struct EditorPageButton* page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
-    void encoderTurned(int encoder6, int ticks) override;
-    void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) override;
-    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) override;
+    void encoderTurned(int encoder, int ticks) override;
+    void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) override;
+    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) override;
     void buttonPressed(int button) override;
     void buttonLongPressed(int instrument, int button) override;
     void refreshOscilloBG() override;
-    void tempoClick() override;
+    void slowTick() override;
 
 private:
     void refreshOscillatorOperatorEnvelope();

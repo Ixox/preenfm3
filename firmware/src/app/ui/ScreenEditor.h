@@ -41,34 +41,27 @@ public:
     SynthEngineType currentEngineType() const;
 
     // Menu for a main page, resolved by the current engine's editor.
-    const struct EditorEditMenu* getMainMenu(int page) const;
-    const struct EditorEditMenu* currentEditMenu() const;
+    const struct EditorMenu* getMainMenu(int page) const;
+    const struct EditorMenu* currentEditMenu() const;
     const char* mainMenuName(int button) const;
     void markPresetModified(int timbre);
     void drawAlgorithm();
 
     void refreshEditorByStep(int& refreshStatus, int& endRefreshStatus);
     void displayParamValue(int encoder, TFT_COLOR color);
-    void newPfm3ParamValue(int& refreshStatus, int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue,
-                           float newValue);
-    void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
-    void tempoClick();
+    void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue);
+    void slowTick();
 
     bool isPresetModifed(int timbre) {
         return presetModifed_[timbre];
     }
     void setPresetModified(int timbre, bool state);
     void resetAllPresetModified();
-    void setEditPageSelected(int mainPage, int editPage) {
-        editPageSelected_[mainPage] = editPage;
-    }
-    void updateStepSequencer(int currentRow, int encoder, int oldValue, int newValue);
-    void updateArpPattern(int currentRow, int encoder, int oldValue, int newValue);
     void displayPreset();
     void displayPopup(TFT_COLOR color, char* text, uint8_t length);
 
     void encoderTurned(int encoder, int ticks);
-    void encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button);
+    void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button);
     void buttonPressed(int button);
     void buttonLongPressed(int instrument, int button);
     void newTimbre(int timbre);
@@ -89,8 +82,6 @@ private:
     bool presetModifed_[NUMBER_OF_TIMBRES];
     int currentTimbre_;
 
-    // Remember curent editPage in mainPage
-    uint8_t editPageSelected_[6];
 };
 
 #endif

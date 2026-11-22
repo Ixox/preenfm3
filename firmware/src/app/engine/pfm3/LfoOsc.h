@@ -27,9 +27,9 @@ public:
 
     void init(struct LfoParams* lfoParams, float* lfoPhase, Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
-    void valueChanged(int encoder) {
-        switch (encoder) {
-        case ENCODER_LFO_KSYNC:
+    void valueChanged(int field) {
+        switch (field) {
+        case 3: // key sync
             this->rampInv_ = 50 * invTab[(int)(lfo_->keybRamp * 50.0f)];
             this->ramp_ = lfo_->keybRamp;
             if (this->ramp_ < 0) {
@@ -37,7 +37,7 @@ public:
                 phase_ = 0;
             }
             break;
-        case ENCODER_LFO_FREQ:
+        case 1: // frequency
             isNotMidiSynchronized_ = ((lfo_->freq * 10.0f) < LFO_MIDICLOCK_MC_DIV_16);
             break;
         }

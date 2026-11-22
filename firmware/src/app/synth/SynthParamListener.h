@@ -23,9 +23,6 @@
 class SynthParamListener {
 
 public:
-    virtual void newPfm3ParamValue(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue, float newValue) = 0;
-    virtual void newPfm3ParamValueFromExternal(int timbre, int currentrow, int encoder, ParameterDisplay* param, float oldValue,
-                                               float newValue) = 0;
     virtual void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
     }
     virtual void newEngineParamValueFromExternal(int timbre, int paramId, int context, float oldValue, float newValue) {

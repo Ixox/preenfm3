@@ -579,7 +579,7 @@ void ScreenSequencer::encoderTurned(int instrument, int encoder, int ticks) {
 void ScreenSequencer::buttonLongPressed(int instrument, int button) {
     // Action for all modes
     switch (button) {
-    case BUTTON_PFM3_6:
+    case BUTTON_SWITCH_6:
         sequencer_->stop();
         sequencer_->rewind();
         refresh(17, 17);
@@ -589,7 +589,7 @@ void ScreenSequencer::buttonLongPressed(int instrument, int button) {
 
     if (seqMode_ == SEQ_MODE_NORMAL) {
         switch (button) {
-        case BUTTON_PFM3_4:
+        case BUTTON_SWITCH_4:
             // Long press on button 4 : Clear sequencer
             sequencer_->stop();
             sequencer_->reset(true);
@@ -598,7 +598,7 @@ void ScreenSequencer::buttonLongPressed(int instrument, int button) {
         }
     } else if (seqMode_ == SEQ_MODE_STEP) {
         switch (button) {
-        case BUTTON_PFM3_4:
+        case BUTTON_SWITCH_4:
             // Long press on button 4 : Clear step sequencer
             stepCursor_ = 0;
             sequencer_->stepClearAll(instrument);
@@ -608,11 +608,11 @@ void ScreenSequencer::buttonLongPressed(int instrument, int button) {
     }
 }
 
-void ScreenSequencer::encoderTurnedWhileButtonPressed(int encoder6, int ticks, int button) {
+void ScreenSequencer::encoderTurnedWhileButtonPressed(int encoder, int ticks, int button) {
     if (seqMode_ == SEQ_MODE_STEP) {
-        if (button == BUTTON_PFM3_2) {
+        if (button == BUTTON_SWITCH_2) {
             sequencer_->changeCurrentNote(stepCurrentInstrument_, stepCursor_, stepSize_, ticks);
-        } else if (button == BUTTON_PFM3_5) {
+        } else if (button == BUTTON_SWITCH_5) {
             sequencer_->changeCurrentVelocity(stepCurrentInstrument_, stepCursor_, stepSize_, ticks);
         }
     }
@@ -622,7 +622,7 @@ void ScreenSequencer::buttonPressed(int instrument, int button) {
     // Action for SEQ and STEP mode
     if (seqMode_ == SEQ_MODE_NORMAL || seqMode_ == SEQ_MODE_STEP) {
         switch (button) {
-        case BUTTON_PFM3_6:
+        case BUTTON_SWITCH_6:
             if (sequencer_->isRunning()) {
                 sequencer_->stop();
             } else {
@@ -636,37 +636,37 @@ void ScreenSequencer::buttonPressed(int instrument, int button) {
 
     if (seqMode_ == SEQ_MODE_NORMAL) {
         switch (button) {
-        case BUTTON_PFM3_1:
+        case BUTTON_SWITCH_1:
             seqMode_ = SEQ_MODE_MUTE;
             refresh(7, 1);
             break;
-        case BUTTON_PFM3_2:
+        case BUTTON_SWITCH_2:
             // Long press on button 1 : record select
             seqMode_ = SEQ_MODE_REC;
             refresh(7, 1);
             break;
-        case BUTTON_PFM3_3:
+        case BUTTON_SWITCH_3:
             seqMode_ = SEQ_MODE_STEP;
             sequencer_->setStepMode(true);
             refresh(19, 0);
             break;
-        case BUTTON_PFM3_4:
+        case BUTTON_SWITCH_4:
             seqMode_ = SEQ_MODE_CLEAR;
             refresh(7, 1);
             break;
-        case BUTTON_PFM3_5:
+        case BUTTON_SWITCH_5:
             break;
         }
     } else {
-        if (button == BUTTON_PFM3_MENU) {
+        if (button == BUTTON_SWITCH_MENU) {
             if (seqMode_ != SEQ_MODE_STEP) {
                 refresh(7, 0);
                 seqMode_ = SEQ_MODE_NORMAL;
                 return;
             }
         }
-        if (button >= BUTTON_PFM3_1 && button <= BUTTON_PFM3_6) {
-            int actionInstrument = button - BUTTON_PFM3_1;
+        if (button >= BUTTON_SWITCH_1 && button <= BUTTON_SWITCH_6) {
+            int actionInstrument = button - BUTTON_SWITCH_1;
             if (seqMode_ == SEQ_MODE_MUTE) {
                 sequencer_->toggleMuted(actionInstrument);
                 refreshInstrument(actionInstrument);
@@ -679,7 +679,7 @@ void ScreenSequencer::buttonPressed(int instrument, int button) {
                 refresh(18, 0);
             } else if (seqMode_ == SEQ_MODE_STEP) {
                 switch (button) {
-                case BUTTON_PFM3_1:
+                case BUTTON_SWITCH_1:
                     sequencer_->stepClearPart(instrument, stepCursor_, stepSize_);
                     clearSequence(stepCursor_, stepCursor_ + stepSize_);
                     stepCursor_ += stepSize_;
@@ -688,7 +688,7 @@ void ScreenSequencer::buttonPressed(int instrument, int button) {
                     }
                     refreshStepCursor();
                     break;
-                case BUTTON_PFM3_3:
+                case BUTTON_SWITCH_3:
                     seqMode_ = SEQ_MODE_NORMAL;
                     sequencer_->setStepMode(false);
                     refresh(19, 0);
@@ -714,7 +714,7 @@ const char* ScreenSequencer::getSequenceName() {
     return sequencer_->getSequenceName();
 }
 
-void ScreenSequencer::tempoClick() {
+void ScreenSequencer::slowTick() {
 
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];

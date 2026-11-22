@@ -14,51 +14,51 @@
 #include "SynthState.h"
 #include "Timbre.h"
 
-static const char* byosParamNames[] = {"Wave", "Mult", "Mix 12", "Attk", "Rel"};
+static const char* byosParamNames[] = {"Wave", "Wave", "Mult", "Mult", "Mix 12", "Attk", "Rel"};
 
 static const char* byosShapeNames[] = {"sin ", "saw ", "squa", "s^2 ", "szer", "spos", "rand",
                                        "off ", "Usr1", "Usr2", "Usr3", "Usr4", "Usr5", "Usr6"};
 
 // clang-format off
-static const struct EditorOneButtonState byosOpState = {
+static const struct EditorPageState byosOpState = {
     "OP",
     {
-        { BYOS_PARAM_WAVE, 0 },
-        { BYOS_PARAM_MULTIPLIER, 0 },
-        { BYOS_PARAM_MIX, 0 },
-        { BYOS_PARAM_WAVE, 1 },
-        { BYOS_PARAM_MULTIPLIER, 1 },
-        { BYOS_PARAM_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_OP1_WAVE),
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_OP1_MULTIPLIER),
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_MIX),
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_OP2_WAVE),
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_OP2_MULTIPLIER),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButtonState byosEnvState = {
+static const struct EditorPageState byosEnvState = {
     "ENV",
     {
-        { BYOS_PARAM_ATTACK, 0 },
-        { BYOS_PARAM_RELEASE, 0 },
-        { BYOS_PARAM_NONE, 0 },
-        { BYOS_PARAM_NONE, 0 },
-        { BYOS_PARAM_NONE, 0 },
-        { BYOS_PARAM_NONE, 0 }
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_ATTACK),
+        BUTTON_SIMPLE_PARAM(BYOS_PARAM_RELEASE),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY()
     }
 };
 
-static const struct EditorOneButton byosOpButton = {
+static const struct EditorPageButton byosOpButton = {
     "OP",
     BUTTONID_ENGINE_PAGE_1,
     1,
     { &byosOpState }
 };
 
-static const struct EditorOneButton byosEnvButton = {
+static const struct EditorPageButton byosEnvButton = {
     "ENV",
     BUTTONID_ENGINE_PAGE_2,
     1,
     { &byosEnvState }
 };
 
-static const struct EditorEditMenu byosMenu = {
+static const struct EditorMenu byosMenu = {
     "Engine",
     2,
     { &byosOpButton, &byosEnvButton }
@@ -75,12 +75,16 @@ static float clampf(float value, float minValue, float maxValue) {
     return value;
 }
 
-static float getByosParamValue(const ByosParams* params, int paramId, int context) {
+static float getByosParamValue(const ByosParams* params, int paramId) {
     switch (paramId) {
-    case BYOS_PARAM_WAVE:
-        return (context >= 0 && context < 2) ? params->wave[context] : 0.0f;
-    case BYOS_PARAM_MULTIPLIER:
-        return (context >= 0 && context < 2) ? params->multiplier[context] : 0.0f;
+    case BYOS_PARAM_OP1_WAVE:
+        return params->wave[0];
+    case BYOS_PARAM_OP2_WAVE:
+        return params->wave[1];
+    case BYOS_PARAM_OP1_MULTIPLIER:
+        return params->multiplier[0];
+    case BYOS_PARAM_OP2_MULTIPLIER:
+        return params->multiplier[1];
     case BYOS_PARAM_MIX:
         return params->mix;
     case BYOS_PARAM_ATTACK:
@@ -110,7 +114,7 @@ const char* EditorByos::getEngineName() const {
     return "BYOS";
 }
 
-const struct EditorEditMenu* EditorByos::getEngineMenu(int page) const {
+const struct EditorMenu* EditorByos::getEngineMenu(int page) const {
     if (page == 0) {
         return &byosMenu;
     }
@@ -132,19 +136,12 @@ Timbre* EditorByos::timbre() {
     return synthState_->getTimbre(currentTimbre());
 }
 
-void EditorByos::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
-    struct FullState* fullState = &synthState_->fullState_;
-    if (button < editMenu->numberOfButtons) {
-        const struct EditorOneButton* buttonPage = editMenu->pages[button];
-        tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->numberOfStates,
-                         fullState->editPage == button ? fullState->buttonState[page->buttonId] + 1 : 0);
-    } else {
-        tft_->drawButton("", 270, 29, button, 0, 0);
-    }
+void EditorByos::drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) {
+    drawEditorButtonDefault(button, editMenu, page);
 }
 
-void EditorByos::drawParameterName(int button, const struct RowEncoder& rowEncoder, const struct EditorEditMenu* editMenu,
-                                   const struct EditorOneButton* page) {
+void EditorByos::printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
+                                   const struct EditorPageButton* page) {
     (void)editMenu;
     (void)page;
 
@@ -152,30 +149,31 @@ void EditorByos::drawParameterName(int button, const struct RowEncoder& rowEncod
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_MEDIUM_GRAY);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
-    if (rowEncoder.row != BYOS_PARAM_NONE) {
-        tft_->print(byosParamNames[rowEncoder.row]);
+    if (slot.id != BYOS_PARAM_NONE) {
+        tft_->print(byosParamNames[slot.id]);
     } else {
         tft_->print("     ");
     }
 }
 
 void EditorByos::displayParamValue(int encoder, TFT_COLOR color) {
-    const struct RowEncoder rowEncoder = rowEncoderFor(encoder);
+    const EditorSlot slot = slotForEncoder(encoder);
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(color);
 
-    if (rowEncoder.row == BYOS_PARAM_NONE) {
+    if (slot.id == BYOS_PARAM_NONE) {
         tft_->print("     ");
         return;
     }
 
     ByosParams* params = (ByosParams*)timbre()->getPatchMemory();
-    switch (rowEncoder.row) {
-    case BYOS_PARAM_WAVE: {
-        int shape = (int)params->wave[rowEncoder.encoder];
+    switch (slot.id) {
+    case BYOS_PARAM_OP1_WAVE:
+    case BYOS_PARAM_OP2_WAVE: {
+        int shape = (int)params->wave[slot.id == BYOS_PARAM_OP2_WAVE ? 1 : 0];
         if (shape < 0) {
             shape = 0;
         } else if (shape >= OSC_SHAPE_LAST) {
@@ -184,8 +182,9 @@ void EditorByos::displayParamValue(int encoder, TFT_COLOR color) {
         tft_->print(byosShapeNames[shape]);
         break;
     }
-    case BYOS_PARAM_MULTIPLIER:
-        tft_->printFloatWithSpace(params->multiplier[rowEncoder.encoder]);
+    case BYOS_PARAM_OP1_MULTIPLIER:
+    case BYOS_PARAM_OP2_MULTIPLIER:
+        tft_->printFloatWithSpace(params->multiplier[slot.id == BYOS_PARAM_OP2_MULTIPLIER ? 1 : 0]);
         break;
     case BYOS_PARAM_MIX:
         tft_->printFloatWithSpace(params->mix);
@@ -202,24 +201,26 @@ void EditorByos::displayParamValue(int encoder, TFT_COLOR color) {
     }
 }
 
-void EditorByos::encoderTurned(int encoder6, int ticks) {
-    const struct RowEncoder rowEncoder = rowEncoderFor(encoder6);
-    if (rowEncoder.row == BYOS_PARAM_NONE) {
+void EditorByos::encoderTurned(int encoder, int ticks) {
+    const EditorSlot slot = slotForEncoder(encoder);
+    if (slot.id == BYOS_PARAM_NONE) {
         return;
     }
 
     ByosParams* params = (ByosParams*)timbre()->getPatchMemory();
-    float oldValue = getByosParamValue(params, rowEncoder.row, rowEncoder.encoder);
+    float oldValue = getByosParamValue(params, slot.id);
     float step = 0.0f;
     float minValue = 0.0f;
     float maxValue = 0.0f;
 
-    switch (rowEncoder.row) {
-    case BYOS_PARAM_WAVE:
+    switch (slot.id) {
+    case BYOS_PARAM_OP1_WAVE:
+    case BYOS_PARAM_OP2_WAVE:
         step = 1.0f;
         maxValue = (float)(OSC_SHAPE_LAST - 1);
         break;
-    case BYOS_PARAM_MULTIPLIER:
+    case BYOS_PARAM_OP1_MULTIPLIER:
+    case BYOS_PARAM_OP2_MULTIPLIER:
         step = 0.25f;
         minValue = 0.25f;
         maxValue = 4.0f;
@@ -239,24 +240,26 @@ void EditorByos::encoderTurned(int encoder6, int ticks) {
 
     float newValue = clampf(oldValue + (float)ticks * step, minValue, maxValue);
     if (newValue != oldValue) {
-        synthState_->propagateNewEngineParamValue(currentTimbre(), rowEncoder.row, rowEncoder.encoder, oldValue, newValue);
+        synthState_->propagateNewEngineParamValue(currentTimbre(), slot.id, 0, oldValue, newValue);
     }
 }
 
-void EditorByos::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {
+void EditorByos::newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) {
+    (void)refreshStatus;
     (void)timbre;
+    (void)context;
     (void)oldValue;
     (void)newValue;
 
     struct FullState* fullState = &synthState_->fullState_;
-    const struct EditorOneButton* page = currentPage();
+    const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
 
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
-        const struct RowEncoder re = page->states[fullState->buttonState[page->buttonId]]->rowEncoder[e];
-        if (re.row == paramId && re.encoder == context) {
+        const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[e];
+        if (slot.id == paramId) {
             displayParamValue(e, COLOR_WHITE);
         }
     }
@@ -265,31 +268,31 @@ void EditorByos::newEngineParamValue(int timbre, int paramId, int context, float
 void EditorByos::buttonPressed(int button) {
     struct FullState* fullState = &synthState_->fullState_;
     int mainPage = fullState->mainPage;
-    const struct EditorEditMenu* editMenu = currentEditMenu();
-    const struct EditorOneButton* page = currentPage();
+    const struct EditorMenu* editMenu = currentEditMenu();
+    const struct EditorPageButton* page = currentPage();
     if (editMenu == nullptr || page == nullptr) {
         return;
     }
 
     switch (button) {
-    case BUTTON_PFM3_EDIT:
-    case BUTTON_PFM3_MENU:
+    case BUTTON_SWITCH_EDIT:
+    case BUTTON_SWITCH_MENU:
         fullState->mainPage = -1;
         break;
-    case BUTTON_PFM3_1:
-    case BUTTON_PFM3_2:
-    case BUTTON_PFM3_3:
-    case BUTTON_PFM3_4:
-    case BUTTON_PFM3_5:
-    case BUTTON_PFM3_6:
-        if (fullState->editPage == button) {
-            if (page->numberOfStates > 0) {
-                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->numberOfStates;
+    case BUTTON_SWITCH_1:
+    case BUTTON_SWITCH_2:
+    case BUTTON_SWITCH_3:
+    case BUTTON_SWITCH_4:
+    case BUTTON_SWITCH_5:
+    case BUTTON_SWITCH_6:
+        if (editPage_ == button) {
+            if (page->stateCount > 0) {
+                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->stateCount;
             }
-        } else if (button < editMenu->numberOfButtons) {
-            if (editMenu->pages[button]->numberOfStates > 0) {
-                parent_->setEditPageSelected(mainPage, button);
-                fullState->editPage = button;
+        } else if (button < editMenu->buttonCount) {
+            if (editMenu->buttons[button]->stateCount > 0) {
+                setEditPageSelected(mainPage, button);
+                editPage_ = button;
             }
         }
         break;
@@ -316,7 +319,7 @@ void EditorByos::drawAlgorithm() {
     }
 }
 
-void EditorByos::tempoClick() {
+void EditorByos::slowTick() {
 }
 
 void EditorByos::refreshOscilloBG() {

@@ -358,7 +358,7 @@ SysTick_Handler()       (1 kHz)
     │   ├── pop one action when currentAction is empty
     │   ├── process at most one action while DMA2D is free
     │   └── additionalActions() for firmware-specific actions
-    └── tempoClick / LED timing every 256 ticks
+    └── slowTick / LED timing every 256 ticks
 
 preenfm3Loop()          (main while(1), no fixed rate)
 ├── MIDI async actions
@@ -411,7 +411,7 @@ The active screen is determined by `synthMode` in the full state:
 - `SYNTH_MODE_MENU` → Menu
 - `SYNTH_MODE_SEQUENCER` → Sequencer
 
-`ScreenCoordinator` also implements `VisualInfo`. `tempoClick()` decrements the per-timbre note-on counters and forwards to the active screen's `tempoClick()` for level-meter decay. `midiClock()` and `noteOn()` update small status indicators.
+`ScreenCoordinator` also implements `VisualInfo`. `slowTick()` decrements the per-timbre note-on counters and forwards to the active screen's `slowTick()` for level-meter decay. `midiClock()` and `noteOn()` update small status indicators.
 
 ### refreshAllScreenByStep() State Machine
 

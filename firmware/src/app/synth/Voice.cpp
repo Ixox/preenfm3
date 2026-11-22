@@ -3936,7 +3936,7 @@ void Voice::setNewEffectParam(int encoder) {
         v0L_ = v1L_ = v2L_ = v3L_ = v4L_ = v5L_ = v6L_ = v7L_ = v8L_ = v0R_ = v1R_ = v2R_ = v3R_ = v4R_ = v5R_ = v6R_ = v7R_ = v8R_ = 0.0f;
         fxParamA1_ = fxParamA2_ = fxParamB2_ = 0;
 
-        for (int k = 1; k < NUMBER_OF_ENCODERS_PFM2; k++) {
+        for (int k = 1; k < PFM3_PARAMS_PER_ROW; k++) {
             setNewEffectParam(k);
         }
     }
@@ -3954,13 +3954,6 @@ void Voice::setNewEffectParam(int encoder) {
         break;
     }
     default:
-        switch (encoder) {
-        case ENCODER_EFFECT_TYPE:
-            break;
-        case ENCODER_EFFECT_PARAM1:
-            break;
-        case ENCODER_EFFECT_PARAM2:
-            break;
-        }
+        break;
     }
 }

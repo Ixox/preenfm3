@@ -505,7 +505,7 @@ void Synth::afterNewParamsLoad(int timbre) {
 
     timbres_[timbre].afterNewParamsLoad();
     // values to force check lfo used
-    timbres_[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
+    timbres_[timbre].verifyLfoUsed(0, 0.0f, 1.0f);
 
     for (int k = 0; k < NUMBER_OF_STORED_NOTES; k++) {
         if (noteBeforeNewParalsLoad_[k] != 0) {
@@ -531,7 +531,7 @@ void Synth::afterNewMixerLoad() {
         timbres_[timbre].setEngine((SynthEngineType)this->synthState_->mixerState_.instrumentState_[timbre].engine);
         timbres_[timbre].afterNewParamsLoad();
         // values to force check lfo used
-        timbres_[timbre].verifyLfoUsed(ENCODER_MATRIX_SOURCE, 0.0f, 1.0f);
+        timbres_[timbre].verifyLfoUsed(0, 0.0f, 1.0f);
         // Update compressor
         newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, -1, this->synthState_->mixerState_.instrumentState_[timbre].compressorType);
     }
@@ -541,15 +541,6 @@ void Synth::afterNewMixerLoad() {
 
     // Update Reverb local variables
     this->synthState_->mixerState_.fxBus_.paramChanged();
-}
-
-void Synth::newPfm3ParamValue(int timbre, int currentRow, int encoder, ParameterDisplay* param, float oldValue, float newValue) {
-    if (param == NULL) {
-        timbres_[timbre].handleNullParamRow(currentRow);
-    } else {
-        int index = currentRow * NUMBER_OF_ENCODERS_PFM2 + encoder;
-        timbres_[timbre].setParamValue(index, oldValue, newValue);
-    }
 }
 
 void Synth::newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue) {

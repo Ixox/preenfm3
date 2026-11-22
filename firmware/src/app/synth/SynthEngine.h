@@ -221,8 +221,8 @@ public:
      * leave the defaults untouched.
      */
 
-    // A PFM3 row/encoder parameter changed.
-    virtual void paramChanged(int row, int encoder, float oldValue, float newValue) {
+    // A PFM3 flat parameter changed.
+    virtual void paramChanged(int index, float oldValue, float newValue) {
     }
 
     // Write a flat parameter value into the PFM3 owner storage.
@@ -246,25 +246,14 @@ public:
     }
     virtual void setStepSelection(int which, int step) {
     }
-    // A row was edited through a non-parameter control (arp pattern, steps).
-    virtual void paramRowChanged(int row) {
-        (void)row;
-    }
-
     // Flat Pfm3Preset mirror (PFM3 UI/storage layout).
     virtual void serializePfm3Preset(struct Pfm3Preset& out) const {
     }
     virtual void deserializePfm3Preset(const struct Pfm3Preset& in) {
     }
 
-    // Map a PFM3 row/encoder change to an outgoing CC/NRPN message.
-    // Return false when the parameter has no MIDI representation.
-    virtual bool midiPfm3ParamFeedback(int row, int encoder, float newValue, struct MidiParamMessage& out) const {
-        return false;
-    }
-
     // An LFO/step parameter changed: forward the new value to the voices.
-    virtual void lfoValueChange(int row, int encoder, float value) {
+    virtual void lfoValueChange(int paramId, int field, float value) {
     }
 
     // Recompute the MIDI note curve table (scale 0 or 1) used by matrix sources.
@@ -272,7 +261,7 @@ public:
     }
 
     // Recompute which LFOs the matrix actually uses (CPU optimisation).
-    virtual void verifyLfoUsed(int encoder, float oldValue, float newValue) {
+    virtual void verifyLfoUsed(int field, float oldValue, float newValue) {
     }
 
     // Whether an LFO is used by the matrix (skip its processing when unused).
