@@ -218,6 +218,7 @@ void Dx7SynthEngine::startVoice(Voice* voice, const uint8_t* program, uint8_t no
 
     voice->note_ = note;
     voice->midiVelocity_ = velocity;
+    voice->fxNoteTrigger_ = 1;
     voice->index_ = index;
     voice->playing_ = true;
     voice->released_ = false;

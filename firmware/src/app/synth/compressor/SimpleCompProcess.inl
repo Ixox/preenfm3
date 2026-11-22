@@ -8,7 +8,7 @@
  *				  void SimpleComp::process( float &in1, float &in2, float keyLinked )
  *				  void SimpleCompRms::process( float &in1, float &in2 )
  *
- *	� 2006, ChunkWare Music Software, OPEN-SOURCE
+ *	 2006, ChunkWare Music Software, OPEN-SOURCE
  *
  *	Permission is hereby granted, free of charge, to any person obtaining a
  *	copy of this software and associated documentation files (the "Software"),
@@ -44,27 +44,43 @@ namespace chunkware_simple
 {
 
 	//-------------------------------------------------------------
-	INLINE float SimpleComp::processBlock( float *inStereo )
+	INLINE float SimpleComp::compressBlock( float *inStereo )
 	{
 	    float *startBuffer = inStereo;
 	    float maxAbsSample = 0.0f;
+	    float sumAbsSample = 0.0f;
 	    for (int s = 0; s < 32; s++) {
-            float rect1 = abs( *inStereo++ );	// rectify input
-            float rect2 = abs( *inStereo++ );
-            maxAbsSample = std::max( maxAbsSample, std::max( rect1, rect2 )); // find the max
+            float rect1 = fabsf( *inStereo++ );	// rectify input (VABS.F32 hardware instruction)
+            float rect2 = fabsf( *inStereo++ );
+            float pairMax = std::max( rect1, rect2 );
+            maxAbsSample = std::max( maxAbsSample, pairMax ); // find the max
+            sumAbsSample += pairMax;
 	    }
-	    float gain = getGain(maxAbsSample);
-	    // Let's slowly (linearly) reach  the new gain
-	    float incGain = (gain - previousGain_) * INV32;
-        if (gain < (1.0f - DC_OFFSET)) {
-            inStereo = startBuffer;
-            for (int s = 0; s < 32; s++) {
-                previousGain_ += incGain;
-                *(inStereo++) *= previousGain_;
-                *(inStereo++) *= previousGain_;
+	    float meanAbsSample = sumAbsSample * INV32;
+	    float detSample = (ratio_ > 0.35f)
+	        ? (0.55f * maxAbsSample + 0.45f * meanAbsSample)
+	        : (0.85f * maxAbsSample + 0.15f * meanAbsSample);
+	    float gain = getGain(detSample);
+
+        if (threshdB_ <= 100.0f) {
+            // Linearly interpolate gain across the block in FPU register
+            float incGain = (gain - previousGain_) * INV32;
+            float g = previousGain_;
+            float *p = startBuffer;
+            // Unroll by 2 to pipeline FPU operations and prevent stalls
+            for (int s = 0; s < 16; s++) {
+                g += incGain;
+                p[0] *= g;
+                p[1] *= g;
+                g += incGain;
+                p[2] *= g;
+                p[3] *= g;
+                p += 4;
             }
+            previousGain_ = gain;
+        } else {
+            previousGain_ = 1.0f;
         }
-        previousGain_ = gain;
         return gain;
 	}
 
@@ -96,20 +112,39 @@ namespace chunkware_simple
             return 1.0f;
         }
 
-        // threshold
-        float overdB = keydB - threshdB_;   // delta over threshold
-        if ( overdB < 0.0 )
-            overdB = 0.0;
+        // Soft-knee threshold calculation
+        float delta = keydB - threshdB_;
+        float overdB = 0.0f;
 
-        // attack/release
-        AttRelEnvelope::run( overdB, envdB_ );  // run attack/release envelope
+        if (kneeQuarterdB_ > 0) {
+            float halfKnee = kneeQuarterdB_ * 0.125f; // (kneeQuarterdB_ * 0.25f) * 0.5f
+            if (delta <= -halfKnee) {
+                overdB = 0.0f;
+            } else if (delta >= halfKnee) {
+                overdB = delta;
+            } else {
+                float kneePos = delta + halfKnee;
+                float inv2Knee = 2.0f / (float)kneeQuarterdB_;
+                overdB = (kneePos * kneePos) * inv2Knee;
+            }
+        } else {
+            if (delta > 0.0f) {
+                overdB = delta;
+            }
+        }
 
-        overdB = envdB_;
+        // Program-dependent / adaptive envelope detection (no per-block expf or release speedup)
+        float prevEnv = envdB_;
+        AttRelEnvelope::run( overdB, envdB_ );
+        if (overdB <= prevEnv && prevEnv > 4.0f) {
+            // Smoother release on deep/sustained compression without speeding up small modulations
+            envdB_ += 0.25f * (prevEnv - envdB_);
+        }
 
         // transfer function
-        gr_ = overdB * ( ratio_ - 1.0 );   // gain reduction (dB)
-        return dB2lin( gr_ );              // convert dB -> linear
-
+        gr_ = envdB_ * ( ratio_ - 1.0f );   // gain reduction (dB, <= 0)
+        float totalGaindB = gr_ + (makeupQuarterdB_ * 0.25f);
+        return dB2lin( totalGaindB );       // convert combined gain reduction + make-up -> linear
     }
 
 }	// end namespace chunkware_simple

@@ -47,7 +47,7 @@ struct FilterRowDisplay fx1RowDisplay[FILTER_LAST] = {
 struct FilterRowDisplay fx2RowDisplay[FILTER2_LAST] = {
     {NULL, NULL, "Gain"},     {"Rate", "Feed", "Mix "}, {"Rate", "M/S ", "Mix "}, {"Rate", "Vibr", "Mix "}, {"Detu", "Freq", "Mix "},
     {"Ptch", "Feed", "Mix "}, {"Ptc1", "Ptc2", "Mix "}, {"Freq", "Feed", "Mix "}, {"Time", "Feed", "Mix "}, {"Time", "Feed", "Mix "},
-    {"Time", "Feed", "Mix "}, {"Size", "Sprd", "Mix "}, {"Tune", "Sprd", "Mix "}};
+    {"Time", "Feed", "Mix "}, {"Size", "Sprd", "Mix "}, {"Tune", "Sprd", "Mix "}, {"Freq", "Reso", "Mix "}};
 
 struct Pfm3Preset* EditorParamPage::pfm3Preset() const {
     return SynthEngineFactory::getPfm3(currentTimbre())->getPfm3Preset();
@@ -164,7 +164,7 @@ void EditorParamPage::drawEditorButton(int button, const struct EditorMenu* edit
 }
 
 void EditorParamPage::printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                                        const struct EditorPageButton* page) {
+                                         const struct EditorPageButton* page) {
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
@@ -276,7 +276,8 @@ void EditorParamPage::newEngineParamValue(int& refreshStatus, int timbre, int pa
     tft_->setCharColor(COLOR_YELLOW);
     valueChangedCounter_[encoder] = 4;
     EditorParamInfo info = paramInfoFor(encoder);
-    updateEncoderValueWithoutCursor(encoderInRow, (context == 0) ? (int)pfm3ParamElementOf((Pfm3Param)paramId) : 0, info, oldValue, newValue);
+    updateEncoderValueWithoutCursor(encoderInRow, (context == 0) ? (int)pfm3ParamElementOf((Pfm3Param)paramId) : 0, info, oldValue,
+                                    newValue);
 }
 
 void EditorParamPage::slowTick() {

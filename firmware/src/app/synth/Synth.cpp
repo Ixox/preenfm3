@@ -68,6 +68,8 @@ void Synth::init(SynthState* synthState) {
         instrumentCompressor_[t].setSampleRate(PREENFM_FREQUENCY / 32.0f);
         instrumentCompressor_[t].setRatio(1.0f);
         instrumentCompressor_[t].setThresh(1000.0f);
+        instrumentCompressor_[t].setKnee(0.0f);
+        instrumentCompressor_[t].setMakeup(0.0f);
         instrumentCompressor_[t].setAttack(10.0);
         instrumentCompressor_[t].setRelease(100.0);
     }
@@ -249,8 +251,7 @@ uint8_t Synth::buildNewSampleBlock(int32_t* buffer1, int32_t* buffer2, int32_t* 
 
     // Guard the RNG call so the audio ISR never polls the ready bit.
     uint32_t random32bit;
-    if (unlikely(!__HAL_RNG_GET_FLAG(&hrng, RNG_FLAG_DRDY))
-        || unlikely(HAL_RNG_GenerateRandomNumber(&hrng, &random32bit) != HAL_OK)) {
+    if (unlikely(!__HAL_RNG_GET_FLAG(&hrng, RNG_FLAG_DRDY)) || unlikely(HAL_RNG_GenerateRandomNumber(&hrng, &random32bit) != HAL_OK)) {
         // Recreate on rnd from previous pass
         random32bit = noise[31] * 0x7fffffff;
     }
@@ -324,7 +325,32 @@ uint8_t Synth::buildNewSampleBlock(int32_t* buffer1, int32_t* buffer2, int32_t* 
 
         // Even without compressor we call this meethod
         // It allows to retrieve the volume in DB
-        instrumentCompressor_[timbre].processBlock(sampleFromTimbre);
+        instrumentCompressor_[timbre].compressBlock(sampleFromTimbre);
+
+        // Dynamics processing: compressor + matched saturation
+        int dynMode = synthState_->mixerState_.instrumentState_[timbre].compressorType;
+        switch (dynMode) {
+        case 1:
+            FxBus::applyWarmSaturation(sampleFromTimbre, SATURATION_WARM, timbre);
+            break;
+        case 2:
+            FxBus::applyWarmSaturation(sampleFromTimbre, SATURATION_PUNCH, timbre);
+            break;
+        case 3:
+            FxBus::applyWarmSaturation(sampleFromTimbre, SATURATION_TUBE, timbre);
+            break;
+        case 4:
+            FxBus::applyWarmSaturation(sampleFromTimbre, SATURATION_DRIVE, timbre);
+            break;
+        case 5:
+            FxBus::applyWarmSaturation(sampleFromTimbre, SATURATION_OVERDRIVE, timbre);
+            break;
+        case 6:
+            FxBus::applyWarmSaturation(sampleFromTimbre, SATURATION_FUZZ, timbre);
+            break;
+        default:
+            break;
+        }
 
         // Send to bus fx, to mix with other timbres
         fxBus->mixAdd(timbres_[timbre].getSampleBlock(), synthState_->mixerState_.instrumentState_[timbre].send,
@@ -601,34 +627,67 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
         break;
     case MIXER_VALUE_COMPRESSOR:
         switch ((int)newValue) {
-        // No
         case 0:
             instrumentCompressor_[timbre].setRatio(1.0f);
-            // Must never be reached
             instrumentCompressor_[timbre].setThresh(1000.0f);
-            instrumentCompressor_[timbre].setAttack(10.0);
-            instrumentCompressor_[timbre].setRelease(100.0);
+            instrumentCompressor_[timbre].setKnee(0.0f);
+            instrumentCompressor_[timbre].setMakeup(0.0f);
+            instrumentCompressor_[timbre].setAttack(10.0f);
+            instrumentCompressor_[timbre].setRelease(100.0f);
             break;
+        // Glue
         case 1:
-            // Slow2
-            instrumentCompressor_[timbre].setRatio(.33f);
-            instrumentCompressor_[timbre].setThresh(-12.0f);
-            instrumentCompressor_[timbre].setAttack(100.0);
-            instrumentCompressor_[timbre].setRelease(1000.0);
+            instrumentCompressor_[timbre].setRatio(0.58f);
+            instrumentCompressor_[timbre].setThresh(-17.5f);
+            instrumentCompressor_[timbre].setKnee(10.0f);
+            instrumentCompressor_[timbre].setMakeup(2.5f);
+            instrumentCompressor_[timbre].setAttack(30.0f);
+            instrumentCompressor_[timbre].setRelease(550.0f);
             break;
+        // Punch
         case 2:
-            // Medium2
-            instrumentCompressor_[timbre].setRatio(.33f);
-            instrumentCompressor_[timbre].setThresh(-12.0f);
-            instrumentCompressor_[timbre].setAttack(8.0);
-            instrumentCompressor_[timbre].setRelease(200.0);
+            instrumentCompressor_[timbre].setRatio(0.10f);
+            instrumentCompressor_[timbre].setThresh(-24.0f);
+            instrumentCompressor_[timbre].setKnee(2.0f);
+            instrumentCompressor_[timbre].setMakeup(8.5f);
+            instrumentCompressor_[timbre].setAttack(30.0f);
+            instrumentCompressor_[timbre].setRelease(50.0f);
             break;
+        // Tube
         case 3:
-            // Fast4
-            instrumentCompressor_[timbre].setRatio(.33f);
-            instrumentCompressor_[timbre].setThresh(-12.0f);
-            instrumentCompressor_[timbre].setAttack(1.0);
-            instrumentCompressor_[timbre].setRelease(50.0);
+            instrumentCompressor_[timbre].setRatio(0.22f);
+            instrumentCompressor_[timbre].setThresh(-18.0f);
+            instrumentCompressor_[timbre].setKnee(8.0f);
+            instrumentCompressor_[timbre].setMakeup(4.5f);
+            instrumentCompressor_[timbre].setAttack(12.0f);
+            instrumentCompressor_[timbre].setRelease(140.0f);
+            break;
+        // Limit
+        case 4:
+            instrumentCompressor_[timbre].setRatio(0.10f);
+            instrumentCompressor_[timbre].setThresh(-14.0f);
+            instrumentCompressor_[timbre].setKnee(6.0f);
+            instrumentCompressor_[timbre].setMakeup(3.5f);
+            instrumentCompressor_[timbre].setAttack(0.5f);
+            instrumentCompressor_[timbre].setRelease(180.0f);
+            break;
+        // Drive
+        case 5:
+            instrumentCompressor_[timbre].setRatio(0.28f);
+            instrumentCompressor_[timbre].setThresh(-20.0f);
+            instrumentCompressor_[timbre].setKnee(6.0f);
+            instrumentCompressor_[timbre].setMakeup(5.5f);
+            instrumentCompressor_[timbre].setAttack(16.0f);
+            instrumentCompressor_[timbre].setRelease(110.0f);
+            break;
+        // Fuzz
+        case 6:
+            instrumentCompressor_[timbre].setRatio(0.12f);
+            instrumentCompressor_[timbre].setThresh(-22.0f);
+            instrumentCompressor_[timbre].setKnee(4.0f);
+            instrumentCompressor_[timbre].setMakeup(6.5f);
+            instrumentCompressor_[timbre].setAttack(10.0f);
+            instrumentCompressor_[timbre].setRelease(80.0f);
             break;
         }
         break;

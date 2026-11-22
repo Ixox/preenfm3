@@ -124,6 +124,7 @@ private:
     float fxPhase_;
     // save float fxParam1 to detect modification
     float fxParam1PlusMatrix_;
+    uint8_t fxNoteTrigger_;
 };
 
 #endif

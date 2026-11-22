@@ -20,11 +20,11 @@
 
 #include "Common.h"
 #include "MixerState.h"
-#include "engine/pfm3/Pfm3Param.h"
-#include "engine/pfm3/Pfm3Preset.h"
 #include "SharedParams.h"
 #include "SynthEngine.h"
 #include "TimbreParams.h"
+#include "engine/pfm3/Pfm3Param.h"
+#include "engine/pfm3/Pfm3Preset.h"
 #include "event_scheduler.h"
 #include "note_stack.h"
 
@@ -59,7 +59,7 @@ public:
     void setSharedParamFromMidi(CommonParamId cid, float newValue);
     CommonParamId getSharedParamId(SharedParamId param) const;
     bool decodeSharedControlChange(uint8_t cc, uint8_t value, SharedParamId& param, float& scaledValue) const;
-        void setPresetNameChar(int index, char c);
+    void setPresetNameChar(int index, char c);
     void setPresetName(const char* name);
     void engineParamChanged(int paramId, int context, float oldValue, float newValue);
     uint32_t getStorageMagic() const;
@@ -293,11 +293,29 @@ private:
 
     /** --------------FX conf--------------  */
     void fxAfterBlock();
+    __attribute__((noinline)) void fx2Flange(float matrixFilterFrequency, float matrixFilterParam2, float gainTmp);
+    __attribute__((noinline)) void fx2Chorus(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Dimension(float matrixFilterFrequency, float matrixFilterParam2, float gainTmp);
+    __attribute__((noinline)) void fx2Doubler(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Tripler(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Bode(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Wide(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2DelayCrunch(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan,
+                                                  float gainTmp);
+    __attribute__((noinline)) void fx2PingPong(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Diffuser(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Grain1(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2Grain2(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    __attribute__((noinline)) void fx2StereoBp(float matrixFilterFrequency, float matrixFilterParam2, float matrixFilterPan, float gainTmp);
+    void initFx();
     float delayInterpolation(float readPos, float buffer[], int bufferLenM1);
     float delayInterpolation2(float readPos, float buffer[], int bufferLenM1, int offset);
+    __attribute__((noinline)) float delayInterpolationHermite(float readPos, const float buffer[], int bufferLenM1, int offset);
+    float hermiteInterpolation(float frac, float xm1, float x0, float x1, float x2);
     float iirFilter(float x, float a0, float* yn1, float* yn2, float* xn1, float* xn2);
 
     int prevFx2Type_ = 0;
+    bool newNotePlayed_ = false;
 
 #define delayBufferSize 2048
 
@@ -349,6 +367,10 @@ private:
     float hb6_x1_ = 0, hb6_x2_ = 0, hb6_y1_ = 0, hb6_y2_ = 0;
     float hb7_x1_ = 0, hb7_x2_ = 0, hb7_y1_ = 0, hb7_y2_ = 0;
     float hb8_x1_ = 0, hb8_x2_ = 0, hb8_y1_ = 0, hb8_y2_ = 0;
+    float* hb_x1_[8] = {&hb1_x1_, &hb2_x1_, &hb3_x1_, &hb4_x1_, &hb5_x1_, &hb6_x1_, &hb7_x1_, &hb8_x1_};
+    float* hb_x2_[8] = {&hb1_x2_, &hb2_x2_, &hb3_x2_, &hb4_x2_, &hb5_x2_, &hb6_x2_, &hb7_x2_, &hb8_x2_};
+    float* hb_y1_[8] = {&hb1_y1_, &hb2_y1_, &hb3_y1_, &hb4_y1_, &hb5_y1_, &hb6_y1_, &hb7_y1_, &hb8_y1_};
+    float* hb_y2_[8] = {&hb1_y2_, &hb2_y2_, &hb3_y2_, &hb4_y2_, &hb5_y2_, &hb6_y2_, &hb7_y2_, &hb8_y2_};
     float phase1_ = 0;
     float samplen1_ = 0;
 

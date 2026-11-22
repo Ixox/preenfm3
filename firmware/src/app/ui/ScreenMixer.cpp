@@ -17,8 +17,8 @@
 #include "ScreenMixer.h"
 #include "SynthEngineFactory.h"
 #include "SynthState.h"
-#include "Timbre.h"
 #include "TftDisplay.h"
+#include "Timbre.h"
 
 // To access comp values
 #include "preenfm3.h"
@@ -28,7 +28,7 @@
 #define HEIGHT_MIXER_LINE 28
 
 const char* outDisplay[] = {"1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6"};
-const char* compDisplay[] = {"Off", "Slow", "Medium", "Fast"};
+const char* compDisplay[] = {"Off", "Glue", "Punch", "Tube", "Limit", "Drive", "Fuzz"};
 const char* engineDisplay[] = {SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
                                SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DX7),
                                SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS)};
@@ -70,7 +70,7 @@ const struct Pfm3MixerButton volumeButton = {
 
 const struct Pfm3MixerButtonState compButtonState = {
       "Compressor", MIXER_VALUE_COMPRESSOR,
-        {0, 3, 4, DISPLAY_TYPE_STRINGS, compDisplay }
+        {0, 6, 7, DISPLAY_TYPE_STRINGS, compDisplay }
 };
 
 

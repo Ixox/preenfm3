@@ -13,9 +13,9 @@
 #include "Pfm3ControlChange.h"
 #include "Pfm3FlashFormat.h"
 #include "Pfm3Midi.h"
+#include "Pfm3Param.h"
 #include "Pfm3Preset.h"
 #include "SynthState.h"
-#include "Pfm3Param.h"
 #include "Timbre.h"
 #include "Voice.h"
 #include "VoicePool.h"
@@ -482,6 +482,7 @@ void Preenfm3Engine::noteOnVoice(Voice* voice, short newNote, float newNoteFrequ
     }
 
     voice->midiVelocity_ = velocity;
+    voice->fxNoteTrigger_ = 1;
     voice->released_ = false;
     voice->playing_ = true;
     voice->isFullOfZero_ = false;
@@ -4011,12 +4012,13 @@ void Preenfm3Engine::renderVoice(Voice* voice) {
                 pfm3State_.prevPhase = phase;
                 float window = 1.f - phase;
 
-                // sync slave osc
+                pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix;
+
+                // sync slave osc (sub-sample accurate)
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
+                    osc_[0].hardSyncToMaster(&pfm3State_.oscState1_, &osc_[2], &pfm3State_.oscState3_, phase);
                 }
 
-                pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix;
                 float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
@@ -4110,18 +4112,18 @@ void Preenfm3Engine::renderVoice(Voice* voice) {
                 pfm3State_.prevPhase = phase;
                 float window = 1.f - phase;
 
-                // sync slave osc
+                pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix + freq4 * voiceIm3;
+                pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + osc2FrequencyPlusMatrix + freq4 * voiceIm4;
+
+                // sync slave osc (sub-sample accurate)
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
-                    pfm3State_.oscState2_.index = osc_[1].geIndexFromtPhase(phase);
+                    osc_[0].hardSyncToMaster(&pfm3State_.oscState1_, &osc_[2], &pfm3State_.oscState3_, phase);
+                    osc_[1].hardSyncToMaster(&pfm3State_.oscState2_, &osc_[2], &pfm3State_.oscState3_, phase);
                 }
 
-                pfm3State_.oscState1_.frequency = freq3 * voiceIm1 + osc1FrequencyPlusMatrix + freq4 * voiceIm3;
                 float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
-
-                pfm3State_.oscState2_.frequency = freq3 * voiceIm2 + osc2FrequencyPlusMatrix + freq4 * voiceIm4;
                 float carSample2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * window;
                 carSample2 *= fabsf(carSample2); // vosim shape
                 float car2 = carSample2 * env2Value * mix2V;
@@ -4208,24 +4210,25 @@ void Preenfm3Engine::renderVoice(Voice* voice) {
                 pfm3State_.prevPhase = phase;
                 float window = 1.f - phase;
 
-                // sync slave osc
+                pfm3State_.oscState3_.frequency = freq4 * voiceIm3 + osc3FrequencyPlusMatrix;
+                pfm3State_.oscState2_.frequency = freq4 * voiceIm2 + osc2FrequencyPlusMatrix;
+                pfm3State_.oscState1_.frequency = freq4 * voiceIm1 + osc1FrequencyPlusMatrix;
+
+                // sync slave oscs (sub-sample accurate)
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
-                    pfm3State_.oscState2_.index = osc_[1].geIndexFromtPhase(phase);
-                    pfm3State_.oscState3_.index = osc_[2].geIndexFromtPhase(phase);
+                    osc_[0].hardSyncToMaster(&pfm3State_.oscState1_, &osc_[3], &pfm3State_.oscState4_, phase);
+                    osc_[1].hardSyncToMaster(&pfm3State_.oscState2_, &osc_[3], &pfm3State_.oscState4_, phase);
+                    osc_[2].hardSyncToMaster(&pfm3State_.oscState3_, &osc_[3], &pfm3State_.oscState4_, phase);
                 }
 
-                pfm3State_.oscState3_.frequency = freq4 * voiceIm3 + osc3FrequencyPlusMatrix;
                 float carSample3 = osc_[2].getNextSample(&pfm3State_.oscState3_, waveTable3) * window;
                 carSample3 *= fabsf(carSample3); // vosim shape
                 float car3 = carSample3 * env3Value * mix3V;
 
-                pfm3State_.oscState2_.frequency = freq4 * voiceIm2 + osc2FrequencyPlusMatrix;
                 float carSample2 = osc_[1].getNextSample(&pfm3State_.oscState2_, waveTable2) * window;
                 carSample2 *= fabsf(carSample2); // vosim shape
                 float car2 = carSample2 * env2Value * mix2V;
 
-                pfm3State_.oscState1_.frequency = freq4 * voiceIm1 + osc1FrequencyPlusMatrix;
                 float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float car1 = carSample1 * env1Value * mix1V;
@@ -4322,12 +4325,13 @@ void Preenfm3Engine::renderVoice(Voice* voice) {
                 pfm3State_.prevPhase = phase;
                 float window = 1.f - phase;
 
-                // sync slave osc
+                pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + osc1FrequencyPlusMatrix;
+
+                // sync slave osc (sub-sample accurate)
                 if (unlikely(isSync)) {
-                    pfm3State_.oscState1_.index = osc_[0].geIndexFromtPhase(phase);
+                    osc_[0].hardSyncToMaster(&pfm3State_.oscState1_, &osc_[3], &pfm3State_.oscState4_, phase);
                 }
 
-                pfm3State_.oscState1_.frequency = freq2 * voiceIm1 + freq3 * voiceIm2 + freq4 * voiceIm3 + osc1FrequencyPlusMatrix;
                 float carSample1 = osc_[0].getNextSample(&pfm3State_.oscState1_, waveTable1) * window;
                 carSample1 *= fabsf(carSample1); // vosim shape
                 float currentSample = carSample1 * env1Value * mix1V;
@@ -5395,9 +5399,8 @@ bool Preenfm3Engine::midiCcData(uint8_t cc, uint8_t value) {
     case CcKind::EnvAllReleaseModulator:
     case CcKind::EnvAllReleaseCarrier: {
         int currentAlgo = (int)getPfm3Preset()->engine1.algo;
-        int type = (entry->kind == CcKind::EnvAllAttackCarrier || entry->kind == CcKind::EnvAllReleaseCarrier)
-                       ? OPERATOR_CARRIER
-                       : OPERATOR_MODULATOR;
+        int type = (entry->kind == CcKind::EnvAllAttackCarrier || entry->kind == CcKind::EnvAllReleaseCarrier) ? OPERATOR_CARRIER
+                                                                                                               : OPERATOR_MODULATOR;
         bool isAttack = entry->kind == CcKind::EnvAllAttackModulator || entry->kind == CcKind::EnvAllAttackCarrier;
         for (int e = 0; e < NUMBER_OF_OPERATORS; e++) {
             if (algoOpInformation[currentAlgo][e] == type) {
@@ -5423,12 +5426,14 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
         int oldStep = stepSelect_[whichStepSeq];
         stepSelect_[whichStepSeq] = step;
         if (oldStep != step) {
-            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pfm3Param(Pfm3Block::StepSeq, whichStepSeq, 0), 0, oldStep, step);
+            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pfm3Param(Pfm3Block::StepSeq, whichStepSeq, 0), 0,
+                                                                  oldStep, step);
         }
         setSeqStepValue(whichStepSeq, step, newValue);
         int newNewValue = getSeqStepValue(whichStepSeq, step);
         if (oldValue != newNewValue) {
-            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pfm3Param(Pfm3Block::StepSeq, whichStepSeq, 0), 0, oldValue, newValue);
+            synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)pfm3Param(Pfm3Block::StepSeq, whichStepSeq, 0), 0,
+                                                                  oldValue, newValue);
         }
     }
 }
@@ -5494,8 +5499,7 @@ bool Preenfm3Engine::midiParamFeedback(int paramId, int context, float newValue,
         if (flat == 0xFFFF) {
             return false;
         }
-        const ParamFullDescription* full =
-            (context == 0) ? &pfm3FullDesc((Pfm3Param)paramId) : &commonFullDesc((CommonParamId)paramId);
+        const ParamFullDescription* full = (context == 0) ? &pfm3FullDesc((Pfm3Param)paramId) : &commonFullDesc((CommonParamId)paramId);
 
         int valueToSend;
         if (full->ui.displayType == DISPLAY_TYPE_FLOAT || full->ui.displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||

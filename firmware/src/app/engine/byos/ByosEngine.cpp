@@ -110,6 +110,7 @@ void ByosEngine::startVoice(Voice* voice, int note, int velocity, uint32_t index
 
     voice->note_ = (char)note;
     voice->midiVelocity_ = (char)velocity;
+    voice->fxNoteTrigger_ = 1;
     voice->noteFrequency_ = noteFrequency;
     voice->velocity_ = state.velocityGain;
     voice->index_ = index;

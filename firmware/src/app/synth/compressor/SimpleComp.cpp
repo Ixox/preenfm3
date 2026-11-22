@@ -1,3 +1,9 @@
+#include "SimpleComp.h"
+
+#if defined(__GNUC__) && !defined(DEBUG)
+#pragma GCC push_options
+#pragma GCC optimize("Ofast", "fast-math")
+#endif
 /*
  *	Simple Compressor (source)
  *
@@ -6,7 +12,7 @@
  *  Version		: 1.12
  *  Implements	: SimpleComp, SimpleCompRms
  *
- *	� 2006, ChunkWare Music Software, OPEN-SOURCE
+ *	 2006, ChunkWare Music Software, OPEN-SOURCE
  *
  *	Permission is hereby granted, free of charge, to any person obtaining a
  *	copy of this software and associated documentation files (the "Software"),
@@ -26,14 +32,13 @@
  *	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *	DEALINGS IN THE SOFTWARE.
  */
-
-#include "SimpleComp.h"
-
 namespace chunkware_simple {
 //-------------------------------------------------------------
 // simple compressor
 //-------------------------------------------------------------
-SimpleComp::SimpleComp() : AttRelEnvelope(10.0, 100.0), threshdB_(0.0), ratio_(1.0), envdB_(DC_OFFSET), keydBMaxTmp_(-100.0) {
+SimpleComp::SimpleComp()
+    : AttRelEnvelope(10.0, 100.0), threshdB_(0.0), ratio_(1.0), envdB_(DC_OFFSET), previousGain_(1.0f), keydBMax_(-100.0f),
+      keydBMaxTmp_(-100.0f), gr_(0.0f), keydBMaxCpt_(0), kneeQuarterdB_(0), makeupQuarterdB_(0) {
 }
 
 //-------------------------------------------------------------
@@ -48,8 +53,27 @@ void SimpleComp::setRatio(float ratio) {
 }
 
 //-------------------------------------------------------------
+void SimpleComp::setKnee(float kneeWidthdB) {
+    if (kneeWidthdB < 0.0f)
+        kneeWidthdB = 0.0f;
+    if (kneeWidthdB > 60.0f)
+        kneeWidthdB = 60.0f;
+    kneeQuarterdB_ = (uint8_t)(kneeWidthdB * 4.0f + 0.5f);
+}
+
+//-------------------------------------------------------------
+void SimpleComp::setMakeup(float makeupdB) {
+    if (makeupdB < 0.0f)
+        makeupdB = 0.0f;
+    if (makeupdB > 60.0f)
+        makeupdB = 60.0f;
+    makeupQuarterdB_ = (uint8_t)(makeupdB * 4.0f + 0.5f);
+}
+
+//-------------------------------------------------------------
 void SimpleComp::initRuntime(void) {
     envdB_ = DC_OFFSET;
+    previousGain_ = 1.0f;
 }
 
 //-------------------------------------------------------------
@@ -76,3 +100,7 @@ void SimpleCompRms::initRuntime(void) {
 }
 
 } // end namespace chunkware_simple
+
+#if defined(__GNUC__) && !defined(DEBUG)
+#pragma GCC pop_options
+#endif

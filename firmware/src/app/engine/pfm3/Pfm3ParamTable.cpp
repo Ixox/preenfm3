@@ -14,10 +14,10 @@
 #include <stddef.h>
 
 #include "Common.h"
+#include "Pfm3ControlChange.h"
+#include "Pfm3Midi.h"
 #include "Pfm3Params.h"
 #include "Pfm3Preset.h"
-#include "Pfm3Midi.h"
-#include "Pfm3ControlChange.h"
 #include "SynthState.h"
 #include "TimbreParams.h"
 
@@ -134,6 +134,7 @@ const char* fx2Name[] = {
     "Diff", /* 10 */
     "Gra1", /* 11 */
     "Gra2", /* 12 */
+    "StBp", /* 13 */
 };
 
 const char* oscShapeNames[] = {"sin ", "saw ", "squa", "s^2 ", "szer", "spos", "rand",
@@ -159,15 +160,14 @@ const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = {0,  1,  2,  3,  4,  
 unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
 
 const char* matrixDestNames[DESTINATION_MAX] = {
-    "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3",
-    "Mix 4", "Pan 4", "Mix *", "Pan *", "o1 Fq", "o2 Fq", "o3 Fq", "o4 Fq", "o5 Fq", "o6 Fq", "o* Fq",
-    "Atk 1", "Atk 2", "Atk 3", "Atk 4", "Atk 5", "Atk 6", "Atk C", "Rel C", "mtx 1", "mtx 2", "mtx 3", "mtx 4",
-    "lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G", "Fx1 1", "o* Fh", "Dec C", "Atk M", "Dec M", "Rel M",
-    "FdBck", "Fx1 2", "fx1Am", "Fx2 1", "Fx2 2", "Fx2Am",
+    "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4",
+    "Pan 4", "Mix *", "Pan *", "o1 Fq", "o2 Fq", "o3 Fq", "o4 Fq", "o5 Fq", "o6 Fq", "o* Fq", "Atk 1", "Atk 2", "Atk 3", "Atk 4",
+    "Atk 5", "Atk 6", "Atk C", "Rel C", "mtx 1", "mtx 2", "mtx 3", "mtx 4", "lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G",
+    "Fx1 1", "o* Fh", "Dec C", "Atk M", "Dec M", "Rel M", "FdBck", "Fx1 2", "fx1Am", "Fx2 1", "Fx2 2", "Fx2Am",
 };
 const unsigned char matrixTargetOrder[DESTINATION_MAX] = {0,  1,  2,  3,  4,  5,  48, 6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
-                                                         17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29, 30, 45, 44, 46,
-                                                         31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53};
+                                                          17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29, 30, 45, 44, 46,
+                                                          31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53};
 
 unsigned char matrixTargetPosition[DESTINATION_MAX];
 
@@ -188,26 +188,58 @@ const char* midiNoteCurves[] = {"Flat", "+Lin", "+Ln8", "+Exp", "-Lin", "-Ln8", 
  * The order must match engineBlocks: each block's descBase points here and
  * fieldCount says how many descriptors it owns.
  */
-#define PARAM_FLOAT(n, mn, mx, off, dt, nv)                                                                                                    \
-    { { ParamAccess::Float, (uint16_t)(off), mn, mx }, { n, dt, nv, nullptr, nullptr, nullptr }, { MidiTransform::Float100 } }
-#define PARAM_ENUM(n, mx, off, nv, names)                                                                                                      \
-    { { ParamAccess::Float, (uint16_t)(off), 0, mx }, { n, DISPLAY_TYPE_STRINGS, nv, names, nullptr, nullptr }, { MidiTransform::Raw } }
-#define PARAM_ENUM_ORDERED(n, mx, off, nv, names, ord, pos)                                                                                    \
-    { { ParamAccess::Float, (uint16_t)(off), 0, mx }, { n, DISPLAY_TYPE_STRINGS, nv, names, ord, pos }, { MidiTransform::Raw } }
-#define PARAM_INTEGER(n, mn, mx, off, nv)                                                                                                      \
-    { { ParamAccess::Float, (uint16_t)(off), mn, mx }, { n, DISPLAY_TYPE_INT, nv, nullptr, nullptr, nullptr }, { MidiTransform::Raw } }
-#define PARAM_STEP_BPM(n, mn, mx, off, nv)                                                                                                     \
-    { { ParamAccess::Float, (uint16_t)(off), mn, mx }, { n, DISPLAY_TYPE_STEP_SEQ_BPM, nv, nullptr, nullptr, nullptr }, { MidiTransform::Raw } }
-#define PARAM_ARP_PATTERN(n, off)                                                                                                              \
-    { { ParamAccess::Bitfield, (uint16_t)(off), 0, 0xFFFF }, { n, DISPLAY_TYPE_ARP_PATTERN, 0, nullptr, nullptr, nullptr }, { MidiTransform::Raw } }
-#define PARAM_CHAR(n, off)                                                                                                                     \
-    { { ParamAccess::Char, (uint16_t)(off), 0, 127 }, { n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr }, { MidiTransform::Raw } }
-#define PARAM_STEP(n, off)                                                                                                                     \
-    { { ParamAccess::U8, (uint16_t)(off), 0, 15 }, { n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr }, { MidiTransform::Raw } }
+#define PARAM_FLOAT(n, mn, mx, off, dt, nv)                                                                                                \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), mn, mx}, {n, dt, nv, nullptr, nullptr, nullptr}, {                                           \
+            MidiTransform::Float100                                                                                                        \
+        }                                                                                                                                  \
+    }
+#define PARAM_ENUM(n, mx, off, nv, names)                                                                                                  \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), 0, mx}, {n, DISPLAY_TYPE_STRINGS, nv, names, nullptr, nullptr}, {                            \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_ENUM_ORDERED(n, mx, off, nv, names, ord, pos)                                                                                \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), 0, mx}, {n, DISPLAY_TYPE_STRINGS, nv, names, ord, pos}, {                                    \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_INTEGER(n, mn, mx, off, nv)                                                                                                  \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), mn, mx}, {n, DISPLAY_TYPE_INT, nv, nullptr, nullptr, nullptr}, {                             \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_STEP_BPM(n, mn, mx, off, nv)                                                                                                 \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), mn, mx}, {n, DISPLAY_TYPE_STEP_SEQ_BPM, nv, nullptr, nullptr, nullptr}, {                    \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_ARP_PATTERN(n, off)                                                                                                          \
+    {                                                                                                                                      \
+        {ParamAccess::Bitfield, (uint16_t)(off), 0, 0xFFFF}, {n, DISPLAY_TYPE_ARP_PATTERN, 0, nullptr, nullptr, nullptr}, {                \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_CHAR(n, off)                                                                                                                 \
+    {                                                                                                                                      \
+        {ParamAccess::Char, (uint16_t)(off), 0, 127}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}, {                              \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_STEP(n, off)                                                                                                                 \
+    {                                                                                                                                      \
+        {ParamAccess::U8, (uint16_t)(off), 0, 15}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}, {                                 \
+            MidiTransform::Raw                                                                                                             \
+        }                                                                                                                                  \
+    }
 
 /*
  * =============================================================
- * Main parameter table: one entry per field, in block order. 
+ * Main parameter table: one entry per field, in block order.
  * =============================================================
  */
 const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"))) = {
@@ -228,10 +260,9 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     PARAM_FLOAT("Mix", 0, 1, offsetof(EngineMix1, mixOsc1), DISPLAY_TYPE_FLOAT, 101),
     PARAM_FLOAT("Pan", -1, 1, offsetof(EngineMix1, panOsc1), DISPLAY_TYPE_FLOAT, 201),
     /* Osc: 6 operators x 4 */
-    PARAM_ENUM_ORDERED("Shap", OSC_SHAPE_LAST - 1, offsetof(OscillatorParams, shape), OSC_SHAPE_LAST, oscShapeNames,
-                       oscShapeNamesOrder, oscShapeNamesPosition),
-    PARAM_ENUM_ORDERED("FTyp", 2, offsetof(OscillatorParams, frequencyType), 3, oscTypeNames, oscTypeNamesOrder,
-                       oscTypeNamesPosition),
+    PARAM_ENUM_ORDERED("Shap", OSC_SHAPE_LAST - 1, offsetof(OscillatorParams, shape), OSC_SHAPE_LAST, oscShapeNames, oscShapeNamesOrder,
+                       oscShapeNamesPosition),
+    PARAM_ENUM_ORDERED("FTyp", 2, offsetof(OscillatorParams, frequencyType), 3, oscTypeNames, oscTypeNamesOrder, oscTypeNamesPosition),
     PARAM_FLOAT("Freq", 0, 16, offsetof(OscillatorParams, frequencyMul), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 193),
     PARAM_FLOAT("FTun", -9, 9, offsetof(OscillatorParams, detune), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 1801),
     /* EnvTime: 6 operators x 4 */
@@ -250,13 +281,13 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     PARAM_ENUM("Sust", CURVE_TYPE_MAX - 1, offsetof(EnvelopeCurveParams, sustainCurve), CURVE_TYPE_MAX, envCurveNames),
     PARAM_ENUM("Rel", CURVE_TYPE_MAX - 1, offsetof(EnvelopeCurveParams, releaseCurve), CURVE_TYPE_MAX, envCurveNames),
     /* Matrix: 12 rows x 4 */
-    PARAM_ENUM_ORDERED("Srce", MATRIX_SOURCE_MAX - 1, offsetof(MatrixRowParams, source), MATRIX_SOURCE_MAX,
-                       matrixSourceNames, matrixSourceOrder, matrixSourcePosition),
+    PARAM_ENUM_ORDERED("Srce", MATRIX_SOURCE_MAX - 1, offsetof(MatrixRowParams, source), MATRIX_SOURCE_MAX, matrixSourceNames,
+                       matrixSourceOrder, matrixSourcePosition),
     PARAM_FLOAT("Mult", -10, 24, offsetof(MatrixRowParams, mul), DISPLAY_TYPE_FLOAT, 3401),
-    PARAM_ENUM_ORDERED("Dest1", DESTINATION_MAX - 1, offsetof(MatrixRowParams, dest1), DESTINATION_MAX, matrixDestNames,
-                       matrixTargetOrder, matrixTargetPosition),
-    PARAM_ENUM_ORDERED("Dest2", DESTINATION_MAX - 1, offsetof(MatrixRowParams, dest2), DESTINATION_MAX, matrixDestNames,
-                       matrixTargetOrder, matrixTargetPosition),
+    PARAM_ENUM_ORDERED("Dest1", DESTINATION_MAX - 1, offsetof(MatrixRowParams, dest1), DESTINATION_MAX, matrixDestNames, matrixTargetOrder,
+                       matrixTargetPosition),
+    PARAM_ENUM_ORDERED("Dest2", DESTINATION_MAX - 1, offsetof(MatrixRowParams, dest2), DESTINATION_MAX, matrixDestNames, matrixTargetOrder,
+                       matrixTargetPosition),
     /* Performance */
     PARAM_FLOAT("p1", -1, 1, offsetof(PerformanceRowParams, perf1), DISPLAY_TYPE_FLOAT, 201),
     PARAM_FLOAT("p2", -1, 1, offsetof(PerformanceRowParams, perf2), DISPLAY_TYPE_FLOAT, 201),
@@ -264,8 +295,7 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     PARAM_FLOAT("p4", -1, 1, offsetof(PerformanceRowParams, perf4), DISPLAY_TYPE_FLOAT, 201),
     /* LfoOsc: 3 x 4 */
     PARAM_ENUM("Shap", LFO_TYPE_MAX - 1, offsetof(LfoParams, shape), LFO_TYPE_MAX, lfoShapeNames),
-    PARAM_FLOAT("Freq", 0, 99.9f, offsetof(LfoParams, freq), DISPLAY_TYPE_FLOAT_LFO_FREQUENCY,
-                LFO_FREQ_MAX_TIMES_10 + 1 + 9),
+    PARAM_FLOAT("Freq", 0, 99.9f, offsetof(LfoParams, freq), DISPLAY_TYPE_FLOAT_LFO_FREQUENCY, LFO_FREQ_MAX_TIMES_10 + 1 + 9),
     PARAM_FLOAT("Bias", -1, 1, offsetof(LfoParams, bias), DISPLAY_TYPE_FLOAT, 201),
     PARAM_FLOAT("KSyn", -0.01f, 16, offsetof(LfoParams, keybRamp), DISPLAY_TYPE_LFO_KSYN, 1602),
     /* LfoPhase */
@@ -286,16 +316,26 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     PARAM_STEP_BPM("Bpm", 10, 245, offsetof(StepSequencerParams, bpm), 236),
     PARAM_FLOAT("Gate", 0, 1, offsetof(StepSequencerParams, gate), DISPLAY_TYPE_FLOAT, 101),
     /* MidiCurve: 2 x 3 */
-    PARAM_ENUM("Befo", MIDI_NOTE_CURVE_MAX - 1, offsetof(MidiNoteCurveRowParams, curveBefore), MIDI_NOTE_CURVE_MAX,
-               midiNoteCurves),
+    PARAM_ENUM("Befo", MIDI_NOTE_CURVE_MAX - 1, offsetof(MidiNoteCurveRowParams, curveBefore), MIDI_NOTE_CURVE_MAX, midiNoteCurves),
     PARAM_INTEGER("Brk", 0, 127, offsetof(MidiNoteCurveRowParams, breakNote), 128),
-    PARAM_ENUM("Afte", MIDI_NOTE_CURVE_MAX - 1, offsetof(MidiNoteCurveRowParams, curveAfter), MIDI_NOTE_CURVE_MAX,
-               midiNoteCurves),
+    PARAM_ENUM("Afte", MIDI_NOTE_CURVE_MAX - 1, offsetof(MidiNoteCurveRowParams, curveAfter), MIDI_NOTE_CURVE_MAX, midiNoteCurves),
     /* StepSeq: 2 x 16 */
-    PARAM_STEP("Step", 0), PARAM_STEP("Step", 1), PARAM_STEP("Step", 2), PARAM_STEP("Step", 3),
-    PARAM_STEP("Step", 4), PARAM_STEP("Step", 5), PARAM_STEP("Step", 6), PARAM_STEP("Step", 7),
-    PARAM_STEP("Step", 8), PARAM_STEP("Step", 9), PARAM_STEP("Step", 10), PARAM_STEP("Step", 11),
-    PARAM_STEP("Step", 12), PARAM_STEP("Step", 13), PARAM_STEP("Step", 14), PARAM_STEP("Step", 15),
+    PARAM_STEP("Step", 0),
+    PARAM_STEP("Step", 1),
+    PARAM_STEP("Step", 2),
+    PARAM_STEP("Step", 3),
+    PARAM_STEP("Step", 4),
+    PARAM_STEP("Step", 5),
+    PARAM_STEP("Step", 6),
+    PARAM_STEP("Step", 7),
+    PARAM_STEP("Step", 8),
+    PARAM_STEP("Step", 9),
+    PARAM_STEP("Step", 10),
+    PARAM_STEP("Step", 11),
+    PARAM_STEP("Step", 12),
+    PARAM_STEP("Step", 13),
+    PARAM_STEP("Step", 14),
+    PARAM_STEP("Step", 15),
 };
 
 const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"))) = {
@@ -312,8 +352,7 @@ const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"
     /* ArpPattern: 4 x 1 */
     PARAM_ARP_PATTERN("", 0),
     /* Effect1 */
-    PARAM_ENUM_ORDERED("Type", FILTER_LAST - 1, offsetof(EffectRowParams, type), FILTER_LAST, fxName, filtersOrder,
-                       filtersPosition),
+    PARAM_ENUM_ORDERED("Type", FILTER_LAST - 1, offsetof(EffectRowParams, type), FILTER_LAST, fxName, filtersOrder, filtersPosition),
     PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param1), DISPLAY_TYPE_FLOAT, 101),
     PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param2), DISPLAY_TYPE_FLOAT, 101),
     PARAM_FLOAT("Gain", 0, 2, offsetof(EffectRowParams, param3), DISPLAY_TYPE_FLOAT, 201),
@@ -323,9 +362,18 @@ const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"
     PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param2), DISPLAY_TYPE_FLOAT, 101),
     PARAM_FLOAT("Gain", 0, 2, offsetof(EffectRowParams, param3), DISPLAY_TYPE_FLOAT, 201),
     /* PresetName: 12 chars */
-    PARAM_CHAR("", 0), PARAM_CHAR("", 1), PARAM_CHAR("", 2), PARAM_CHAR("", 3),
-    PARAM_CHAR("", 4), PARAM_CHAR("", 5), PARAM_CHAR("", 6), PARAM_CHAR("", 7),
-    PARAM_CHAR("", 8), PARAM_CHAR("", 9), PARAM_CHAR("", 10), PARAM_CHAR("", 11),
+    PARAM_CHAR("", 0),
+    PARAM_CHAR("", 1),
+    PARAM_CHAR("", 2),
+    PARAM_CHAR("", 3),
+    PARAM_CHAR("", 4),
+    PARAM_CHAR("", 5),
+    PARAM_CHAR("", 6),
+    PARAM_CHAR("", 7),
+    PARAM_CHAR("", 8),
+    PARAM_CHAR("", 9),
+    PARAM_CHAR("", 10),
+    PARAM_CHAR("", 11),
 };
 
 static const ParamBlock engineBlocks[(int)Pfm3Block::Count] = {

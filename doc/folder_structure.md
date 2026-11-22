@@ -60,12 +60,14 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 | File(s) | Contents |
 |---------|----------|
 | `Synth.*` | Top-level render: `buildNewSampleBlock()`, timbre mix, output dispatch |
-| `Timbre.*` | Per-timbre voice allocation, arpeggiator, FX2, engine glue |
+| `Timbre.*` | Per-timbre voice allocation, arpeggiator and engine glue |
+| `TimbreFx.*` | Per-timbre FX2 block: delay lines, Hermite interpolation and FX modules |
 | `Voice.*` | Per-voice host and voice state |
+| `VoiceFx.*` | Per-voice filter/FX block: dispatch, ADAA stages and FX parameter helpers |
 | `VoicePool.*` | Voice pool and allocation |
 | `MixerState.*`, `SynthState.*`, `Common.*` | Shared state, presets and common constants |
 | `waves.*` | Wavetable data used by the oscillators |
-| `FxBus.*` | Reverb / FX bus |
+| `FxBus.*` | Reverb / FX bus and matched saturation |
 | `compressor/` | Compressor, simple envelope/gain helpers |
 | `SynthEngine.*`, `SynthEngineFactory.*`, `TimbreParams.h` | Engine interface, factory and shared storage contract |
 | `MidiControlChange.h`, `SharedParams.h`, `PersistenceMagic.h` | Shared MIDI/param/persistence helpers |
@@ -189,7 +191,7 @@ bootloader links the USB MSC class.
 ## Where to add code
 
 - **New PFM3 parameter**: `Pfm3Params.h` / `SynthState.h`, then the editor UI in
-  `ScreenEditor.cpp`, and the DSP use in `Voice.cpp` / `Timbre.cpp`.
+  `ScreenEditor.cpp`, and the DSP use in `VoiceFx.cpp` / `Timbre.cpp`.
 - **New DX7 parameter**: `EditorDx7.*` and the DX7 program layout
   (see `doc/dx7_engine.md`).
 - **New screen/page**: add a `Screen*` class and wire it in `ScreenCoordinator`.

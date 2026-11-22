@@ -84,6 +84,37 @@ public:
         return phase * waveTable->max;
     }
 
+    inline __attribute__((always_inline)) float getPhaseIncrement(struct OscState* oscState) {
+        struct WaveTable* waveTable = &waveTables[(int)oscillator_->shape];
+        return oscState->frequency * waveTable->precomputedValue + waveTable->floatToAdd;
+    }
+
+    // Sub-sample accurate hard sync of this (slave) oscillator on a master wrap.
+    // Must be called after the master getNextSample() that wrapped and after this
+    // slave frequency is set, before this slave getNextSample().
+    inline __attribute__((always_inline)) void hardSyncToMaster(struct OscState* oscState, Osc* masterOsc, struct OscState* masterState,
+                                                                float masterPhase) {
+        struct WaveTable* waveTable = &waveTables[(int)oscillator_->shape];
+        float masterIncrement = masterOsc->getPhaseIncrement(masterState) * waveTables[(int)masterOsc->oscillator_->shape].phaseMul;
+
+        if (unlikely(!(masterIncrement > 0.0f))) {
+            // Reversed phase: keep the legacy sample-rounded reset.
+            oscState->index = masterPhase * waveTable->max;
+            return;
+        }
+
+        // Fraction of the current sample elapsed since the master wrap (0..1).
+        float elapsed = masterPhase / masterIncrement;
+        if (elapsed > 1.0f) {
+            elapsed = 1.0f;
+        }
+        // getNextSample() adds one full increment: pre-compensate so that the slave
+        // phase after that call is exactly elapsed * increment. Offset by one table
+        // length to keep the index positive.
+        float slaveIncrement = getPhaseIncrement(oscState);
+        oscState->index = (float)(waveTable->max + 1) + (elapsed - 1.0f) * slaveIncrement;
+    }
+
     inline float* getNextBlock(struct OscState* oscState) {
         int shape = (int)oscillator_->shape;
         int max = waveTables[shape].max;

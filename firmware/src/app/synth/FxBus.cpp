@@ -775,3 +775,166 @@ void FxBus::lfoProcess(float* lfo, float* lfotri, float* lfoInc) {
     }
     *lfo = (*lfo * lfoLpCoef1_ + *lfotri) * lfoLpCoef2_;
 }
+
+static inline float fastInvSqrt(float u) {
+    union {
+        float f;
+        uint32_t i;
+    } conv = {u};
+    conv.i = 0x5f3759dfu - (conv.i >> 1);
+    float y = conv.f;
+    return y * (1.5f - 0.5f * u * y * y);
+}
+
+static inline float hwSqrtf(float x) {
+#if defined(__ARM_FP)
+    float res;
+    __asm__("vsqrt.f32 %0, %1" : "=t"(res) : "t"(x));
+    return res;
+#else
+    return sqrtf(x);
+#endif
+}
+
+static float satAdaaState[NUMBER_OF_TIMBRES][2][2] __attribute__((section(".ram_d1")));
+static uint8_t satLastMode[NUMBER_OF_TIMBRES] __attribute__((section(".ram_d1")));
+
+void FxBus::applyWarmSaturation(float* samples, int mode, int timbre) {
+    // PreenFM3 voices are attenuated by x0.2 (voicesToTimbre) to prevent polyphonic clipping.
+    // Scale up into the non-linear sweet-spot, then back down to the timbre bus level.
+    if (timbre < 0 || timbre >= NUMBER_OF_TIMBRES) {
+        timbre = 0;
+    }
+    const float* end = samples + (BLOCK_SIZE * 2);
+    if (mode != SATURATION_WARM && mode != SATURATION_FUZZ) {
+        satLastMode[timbre] = (uint8_t)mode;
+    }
+    switch (mode) {
+    case SATURATION_PUNCH: {
+        while (samples < end) {
+            float x_in = 3.6f * *samples;
+            float x_d = x_in + 0.12f * x_in * fabsf(x_in);
+            *samples++ = 0.25f * x_d * fastInvSqrt(1.0f + 0.28f * x_d * x_d);
+        }
+        break;
+    }
+    case SATURATION_TUBE: {
+        while (samples < end) {
+            float x_in = 3.8f * *samples;
+            float x2 = x_in * x_in;
+            float x_d = x_in + 0.05f * x2 + 0.11f * x_in * fabsf(x_in);
+            *samples++ = 0.28f * x_d * fastInvSqrt(1.0f + 0.38f * x_d * x_d);
+        }
+        break;
+    }
+    case SATURATION_WARM: {
+        // Branchless 1st-order ADAA: (G(u) - G(uPrev)) / (u - uPrev)
+        const float k = 0.15f;
+        float* stL = satAdaaState[timbre][0];
+        float* stR = satAdaaState[timbre][1];
+        if (satLastMode[timbre] != SATURATION_WARM) {
+            float uL = 2.2f * samples[0];
+            float uR = 2.2f * samples[1];
+            stL[0] = uL;
+            stL[1] = hwSqrtf(1.0f + k * uL * uL);
+            stR[0] = uR;
+            stR[1] = hwSqrtf(1.0f + k * uR * uR);
+            satLastMode[timbre] = SATURATION_WARM;
+        }
+        float uPrevL = stL[0], gPrevL = stL[1];
+        float uPrevR = stR[0], gPrevR = stR[1];
+        while (samples < end) {
+            float uL = 2.2f * samples[0];
+            float gL = hwSqrtf(1.0f + k * uL * uL);
+            samples[0] = 0.45f * (uL + uPrevL) / (gL + gPrevL);
+            uPrevL = uL;
+            gPrevL = gL;
+
+            float uR = 2.2f * samples[1];
+            float gR = hwSqrtf(1.0f + k * uR * uR);
+            samples[1] = 0.45f * (uR + uPrevR) / (gR + gPrevR);
+            uPrevR = uR;
+            gPrevR = gR;
+
+            samples += 2;
+        }
+        stL[0] = uPrevL;
+        stL[1] = gPrevL;
+        stR[0] = uPrevR;
+        stR[1] = gPrevR;
+        break;
+    }
+    case SATURATION_DRIVE: {
+        const float thresh = 0.72f;
+        const float margin = 0.23f;
+        while (samples < end) {
+            float x = *samples;
+            float ax = fabsf(x);
+            if (unlikely(ax > thresh)) {
+                float diff = ax - thresh;
+                float y = thresh + margin * (diff / (margin + diff));
+                x = (x > 0.0f) ? y : -y;
+            }
+            *samples++ = x;
+        }
+        break;
+    }
+    case SATURATION_FUZZ: {
+        const float bias = 0.22f;
+        const float dc = 0.21486f;
+        float* stL = satAdaaState[timbre][0];
+        float* stR = satAdaaState[timbre][1];
+        if (satLastMode[timbre] != SATURATION_FUZZ) {
+            float uL = 7.5f * samples[0] + bias;
+            float uR = 7.5f * samples[1] + bias;
+            stL[0] = uL;
+            stL[1] = hwSqrtf(1.0f + uL * uL);
+            stR[0] = uR;
+            stR[1] = hwSqrtf(1.0f + uR * uR);
+            satLastMode[timbre] = SATURATION_FUZZ;
+        }
+        float uPrevL = stL[0], gPrevL = stL[1];
+        float uPrevR = stR[0], gPrevR = stR[1];
+        while (samples < end) {
+            float sL = samples[0];
+            float uL = 7.5f * sL + bias;
+            float gL = hwSqrtf(1.0f + uL * uL);
+            float wetL = (uL + uPrevL) / (gL + gPrevL) - dc;
+            float dryL = 0.5f * (sL + (uPrevL - bias) * (1.0f / 7.5f));
+            uPrevL = uL;
+            gPrevL = gL;
+            samples[0] = 0.45f * dryL + 0.11f * wetL;
+
+            float sR = samples[1];
+            float uR = 7.5f * sR + bias;
+            float gR = hwSqrtf(1.0f + uR * uR);
+            float wetR = (uR + uPrevR) / (gR + gPrevR) - dc;
+            float dryR = 0.5f * (sR + (uPrevR - bias) * (1.0f / 7.5f));
+            uPrevR = uR;
+            gPrevR = gR;
+            samples[1] = 0.45f * dryR + 0.11f * wetR;
+
+            samples += 2;
+        }
+        stL[0] = uPrevL;
+        stL[1] = gPrevL;
+        stR[0] = uPrevR;
+        stR[1] = gPrevR;
+        break;
+    }
+    case SATURATION_OVERDRIVE: {
+        while (samples < end) {
+            float s = *samples;
+            float x_in = 4.8f * s;
+            float x2 = x_in * x_in;
+            float x_d = x_in + 0.08f * x2 + 0.18f * x_in * fabsf(x_in);
+            float wet = x_d * fastInvSqrt(1.0f + 0.55f * x_d * x_d);
+            *samples++ = 0.12f * s + 0.21f * wet;
+        }
+        break;
+    }
+    default:
+        satLastMode[timbre] = (uint8_t)mode;
+        break;
+    }
+}
