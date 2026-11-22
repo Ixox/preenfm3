@@ -440,10 +440,10 @@ engine; FX1/FX2 are also after the engine and should remain enabled.
 Current RAM use from the default build is already tight:
 
 ```
-DTCMRAM: 95.85%
-RAM_D1:  86.21%
+DTCMRAM: 89.86%
+RAM_D1:  93.04%
 RAM_D2:  93.07%
-RAM_D2B: 73.43%
+RAM_D2B: 55.01%
 ```
 
 `Dx7Note` per voice adds six envelopes, six `FmOpParams`, a pitch envelope,

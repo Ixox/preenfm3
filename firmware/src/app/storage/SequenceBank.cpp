@@ -53,8 +53,8 @@
 
 extern FirmwareTftDisplay tft;
 
-__attribute__((section(".ram_d2b"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
-__attribute__((section(".ram_d2b"))) static FIL sequenceFile;
+__attribute__((section(".ram_d2c"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
+__attribute__((section(".ram_d2c"))) static FIL sequenceFile;
 
 extern SeqMidiAction actions[SEQ_ACTION_SIZE];
 extern StepSeqValue stepNotes[NUMBER_OF_STEP_SEQUENCES][256];

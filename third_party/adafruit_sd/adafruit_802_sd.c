@@ -94,7 +94,7 @@
 #include "adafruit_802_sd.h"
 
 
-__attribute__((section(".ram_d2b"))) uint8_t dummySector[512];
+__attribute__((section(".ram_d2c"))) uint8_t dummySector[512];
 
 /** @addtogroup BSP
   * @{

@@ -19,7 +19,7 @@
 
 #include "Storage.h"
 
-__attribute__((section(".ram_d2b"))) char lineBuffer[1024];
+__attribute__((section(".ram_d2c"))) char lineBuffer[1024];
 
 void Storage::init(Timbre* timbre1, Timbre* timbre2, Timbre* timbre3, Timbre* timbre4, Timbre* timbre5, Timbre* timbre6) {
     mixerBank_.setFileSystemUtils(&fsu_);

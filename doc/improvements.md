@@ -43,8 +43,9 @@ broader project-level work.
 ## MPU and cache coherency
 
 Status: problems 1–6 below are fixed. The MPU is configured before the caches,
-`RAM_D2B` and `RAM_D2C` are non-cacheable, `RAM_D3` is not shareable, and
-`__DSB()` barriers surround the SAI, DMA2D and SD DMA transfers.
+`RAM_D2C` is non-cacheable for SD/SPI2/FatFS DMA, `RAM_D2B` is write-through
+cacheable for CPU-only audio, `RAM_D3` is not shareable, and `__DSB()` barriers
+surround the SAI, DMA2D and SD DMA transfers.
 
 The STM32H753 has a Cortex-M7 with separate I-cache and D-cache. DMA masters (SAI, SPI, DMA2D) are **not coherent** with the CPU cache. The firmware therefore has to either:
 
@@ -64,7 +65,7 @@ The current MPU setup uses cacheable memory for all DMA buffers and does not per
 |--------|-------|------------|--------|
 | 1 | `0x24000000` + 512 KB | TEX0, C=1, B=0, S=0 | Normal, write-through |
 | 2 | `0x30000000` + 128 KB | TEX0, C=1, B=0, S=0 | Normal, write-through |
-| 3 | `0x30020000` + 128 KB | TEX1, C=0, B=0, S=1 | Normal, non-cacheable |
+| 3 | `0x30020000` + 128 KB | TEX0, C=1, B=0, S=0 | Normal, write-through |
 | 4 | `0x38000000` + 64 KB | TEX0, C=1, B=1, S=0 | Normal, write-back, write-allocate |
 | 5 | `0x30040000` + 32 KB | TEX1, C=0, B=0, S=1 | Normal, non-cacheable (`RAM_D2C`) |
 
@@ -72,7 +73,8 @@ The linker sections map as follows (`firmware/preenfm3_2MB.ld:161-179`):
 
 - `.ram_d1` → Region 1: display buffers, LFO table, some FX buffers
 - `.ram_d2` → Region 2: DAC `waveform1/2/3`, PPM image, FX buffers
-- `.ram_d2b` → Region 3: FatFS/SD/file/sequence buffers
+- `.ram_d2b` → Region 3: CPU-only audio (FX2 delay/diffusers)
+- `.ram_d2c` → Region 5: SD/SPI2/FatFS buffers
 - `.ram_d3` → Region 4: sequencer data
 
 ---
@@ -105,6 +107,10 @@ If the MPU must be reconfigured after caches are already on, clean and invalidat
 ---
 
 ### Problem 2 — `.ram_d2b` is write-back but used for SPI2 DMA to the SD card
+
+**Status: fixed.** The SD/FatFS buffers now live in non-cacheable `.ram_d2c`
+(MPU Region 5). `.ram_d2b` is write-through cacheable and holds only CPU-only
+audio buffers.
 
 **Severity: critical**
 
@@ -238,6 +244,9 @@ Make the intent explicit in the MPU configuration and add the corresponding main
 
 ### Problem 6 — `RAM_D2C` has no MPU region
 
+**Status: fixed.** `RAM_D2C` now has MPU Region 5 and a `.ram_d2c` output
+section. The SD/SPI2/FatFS DMA buffers live there and are non-cacheable.
+
 **Severity: low**
 
 `firmware/preenfm3_2MB.ld:47` defines:
@@ -246,11 +255,8 @@ Make the intent explicit in the MPU configuration and add the corresponding main
 RAM_D2C (xrw) : ORIGIN = 0x30040000, LENGTH = 32K
 ```
 
-but there is no `.ram_d2c` output section and no MPU region for `0x30040000`. It is currently unused, so this is not an active bug. If a future DMA buffer is placed there, it will use the default memory map and may be cacheable without maintenance.
-
-**Recommendation**
-
-Either remove `RAM_D2C` from the linker script or add an explicit MPU region and linker section for it.
+The region is covered by Region 5, so a buffer placed there cannot fall back to
+the default cacheable memory map.
 
 ---
 
@@ -447,14 +453,12 @@ aggressively (call overhead removed), which likely contributes to the gain.
 
 ### 2. Synth — hardware RNG in the audio callback
 
-**Priority: medium.** `Synth::buildNewSampleBlock()` calls
-`HAL_RNG_GenerateRandomNumber()` to seed the first two noise samples, then uses
-a 32-bit LCG for the other 30. The HAL call polls the RNG ready bit and can
-block for several microseconds inside the audio interrupt.
-
-Suggested action: generate all 32 noise values with the existing LCG (or seed
-the LCG from the RNG once, outside the audio path). This removes a
-variable-latency hardware call from the block callback.
+**Status: fixed.** `Synth::buildNewSampleBlock()` still uses
+`HAL_RNG_GenerateRandomNumber()` to seed the first two noise samples, but it now
+checks `RNG_FLAG_DRDY` first. If the RNG is not ready (or the call fails), it
+reuses the previous noise block's last sample as the LCG seed instead of
+polling inside the audio interrupt. The other 30 samples still come from the
+32-bit LCG.
 
 ### 3. I-cache pressure in the render switches
 
@@ -516,8 +520,9 @@ branch-hoisted and benefit from `-funroll-loops`; the Cortex-M7 has no NEON, so
 
 1. ~~Hoist the `WaveTable` out of the per-sample loop.~~ Done: passed as a
    per-block pointer, no persistent RAM.
-2. Remove the `HAL_RNG_GenerateRandomNumber()` call from the audio block
-   callback.
+2. ~~Remove the `HAL_RNG_GenerateRandomNumber()` call from the audio block
+   callback.~~ Done: guarded with `RNG_FLAG_DRDY`; the RNG stays in the callback
+   but can no longer block.
 3. Add early returns for `FILTER_OFF` / `FILTER2_OFF`.
 4. Measure I-cache pressure before restructuring `Voice::nextBlock()`.
 5. Only optimise the DX7 fixed-point kernel if it is the hot engine.
@@ -533,7 +538,7 @@ integer overload, the difference is truncated before the comparison. Prefer
 
 ## MPU suggested order of work
 
-1. ~~Fix Region 3: make `.ram_d2b` non-cacheable, or add clean/invalidate around SPI2 DMA.~~ Done: `RAM_D2B` is non-cacheable.
+1. ~~Fix Region 3: make `.ram_d2b` non-cacheable, or add clean/invalidate around SPI2 DMA.~~ Done: SD/FatFS buffers moved to non-cacheable `RAM_D2C`; `RAM_D2B` is write-through cacheable.
 2. ~~Move MPU configuration before `SCB_EnableDCache()`.~~ Done.
 3. ~~Add `__DSB()` barriers around SAI, DMA2D and SPI DMA transfers.~~ Done.
 4. Cache policy for `tftMemory` and the display buffers: `.ram_d1` is
@@ -541,7 +546,7 @@ integer overload, the difference is truncated before the comparison. Prefer
    CPU does not read it. `pushToTft()` waits for DMA2D and issues a `__DSB()`
    before starting SPI DMA. No further change needed.
 5. Align DMA buffers to 32-byte cache lines: not required with the current
-   policy (non-cacheable `RAM_D2B`/`RAM_D2C`, write-through `RAM_D1`/`RAM_D2`).
+   policy (non-cacheable `RAM_D2C`, write-through `RAM_D1`/`RAM_D2`/`RAM_D2B`).
 6. Add a comment for every DMA buffer stating its cache policy: the MPU region
    comments cover this; add per-buffer notes when touching those buffers.
 
@@ -592,10 +597,10 @@ items above. These are candidates, not confirmed priorities.
    pages/display code, voice-pool/mixer helpers and engine-specific parameter
    handling.
 
-7. **Close out the remaining audio-path list.** Remove
-   `HAL_RNG_GenerateRandomNumber()` from `Synth::buildNewSampleBlock()`, add
-   the `FILTER_OFF` / `FILTER2_OFF` early returns, and fix the `abs()` →
-   `fabsf()` correctness issue. Measure each with the benchmark from item 5.
+7. **Close out the remaining audio-path list.** The RNG call is now guarded by
+   `RNG_FLAG_DRDY`; add the `FILTER_OFF` / `FILTER2_OFF` early returns and fix
+   the `abs()` → `fabsf()` correctness issue. Measure each with the benchmark
+   from item 5.
 
 8. **Run measured DX7 hot-path experiments.** The per-block `exp()` in
    `Dx7Note::compute()` (amp modulation), the virtual `FmCore::render()` call

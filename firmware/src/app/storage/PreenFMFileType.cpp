@@ -18,8 +18,8 @@
 #include "PreenFMFileType.h"
 #include "engine/pfm3/Pfm3Preset.h"
 
-__attribute__((section(".ram_d2b"))) char storageBuffer[PROPERTY_FILE_SIZE];
-__attribute__((section(".ram_d2b"))) static FIL file;
+__attribute__((section(".ram_d2c"))) char storageBuffer[PROPERTY_FILE_SIZE];
+__attribute__((section(".ram_d2c"))) static FIL file;
 
 PreenFMFileType::PreenFMFileType() {
     isInitialized_ = false;

@@ -25,8 +25,8 @@
 
 extern FirmwareTftDisplay tft;
 
-__attribute__((section(".ram_d2b"))) struct PFM3File preenFMMixerAlloc[NUMBEROFPREENFMMIXERS];
-__attribute__((section(".ram_d2b"))) static FIL mixerFile;
+__attribute__((section(".ram_d2c"))) struct PFM3File preenFMMixerAlloc[NUMBEROFPREENFMMIXERS];
+__attribute__((section(".ram_d2c"))) static FIL mixerFile;
 
 MixerBank::MixerBank() {
     this->numberOfFilesMax_ = NUMBEROFPREENFMMIXERS;

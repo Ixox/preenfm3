@@ -21,7 +21,7 @@
 uint8_t retUSER;    /* Return value for USER */
 char USERPath[4];   /* USER logical drive path */
 
-__attribute__((section(".ram_d2b")))  FATFS USERFatFS;    /* File system object for USER logical drive */
+__attribute__((section(".ram_d2c")))  FATFS USERFatFS;    /* File system object for USER logical drive */
 
 /* USER CODE BEGIN Variables */
 

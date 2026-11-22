@@ -24,7 +24,7 @@
 extern FirmwareTftDisplay tft;
 
 __attribute__((section(".ram_d2"))) char imagePPM[6400 * 3];
-__attribute__((section(".ram_d2b"))) static FIL imageFile;
+__attribute__((section(".ram_d2c"))) static FIL imageFile;
 extern uint16_t tftMemory[240 * 320];
 
 PPMImage::PPMImage() {

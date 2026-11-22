@@ -19,7 +19,7 @@
 #include "engine/pfm3/Pfm3Preset.h"
 #include "Timbre.h"
 
-__attribute__((section(".ram_d2b"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
+__attribute__((section(".ram_d2c"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
 
 PatchBank::PatchBank() {
     numberOfFilesMax_ = NUMBEROFPREENFMBANKS;

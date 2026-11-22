@@ -247,9 +247,10 @@ uint8_t Synth::buildNewSampleBlock(int32_t* buffer1, int32_t* buffer2, int32_t* 
 
     CYCLE_MEASURE_START(cycles_all_);
 
-    // We consider the random number is always ready here...
+    // Guard the RNG call so the audio ISR never polls the ready bit.
     uint32_t random32bit;
-    if (unlikely(HAL_RNG_GenerateRandomNumber(&hrng, &random32bit) != HAL_OK)) {
+    if (unlikely(!__HAL_RNG_GET_FLAG(&hrng, RNG_FLAG_DRDY))
+        || unlikely(HAL_RNG_GenerateRandomNumber(&hrng, &random32bit) != HAL_OK)) {
         // Recreate on rnd from previous pass
         random32bit = noise[31] * 0x7fffffff;
     }

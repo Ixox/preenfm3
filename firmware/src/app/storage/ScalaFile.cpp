@@ -22,7 +22,7 @@
 
 // Per-note frequency table (DTCM), filled when a scale is loaded.
 float scalaFrequency[6][128];
-__attribute__((section(".ram_d2b"))) struct PFM3File scalaScaleFileAlloc[NUMBEROFSCALASCALEFILES];
+__attribute__((section(".ram_d2c"))) struct PFM3File scalaScaleFileAlloc[NUMBEROFSCALASCALEFILES];
 
 extern char lineBuffer[1024];
 

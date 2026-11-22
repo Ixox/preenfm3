@@ -32,16 +32,16 @@ above 95 % in any RAM region.
 | Region | Origin | Size | MPU / cache | Startup init | Intended use | Used | % |
 |---|---|---|---|---|---|---|---|
 | ITCMRAM | `0x00000004` | 63 KB | none configured; never cached | none (zeroed) | hot FM tables, user waveforms, time-critical code | 51,464 B | 79.77 |
-| DTCMRAM | `0x20000000` | 128 KB | none configured; never cached | `.data` copied, `.bss` zeroed | hot per-sample state, waveform tables, user buffers, stack | 110,888 B | 84.60 |
+| DTCMRAM | `0x20000000` | 128 KB | none configured; never cached | `.data` copied, `.bss` zeroed | hot per-sample state, waveform tables, user buffers, stack | 117,776 B | 89.86 |
 | RAM_D1 | `0x24000000` | 512 KB | MPU R1, write-through | none (zeroed) | display buffers, engine state, FX lines | 487,808 B | 93.04 |
 | RAM_D2 | `0x30000000` | 128 KB | MPU R2, write-through | none (zeroed) | SAI audio buffers, FX scratch | 121,992 B | 93.07 |
-| RAM_D2B | `0x30020000` | 128 KB | MPU R3, non-cacheable, shareable | none (zeroed) | SD/SPI2 DMA and FatFs buffers | 96,244 B | 73.43 |
-| RAM_D2C | `0x30040000` | 32 KB | MPU R5, non-cacheable, shareable | none (zeroed) | reserved DMA-safe staging | 0 B | 0 |
-| RAM_D3 | `0x38000000` | 64 KB | MPU R4, write-back | none (zeroed) | cold data: sequencer, preset mirrors | 48,016 B | 73.27 |
-| FLASH | `0x08020000` | 1920 KB | — | — | code, `.rodata`, `.data` load image | 697,672 B | 35.49 |
+| RAM_D2B | `0x30020000` | 128 KB | MPU R3, write-through | none (zeroed) | CPU-only audio: FX2 delay and diffusers | 72,100 B | 55.01 |
+| RAM_D2C | `0x30040000` | 32 KB | MPU R5, non-cacheable, shareable | none (zeroed) | SD/SPI2 DMA and FatFs buffers | 24,144 B | 73.68 |
+| RAM_D3 | `0x38000000` | 64 KB | MPU R4, write-back | none (zeroed) | cold data: sequencer, preset mirrors | 48,040 B | 73.30 |
+| FLASH | `0x08020000` | 1920 KB | — | — | code, `.rodata`, `.data` load image | 578,902 B | 29.44 |
 
-Total SRAM used is 916,412 B (about 85 % of the 1,056 KB available). DTCM is
-at 84.6 %, and RAM_D1 and RAM_D2 are around 93 %.
+Total SRAM used is 923,324 B (about 85.5 % of the 1,055 KB available). DTCM is
+at 89.86 %, and RAM_D1 and RAM_D2 are around 93 %.
 
 DTCM and ITCM are not described by the MPU: the Cortex-M7 TCMs are accessed
 directly and are never cached. That is why hot tables in ITCM gave a large
@@ -59,8 +59,8 @@ section in the linker script:
 |---|---|---|
 | `.ram_d1` | RAM_D1 | `RAM_D1_SECTION` (`preen_lib/include/TftDisplay.h`, `firmware/src/app/preenfm3.cpp`) |
 | `.ram_d2` | RAM_D2 | `RAM_D2_SECTION` |
-| `.ram_d2b` | RAM_D2B | `RAM_D2B_SECTION` |
-| `.ram_d2c` | RAM_D2C | `RAM_D2C_SECTION` |
+| `.ram_d2b` | RAM_D2B | raw `__attribute__((section(".ram_d2b")))` / `RAM_D2B_SECTION` |
+| `.ram_d2c` | RAM_D2C | raw `__attribute__((section(".ram_d2c")))` / `RAM_D2C_SECTION` |
 | `.ram_d3` | RAM_D3 | `RAM_D3_SECTION` |
 | `.instruction_ram` | ITCMRAM | raw `__attribute__((section(".instruction_ram")))` |
 
@@ -82,10 +82,11 @@ The macro definitions are duplicated between `TftDisplay.h` and
 4. **RAM_D2** — audio data close to the SAI DMA and the larger FX buffers.
    Write-through cacheable, so CPU writes reach memory without an explicit
    clean.
-5. **RAM_D2B** — anything touched by the SPI2/SD DMA or FatFs. Non-cacheable,
-   so no cache maintenance is needed (the safety property from the MPU work).
-6. **RAM_D2C** — same properties as RAM_D2B, kept empty as reserved DMA-safe
-   staging. Do not put per-sample lookup tables here.
+5. **RAM_D2B** — CPU-only audio buffers (FX2 delay and diffusers). Write-through
+   cacheable; no DMA touches this region.
+6. **RAM_D2C** — the SPI2/SD DMA and FatFs buffers. Non-cacheable, so no cache
+   maintenance is needed (the safety property from the MPU work). Do not put
+   per-sample lookup tables here.
 7. **RAM_D3** — cold bulk data that no DMA touches: sequencer steps/actions
    and the editor/storage PFM3 preset mirrors. Write-back caching is fine.
 8. **FLASH** — code and constants. Read-only data lives in `.rodata`; the six
@@ -184,31 +185,35 @@ Largest symbols per region, from
 | 688 | `FxBus::inputBuffer2` |
 | 512 ×3 | `waveform1` … `waveform3` |
 
-**RAM_D2B** — 96,244 B
+**RAM_D2B** — 72,100 B
 
 | Bytes | Symbol |
 |---|---|
 | 49,152 | `Timbre::delayBuffer` (6 × 2048 floats) |
 | 17,104 | `FxBus::diffuserBuffer4` |
-| 8,192 | `storageBuffer` |
 | 5,844 | `FxBus::diffuserBuffer3` |
+
+**RAM_D2C** — 24,144 B
+
+| Bytes | Symbol |
+|---|---|
+| 8,192 | `storageBuffer` |
 | 3,840 | `dx7BankAlloc` |
 | 1,920 ×4 | `preenFMBankAlloc`, `preenFMMixerAlloc`, `preenFMSequenceAlloc`, `scalaScaleFileAlloc` |
 | 1,024 | `lineBuffer` |
 | 560 | `USERFatFS` |
 | 552 ×4 | `file`, `imageFile`, `mixerFile`, `sequenceFile` |
 | 512 | `dummySector` |
+| 128 | `dx7PackedPatch` |
 
-**RAM_D2C** — 0 B (reserved)
-
-**RAM_D3** — 48,016 B
+**RAM_D3** — 48,040 B
 
 | Bytes | Symbol |
 |---|---|
 | 24,576 | `stepNotes` |
 | 16,384 | `actions` |
 | 6,048 | `pfm3Presets_` (6 × `Pfm3Preset` editor mirrors) |
-| 1,008 | `backupPfm3PresetStorage_` |
+| 1,032 | `backupTimbre_` (ScreenMenu snapshot) |
 
 **FLASH** — the six waveform tables also have a `const` copy in `.rodata`
 (36,868 B) as the load image for the DTCM buffers, together with the preset
@@ -234,7 +239,7 @@ region, so the current budget is visible in every build.
 
 ## Remaining tight spots
 
-- **DTCM (84.6 %)** holds the six waveform tables and the hot per-sample
+- **DTCM (89.86 %)** holds the six waveform tables and the hot per-sample
   state; ITCM has ~13 KB free for hot code and small tables.
 - **RAM_D1 (93 %)** and **RAM_D2 (93 %)** are the regions to watch. A new
   large buffer must either fit in RAM_D3/DTCM or replace an existing one.
@@ -242,8 +247,9 @@ region, so the current budget is visible in every build.
 - **`userWaveform` is in ITCM** (24.6 KB). If ITCM is ever needed for code,
   that buffer is the first candidate to move to RAM_D1; user-waveform playback
   would then go through the cache.
-- **RAM_D2C is empty** on purpose: it is the reserved non-cacheable staging
-  area for future DMA buffers.
+- **RAM_D2C is no longer empty**: it holds the non-cacheable SD/SPI2/FatFS DMA
+  buffers (24,144 B, 73.68 %). **RAM_D2B** holds CPU-only audio and is
+  write-through cacheable.
 - **`nullNames`** in `ScreenMixer.cpp` is a zero-length array used as an
   empty name table. It consumes no RAM despite the symbol size reported by
   `nm`.

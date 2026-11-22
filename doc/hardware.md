@@ -696,7 +696,7 @@ The microSD card is used in **SPI mode**, not SDMMC. It is connected to SPI2 and
 1. Calls `ADAFRUIT_802_SD_Init(0)` (`lib/Src/preenfm3lib.c:145-151`).
 2. Mounts the FatFs volume with `f_mount(&USERFatFS, USERPath, 1)`.
 
-`USERFatFS` and the SD/FatFS buffers live in `.ram_d2b` (`lib/Src/fatfs.c:24`). The `Storage sdCard` object (`preenfm3.cpp:59`) wraps the preset, mixer, sequence, configuration and user-waveform files. On startup, `preenfm3Init()` loads the configuration, default mixer, default sequence, user waveforms and user envelopes (`preenfm3.cpp:468-472`).
+`USERFatFS` and the SD/FatFS buffers live in `.ram_d2c` (`lib/Src/fatfs.c:24`). The `Storage sdCard` object (`preenfm3.cpp:59`) wraps the preset, mixer, sequence, configuration and user-waveform files. On startup, `preenfm3Init()` loads the configuration, default mixer, default sequence, user waveforms and user envelopes (`preenfm3.cpp:468-472`).
 
 The card contains:
 
@@ -751,7 +751,7 @@ The filesystem is mounted on `USERPath` after `ADAFRUIT_802_SD_Init()` succeeds.
 
 ### Cache Coherency Note
 
-`.ram_d2b` is MPU Region 3, configured normal non-cacheable, so the CPU and SPI2 DMA see the same data without cache maintenance. `__DSB()` barriers are placed before the SPI2 DMA start and after completion. See `doc/improvements.md`.
+`.ram_d2c` is MPU Region 5, configured normal non-cacheable, so the CPU and SPI2 DMA see the same data without cache maintenance. `__DSB()` barriers are placed before the SPI2 DMA start and after completion. `.ram_d2b` is now write-through cacheable and holds CPU-only audio buffers. See `doc/improvements.md`.
 
 ---
 
@@ -902,8 +902,8 @@ MIDI clock handling is also in `newByte()`: `MIDI_CLOCK` increments the clock co
 | DTCMRAM | `0x20000000` | 128 KB | — | Stack, heap; TCM is not cached by the M7 D-cache |
 | RAM_D1 | `0x24000000` | 512 KB | `.ram_d1` | TFT framebuffer/foreground/background, LFO table, some FX delay buffers |
 | RAM_D2 | `0x30000000` | 128 KB | `.ram_d2` | DAC `waveform1/2/3`, PPM image, FX buffers |
-| RAM_D2B | `0x30020000` | 128 KB | `.ram_d2b` | FatFS/SD/file/sequence buffers, some delay/diffuser buffers |
-| RAM_D2C | `0x30040000` | 32 KB | `.ram_d2c` (empty) | Reserved; MPU region 5, non-cacheable |
+| RAM_D2B | `0x30020000` | 128 KB | `.ram_d2b` | CPU-only audio: FX2 delay and diffusers; write-through cacheable |
+| RAM_D2C | `0x30040000` | 32 KB | `.ram_d2c` | FatFS/SD/file/sequence buffers; MPU region 5, non-cacheable |
 | RAM_D3 | `0x38000000` | 64 KB | `.ram_d3` | Sequencer actions and step notes |
 | Flash | `0x08000000` | 128 KB | — | Bootloader |
 | Flash | `0x08020000` | 1920 KB | `.text`, `.rodata` | Firmware application |
@@ -934,9 +934,9 @@ RAM_D2_SECTION int32_t waveform3[64 * 2];
 |------------|------|------|-----|---|---|---|--------------|-----------------------|
 | Region 1 | `0x24000000` | 512 KB | 0 | 1 | 0 | 0 | Normal, write-through | `.ram_d1` — display buffers, LFO table, FX delays |
 | Region 2 | `0x30000000` | 128 KB | 0 | 1 | 0 | 0 | Normal, write-through | `.ram_d2` — DAC waveforms, PPM/FX buffers |
-| Region 3 | `0x30020000` | 128 KB | 1 | 0 | 0 | 1 | Normal, non-cacheable | `.ram_d2b` — FatFS/SD/file/sequence buffers |
+| Region 3 | `0x30020000` | 128 KB | 0 | 1 | 0 | 0 | Normal, write-through | `.ram_d2b` — CPU-only audio (FX2 delay/diffusers) |
 | Region 4 | `0x38000000` | 64 KB | 0 | 1 | 1 | 0 | Normal, write-back, write-allocate | `.ram_d3` — sequencer data |
-| Region 5 | `0x30040000` | 32 KB | 1 | 0 | 0 | 1 | Normal, non-cacheable | `.ram_d2c` — reserved for future DMA buffers |
+| Region 5 | `0x30040000` | 32 KB | 1 | 0 | 0 | 1 | Normal, non-cacheable | `.ram_d2c` — SD/SPI2/FatFS buffers |
 
 DTCM, ITCM, flash and peripherals are not covered by an explicit MPU region and use the default memory map. The MPU is enabled with `HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT)`.
 
@@ -948,6 +948,6 @@ The MPU is configured first (`MPU_RegionConfig()`), then the I-cache and D-cache
 |-----------|----------------------|--------------|------------|-------|
 | `waveform1/2/3` | `.ram_d2` / Region 2 | Write-through | SAI1/SAI2 TX DMA | CPU fills the block, then `__DSB()` before the DMA consumes it |
 | `tftMemory`, `tftForeground`, `tftBackground` | `.ram_d1` / Region 1 | Write-through | DMA2D + SPI1 TX DMA | `pushToTft()` waits for DMA2D and issues `__DSB()` before starting SPI DMA |
-| FatFS/SD/file buffers | `.ram_d2b` / Region 3 | Non-cacheable | SPI2 TX/RX DMA | No cache maintenance required; `__DSB()` before start and after completion |
-| `RAM_D2C` buffers | `.ram_d2c` / Region 5 | Non-cacheable | none currently | Reserved for future DMA buffers |
+| FatFS/SD/file buffers | `.ram_d2c` / Region 5 | Non-cacheable | SPI2 TX/RX DMA | No cache maintenance required; `__DSB()` before start and after completion |
+| `Timbre::delayBuffer`, `FxBus::diffuserBuffer3/4` | `.ram_d2b` / Region 3 | Write-through | CPU only | No DMA coherency concern |
 | Sequencer actions/notes | `.ram_d3` / Region 4 | Write-back, write-allocate | CPU only | No DMA coherency concern |
