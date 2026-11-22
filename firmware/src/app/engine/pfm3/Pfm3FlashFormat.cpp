@@ -89,11 +89,13 @@ void pfm3ParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams*
     // copy envCurve to int8_t flash memory
     const EnvelopeCurveParams* envCurveParam = &params->env1Curve;
     uint8_t* envFlashUint8 = (uint8_t*)&flashMemory->envCurves1To4;
+    uint8_t* envFlashUint8b = (uint8_t*)&flashMemory->envCurves5To6;
     for (int e = 0; e < 6; e++) {
-        envFlashUint8[e * 4 + 0] = (uint8_t)envCurveParam[e].attackCurve;
-        envFlashUint8[e * 4 + 1] = (uint8_t)envCurveParam[e].decayCurve;
-        envFlashUint8[e * 4 + 2] = (uint8_t)envCurveParam[e].sustainCurve;
-        envFlashUint8[e * 4 + 3] = (uint8_t)envCurveParam[e].releaseCurve;
+        uint8_t* curve = e < 4 ? envFlashUint8 + e * 4 : envFlashUint8b + (e - 4) * 4;
+        curve[0] = (uint8_t)envCurveParam[e].attackCurve;
+        curve[1] = (uint8_t)envCurveParam[e].decayCurve;
+        curve[2] = (uint8_t)envCurveParam[e].sustainCurve;
+        curve[3] = (uint8_t)envCurveParam[e].releaseCurve;
     }
 
     copyFloat((float*)&params->matrixRowState1, (float*)&flashMemory->matrixRowState1, 4 * 12);
@@ -183,9 +185,21 @@ void pfm3FlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Pr
 
     // copy envCurve from int8_t flash memory
     EnvelopeCurveParams* envCurveParam = &params->env1Curve;
-    uint8_t* envFlashUint8 = (uint8_t*)&flashMemory->envCurves1To4;
+    const uint8_t* envFlashUint8 = (const uint8_t*)&flashMemory->envCurves1To4;
+    const uint8_t* envFlashUint8b = (const uint8_t*)&flashMemory->envCurves5To6;
 
-    if (iszero(envFlashUint8, 24)) {
+    bool curvesEmpty = true;
+    for (int e = 0; e < 6 && curvesEmpty; e++) {
+        const uint8_t* curve = e < 4 ? envFlashUint8 + e * 4 : envFlashUint8b + (e - 4) * 4;
+        for (int k = 0; k < 4; k++) {
+            if (curve[k] != 0) {
+                curvesEmpty = false;
+                break;
+            }
+        }
+    }
+
+    if (curvesEmpty) {
         // Set default env curve if not initialized
         for (int e = 0; e < 6; e++) {
             envCurveParam[e].attackCurve = 1.0f;
@@ -195,10 +209,11 @@ void pfm3FlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Pr
         }
     } else {
         for (int e = 0; e < 6; e++) {
-            envCurveParam[e].attackCurve = (float)envFlashUint8[e * 4 + 0];
-            envCurveParam[e].decayCurve = (float)envFlashUint8[e * 4 + 1];
-            envCurveParam[e].sustainCurve = (float)envFlashUint8[e * 4 + 2];
-            envCurveParam[e].releaseCurve = (float)envFlashUint8[e * 4 + 3];
+            const uint8_t* curve = e < 4 ? envFlashUint8 + e * 4 : envFlashUint8b + (e - 4) * 4;
+            envCurveParam[e].attackCurve = (float)curve[0];
+            envCurveParam[e].decayCurve = (float)curve[1];
+            envCurveParam[e].sustainCurve = (float)curve[2];
+            envCurveParam[e].releaseCurve = (float)curve[3];
         }
     }
 
