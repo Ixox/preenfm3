@@ -23,5 +23,4 @@ void msfaInit(float sampleRate) {
   Porta::init_sr(sampleRate);
   Sin::init();
   Exp2::init();
-  Tanh::init();
 }

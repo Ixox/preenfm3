@@ -18,12 +18,12 @@
 #include "MixerState.h"
 #include "PatchBank.h"
 #include "Sequencer.h"
-#include "TftDisplay.h"
+#include "FirmwareTftDisplay.h"
 #include "Timbre.h"
 #include <MixerBank.h>
 #include <ScalaFile.h>
 
-extern TftDisplay tft;
+extern FirmwareTftDisplay tft;
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMMixerAlloc[NUMBEROFPREENFMMIXERS];
 __attribute__((section(".ram_d2b"))) static FIL mixerFile;

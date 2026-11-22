@@ -18,13 +18,13 @@
 #include "Lfo.h"
 
 // Standard 128kb memory
-float Lfo::invTab[2048] __attribute__((section(".ram_d1")));
-int Lfo::initTab = 0;
+float Pfm3Lfo::invTab[2048] __attribute__((section(".ram_d1")));
+int Pfm3Lfo::initTab = 0;
 
-Lfo::Lfo() {
+Pfm3Lfo::Pfm3Lfo() {
 }
 
-void Lfo::init(Matrix* matrix, SourceEnum source, DestinationEnum dest) {
+void Pfm3Lfo::init(Matrix* matrix, SourceEnum source, DestinationEnum dest) {
     this->destination_ = (uint8_t)dest;
     this->source_ = (uint8_t)source;
     this->matrix_ = matrix;

@@ -17,7 +17,7 @@
  */
 
 #define LINE_BUFFER_SIZE 64
-extern char lineBuffer[64];
+extern char lineBuffer[1024];
 
 // User curves
 extern float userEnvCurves[4][64];

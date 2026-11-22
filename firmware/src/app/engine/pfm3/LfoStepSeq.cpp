@@ -36,7 +36,7 @@ float expValues[] = {0,
 
 void LfoStepSeq::init(struct StepSequencerParams* stepSeqParam, struct StepSequencerSteps* stepSeqSteps, Matrix* matrix, SourceEnum source,
                       DestinationEnum dest) {
-    Lfo::init(matrix, source, (DestinationEnum)0);
+    Pfm3Lfo::init(matrix, source, (DestinationEnum)0);
     this->seqParams_ = stepSeqParam;
     this->seqSteps_ = stepSeqSteps;
     this->matrixGateDestination_ = dest;

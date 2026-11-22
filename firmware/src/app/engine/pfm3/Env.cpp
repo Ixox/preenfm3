@@ -18,9 +18,9 @@
 #include "Env.h"
 
 // ram_d1
-float Env::incTab[1601] __attribute__((section(".instruction_ram")));
+float Pfm3Env::incTab[1601] __attribute__((section(".instruction_ram")));
 
-int Env::initTab = 0;
+int Pfm3Env::initTab = 0;
 
 float envLinear[] = {0.0f, 1.0f};
 
@@ -43,7 +43,7 @@ float userEnvCurves[4][64] __attribute__((section(".instruction_ram")));
 struct table allLfoTables[CURVE_TYPE_MAX] = {{envExponential, 63},   {envLinear, 1},         {envLog, 63},          {userEnvCurves[0], 63},
                                              {userEnvCurves[1], 63}, {userEnvCurves[2], 63}, {userEnvCurves[3], 63}};
 
-void Env::init(struct EnvelopeTimeMemory* envParamTime, struct EnvelopeLevelMemory* envParamLevel, uint8_t envNumber, float* algoNumber,
+void Pfm3Env::init(struct EnvelopeTimeMemory* envParamTime, struct EnvelopeLevelMemory* envParamLevel, uint8_t envNumber, float* algoNumber,
                struct EnvelopeCurveParams* envCurve) {
     this->envTime_ = envParamTime;
     this->envLevel_ = envParamLevel;

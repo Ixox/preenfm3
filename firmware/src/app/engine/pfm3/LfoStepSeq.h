@@ -20,7 +20,7 @@
 
 #include "Lfo.h"
 
-class LfoStepSeq : public Lfo {
+class LfoStepSeq : public Pfm3Lfo {
 public:
     void init(struct StepSequencerParams* stepSeqParam, struct StepSequencerSteps* stepSeqSteps, Matrix* matrix, SourceEnum source,
               DestinationEnum dest);

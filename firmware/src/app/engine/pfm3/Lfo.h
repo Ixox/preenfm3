@@ -27,10 +27,10 @@
 
 #define NUMBER_OF_LFO NUMBER_OF_LFO_OSC + NUMBER_OF_LFO_ENV + NUMBER_OF_LFO_ENV2 + NUMBER_OF_LFO_STEP
 
-class Lfo {
+class Pfm3Lfo {
 public:
-    Lfo();
-    virtual ~Lfo() {
+    Pfm3Lfo();
+    virtual ~Pfm3Lfo() {
     }
     virtual void init(Matrix* matrix, SourceEnum source, DestinationEnum dest);
 

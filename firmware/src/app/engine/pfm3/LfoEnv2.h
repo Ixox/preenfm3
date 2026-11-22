@@ -31,7 +31,7 @@
 
 enum Env2State { ENV2_STATE_ON_S = 0, ENV2_STATE_ON_A, ENV2_STATE_ON_D, ENV2_STATE_DEAD, ENV2_NUMBER_OF_STATES };
 
-class LfoEnv2 : public Lfo {
+class LfoEnv2 : public Pfm3Lfo {
 public:
     LfoEnv2();
 

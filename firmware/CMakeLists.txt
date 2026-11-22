@@ -61,6 +61,7 @@ target_compile_options(preenfm3_firmware PRIVATE
     -Wall
     -fdata-sections
     -ffunction-sections
+    -flto
 )
 
 # Optional suffix for experiment artifacts, e.g. -DPRE_ENFM3_FW_VARIANT=O2
@@ -82,6 +83,7 @@ target_link_libraries(preenfm3_firmware PRIVATE
 )
 
 target_link_options(preenfm3_firmware PRIVATE
+    -flto
     -T${FIRMWARE_DIR}/preenfm3_2MB.ld
     -Wl,--gc-sections
     -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/preenfm3_firmware.map

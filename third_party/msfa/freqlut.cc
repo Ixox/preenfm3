@@ -30,7 +30,8 @@
 
 #define MAX_LOGFREQ_INT 20
 
-int32_t lut[N_SAMPLES + 1] __attribute__((section(".ram_d2c")));
+// preenFM3: keep the frequency table in ITCM (0-wait, no cache).
+int32_t lut[N_SAMPLES + 1] __attribute__((section(".instruction_ram")));
 
 void Freqlut::init(double sample_rate) {
   double y = (1LL << (24 + MAX_LOGFREQ_INT)) / sample_rate;

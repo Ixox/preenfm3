@@ -48,10 +48,10 @@
 
  */
 
-#include "TftDisplay.h"
+#include "FirmwareTftDisplay.h"
 #include <SequenceBank.h>
 
-extern TftDisplay tft;
+extern FirmwareTftDisplay tft;
 
 __attribute__((section(".ram_d2b"))) struct PFM3File preenFMSequenceAlloc[NUMBEROFPREENFMSEQUENCES];
 __attribute__((section(".ram_d2b"))) static FIL sequenceFile;

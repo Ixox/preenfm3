@@ -10,8 +10,8 @@
 /*
  * DX7 engine state and adapters.
  *
- * The DX7 headers are only included here so their Lfo/Env classes do not
- * collide with the PFM3 classes in the rest of the firmware.
+ * The DX7 headers are only included here to keep the vendored MSFA headers
+ * out of the rest of the firmware.
  */
 
 #include "Dx7Engine.h"

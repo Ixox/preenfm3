@@ -23,7 +23,7 @@ extern LiquidCrystal      lcd;
 // User waveforms
 extern float userWaveform[6][1024];
 
-extern char lineBuffer[512];
+extern char lineBuffer[1024];
 #define LINE_BUFFER_SIZE 512
 
 extern char* oscShapeNames[];

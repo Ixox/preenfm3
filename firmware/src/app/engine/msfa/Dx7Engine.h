@@ -10,9 +10,9 @@
 /*
  * DX7 engine state.
  *
- * The DX7 (Dexed) headers define Lfo/Env, which collide with the PFM3
- * classes of the same name. Keep those headers out of the firmware headers
- * and expose an opaque state plus free functions instead.
+ * Keep the vendored DX7 (Dexed/MSFA) headers out of the firmware headers and
+ * expose an opaque state plus free functions instead, so those headers (and
+ * their std dependencies) are not pulled into most translation units.
  *
  * The state lives in dedicated RAM_D1 arrays instead of inside Voice/Timbre
  * (which are in DTCMRAM).

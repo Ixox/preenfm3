@@ -20,7 +20,7 @@
 extern float noise[32];
 
 void LfoOsc::init(struct LfoParams* lfoParams, float* phase, Matrix* matrix, SourceEnum source, DestinationEnum dest) {
-    Lfo::init(matrix, source, dest);
+    Pfm3Lfo::init(matrix, source, dest);
     this->type_ = LFO_TRIANGLE;
     this->ramp_ = 0;
     this->initPhase_ = phase;

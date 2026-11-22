@@ -24,7 +24,7 @@
 __attribute__((section(".instruction_ram"))) float scalaFrequency[6][128];
 __attribute__((section(".ram_d2b"))) struct PFM3File scalaScaleFileAlloc[NUMBEROFSCALASCALEFILES];
 
-extern char lineBuffer[512];
+extern char lineBuffer[1024];
 
 ScalaFile::ScalaFile() {
     this->numberOfFilesMax_ = NUMBEROFSCALASCALEFILES;

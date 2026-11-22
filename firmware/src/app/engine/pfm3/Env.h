@@ -60,9 +60,9 @@ extern float userEnvCurves[4][64];
 
 extern struct table allLfoTables[CURVE_TYPE_MAX];
 
-class Env {
+class Pfm3Env {
 public:
-    Env() {
+    Pfm3Env() {
 
         nextState_[ENV_STATE_ON_A] = ENV_STATE_ON_D;
         nextState_[ENV_STATE_ON_D] = ENV_STATE_ON_S;
@@ -83,7 +83,7 @@ public:
         stateTarget_[ENV_STATE_DEAD] = 0.0f;
     }
 
-    virtual ~Env(void) {
+    virtual ~Pfm3Env(void) {
     }
 
     void init(struct EnvelopeTimeMemory* envTime, struct EnvelopeLevelMemory* envLevel, uint8_t envNumber, float* algoNumber,

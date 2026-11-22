@@ -21,7 +21,7 @@
 #include "Lfo.h"
 #include "Osc.h"
 
-class LfoOsc : public Lfo {
+class LfoOsc : public Pfm3Lfo {
 public:
     virtual ~LfoOsc() {};
 

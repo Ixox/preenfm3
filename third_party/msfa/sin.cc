@@ -22,10 +22,12 @@
 
 #define R (1 << 29)
 
+// preenFM3: keep the hot sine table in ITCM (0-wait, no cache) instead of
+// non-cacheable RAM_D2C. Filled at startup by Sin::init().
 #ifdef SIN_DELTA
-int32_t sintab[SIN_N_SAMPLES << 1] __attribute__((section(".ram_d2c")));
+int32_t sintab[SIN_N_SAMPLES << 1] __attribute__((section(".instruction_ram")));
 #else
-int32_t sintab[SIN_N_SAMPLES + 1] __attribute__((section(".ram_d2c")));
+int32_t sintab[SIN_N_SAMPLES + 1] __attribute__((section(".instruction_ram")));
 #endif
 
 void Sin::init() {

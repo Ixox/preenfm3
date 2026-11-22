@@ -110,7 +110,7 @@ public:
     Osc& osc(int index) {
         return osc_[index];
     }
-    Env& env(int index) {
+    Pfm3Env& env(int index) {
         return env_[index];
     }
 
@@ -164,7 +164,7 @@ private:
     static float glidePhaseInc[13];
     static float mpeBitchBend[6];
     Osc osc_[6];
-    Env env_[6];
+    Pfm3Env env_[6];
     int lfoUSed_[NUMBER_OF_LFO];
     bool recomputeNext_;
     float currentGate_;

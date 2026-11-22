@@ -18,7 +18,7 @@
 #include "ConfigurationFile.h"
 #include "Menu.h"
 
-extern char lineBuffer[512];
+extern char lineBuffer[1024];
 
 ConfigurationFile::ConfigurationFile() {
     numberOfFilesMax_ = 0;

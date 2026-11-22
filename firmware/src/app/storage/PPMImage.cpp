@@ -18,10 +18,10 @@
 #include <PPMImage.h>
 
 #ifdef PPMIMAGE_ENABLE
-#include "TftDisplay.h"
+#include "FirmwareTftDisplay.h"
 #include "fatfs.h"
 
-extern TftDisplay tft;
+extern FirmwareTftDisplay tft;
 
 __attribute__((section(".ram_d2"))) char imagePPM[6400 * 3];
 __attribute__((section(".ram_d2b"))) static FIL imageFile;

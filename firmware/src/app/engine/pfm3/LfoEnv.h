@@ -21,7 +21,7 @@
 #include "Env.h"
 #include "Lfo.h"
 
-class LfoEnv : public Lfo {
+class LfoEnv : public Pfm3Lfo {
 public:
     LfoEnv();
 
