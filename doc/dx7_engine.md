@@ -441,7 +441,7 @@ Current RAM use from the default build is already tight:
 
 ```
 DTCMRAM: 89.86%
-RAM_D1:  93.04%
+RAM_D1:  70.17%
 RAM_D2:  93.07%
 RAM_D2B: 55.01%
 ```

@@ -19,6 +19,7 @@
 #include "ili9341.h"
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_hal_rng.h"
+#include <stdlib.h>
 #include <string.h>
 
 // 95 char + 16 step seqs + 1 note + 4 for sequencers
@@ -27,18 +28,26 @@
 #define likely(x)   __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
 
-RAM_D1_SECTION uint8_t tftForeground[60000];
-RAM_D1_SECTION uint16_t tftBackground[42860 * 2];
+#define TFT_FOREGROUND_BIG_CHARS      (NUMBER_OF_CHARS * 11 * 18)
+#define TFT_FOREGROUND_SMALL_CHARS    (96 * 7 * 10)
+#define TFT_FOREGROUND_SEGMENT_DIGITS (12 * 9 * 5 * 4)
+#define TFT_FOREGROUND_OSCILLO        (160 * 101)
+#define TFT_FOREGROUND_ALGO           (80 * 100)
+#define TFT_FOREGROUND_ENTRIES                                                                                                             \
+    (TFT_FOREGROUND_BIG_CHARS + TFT_FOREGROUND_SMALL_CHARS + TFT_FOREGROUND_SEGMENT_DIGITS + TFT_FOREGROUND_OSCILLO + TFT_FOREGROUND_ALGO)
+// Round up to 32 bytes (uint8_t entries) so the next buffer is 32-byte aligned.
+#define TFT_FOREGROUND_SIZE (((TFT_FOREGROUND_ENTRIES + 31) / 32) * 32)
+
+#define TFT_BACKGROUND_ENTRIES (NUMBER_OF_TFT_COLORS * 20 * 11 + 160 * 100 + 80 * 100)
+// Round up to 16 uint16_t entries so the next buffer starts on a 32-byte boundary.
+#define TFT_BACKGROUND_SIZE (((TFT_BACKGROUND_ENTRIES + 15) / 16) * 16)
+
+RAM_D1_SECTION uint8_t tftForeground[TFT_FOREGROUND_SIZE];
+RAM_D1_SECTION uint16_t tftBackground[TFT_BACKGROUND_SIZE];
 RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 
 extern DMA2D_HandleTypeDef hdma2d;
 extern RNG_HandleTypeDef hrng;
-
-#define BG_OFFSET_BLACK      0
-#define BG_OFFSET_DARK_BLUE  20 * 12
-#define BG_OFFSET_LIGHT_BLUE 20 * 12 * 2
-
-#define ABS(X) ((X) > 0 ? (X) : -(X))
 
 #define TFT_OSCILLO_Y 160
 #define TFT_OSCILLO_X 0

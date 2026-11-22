@@ -82,8 +82,8 @@ const struct Pfm3MixerButtonState outButtonState = {
 
 const struct Pfm3MixerButton outButton = {
   "Out",
-  1,
-  { &outButtonState  }
+  2,
+  { &outButtonState, &compButtonState }
 };
 
 const struct Pfm3MixerButtonState voiceButtonState = {
@@ -97,9 +97,9 @@ const struct Pfm3MixerButtonState engineButtonState = {
 };
 
 const struct Pfm3MixerButton voiceButton = {
-  "Voices",
-  3,
-  { &engineButtonState, &voiceButtonState, &compButtonState }
+  "Inst",
+  2,
+  { &engineButtonState, &voiceButtonState }
 };
 
 
@@ -498,18 +498,8 @@ void ScreenMixer::displayMixerValue(int timbre) {
             }
         } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
             uint8_t numberOfVoice = *((int8_t*)valueP);
-            uint8_t polyMono = synthState_->getTimbre(timbre)->getPlayMode();
             if (numberOfVoice == 0) {
                 tft_->setCharColor(COLOR_DARK_GRAY);
-            } else if (numberOfVoice == 1) {
-                if (polyMono == 2.0f) {
-                    tft_->setCharColor(COLOR_RED);
-                }
-            } else {
-                // More than 1 voice and mono mode
-                if (polyMono == 0.0f) {
-                    tft_->setCharColor(COLOR_RED);
-                }
             }
         }
 

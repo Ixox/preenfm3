@@ -33,15 +33,15 @@ above 95 % in any RAM region.
 |---|---|---|---|---|---|---|---|
 | ITCMRAM | `0x00000004` | 63 KB | none configured; never cached | none (zeroed) | hot FM tables, user waveforms, time-critical code | 51,464 B | 79.77 |
 | DTCMRAM | `0x20000000` | 128 KB | none configured; never cached | `.data` copied, `.bss` zeroed | hot per-sample state, waveform tables, user buffers, stack | 117,776 B | 89.86 |
-| RAM_D1 | `0x24000000` | 512 KB | MPU R1, write-through | none (zeroed) | display buffers, engine state, FX lines | 487,808 B | 93.04 |
+| RAM_D1 | `0x24000000` | 512 KB | MPU R1, write-through | none (zeroed) | display buffers, engine state, FX lines | 367,888 B | 70.17 |
 | RAM_D2 | `0x30000000` | 128 KB | MPU R2, write-through | none (zeroed) | SAI audio buffers, FX scratch | 121,992 B | 93.07 |
 | RAM_D2B | `0x30020000` | 128 KB | MPU R3, write-through | none (zeroed) | CPU-only audio: FX2 delay and diffusers | 72,100 B | 55.01 |
 | RAM_D2C | `0x30040000` | 32 KB | MPU R5, non-cacheable, shareable | none (zeroed) | SD/SPI2 DMA and FatFs buffers | 24,144 B | 73.68 |
 | RAM_D3 | `0x38000000` | 64 KB | MPU R4, write-back | none (zeroed) | cold data: sequencer, preset mirrors | 48,040 B | 73.30 |
-| FLASH | `0x08020000` | 1920 KB | — | — | code, `.rodata`, `.data` load image | 578,902 B | 29.44 |
+| FLASH | `0x08020000` | 1920 KB | — | — | code, `.rodata`, `.data` load image | 578,790 B | 29.44 |
 
-Total SRAM used is 923,324 B (about 85.5 % of the 1,055 KB available). DTCM is
-at 89.86 %, and RAM_D1 and RAM_D2 are around 93 %.
+Total SRAM used is 803,404 B (about 74.4 % of the 1,055 KB available). DTCM is
+at 89.86 %, RAM_D2 is at 93.07 %, and RAM_D1 is at 70.17 %.
 
 DTCM and ITCM are not described by the MPU: the Cortex-M7 TCMs are accessed
 directly and are never cached. That is why hot tables in ITCM gave a large
@@ -150,13 +150,13 @@ Largest symbols per region, from
 | 6,404 | `Pfm3Env::incTab` |
 | 4,100 | MSFA `lut` |
 
-**RAM_D1** — 487,808 B
+**RAM_D1** — 367,888 B
 
 | Bytes | Symbol |
 |---|---|
-| 171,440 | `tftBackground` |
 | 153,600 | `tftMemory` |
-| 60,000 | `tftForeground` |
+| 56,032 | `tftForeground` |
+| 55,488 | `tftBackground` |
 | 28,676 | `FxBus::delay1Buffer` |
 | 23,956 | `FxBus::delay2Buffer` |
 | 16,256 | `dx7VoiceStates` |
@@ -241,9 +241,10 @@ region, so the current budget is visible in every build.
 
 - **DTCM (89.86 %)** holds the six waveform tables and the hot per-sample
   state; ITCM has ~13 KB free for hot code and small tables.
-- **RAM_D1 (93 %)** and **RAM_D2 (93 %)** are the regions to watch. A new
-  large buffer must either fit in RAM_D3/DTCM or replace an existing one.
-  The post-build check turns a silent overflow into a build failure.
+- **RAM_D2 (93 %)** is the tightest region now; **RAM_D1 is at 70 %** and has
+  about 153 KB free. A new large buffer must either fit in RAM_D3/DTCM/RAM_D1 or
+  replace an existing one. The post-build check turns a silent overflow into a
+  build failure.
 - **`userWaveform` is in ITCM** (24.6 KB). If ITCM is ever needed for code,
   that buffer is the first candidate to move to RAM_D1; user-waveform playback
   would then go through the cache.

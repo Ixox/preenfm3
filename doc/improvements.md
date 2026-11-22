@@ -202,8 +202,8 @@ The display buffers are in `.ram_d1` (Region 1, write-through):
 
 ```cpp
 // lib/Src/TftDisplay.cpp:33-35
-RAM_D1_SECTION uint8_t  tftForeground[60000];
-RAM_D1_SECTION uint16_t tftBackground[42860 * 2];
+RAM_D1_SECTION uint8_t  tftForeground[TFT_FOREGROUND_SIZE];
+RAM_D1_SECTION uint16_t tftBackground[TFT_BACKGROUND_SIZE];
 RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 ```
 

@@ -261,8 +261,8 @@ All display buffers are in RAM_D1 (`.ram_d1`), not DTCM:
 | Buffer | Size | Purpose |
 |--------|------|---------|
 | `tftMemory[240 * 320]` | 76,800 `uint16_t` = 153,600 B | RGB565 framebuffer sent to the TFT |
-| `tftForeground[60000]` | 60,000 B | A8 masks: font glyphs, oscilloscope, algorithm view |
-| `tftBackground[42860 * 2]` | 85,720 `uint16_t` = 171,440 B | RGB565 backgrounds and pre-filled character blocks |
+| `tftForeground[TFT_FOREGROUND_SIZE]` | 56,032 B | A8 masks: font glyphs, oscilloscope, algorithm view |
+| `tftBackground[TFT_BACKGROUND_SIZE]` | 27,744 `uint16_t` = 55,488 B | RGB565 backgrounds and pre-filled character blocks |
 
 The foreground buffer is subdivided during `TftDisplay::init()` (`lib/Src/TftDisplay.cpp:143-230`):
 
@@ -912,8 +912,8 @@ The display buffers are in RAM_D1, not DTCM:
 
 ```cpp
 // lib/Src/TftDisplay.cpp:33-35
-RAM_D1_SECTION uint8_t  tftForeground[60000];
-RAM_D1_SECTION uint16_t tftBackground[42860 * 2];
+RAM_D1_SECTION uint8_t  tftForeground[TFT_FOREGROUND_SIZE];
+RAM_D1_SECTION uint16_t tftBackground[TFT_BACKGROUND_SIZE];
 RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 ```
 
