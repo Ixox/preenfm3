@@ -84,10 +84,10 @@ bool Dx7SynthEngine::midiData(int timbre, const MidiData& data) {
             return midiCcData(data.cc, data.ccValue);
         }
     case MIDI_DATA_AFTERTOUCH:
-        dx7TimbreSetController(dx7State_, MATRIX_SOURCE_AFTERTOUCH, data.value);
+        dx7TimbreSetController(dx7State_, MATRIX_SOURCE_AFTERTOUCH, data.nrpnValue * (1.0f / 127.0f));
         return true;
     case MIDI_DATA_PITCHBEND:
-        dx7TimbreSetController(dx7State_, MATRIX_SOURCE_PITCHBEND, data.value);
+        dx7TimbreSetController(dx7State_, MATRIX_SOURCE_PITCHBEND, ((int)data.nrpnValue - 8192) * (1.0f / 8192.0f));
         return true;
     default:
         return false;

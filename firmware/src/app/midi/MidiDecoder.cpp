@@ -310,14 +310,14 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
         break;
     case MIDI_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
-            struct MidiData data = {MIDI_DATA_AFTERTOUCH, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[0]};
+            struct MidiData data = {MIDI_DATA_AFTERTOUCH, midiEvent.channel, 0, 0, 0, midiEvent.value[0]};
             this->synth_->getTimbre(timbres[tk])->midiData(data);
         }
         break;
     case MIDI_PITCH_BEND: {
-        int pb = ((int)midiEvent.value[1] << 7) + (int)midiEvent.value[0] - 8192;
         for (int tk = 0; tk < timbreIndex; tk++) {
-            struct MidiData data = {MIDI_DATA_PITCHBEND, midiEvent.channel, 0, 0, 0, 0, (float)pb * .00012207031250000000f};
+            struct MidiData data = {MIDI_DATA_PITCHBEND, midiEvent.channel, 0, 0, 0,
+                                    (uint16_t)((midiEvent.value[1] << 7) | midiEvent.value[0])};
             this->synth_->getTimbre(timbres[tk])->midiData(data);
         }
         break;
@@ -356,14 +356,14 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
             controlChange(0, midiEvent);
         }
         case MIDI_PITCH_BEND: {
-            int pb = ((int)midiEvent.value[1] << 7) + (int)midiEvent.value[0] - 8192;
             // PITCH BEND in MPE mode we devide by 819.2 and not 8192 to have a x10 value
-            struct MidiData data = {MIDI_DATA_PITCHBEND, midiEvent.channel, 0, 0, 0, 0, (float)pb * .00012207031250000000f};
+            struct MidiData data = {MIDI_DATA_PITCHBEND, midiEvent.channel, 0, 0, 0,
+                                    (uint16_t)((midiEvent.value[1] << 7) | midiEvent.value[0])};
             this->synth_->getTimbre(0)->midiData(data);
             break;
         }
         case MIDI_AFTER_TOUCH: {
-            struct MidiData data = {MIDI_DATA_AFTERTOUCH, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[0]};
+            struct MidiData data = {MIDI_DATA_AFTERTOUCH, midiEvent.channel, 0, 0, 0, midiEvent.value[0]};
             this->synth_->getTimbre(0)->midiData(data);
             break;
         }
@@ -395,21 +395,21 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         break;
     }
     case MIDI_AFTER_TOUCH: {
-        struct MidiData data = {MIDI_DATA_MPE_AFTERTOUCH, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[0]};
+        struct MidiData data = {MIDI_DATA_MPE_AFTERTOUCH, midiEvent.channel, 0, 0, 0, midiEvent.value[0]};
         this->synth_->getTimbre(0)->midiData(data);
         break;
     }
     case MIDI_CONTROL_CHANGE:
         switch (midiEvent.value[0]) {
         case CC_MPE_SLIDE_CC74: {
-            struct MidiData data = {MIDI_DATA_MPE_SLIDE, midiEvent.channel, 0, 0, 0, 0, INV127 * midiEvent.value[1]};
+            struct MidiData data = {MIDI_DATA_MPE_SLIDE, midiEvent.channel, 0, 0, 0, midiEvent.value[1]};
             this->synth_->getTimbre(0)->midiData(data);
         }
         break;
         }
     case MIDI_PITCH_BEND: {
-        int pb = ((int)midiEvent.value[1] << 7) + (int)midiEvent.value[0] - 8192;
-        struct MidiData data = {MIDI_DATA_MPE_PITCHBEND, midiEvent.channel, 0, 0, 0, 0, (float)pb * .00012207031250000000f};
+        struct MidiData data = {MIDI_DATA_MPE_PITCHBEND, midiEvent.channel, 0, 0, 0,
+                                (uint16_t)((midiEvent.value[1] << 7) | midiEvent.value[0])};
         this->synth_->getTimbre(0)->midiData(data);
         break;
     }
@@ -422,7 +422,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
     // User CC are higher priority even if they hide some important preenfm3 CC
     for (int i = 0; i < 4; i++) {
         if (unlikely(this->synthState_->mixerState_.userCC_[i] == midiEvent.value[0])) {
-            struct MidiData data = {MIDI_DATA_USER_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+            struct MidiData data = {MIDI_DATA_USER_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0};
             this->synth_->getTimbre(timbre)->midiData(data);
             return;
         }
@@ -468,12 +468,12 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         bankNumberLSB_[timbre] = midiEvent.value[1];
         break;
     case CC_MODWHEEL: {
-        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0};
         this->synth_->getTimbre(timbre)->midiData(data);
         return;
     }
     case CC_BREATH: {
-        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0};
         this->synth_->getTimbre(timbre)->midiData(data);
         return;
     }
@@ -547,7 +547,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         }
 
         // Engine-owned parameter CCs.
-        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0, 0.0f};
+        struct MidiData data = {MIDI_DATA_CC, midiEvent.channel, midiEvent.value[0], midiEvent.value[1], 0, 0};
         this->synth_->getTimbre(timbre)->midiData(data);
     }
 
@@ -603,7 +603,7 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
                 asyncAction.action.timbre = timbre;
                 asyncActions.insert(asyncAction);
             } else {
-                struct MidiData data = {MIDI_DATA_NRPN, midiEvent.channel, 0, 0, param, value, 0.0f};
+                struct MidiData data = {MIDI_DATA_NRPN, midiEvent.channel, 0, 0, param, value};
                 this->synth_->getTimbre(timbre)->midiData(data);
             }
         }

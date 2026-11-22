@@ -5287,19 +5287,19 @@ bool Preenfm3Engine::midiData(int timbre, const MidiData& data) {
     case MIDI_DATA_NRPN:
         return midiNrpnData(data.nrpnParam, data.nrpnValue);
     case MIDI_DATA_AFTERTOUCH:
-        setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, data.value);
+        setMatrixSource(MATRIX_SOURCE_AFTERTOUCH, data.nrpnValue * INV127);
         return true;
     case MIDI_DATA_PITCHBEND:
-        setMatrixSource(MATRIX_SOURCE_PITCHBEND, data.value);
+        setMatrixSource(MATRIX_SOURCE_PITCHBEND, ((int)data.nrpnValue - 8192) * (1.0f / 8192.0f));
         return true;
     case MIDI_DATA_MPE_AFTERTOUCH:
-        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, data.value);
+        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_AFTERTOUCH_MPE, data.nrpnValue * INV127);
         return true;
     case MIDI_DATA_MPE_PITCHBEND:
-        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_PITCHBEND_MPE, data.value);
+        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_PITCHBEND_MPE, ((int)data.nrpnValue - 8192) * (1.0f / 8192.0f));
         return true;
     case MIDI_DATA_MPE_SLIDE:
-        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_MPESLIDE, data.value);
+        setMatrixSourceMPE(data.channel, MATRIX_SOURCE_MPESLIDE, data.nrpnValue * INV127);
         return true;
     }
     return false;

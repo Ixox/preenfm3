@@ -29,8 +29,8 @@ struct MidiData {
     uint8_t cc;
     uint8_t ccValue;
     uint16_t nrpnParam;
+    // NRPN 14-bit value, or raw aftertouch/pitch bend/MPE value.
     uint16_t nrpnValue;
-    float value;
 };
 
 #endif
