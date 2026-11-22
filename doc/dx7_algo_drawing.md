@@ -10,13 +10,13 @@ The algorithm diagram is not drawn directly to the TFT. It is rendered into an
 
 ```
 ScreenEditor::refreshEditorByStep()
-        -> tft_->drawAlgo(algo)
-             TftDisplay::drawAlgo()                preen_lib/src/display/TftDisplay.cpp:1044
+        -> tft_->drawAlgoTable(EditorPfm3Algo::table(algo))
+             TftDisplay::drawAlgoTable()           preen_lib/src/display/TftDisplay.cpp:1063
              inserts TFT_DRAW_ALGO action
         -> TftDisplay action queue
-             case TFT_DRAW_ALGO                    preen_lib/src/display/TftDisplay.cpp:475
+             case TFT_DRAW_ALGO                    preen_lib/src/display/TftDisplay.cpp:465
              clear bgAlgo (80x100, DMA2D)
-             tftAlgo->drawAlgo(param1)             preen_lib/src/display/TftAlgo.cpp:867
+             tftAlgo->drawAlgoFromTable(action.algoTable)
              merge foreground (highlight) buffer
 ```
 
@@ -70,11 +70,12 @@ Max x = 74, max y = 93, which fits the 80×100 buffer.
 
 ### Table
 
-The PFM3 tables are `algo1..algo32` with `allAlgos[32]`
-(`TftAlgo.cpp:621`). `drawAlgo()` selects `allAlgos[algo % 32]`. These are the
-**PFM3** algorithms, not the DX7 ones.
+The PFM3 tables are `algo1..algo32` with `allAlgos[ALGO_END]` in
+`firmware/src/app/engine/pfm3/EditorPfm3Algo.cpp`. `EditorPfm3Algo::table(algo)`
+selects `allAlgos[algo % ALGO_END]`. These are the **PFM3** algorithms, not the
+DX7 ones; the DX7 tables live in `firmware/src/app/engine/msfa/EditorDx7Algo.cpp`.
 
-Example (`algo1`, `TftAlgo.cpp`):
+Example (`algo1`, `EditorPfm3Algo.cpp`):
 
 ```c
 const uint8_t algo1[] = {
@@ -164,6 +165,11 @@ This gives connections, carriers and feedback without a second table. What it
 does **not** give is screen positions, which is the missing piece.
 
 ## 4. What is needed
+
+> Implemented: the DX7 tables now live in
+> `firmware/src/app/engine/msfa/EditorDx7Algo.cpp`, and the diagram is drawn
+> through the generic `TftAlgo::drawAlgoFromTable()`. The list below is kept as
+> the original design rationale.
 
 1. **A DX7 layout table** `dx7Algos[32]` in the same command-stream format,
    using DX7 operator numbers `1..6` (so the printed numbers and

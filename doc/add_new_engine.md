@@ -176,7 +176,10 @@ Add `EditorNewEngine` and implement the required `EditorEngine` methods:
 
 Optional hooks:
 
-- `drawAlgorithm()`, `drawPageHeader()`, `preparePage()`
+- `drawAlgorithm()`, `drawPageHeader()`, `preparePage()`. If the engine draws
+  its algorithm diagram, put the command-stream tables in an `Editor<Engine>Algo`
+  helper class (see `EditorPfm3Algo`, `EditorDx7Algo`) and call
+  `tft_->drawAlgoTable(Editor<Engine>Algo::table(algo))`.
 - `newEngineParamValue()` for engine-specific param feedback
 - `getCommonPage(page)` to expose the shared Arp/Fx page as a main-menu
   button. Return `COMMON_PAGE_ARP_FX` for the page index that should host it

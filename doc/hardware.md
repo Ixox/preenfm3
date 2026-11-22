@@ -329,7 +329,7 @@ Rendering pipeline:
 - `oscilloForceNextDisplay()` forces a redraw after a pause or mode change.
 
 **Algorithm visualizer** (`TftAlgo`):
-- `TFT_DRAW_ALGO` is a multi-step action: clear `bgAlgo`, draw the algorithm with `TftAlgo::drawAlgo()`, optionally clear `fgAlgo`, then blend `fgAlgo` over `bgAlgo` into `tftMemory`.
+- `TFT_DRAW_ALGO` is a multi-step action: clear `bgAlgo`, draw the algorithm with `TftAlgo::drawAlgoFromTable()`, optionally clear `fgAlgo`, then blend `fgAlgo` over `bgAlgo` into `tftMemory`. The table comes from the active engine's `EditorPfm3Algo` / `EditorDx7Algo`.
 - Custom Bresenham line drawing into RGB565 and A8 buffers.
 - Numbers rendered as scaled (2×) 5×5 digit patterns; operators drawn as boxes.
 
@@ -600,7 +600,7 @@ Every drawing method inserts a `TFTAction` into the ring buffer. Below are all m
 | `printSmallChar(char c)` | 910 | `TFT_DISPLAY_ONE_SMALL_CHAR` |
 | `fillArea(x, y, w, h, color)` | 1010 | `TFT_DRAW_FILL_AREA` |
 | `clear()` | 726 | `TFT_DRAW_FILL_TFT` |
-| `drawAlgo(int algo)` | 1044 | `TFT_DRAW_ALGO` |
+| `drawAlgoTable(const uint8_t* table)` | 1063 | `TFT_DRAW_ALGO` |
 | `highlightOperator(int op)` | 1058 | `TFT_HIGHLIGHT_ALGO_OPERATOR` |
 | `eraseHighlightOperator(int op)` | 1066 | `TFT_ERASE_HIGHLIGHT_ALGO_OPERATOR` |
 | `highlightIM(from, to)` | 1074 | `TFT_HIGHTLIGHT_ALGO_IM` |
@@ -639,7 +639,7 @@ Every screen class calls these methods through its `tft_` pointer:
 | Screen | Methods Called |
 |--------|---------------|
 | `ScreenMixer` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawLevelMetter()`, `tft_->clear()`, `tft_->pauseRefresh()`, `tft_->restartRefreshTft()` |
-| `ScreenEditor` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawButtonBiState()`, `tft_->drawAlgo()`, `tft_->clearAlgoFG()`, `tft_->highlightOperator()`, `tft_->eraseHighlightOperator()`, `tft_->highlightIM()`, `tft_->eraseHighlightIM()`, `tft_->oscilloForceNextDisplay()`, plus oscillo background methods |
+| `ScreenEditor` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawButtonBiState()`, `tft_->drawAlgoTable()`, `tft_->clearAlgoFG()`, `tft_->highlightOperator()`, `tft_->eraseHighlightOperator()`, `tft_->highlightIM()`, `tft_->eraseHighlightIM()`, `tft_->oscilloForceNextDisplay()`, plus oscillo background methods |
 | `ScreenSequencer` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawSimpleButton()`, `tft_->clear()` |
 | `ScreenMenu` | `tft_->print()`, `tft_->fillArea()`, `tft_->drawButton()`, `tft_->drawSimpleButton()`, `tft_->drawSimpleBorderButton()`, `tft_->clear()` |
 

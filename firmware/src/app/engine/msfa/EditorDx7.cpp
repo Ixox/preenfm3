@@ -18,6 +18,7 @@
  */
 
 #include "EditorDx7.h"
+#include "EditorDx7Algo.h"
 #include "ScreenEditor.h"
 
 #include "Dx7Engine.h"
@@ -338,7 +339,7 @@ void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
 }
 
 void EditorDx7::drawAlgorithm() {
-    tft_->drawDx7Algo(timbre()->getPatchMemory()[134]);
+    tft_->drawAlgoTable(EditorDx7Algo::table(timbre()->getPatchMemory()[134]));
 }
 
 void EditorDx7::drawEditorButton(int button, const struct EditorEditMenu* editMenu, const struct EditorOneButton* page) {
@@ -435,7 +436,7 @@ void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float 
     if (paramId == DX7_FEEDBACK && encoder >= 0) {
         uint8_t source = 0;
         uint8_t dest = 0;
-        if (tft_->getDx7Feedback(this->timbre()->getPatchMemory()[134], source, dest)) {
+        if (EditorDx7Algo::getFeedback(this->timbre()->getPatchMemory()[134], source, dest)) {
             tft_->highlightFeedback(encoder, source, dest);
             feedbackChangedCounter_ = 4;
             feedbackSource_ = source;
@@ -451,7 +452,7 @@ void EditorDx7::newEngineParamValue(int timbre, int paramId, int context, float 
         refreshOscillatorOperatorEnvelope();
     }
     if (paramId == DX7_ALGORITHM) {
-        tft_->drawDx7Algo((int)newValue);
+        tft_->drawAlgoTable(EditorDx7Algo::table((int)newValue));
     }
 
     if (encoder >= 0) {

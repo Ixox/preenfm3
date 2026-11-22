@@ -28,7 +28,6 @@ extern const char* polyMonoNames[];
 #define MIN(X, Y)        (((X) < (Y)) ? (X) : (Y))
 #define CUSTOM_CHAR_NOTE (char)7
 
-extern struct ModulationIndex modulationIndex[ALGO_END][6];
 extern arp_pattern_t lut_res_arpeggiator_patterns[ARPEGGIATOR_PRESET_PATTERN_COUNT];
 
 extern int getLength(const char* str);

@@ -51,8 +51,8 @@ Main synth application. CMake globs `src/app/**` and `src/platform/**`.
 
 | File(s) | Contents |
 |---------|----------|
-| `pfm3/` | PFM3 engine: `Preenfm3Engine`, `Pfm3*`, `Osc`, `Env`, `Lfo*`, `Matrix`, `Presets`, `EditorPfm3` |
-| `msfa/` | DX7 (Dexed/MSFA) engine: `Dx7Engine`, `Dx7SynthEngine`, `Dx7Params`, `Dx7ControlChange`, `EditorDx7` |
+| `pfm3/` | PFM3 engine: `Preenfm3Engine`, `Pfm3*`, `Osc`, `Env`, `Lfo*`, `Matrix`, `Presets`, `EditorPfm3`, `EditorPfm3Algo` |
+| `msfa/` | DX7 (Dexed/MSFA) engine: `Dx7Engine`, `Dx7SynthEngine`, `Dx7Params`, `Dx7ControlChange`, `EditorDx7`, `EditorDx7Algo` |
 | `byos/` | Example third engine: `ByosEngine`, `EditorByos`, params and README |
 
 ### `firmware/src/app/synth/`
@@ -112,7 +112,7 @@ Shared library linked by both the firmware and the bootloader.
 | `include/` | Public headers: `TftDisplay.h`, `TftAlgo.h`, `Encoders.h`, `RingBuffer.h`, `preenfm3lib.h`, `preenfm3_pins.h`, `stm32h7xx_hal_conf.h` |
 | `src/board/` | `preenfm3lib.c` — board ID, GPIO and SD init |
 | `src/core/` | `RingBuffer.cpp` |
-| `src/display/` | `TftDisplay.cpp`, `TftAlgo.cpp` (real algorithm drawing) |
+| `src/display/` | `TftDisplay.cpp`, `TftAlgo.cpp` (generic algorithm raster primitives; engine tables live in `engine/*/Editor*Algo.*`) |
 | `src/input/` | `Encoders.cpp` — HC165 buttons/encoders |
 | `src/platform/` | `syscalls.c`, `sysmem.c` |
 | `src/storage/` | Reserved (storage lives in `firmware/src/app/storage`) |

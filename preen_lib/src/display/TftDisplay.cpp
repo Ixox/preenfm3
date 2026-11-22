@@ -480,11 +480,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
             break;
         case 1:
             this->tftAlgo_->setBufferAdress(bgAlgo_);
-            if (currentAction_.param1 & 0x80) {
-                this->tftAlgo_->drawDx7Algo(currentAction_.param1 & 0x7f);
-            } else {
-                this->tftAlgo_->drawAlgo(currentAction_.param1);
-            }
+            this->tftAlgo_->drawAlgoFromTable(currentAction_.algoTable);
 
             if (fgAlgoDirty_) {
                 currentAction_.param3 = 2;
@@ -1064,24 +1060,12 @@ void TftDisplay::oscilloRecord32Samples(float* samples) {
     }
 }
 
-void TftDisplay::drawAlgo(int algo) {
+void TftDisplay::drawAlgoTable(const uint8_t* algoTable) {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_ALGO;
-    newAction.param1 = algo;
     newAction.param3 = 0;
+    newAction.algoTable = algoTable;
     tftActions_.insert(newAction);
-}
-
-void TftDisplay::drawDx7Algo(int algo) {
-    TFTAction newAction;
-    newAction.actionType = TFT_DRAW_ALGO;
-    newAction.param1 = algo | 0x80;
-    newAction.param3 = 0;
-    tftActions_.insert(newAction);
-}
-
-bool TftDisplay::getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest) {
-    return tftAlgo_->getDx7Feedback(algo, opSource, opDest);
 }
 
 void TftDisplay::clearAlgoFG() {

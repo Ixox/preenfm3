@@ -776,8 +776,8 @@ For MSFA:
 
 - Draw the DX7 algorithm from MSFA’s `FmAlgorithm`/`FmCore` tables instead of
   PFM3’s `algoInformation` (`Common.h:739-773`, `ScreenEditor.cpp:4351-4365`).
-  Implemented with the `dx7algo1..32` tables and `drawDx7Algo()` in
-  `TftAlgo`/`TftDisplay`.
+  Implemented with the `dx7algo1..32` tables in `EditorDx7Algo`
+  (`engine/msfa/`) and the generic `TftAlgo::drawAlgoFromTable()`.
 - Draw the DX7 rate/level envelope (four rates, four levels) rather than the
   PFM3 ADSR curves. Implemented as follows:
   - `msfaGetEnvelopeDisplay()` (`MsfaEngine.cpp`) converts one operator’s

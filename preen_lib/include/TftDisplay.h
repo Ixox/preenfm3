@@ -104,6 +104,7 @@ struct TFTAction {
     uint8_t param3 = 0;
     uint16_t param4 = 0;
     uint8_t param5 = 0;
+    const uint8_t* algoTable = nullptr;
 };
 
 #define OSCILLO_WIDTH       160
@@ -172,9 +173,7 @@ public:
     void oscilloNewLowerFrequency(float lf);
     void oscilloRecord32Samples(float* samples);
 
-    void drawAlgo(int algo);
-    void drawDx7Algo(int algo);
-    bool getDx7Feedback(int algo, uint8_t& opSource, uint8_t& opDest);
+    void drawAlgoTable(const uint8_t* algoTable);
     void highlightOperator(int op);
     void eraseHighlightOperator(int op);
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);

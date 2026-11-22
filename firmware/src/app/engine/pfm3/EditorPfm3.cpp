@@ -18,6 +18,7 @@
  */
 
 #include "EditorPfm3.h"
+#include "EditorPfm3Algo.h"
 #include "Pfm3ParameterRows.h"
 #include "Pfm3Preset.h"
 #include "ScreenEditor.h"
@@ -2667,6 +2668,8 @@ void EditorPfm3::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftD
     for (int i = 0; i < MATRIX_SOURCE_MAX; i++) {
         matrixSourcePosition[matrixSourceOrder[i]] = position++;
     }
+
+    EditorPfm3Algo::init();
 }
 
 SynthEngineType EditorPfm3::getEngineType() const {
@@ -2776,7 +2779,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
         case ROW_ENGINE:
             if (encoder == ENCODER_ENGINE_ALGO) {
                 checkOperatorNumber();
-                tft_->drawAlgo(newValue);
+                tft_->drawAlgoTable(EditorPfm3Algo::table(newValue));
             }
             break;
         case ROW_LFOSEQ1:
@@ -2809,7 +2812,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
             if (hideParam_[encoder6]) {
                 return;
             }
-            struct ModulationIndex im = modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][encoder6];
+            struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][encoder6];
             if (im.source != im.destination) {
                 tft_->highlightIM(encoder6, im.source, im.destination);
             } else {
@@ -2826,7 +2829,7 @@ void EditorPfm3::newPfm3ParamValue(int& refreshStatus, int timbre, int currentRo
             }
             int mixNumber = (currentRow - ROW_OSC_MIX1) * 2 + ((encoder & 0x2) >> 1);
             int currentAlgo = (int)synthState_->pfm3Preset_->engine1.algo;
-            int operatorNumber = allAlgos[currentAlgo][mixNumber * 2 + 1] - 1;
+            int operatorNumber = EditorPfm3Algo::table(currentAlgo)[mixNumber * 2 + 1] - 1;
 
             tft_->highlightOperator(operatorNumber);
             mixChangedCounter_[encoder6] = 4;
@@ -2920,7 +2923,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
 }
 
 void EditorPfm3::drawAlgorithm() {
-    tft_->drawAlgo(synthState_->pfm3Preset_->engine1.algo);
+    tft_->drawAlgoTable(EditorPfm3Algo::table(synthState_->pfm3Preset_->engine1.algo));
 }
 
 void EditorPfm3::drawPageHeader() {
@@ -2958,7 +2961,7 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder& rowEncod
         case ROW_MODULATION1:
         case ROW_MODULATION2:
         case ROW_MODULATION3: {
-            struct ModulationIndex im = modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][button];
+            struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][button];
             if (im.source == 0) {
                 hideParam_[button] = true;
             } else {
@@ -2983,7 +2986,7 @@ void EditorPfm3::drawParameterName(int button, const struct RowEncoder& rowEncod
                 tft_->print(paramRow->paramName[rowEncoder.encoder]);
 
                 tft_->printSmallChar('(');
-                tft_->printSmallChar(allAlgos[currentAlgo][mixNumber * 2 + 1]);
+                tft_->printSmallChar(EditorPfm3Algo::table(currentAlgo)[mixNumber * 2 + 1]);
                 tft_->printSmallChar(')');
             } else {
                 tft_->setCharColor(COLOR_DARK_GRAY);
@@ -3028,7 +3031,7 @@ void EditorPfm3::tempoClick() {
         if (imChangedCounter_[e] > 0) {
             imChangedCounter_[e]--;
             if (imChangedCounter_[e] == 0) {
-                struct ModulationIndex im = modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][e];
+                struct ModulationIndex im = EditorPfm3Algo::modulationIndex[(int)synthState_->pfm3Preset_->engine1.algo][e];
                 if (im.source != im.destination) {
                     tft_->eraseHighlightIM(e, im.source, im.destination);
                 } else {
