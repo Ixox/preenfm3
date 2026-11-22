@@ -41,7 +41,7 @@ void ConfigurationFile::loadConfig(uint8_t* midiConfigBytes) {
     }
     reachableProperties[size] = 0;
 
-    int result = load(PROPERTIES, 0, reachableProperties, size);
+    load(PROPERTIES, 0, reachableProperties, size);
     int loop = 0;
     char* readProperties = reachableProperties;
     while (loop != -1 && (readProperties - reachableProperties) < size) {

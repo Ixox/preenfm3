@@ -36,7 +36,6 @@ private:
 
     float phase_;
     float phaseStep_;
-    int gateValue_;
     int target_;
     int currentValue_;
     bool gated_;

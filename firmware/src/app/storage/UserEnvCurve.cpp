@@ -164,9 +164,7 @@ int UserEnvCurve::fillUserEnvCurveFromTxt(int f, char* buffer, int filled, bool 
 void UserEnvCurve::normalize(float* buffer, int numberOfSamples) {
     float min = 0;
     float max = 0;
-    float average = 0;
     for (int i = 0; i < numberOfSamples; i++) {
-        average += buffer[i];
         if (buffer[i] < min) {
             min = buffer[i];
         }

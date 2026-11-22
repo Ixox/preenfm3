@@ -776,8 +776,8 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         const float scale = sqrt3(fb);
 
         float* sp = this->sampleBlock_;
-        float lowL = v0L_, highL = 0, bandL = v1L_;
-        float lowR = v0R_, highR = 0, bandR = v1R_;
+        float lowL = v0L_, bandL = v1L_;
+        float lowR = v0R_, bandR = v1R_;
 
         const float svfGain = (1 + SVFGAINOFFSET + filterParam2 * filterParam2 * 0.75f) * mixerGain_;
 
@@ -913,7 +913,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float _lx2L = v5L_, _lx2R = v5R_;
         const float f1 = clamp(f * 0.56f, filterWindowMin, filterWindowMax);
         float coef1 = (1.0f - f1) / (1.0f + f1);
-        const float f2 = clamp(0.25f + f * 0.08f, filterWindowMin, filterWindowMax);
         float coef2 = (1.0f - f1) / (1.0f + f1);
 
         for (int k = BLOCK_SIZE; k--;) {
@@ -1598,7 +1597,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float lowR2 = v2R_, highR2 = 0, bandR2 = v3R_;
         float lowL3 = v4L_, highL3 = 0, bandL3 = v5L_;
         float lowR3 = v4R_, highR3 = 0, bandR3 = v5R_;
-        float out;
 
         for (int k = BLOCK_SIZE; k--;) {
             // Left voice
@@ -1651,9 +1649,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
 
         float filterParam2 = clamp(matrixFilterParam2 + shared.effect1.param2, 0, 1);
 
-        const float f1 = clamp((fxParam1_), 0.001f, 1); // allpass F
-        float coef1 = (1.0f - f1) / (1.0f + f1);
-
         float* sp = this->sampleBlock_;
 
         float localv0L = v0L_;
@@ -1704,7 +1699,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
 
         float f = filterParam2 * 0.5f + 0.12f;
         float pattern = (1 - 0.7f * f);
-        float invAttn = sqrt3(currentTimbre_->getNumberOfVoiceInverse());
         int drive = clamp(27 + sqrt3(fxParam1_) * 86, 0, 255);
         float gain = 1.1f + 44 * panTable[drive];
         float gainCorrection = (1.2f - sqrt3(panTable[64 + (drive >> 1)] * 0.6f));
@@ -2051,7 +2045,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float _lx2L = v5L_, _lx2R = v5R_;
         const float f1 = clamp(0.57f - fxParam1_ * 0.33f, filterWindowMin, filterWindowMax);
         float coef1 = (1.0f - f1) / (1.0f + f1);
-        const float f2 = clamp(0.50f - fxParam1_ * 0.39f, filterWindowMin, filterWindowMax);
         float coef2 = (1.0f - f1) / (1.0f + f1);
 
         const float r = 0.9940f;
@@ -2369,7 +2362,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         filterParam2 = ((OffsetTmp + 9.0f * filterParam2) * .1f);
 
         const float offset = filterParam2 * filterParam2 * 0.17f;
-        const float spread = 0.8f + filterParam2 * 0.8f;
         const float lrDelta = 0.005f * folded;
         const float range = 0.47f;
 
@@ -2700,8 +2692,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         const float a = 0.85f;
         const float b = 1.f - a;
 
-        const float f = 0.33f + f1;
-
         coef3 = clamp(coef3 + (*sp * 0.0075f), 0, 1); // nested f xmod
 
         for (int k = BLOCK_SIZE; k--;) {
@@ -2790,9 +2780,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float lowR3 = v4R_, bandR3 = v5R_;
 
         const float svfGain = (1 + SVFGAINOFFSET) * mixerGain_;
-
-        const float fap1 = clamp(f1, filterWindowMin, filterWindowMax);
-        float coef1 = (1.0f - fap1) / (1.0f + fap1);
 
         float out;
         const float r = 0.985f;
@@ -2895,9 +2882,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float lowR3 = v4R_, bandR3 = v5R_;
 
         const float svfGain = (1 + SVFGAINOFFSET) * mixerGain_;
-
-        const float fap1 = clamp(f1, filterWindowMin, filterWindowMax);
-        float coef1 = (1.0f - fap1) / (1.0f + fap1);
 
         float out;
         const float r = 0.985f;
@@ -3097,9 +3081,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float invCut = 1 - cut;
 
         // const float r = 0.985f;
-        const float bipolarf = fxParam1_ - 0.5f;
-        const float fold3 = (fold(13 * bipolarf) + 0.125f) * 1.5f;
-        float dc = cut2 * 0.1f;
         float* sp = this->sampleBlock_;
 
         float buf1L = v0L_, buf2L = v1L_, buf3L = v2L_;
@@ -3289,8 +3270,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float _ly2L = v6L_, _ly2R = v6R_;
         float _lx2L = v7L_, _lx2R = v7R_;
 
-        float resoclip;
-
         const float bipolarf = fxParam1_ - 0.5f;
         const float fold3 = (fold(13 * bipolarf) + 0.125f) * 0.25f;
         const float f1 = clamp(0.33f + fold3 * (1 - cut * 0.5f), filterWindowMin, filterWindowMax);
@@ -3299,7 +3278,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float coef2 = (1.0f - f2) / (1.0f + f2);
 
         float finalGain = mixerGain_ * 1.25f;
-        float nz;
 
         for (int k = BLOCK_SIZE; k--;) {
 
@@ -3363,11 +3341,10 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         const float scale = sqrt3(fb);
 
         float dc = f * 0.05f * fb;
-        const float f2 = 0.25f + f * 0.5f;
 
         float* sp = this->sampleBlock_;
-        float lowL = v0L_, highL = 0, bandL = v1L_;
-        float lowR = v0R_, highR = 0, bandR = v1R_;
+        float lowL = v0L_, bandL = v1L_;
+        float lowR = v0R_, bandR = v1R_;
 
         const float svfGain = (1 + filterParam2 * filterParam2 * 0.75f) * mixerGain_;
 
@@ -3556,14 +3533,11 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
 
         // --------- init ---------
         float f0b0, f0b1;       // filter 0 numerator coefficients
-        float f0a0, f0a1;       // filter 0 denominator coefficients
+        float f0a1;             // filter 0 denominator coefficient
         float f1b = 1;          // filter 1 numerator, really just a gain compensation
         float f1a0, f1a1, f1a2; // filter 1 denominator coefficients
         float f2b = 1;          // filter 2 numerator, same
         float f2a0, f2a1, f2a2; // filter 2 denominator coefficients
-        float f0state;
-        float f1state0, f1state1;
-        float f2state0, f2state1;
 
         // filter section 1, one zero and one pole highpass
         // pole location is affected by feedback
@@ -3588,7 +3562,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
         float targetgain = 2 / (1 + reso_k) + 0.5f * vcf_reso + 0.2f * fxParamA1_;
         f0b0 = 1; // (z - z0) * z^-1
         f0b1 = -1;
-        f0a0 = 1; // (z - p0) * z^-1
         f0a1 = -p0f;
 
         // adjust gain
@@ -3709,7 +3682,6 @@ void Voice::fxAfterBlock(float matrixFilterFrequency, float matrixFilterParam2, 
 
         float hpCoef1 = 1 / (1 + p);
         float hpCoef2 = p * hpCoef1;
-        float hpIn;
 
         const float r = 0.9940f;
 
