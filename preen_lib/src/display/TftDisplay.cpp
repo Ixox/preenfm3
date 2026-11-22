@@ -75,29 +75,10 @@ uint16_t convertTo565(uint32_t x) {
 
 TftDisplay::TftDisplay() {
     pushToTftInProgress_ = false;
-    pushingPart_ = 0;
-
-    tftDirtyBits_ = TFT_PART_ALL_BITS;
-
-    areaY_[TFT_PART_HEADER] = 0;
-    areaHeight_[TFT_PART_HEADER] = 40;
-
-    areaY_[TFT_PART_VALUES] = 40;
-    areaHeight_[TFT_PART_VALUES] = 40;
-    areaY_[TFT_PART_VALUES2] = 80;
-    areaHeight_[TFT_PART_VALUES2] = 40;
-    areaY_[TFT_PART_VALUES3] = 120;
-    areaHeight_[TFT_PART_VALUES3] = 40;
-
-    areaY_[TFT_PART_OSCILLO] = 160;
-    areaHeight_[TFT_PART_OSCILLO] = 40;
-    areaY_[TFT_PART_OSCILLO2] = 200;
-    areaHeight_[TFT_PART_OSCILLO2] = 40;
-    areaY_[TFT_PART_OSCILLO3] = 240;
-    areaHeight_[TFT_PART_OSCILLO3] = 30;
-
-    areaY_[TFT_PART_BUTTONS] = 270;
-    areaHeight_[TFT_PART_BUTTONS] = 50;
+    pushingY0_ = 0;
+    pushingY1_ = 0;
+    nextDirtyRow_ = 0;
+    markAllDirty();
 
     currentAction_.actionType = 0;
     lastOscilloSaturateTic_ = 0;
@@ -140,9 +121,7 @@ TftDisplay::TftDisplay() {
     tftRefreshing_ = true;
     fgAlgoDirty_ = true;
     flatOscilloAlreadyDisplayed_ = true;
-    tftPushMillis_ = 0;
     tftGetStatusMillis_ = 0;
-    part_ = 0;
     olscilloYScale_ = 1.0f;
     tftMustBeReset_ = false;
 }
@@ -277,81 +256,172 @@ void TftDisplay::reset() {
     tftMustBeReset_ = false;
 }
 
-void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
-
-    uint16_t yBottom = y + height;
-
-    if (unlikely(y < 40)) {
-        tftDirtyBits_ |= 0b00000001;
+void TftDisplay::markRows(uint16_t y0, uint16_t y1) {
+    if (y0 >= TFT_HEIGHT || y1 <= y0) {
+        return;
+    }
+    if (y1 > TFT_HEIGHT) {
+        y1 = TFT_HEIGHT;
     }
 
-    if (unlikely(y < 80 && yBottom >= 40)) {
-        tftDirtyBits_ |= 0b00000010;
+    // Keep the multi-word dirty-bitmap update atomic with the SPI error ISR.
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
+    uint16_t firstWord = y0 >> 5;
+    uint16_t lastWord = (y1 - 1) >> 5;
+    uint32_t firstMask = 0xFFFFFFFFUL << (y0 & 31);
+    uint32_t lastMask = 0xFFFFFFFFUL >> (31 - ((y1 - 1) & 31));
+
+    if (firstWord == lastWord) {
+        dirtyRows_[firstWord] |= firstMask & lastMask;
+    } else {
+        dirtyRows_[firstWord] |= firstMask;
+        for (uint16_t w = firstWord + 1; w < lastWord; w++) {
+            dirtyRows_[w] = 0xFFFFFFFFUL;
+        }
+        dirtyRows_[lastWord] |= lastMask;
     }
 
-    if (unlikely(y < 120 && yBottom >= 80)) {
-        tftDirtyBits_ |= 0b00000100;
+    __set_PRIMASK(primask);
+}
+
+void TftDisplay::clearRows(uint16_t y0, uint16_t y1) {
+    if (y0 >= TFT_HEIGHT || y1 <= y0) {
+        return;
+    }
+    if (y1 > TFT_HEIGHT) {
+        y1 = TFT_HEIGHT;
     }
 
-    if (unlikely(y < 160 && yBottom >= 120)) {
-        tftDirtyBits_ |= 0b00001000;
-    }
+    uint16_t firstWord = y0 >> 5;
+    uint16_t lastWord = (y1 - 1) >> 5;
+    uint32_t firstMask = 0xFFFFFFFFUL << (y0 & 31);
+    uint32_t lastMask = 0xFFFFFFFFUL >> (31 - ((y1 - 1) & 31));
 
-    if (unlikely(y < 200 && yBottom >= 160)) {
-        tftDirtyBits_ |= 0b00010000;
-    }
-
-    if (unlikely(y < 240 && yBottom >= 200)) {
-        tftDirtyBits_ |= 0b00100000;
-    }
-
-    if (unlikely(y < 270 && yBottom >= 230)) {
-        tftDirtyBits_ |= 0b01000000;
-    }
-
-    if (unlikely(yBottom >= 270)) {
-        tftDirtyBits_ |= 0b10000000;
+    if (firstWord == lastWord) {
+        dirtyRows_[firstWord] &= ~(firstMask & lastMask);
+    } else {
+        dirtyRows_[firstWord] &= ~firstMask;
+        for (uint16_t w = firstWord + 1; w < lastWord; w++) {
+            dirtyRows_[w] = 0;
+        }
+        dirtyRows_[lastWord] &= ~lastMask;
     }
 }
 
-void TftDisplay::tic(bool checkDisplayPower) {
+void TftDisplay::markAllDirty() {
+    memset(dirtyRows_, 0xFF, sizeof(dirtyRows_));
+}
 
-    uint32_t offset;
+bool TftDisplay::anyDirty() const {
+    for (uint16_t w = 0; w < TFT_DIRTY_WORDS; w++) {
+        if (dirtyRows_[w] != 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool TftDisplay::findNextDirtyRun(uint16_t startRow, uint16_t& y0, uint16_t& y1) const {
+    if (startRow >= TFT_HEIGHT) {
+        startRow = 0;
+    }
+
+    for (uint16_t pass = 0; pass < 2; pass++) {
+        uint16_t begin = (pass == 0) ? startRow : 0;
+        uint16_t end = (pass == 0) ? TFT_HEIGHT : startRow;
+
+        for (uint16_t row = begin; row < end; row++) {
+            if (dirtyRows_[row >> 5] & (1UL << (row & 31))) {
+                y0 = row;
+
+                uint16_t maxEnd = row + TFT_MAX_BAND_HEIGHT;
+                if (maxEnd > TFT_HEIGHT) {
+                    maxEnd = TFT_HEIGHT;
+                }
+
+                y1 = row + 1;
+                while (y1 < maxEnd && (dirtyRows_[y1 >> 5] & (1UL << (y1 & 31)))) {
+                    y1++;
+                }
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void TftDisplay::setDirtyArea(uint16_t y, uint16_t height) {
+    uint32_t end = (uint32_t)y + height;
+    if (y >= TFT_HEIGHT || end <= y) {
+        return;
+    }
+    if (end > TFT_HEIGHT) {
+        end = TFT_HEIGHT;
+    }
+    markRows(y, (uint16_t)end);
+}
+
+void TftDisplay::ticTimer(bool checkDisplayPower) {
+
     uint32_t currentMillis = HAL_GetTick();
 
-    if (unlikely((currentMillis - tftPushMillis_) > 20)) {
-
-        // Only if previous DMA pushed is finished
-        if (checkDisplayPower && (currentMillis - tftGetStatusMillis_) > 500) {
+    if (checkDisplayPower && (currentMillis - tftGetStatusMillis_) > 500) {
+        status_[1] = 1;
+        if (ILI9341_ReadPowerMode(status_) != HAL_OK) {
             status_[1] = 1;
-            if (ILI9341_ReadPowerMode(status_) != HAL_OK) {
-                status_[1] = 1;
-            }
-            // Try to detect when TFT is BLANK
-            if (status_[1] != 222 && status_[1] != 156) {
-                if (status_[3] == status_[1]) {
-                    clearActions();
-                    tftMustBeReset_ = true;
-                }
-            }
-            // status_2 allows to make sure we got 2 wrong number in a row
-            status_[3] = status_[1];
-            tftGetStatusMillis_ = currentMillis;
-            return;
         }
-
-        if (pushToTft()) {
-            // a part have been pushed
-            tftPushMillis_ = currentMillis;
-            return;
+        // Try to detect when TFT is BLANK
+        if (status_[1] != 222 && status_[1] != 156) {
+            if (status_[3] == status_[1]) {
+                tftMustBeReset_ = true;
+            }
         }
+        // status_2 allows to make sure we got 2 wrong number in a row
+        status_[3] = status_[1];
+        tftGetStatusMillis_ = currentMillis;
+        return;
     }
 
-    // If doing nothing try to take next action
-    if ((currentAction_.actionType == 0) && (tftActions_.getCount() > 0)) {
-        currentAction_ = tftActions_.remove();
-        currentActionStep_ = 0;
+    if (currentAction_.actionType == TFT_WAITCYCLE) {
+        currentAction_.param2--;
+        if (currentAction_.param2 == 0) {
+            currentAction_.actionType = 0;
+        }
     }
+}
+
+void TftDisplay::processActions(uint8_t maxSteps) {
+    for (uint8_t n = 0; n < maxSteps; n++) {
+        if (!PFM_IS_DMA2D_READY()) {
+            break;
+        }
+        if (currentAction_.actionType == 0) {
+            if (tftActions_.getCount() == 0) {
+                break;
+            }
+            uint32_t primask = __get_PRIMASK();
+            __disable_irq();
+            currentAction_ = tftActions_.remove();
+            currentActionStep_ = 0;
+            __set_PRIMASK(primask);
+        }
+        if (currentAction_.actionType == TFT_WAITCYCLE) {
+            break;
+        }
+        processActionStep();
+    }
+
+    if (!pushToTftInProgress_ && anyDirty()) {
+        pushToTft();
+    }
+}
+
+void TftDisplay::processActionStep() {
+
+    uint32_t offset;
 
     switch (currentAction_.actionType) {
     case TFT_NOP:
@@ -400,25 +470,18 @@ void TftDisplay::tic(bool checkDisplayPower) {
         break;
     case TFT_DRAW_FILL_TFT:
         // CLEAR tftMemory
-        // 4 steps : tft is divided in 4 parts
         if (PFM_IS_DMA2D_READY()) {
 
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_R2M);
             WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[currentAction_.param5]);
 
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 0);
-
-            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL),
-                       (areaHeight_[currentAction_.param3] | (240 << DMA2D_POSITION_NLR_PL)));
-            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + areaY_[currentAction_.param3] * 240));
+            MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (TFT_HEIGHT | (TFT_WIDTH << DMA2D_POSITION_NLR_PL)));
+            WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)tftMemory);
             PFM_START_DMA2D();
 
-            if (currentAction_.param3 == 0) {
-                tftDirtyBits_ = TFT_PART_ALL_BITS;
-                currentAction_.actionType = 0;
-            } else {
-                currentAction_.param3--;
-            }
+            markAllDirty();
+            currentAction_.actionType = 0;
         }
         break;
     case TFT_DRAW_OSCILLO:
@@ -466,7 +529,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(fgOscillo_));
                 PFM_START_DMA2D();
                 currentAction_.actionType = 0;
-                tftDirtyBits_ |= TFT_PART_OSCILLO_BITS;
+                setDirtyArea(TFT_OSCILLO_Y, 100);
             }
             break;
         }
@@ -529,7 +592,7 @@ void TftDisplay::tic(bool checkDisplayPower) {
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
                 PFM_START_DMA2D();
 
-                tftDirtyBits_ |= TFT_PART_OSCILLO_BITS;
+                setDirtyArea(TFT_OSCILLO_Y, 100);
                 currentAction_.actionType = 0;
             }
             break;
@@ -636,30 +699,25 @@ void TftDisplay::tic(bool checkDisplayPower) {
     case TFT_RESTART_REFRESH:
         tftRefreshing_ = true;
         // start from the top
-        part_ = 0;
+        nextDirtyRow_ = 0;
         currentAction_.actionType = 0;
         break;
     case TFT_PAUSE_REFRESH:
         tftRefreshing_ = false;
         currentAction_.actionType = 0;
         break;
-    case TFT_WAITCYCLE:
-        currentAction_.param2--;
-        if (currentAction_.param2 == 0) {
-            currentAction_.actionType = 0;
-        }
-        break;
     }
     additionalActions();
 }
 
 /*
- * Push tftMemory to physical TFT
- * Screen is divided into UPDATE_NUMBER_OF_PARTS parts, and only at a time is pushed.
+ * Push tftMemory to physical TFT.
+ * Dirty rows are tracked as a 320-bit bitmap; one contiguous run is pushed
+ * per call, capped at TFT_MAX_BAND_HEIGHT rows.
  */
 bool TftDisplay::pushToTft() {
 
-    if (tftDirtyBits_ == 0 || !tftRefreshing_) {
+    if (!tftRefreshing_ || pushToTftInProgress_ || !anyDirty()) {
         return false;
     }
 
@@ -668,35 +726,39 @@ bool TftDisplay::pushToTft() {
         return false;
     }
 
-    // 4 max - can break before
-    int p;
-    for (p = 0; p < TFT_NUMBER_OF_PARTS; p++) {
-        if ((tftDirtyBits_ & (1UL << part_)) > 0) {
-            // Update TFT part
-            ILI9341_Select();
-
-            uint16_t height = areaHeight_[part_];
-            uint16_t y = areaY_[part_];
-
-            if (ILI9341_SetAddressWindow(y, y + height - 1) == HAL_OK) {
-
-                PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
-
-                // Make sure the composed pixels are visible before SPI DMA reads them.
-                __DSB();
-
-                if (HAL_OK == HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t*)tftMemory + (y * 240 * 2), height * 240 * 2)) {
-                    tftDirtyBits_ &= ~(1UL << part_);
-                    pushingPart_ = part_;
-                    pushToTftInProgress_ = true;
-                }
-            }
-            part_ = (part_ + 1) % TFT_NUMBER_OF_PARTS;
-            break;
-        }
-        part_ = (part_ + 1) % TFT_NUMBER_OF_PARTS;
+    uint16_t y0, y1;
+    if (!findNextDirtyRun(nextDirtyRow_, y0, y1)) {
+        return false;
     }
 
+    ILI9341_Select();
+
+    if (ILI9341_SetAddressWindow(y0, y1 - 1) != HAL_OK) {
+        ILI9341_Unselect();
+        return false;
+    }
+
+    PFM_SET_PIN(ILI9341_DC_GPIO_Port, ILI9341_DC_Pin);
+
+    // Make sure the composed pixels are visible before SPI DMA reads them.
+    __DSB();
+
+    uint32_t offset = (uint32_t)y0 * TFT_WIDTH * 2;
+    uint32_t size = (uint32_t)(y1 - y0) * TFT_WIDTH * 2;
+
+    pushingY0_ = y0;
+    pushingY1_ = y1;
+    pushToTftInProgress_ = true;
+    clearRows(y0, y1);
+
+    if (HAL_OK != HAL_SPI_Transmit_DMA(&ILI9341_SPI_PORT, (uint8_t*)tftMemory + offset, (uint16_t)size)) {
+        markRows(y0, y1);
+        pushToTftInProgress_ = false;
+        ILI9341_Unselect();
+        return false;
+    }
+
+    nextDirtyRow_ = (y1 >= TFT_HEIGHT) ? 0 : y1;
     return true;
 }
 
@@ -706,8 +768,9 @@ void TftDisplay::pushToTftFinished() {
 }
 
 void TftDisplay::pushToTftError() {
-    // Keep the dirty bit set so the part is retried on the next push.
+    // Restore the in-flight range so it is retried on the next push.
     ILI9341_Unselect();
+    markRows(pushingY0_, pushingY1_);
     pushToTftInProgress_ = false;
 }
 
@@ -757,7 +820,6 @@ void TftDisplay::clearMixerLabels() {
 void TftDisplay::clear() {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_FILL_TFT;
-    newAction.param3 = TFT_NUMBER_OF_PARTS - 1;
     newAction.param5 = COLOR_BLACK;
     tftActions_.insert(newAction);
     bHasJustBeenCleared_ = true;

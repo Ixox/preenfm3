@@ -510,7 +510,7 @@ void Sequencer::clear(uint8_t instrument) {
 }
 
 // From main loop thread
-// Different lower priority thread than tic() above
+// Different lower priority thread than ticMillis() above
 // We save in the stepCurrentInstrument !
 void Sequencer::insertNote(uint8_t instrument, uint8_t note, uint8_t velocity) {
     if (stepMode_) {

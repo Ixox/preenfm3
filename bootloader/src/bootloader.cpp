@@ -273,7 +273,8 @@ void bootloaderTftTic() {
     }
 
     pfm3Millis++;
-    tft.tic(false);
+    tft.ticTimer(false);
+    tft.processActions(TFT_MAX_ACTIONS_PER_LOOP);
 }
 
 void dependencyInjection() {

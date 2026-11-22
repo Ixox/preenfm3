@@ -58,6 +58,8 @@ TftAlgo tftAlgo;
 Synth synth;
 Storage sdCard;
 Sequencer sequencer;
+// Set by the audio ISR when a timbre clips; the main loop displays CLIPPING.
+// One bit per timbre.
 uint8_t saturatedOutput = 0;
 uint8_t saturatedOutputMem = 0;
 bool saturatedOutputDisplayed = 0;
@@ -66,6 +68,9 @@ int ili9341NumberOfErrors = 0;
 
 RingBuffer<uint8_t, 64> usbMidi;
 
+// Audio output buffers, one per SAI block. Each is two 64-int32 halves
+// (double buffer). The SAI DMA runs circularly and plays one half while the
+// audio callbacks refill the other.
 RAM_D2_SECTION int32_t waveform1[64 * 2];
 RAM_D2_SECTION int32_t waveform2[64 * 2];
 RAM_D2_SECTION int32_t waveform3[64 * 2];
@@ -111,6 +116,9 @@ void preenfm3Init() {
         waveform3[s] = 0;
     }
 
+    // Start the three circular SAI DMA streams. From this point the audio
+    // callbacks run and become the clock that drives the whole synth; they
+    // must never be starved.
     HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t*)waveform3, 64 * 2);
     HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)waveform2, 64 * 2);
     HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)waveform1, 64 * 2);
@@ -122,10 +130,11 @@ void preenfm3Init() {
 
     // Prepare Screen before turning on the backlight. It's nicer.
     if (erreurSD == 0) {
-        while (fmDisplay3.needRefresh()) {
-            if (tft.getNumberOfPendingActions() < 100) {
+        while (fmDisplay3.needRefresh() || tft.getNumberOfPendingActions() > 0) {
+            if (fmDisplay3.needRefresh() && tft.getNumberOfPendingActions() < 100) {
                 fmDisplay3.refreshAllScreenByStep();
             }
+            tft.processActions(TFT_MAX_ACTIONS_PER_LOOP);
         }
     } else {
         tft.clear();
@@ -138,7 +147,7 @@ void preenfm3Init() {
         tft.print((int)erreurSD);
         tft.print("#");
     }
-    // For tft.tic
+    // For tft.ticTimer
     HAL_Delay(400);
 
     // the TFT should be ready, we can turn on the led backlight
@@ -156,6 +165,11 @@ void preenfm3Init() {
     HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
 }
 
+// Main loop (thread mode): runs continuously, no fixed period. Handles work
+// that may take variable time or can be deferred: MIDI async actions, encoder
+// actions, UI refresh, oscillo, TFT reset/reinit and tft.processActions().
+// Some tasks self-pace with HAL_GetTick() (oscillo every 125 ms, CPU display
+// every 1 s). Audio does not run here; it runs from the SAI DMA IRQ.
 void preenfm3Loop() {
     uint32_t currentMillis = HAL_GetTick();
 
@@ -211,8 +225,8 @@ void preenfm3Loop() {
     }
 
     if (synthState.fullState_.synthMode == SYNTH_MODE_EDITOR) {
-        // Oscillo refreqh : 8 Hz = 125 ms
-        if (unlikely((currentMillis - oscilloMillis) >= 125)) {
+        // Oscillo refresh: 20 Hz = 50 ms
+        if (unlikely((currentMillis - oscilloMillis) >= 50)) {
             oscilloMillis = currentMillis;
             tft.oscilloRrefresh();
             float lf = synth.getLowerNoteFrequency(synthState.getCurrentTimbre());
@@ -241,6 +255,8 @@ void preenfm3Loop() {
             tft.printSmallChar(ili9341NumberOfErrors);
         }
     }
+
+    tft.processActions(TFT_MAX_ACTIONS_PER_LOOP);
 
     if (synthState.fullState_.midiConfigValue[MIDICONFIG_CPU_USAGE]) {
         if (unlikely((currentMillis - cpuUsageMillis) > 1000)) {
@@ -277,6 +293,23 @@ void preenfm3Loop() {
     }
 }
 
+// Two execution contexts: this 1 kHz SysTick ISR does only short, deterministic
+// work that needs an exact millisecond cadence; variable or slow work is
+// deferred to preenfm3Loop() in thread mode. Audio is separate: it runs from
+// the SAI DMA IRQ (DMA1_Stream0 -> HAL_SAI_Tx*CpltCallback).
+//
+// Tick map (SysTick runs at 1 kHz):
+//   preenfm3Tic()   SysTick ISR entry:
+//                     encoders        every 2 ms
+//                     sequencer       every 1 ms
+//                     tft.ticTimer()  every 1 ms (power check every 500 ms,
+//                                     TFT_WAITCYCLE countdown only)
+//                     slowTick()      every 256 ms (UI/menu timing; a divider
+//                                     off this same 1 kHz tick)
+//   tft.processActions()  main loop only: drains TFT actions and starts the
+//                         next dirty band. Never call from an ISR.
+// Historical note: the old TftDisplay::tic() was split into ticTimer()
+// (ISR-safe timing) and processActions() (main-loop drawing).
 void preenfm3Tic() {
 
     if (unlikely(!readyForTFT)) {
@@ -295,7 +328,7 @@ void preenfm3Tic() {
     sequencer.ticMillis();
 
     // TFT DMA2D opertations
-    tft.tic(synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
+    tft.ticTimer(synthState.fullState_.midiConfigValue[MIDICONFIG_TFT_AUTO_REINIT] == 1);
 
     // Pfm3 Misc tics
     switch (tftCpt & 0xff) {
@@ -318,6 +351,8 @@ void preenfm3Tic() {
     }
 }
 
+// Runs from the audio ISR only: drain the MIDI byte rings without blocking.
+// The rings are filled by the USART and USB interrupts.
 void preenfm3DecodeMidiIn() {
     while (usartBufferIn.getCount() > 0) {
         midiDecoder.newByte(usartBufferIn.remove());
@@ -327,6 +362,13 @@ void preenfm3DecodeMidiIn() {
     }
 }
 
+// --- Audio ISR entry points ---------------------------------------------
+// Called from the SAI DMA IRQ (DMA1_Stream0) at the audio block rate. They
+// produce every sample the synth plays, so they are the hardest real-time
+// path in the firmware: short, non-blocking, allocation-free.
+
+// Audio ISR (DMA complete): the first half is playing, so refill the second
+// half. Missing this deadline glitches the audio.
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef* hsai) {
     if (hsai == &hsai_BlockA1) {
         preenfm3DecodeMidiIn();
@@ -337,12 +379,9 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef* hsai) {
     }
 }
 
-/**
- * @brief Rx Transfer half completed callback.
- * @param  hsai pointer to a SAI_HandleTypeDef structure that contains
- *              the configuration information for SAI module.
- * @retval None
- */
+// Audio ISR (DMA half complete): the second half is playing, so refill the
+// first half. Together with TxCplt this is the most time-critical entry point
+// in the firmware; never block or allocate here.
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef* hsai) {
     if (hsai == &hsai_BlockA1) {
         preenfm3DecodeMidiIn();

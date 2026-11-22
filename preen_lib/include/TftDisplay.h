@@ -22,18 +22,8 @@
 #include "TftAlgo.h"
 #include "stm32h7xx_hal.h"
 
-#define TFTACTION_BUFFER_SIZE 128
-
-enum {
-    TFT_PART_HEADER = 0,
-    TFT_PART_VALUES,
-    TFT_PART_VALUES2,
-    TFT_PART_VALUES3,
-    TFT_PART_OSCILLO,
-    TFT_PART_OSCILLO2,
-    TFT_PART_OSCILLO3,
-    TFT_PART_BUTTONS
-};
+#define TFTACTION_BUFFER_SIZE    128
+#define TFT_MAX_ACTIONS_PER_LOOP 8
 
 enum {
     TFT_NOP = 0,
@@ -57,13 +47,10 @@ enum {
     TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM
 };
 
-#define TFT_PART_HEADER_BITS  0b00000001
-#define TFT_PART_VALUES_BITS  0b00001110
-#define TFT_PART_OSCILLO_BITS 0b01110000
-#define TFT_PART_BUTTONS_BITS 0b10000000
-#define TFT_PART_ALL_BITS     0b11111111
-
-#define TFT_NUMBER_OF_PARTS 8
+#define TFT_WIDTH           240
+#define TFT_HEIGHT          320
+#define TFT_DIRTY_WORDS     ((TFT_HEIGHT + 31) / 32)
+#define TFT_MAX_BAND_HEIGHT 128
 
 #define RAM_D1_SECTION        __attribute__((section(".ram_d1")))
 #define DMA2D_POSITION_NLR_PL (uint32_t)POSITION_VAL(DMA2D_NLR_PL) /*!< Required left shift to set pixels per lines value */
@@ -123,7 +110,8 @@ public:
     virtual ~TftDisplay();
     void init(TftAlgo* tftAlgo);
 
-    void tic(bool checkDisplayPower);
+    void ticTimer(bool checkDisplayPower);
+    void processActions(uint8_t maxSteps);
     virtual void additionalActions() {};
 
     bool pushToTft();
@@ -231,8 +219,14 @@ private:
     void oscilloFillWithRand(int randtype);
     void oscilloBgDrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 
+    void processActionStep();
+    void markRows(uint16_t y0, uint16_t y1);
+    void clearRows(uint16_t y0, uint16_t y1);
+    void markAllDirty();
+    bool anyDirty() const;
+    bool findNextDirtyRun(uint16_t startRow, uint16_t& y0, uint16_t& y1) const;
+
     uint32_t lastOscilloSaturateTic_;
-    uint32_t tftPushMillis_;
     uint32_t tftGetStatusMillis_;
     // adress of the segment digit;
     uint8_t* fgSegmentDigit_;
@@ -260,16 +254,15 @@ private:
 
     // TFT refresh
     bool tftRefreshing_;
-    uint16_t areaHeight_[TFT_NUMBER_OF_PARTS];
-    uint16_t areaY_[TFT_NUMBER_OF_PARTS];
+    uint32_t dirtyRows_[TFT_DIRTY_WORDS];
+    uint16_t nextDirtyRow_;
 
     bool flatOscilloAlreadyDisplayed_;
     bool bHasJustBeenCleared_;
 
-    bool pushToTftInProgress_;
-    uint8_t pushingPart_;
-    uint32_t tftDirtyBits_;
-    uint8_t part_;
+    volatile bool pushToTftInProgress_;
+    uint16_t pushingY0_;
+    uint16_t pushingY1_;
 
     // 3 bytes to deal with power status
     uint8_t status_[4];
