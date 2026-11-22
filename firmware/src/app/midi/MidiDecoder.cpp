@@ -19,7 +19,6 @@ extern "C" {
 #include "usbd_midi.h"
 }
 
-#include "MidiCapabilities.h"
 #include "MidiData.h"
 #include "MidiDecoder.h"
 #include "RingBuffer.h"
@@ -34,6 +33,10 @@ extern UART_HandleTypeDef huart1;
 
 #define INV127 .00787401574803149606f
 #define INV64  .015625f
+
+// NRPN v2 command domain and error response (transport framing only).
+#define NRPN_MSB_CONTROL    127
+#define NRPN_RESPONSE_ERROR 66
 
 static inline float ccToPercentFloat(unsigned char ccValue) {
     int percent = ((int)ccValue * 100 + 63) / 127;
@@ -309,11 +312,14 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
             }
         }
         break;
-    case MIDI_CONTROL_CHANGE:
+    case MIDI_CONTROL_CHANGE: {
+        // midiEventForInstrument1MPE already handles channel 0 when MPE is on.
+        const bool mpeMaster = isInst1MPE && midiEvent.channel == 0;
         for (int tk = 0; tk < timbreIndex; tk++) {
-            controlChange(timbres[tk], midiEvent);
+            controlChange(timbres[tk], midiEvent, tk == 0 && !mpeMaster);
         }
         break;
+    }
     case MIDI_POLY_AFTER_TOUCH:
         for (int tk = 0; tk < timbreIndex; tk++) {
             int timbre = timbres[tk];
@@ -368,7 +374,7 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         // CC74 is per voice, the rest is only on channel 0
         switch (midiEvent.eventType) {
         case MIDI_CONTROL_CHANGE: {
-            controlChange(0, midiEvent);
+            controlChange(0, midiEvent, true);
         }
         case MIDI_PITCH_BEND: {
             // PITCH BEND in MPE mode we devide by 819.2 and not 8192 to have a x10 value
@@ -430,7 +436,7 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
     }
 }
 
-void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
+void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent, bool ownsChannel) {
     int receives = this->synthState_->fullState_.midiConfigValue[MIDICONFIG_RECEIVES];
 
     // User CC are higher priority even if they hide some important preenfm3 CC
@@ -603,41 +609,44 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent) {
         }
 
         if (this->currentNrpn_[timbre].readyToSend) {
-            uint16_t param = (this->currentNrpn_[timbre].paramMSB << 7) + this->currentNrpn_[timbre].paramLSB;
-            uint16_t value = (this->currentNrpn_[timbre].valueMSB << 7) + this->currentNrpn_[timbre].valueLSB;
+            uint8_t paramMSB = this->currentNrpn_[timbre].paramMSB;
+            uint8_t paramLSB = this->currentNrpn_[timbre].paramLSB;
+            uint8_t valueMSB = this->currentNrpn_[timbre].valueMSB;
+            uint8_t valueLSB = this->currentNrpn_[timbre].valueLSB;
+            uint16_t value = (valueMSB << 7) + valueLSB;
             this->currentNrpn_[timbre].readyToSend = false;
 
-            if (param == (127 << 7) + 127) {
+            // Several timbres can share a MIDI channel (omni, global). The NRPN
+            // is only applied by the timbre owning the channel; the others only
+            // keep their parser state in sync.
+            if (!ownsChannel) {
+                return;
+            }
+
+            if (paramMSB == NRPN_MSB_CONTROL) {
+                // Command-domain response: decoded by the engine from the main
+                // loop (MIDI parsing runs in the audio ISR).
                 AsyncAction asyncAction;
                 asyncAction.fullBytes = 0l;
-                asyncAction.action.actionType = SEND_PATCH_AS_NRPN;
-                asyncAction.action.timbre = timbre;
-                asyncAction.action.param1 = (uint8_t)(midiEvent.channel + 1);
+                asyncAction.action.actionType = SEND_NRPN_RESPONSE;
+                asyncAction.action.timbre = (uint8_t)timbre;
+                asyncAction.action.param1 = midiEvent.channel;
+                asyncAction.action.param2 = paramMSB;
+                asyncAction.action.param3 = paramLSB;
+                asyncAction.action.param4 = valueMSB;
+                asyncAction.action.param5 = valueLSB;
                 asyncActions.insert(asyncAction);
-            } else if (param == (127 << 7) + 126) {
-                sendCapabilities(timbre, midiEvent.channel);
-            } else if (this->currentNrpn_[timbre].paramMSB == 4) {
-                switch (this->currentNrpn_[timbre].paramLSB) {
-                case 0:
-                    this->synth_->setNewMixerValueFromMidi(timbre, MIXER_VALUE_SEND, value * 0.01f);
-                    break;
-                case 1:
-                    this->synth_->setNewMixerValueFromMidi(timbre, MIXER_VALUE_COMPRESSOR, (float)value);
-                    break;
-                case 2:
-                    this->synth_->setNewMixerValueFromMidi(1, MIXER_VALUE_GLOBAL_SETTINGS_3, value * 0.01f);
-                    break;
-                case 3:
-                    this->synth_->setNewMixerValueFromMidi(0, MIXER_VALUE_GLOBAL_SETTINGS_3, (float)value);
-                    break;
-                default:
-                    break;
-                }
-            } else if (this->currentNrpn_[timbre].paramMSB == 5 || this->currentNrpn_[timbre].paramMSB == 6) {
-                // Step-sequencer modes/loop length are not supported here.
             } else {
-                struct MidiData data = {MIDI_DATA_NRPN, midiEvent.channel, 0, 0, param, value};
-                this->synth_->getTimbre(timbre)->midiData(data);
+                struct MidiData data = {MIDI_DATA_NRPN, midiEvent.channel, 0, 0, (uint16_t)((paramMSB << 7) | paramLSB), value};
+                if (!this->synth_->getTimbre(timbre)->midiData(data)) {
+                    uint8_t error = this->synth_->getTimbre(timbre)->nrpnError();
+                    if (error != 0xFF) {
+                        // Single error frame: safe to send from the ISR.
+                        sendNrpn(midiEvent.channel, (NRPN_MSB_CONTROL << 7) | NRPN_RESPONSE_ERROR, error);
+                        sendMidiDin5Out();
+                        sendMidiUsbOut();
+                    }
+                }
             }
         }
     }
@@ -659,66 +668,6 @@ void MidiDecoder::sendNrpn(uint8_t channel, uint16_t param, uint16_t value) {
     cc.value[0] = 38;
     cc.value[1] = (unsigned char)(value & 0x7F);
     writeMidiCCOut(&cc);
-}
-
-void MidiDecoder::sendCapabilities(uint8_t timbre, uint8_t channel) {
-    struct MidiParamMessage message;
-    for (int index = 0; index < MIDI_CAPABILITY_NRPN_COUNT; index++) {
-        if (!this->synth_->getTimbre(timbre)->midiPatchParam(timbre, index, message)) {
-            break;
-        }
-        sendNrpn(channel, message.nrpn, message.nrpnValue);
-    }
-    sendMidiDin5Out();
-    sendMidiUsbOut();
-}
-
-void MidiDecoder::sendCurrentPatchAsNrpns(int timbre, int replyChannel) {
-    struct MidiEvent cc;
-    cc.eventType = MIDI_CONTROL_CHANGE;
-
-    int channel = replyChannel;
-    if (channel < 0 || channel > 15) {
-        // Si channel = ALL envoie sur 1
-        channel = this->synthState_->mixerState_.instrumentState_[timbre].midiChannel - 1;
-        if (channel == -1) {
-            channel = 0;
-        }
-    }
-    cc.channel = channel;
-
-    int index = 0;
-    struct MidiParamMessage message;
-    while (this->synth_->getTimbre(timbre)->midiPatchParam(timbre, index, message)) {
-        index++;
-
-        if (!message.isNrpn) {
-            continue;
-        }
-
-        // NRPN is 4 control change
-        cc.value[0] = 99;
-        cc.value[1] = (unsigned char)(message.nrpn >> 7);
-        writeMidiCCOut(&cc);
-        cc.value[0] = 98;
-        cc.value[1] = (unsigned char)(message.nrpn & 0x7F);
-        writeMidiCCOut(&cc);
-        cc.value[0] = 6;
-        cc.value[1] = (unsigned char)(message.nrpnValue >> 7);
-        writeMidiCCOut(&cc);
-        cc.value[0] = 38;
-        cc.value[1] = (unsigned char)(message.nrpnValue & 0x7F);
-        writeMidiCCOut(&cc);
-
-        sendMidiDin5Out();
-        sendMidiUsbOutIfBufferFull();
-        // Wait for midi (USART) to be all sent
-        while (usartBufferOut.getCount() > 0) {
-        }
-    }
-
-    // send Usb Anyway
-    sendMidiUsbOut();
 }
 
 void MidiDecoder::newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue) {
@@ -744,43 +693,36 @@ void MidiDecoder::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValu
         channel = 0;
     }
 
-    int nrpnLsb = -1;
-    int nrpnVal = 0;
     int cc = 0;
     int ccVal = 0;
 
     if (valueType == MIXER_VALUE_SEND) {
-        nrpnLsb = 0;
-        nrpnVal = percentFloatToNrpn(newValue);
         cc = CC_TIMBRE_DRYWET;
-        ccVal = nrpnVal;
+        ccVal = percentFloatToNrpn(newValue);
     } else if (valueType == MIXER_VALUE_COMPRESSOR) {
-        nrpnLsb = 1;
-        nrpnVal = (int)(newValue + 0.1f);
         cc = CC_TIMBRE_DYNAMICS;
-        ccVal = nrpnVal;
+        ccVal = (int)(newValue + 0.1f);
     } else if (valueType == MIXER_VALUE_GLOBAL_SETTINGS_3) {
         if (timbre == 1) {
-            nrpnLsb = 2;
-            nrpnVal = percentFloatToNrpn(newValue);
             cc = CC_MFX_RETURN;
-            ccVal = nrpnVal;
+            ccVal = percentFloatToNrpn(newValue);
         } else if (timbre == 0) {
-            nrpnLsb = 3;
-            nrpnVal = (int)(newValue + 0.1f);
             cc = CC_MFX_PRESET;
-            ccVal = nrpnVal;
+            ccVal = (int)(newValue + 0.1f);
         }
     }
 
-    if (nrpnLsb < 0) {
+    if (cc == 0) {
         return;
     }
 
     if (sendCCOrNRPN == 2) {
-        sendNrpn(channel, (4 << 7) | nrpnLsb, (uint16_t)nrpnVal);
-        sendMidiDin5Out();
-        sendMidiUsbOut();
+        struct MidiParamMessage message;
+        if (synth_->getTimbre(timbre)->midiMixerFeedback(timbre, valueType, newValue, message)) {
+            sendNrpn(channel, message.nrpn, message.nrpnValue);
+            sendMidiDin5Out();
+            sendMidiUsbOut();
+        }
     } else {
         struct MidiEvent midiEvent;
         midiEvent.eventType = MIDI_CONTROL_CHANGE;
@@ -911,9 +853,27 @@ void MidiDecoder::processAsyncActions() {
                 }
             }
             break;
-        case SEND_PATCH_AS_NRPN:
-            sendCurrentPatchAsNrpns(asyncAction.action.timbre, asyncAction.action.param1 > 0 ? (int)asyncAction.action.param1 - 1 : -1);
+        case SEND_NRPN_RESPONSE: {
+            Timbre* timbre = this->synth_->getTimbre(asyncAction.action.timbre);
+            uint8_t channel = asyncAction.action.param1;
+            uint16_t address = (uint16_t)((asyncAction.action.param2 << 7) | asyncAction.action.param3);
+            uint16_t value = (uint16_t)((asyncAction.action.param4 << 7) | asyncAction.action.param5);
+
+            timbre->startNrpnResponse(channel, address, value);
+            const struct MidiParamMessage* message;
+            while ((message = timbre->getNextNrpn()) != nullptr) {
+                if (!message->isNrpn) {
+                    continue;
+                }
+                sendNrpn(channel, message->nrpn, message->nrpnValue);
+                sendMidiDin5Out();
+                sendMidiUsbOutIfBufferFull();
+                while (usartBufferOut.getCount() > 0) {
+                }
+            }
+            sendMidiUsbOut();
             break;
+        }
         }
     }
 }

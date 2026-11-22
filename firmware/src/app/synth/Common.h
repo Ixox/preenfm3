@@ -162,6 +162,9 @@ enum {
 #define LFO_FREQ_MAX          99.9f
 #define LFO_FREQ_MAX_TIMES_10 (int)(LFO_FREQ_MAX * 10.0f)
 
+#define INV127 .00787401574803149606f
+#define INV16  .0625
+
 enum LfoMidiClockMc {
     LFO_BEFORE_MIDI_CLOCK = LFO_FREQ_MAX_TIMES_10,
     LFO_MIDICLOCK_MC_DIV_16, // 1000

@@ -16,7 +16,6 @@
 #include "Common.h"
 #include "MidiControlChange.h"
 #include "Pfm3ControlChange.h"
-#include "Pfm3Midi.h"
 #include "Pfm3Params.h"
 #include "Pfm3Preset.h"
 #include "SynthState.h"
@@ -189,54 +188,22 @@ const char* midiNoteCurves[] = {"Flat", "+Lin", "+Ln8", "+Exp", "-Lin", "-Ln8", 
  * The order must match engineBlocks: each block's descBase points here and
  * fieldCount says how many descriptors it owns.
  */
-#define PARAM_FLOAT(n, mn, mx, off, dt, nv)                                                                                                \
-    {                                                                                                                                      \
-        {ParamAccess::Float, (uint16_t)(off), mn, mx}, {n, dt, nv, nullptr, nullptr, nullptr}, {                                           \
-            MidiTransform::Float100                                                                                                        \
-        }                                                                                                                                  \
-    }
-#define PARAM_ENUM(n, mx, off, nv, names)                                                                                                  \
-    {                                                                                                                                      \
-        {ParamAccess::Float, (uint16_t)(off), 0, mx}, {n, DISPLAY_TYPE_STRINGS, nv, names, nullptr, nullptr}, {                            \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
-#define PARAM_ENUM_ORDERED(n, mx, off, nv, names, ord, pos)                                                                                \
-    {                                                                                                                                      \
-        {ParamAccess::Float, (uint16_t)(off), 0, mx}, {n, DISPLAY_TYPE_STRINGS, nv, names, ord, pos}, {                                    \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
-#define PARAM_INTEGER(n, mn, mx, off, nv)                                                                                                  \
-    {                                                                                                                                      \
-        {ParamAccess::Float, (uint16_t)(off), mn, mx}, {n, DISPLAY_TYPE_INT, nv, nullptr, nullptr, nullptr}, {                             \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
-#define PARAM_STEP_BPM(n, mn, mx, off, nv)                                                                                                 \
-    {                                                                                                                                      \
-        {ParamAccess::Float, (uint16_t)(off), mn, mx}, {n, DISPLAY_TYPE_STEP_SEQ_BPM, nv, nullptr, nullptr, nullptr}, {                    \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
-#define PARAM_ARP_PATTERN(n, off)                                                                                                          \
-    {                                                                                                                                      \
-        {ParamAccess::Bitfield, (uint16_t)(off), 0, 0xFFFF}, {n, DISPLAY_TYPE_ARP_PATTERN, 0, nullptr, nullptr, nullptr}, {                \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
-#define PARAM_CHAR(n, off)                                                                                                                 \
-    {                                                                                                                                      \
-        {ParamAccess::Char, (uint16_t)(off), 0, 127}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}, {                              \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
-#define PARAM_STEP(n, off)                                                                                                                 \
-    {                                                                                                                                      \
-        {ParamAccess::U8, (uint16_t)(off), 0, 15}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}, {                                 \
-            MidiTransform::Raw                                                                                                             \
-        }                                                                                                                                  \
-    }
+#define PARAM_FLOAT(n, mn, mx, st, off, dt, nv) \
+    {{ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {n, dt, nv, nullptr, nullptr, nullptr}}
+#define PARAM_ENUM(n, mx, off, nv, names) \
+    {{ParamAccess::Float, (uint16_t)(off), 0, mx, 1.0f}, {n, DISPLAY_TYPE_STRINGS, nv, names, nullptr, nullptr}}
+#define PARAM_ENUM_ORDERED(n, mx, off, nv, names, ord, pos) \
+    {{ParamAccess::Float, (uint16_t)(off), 0, mx, 1.0f}, {n, DISPLAY_TYPE_STRINGS, nv, names, ord, pos}}
+#define PARAM_INTEGER(n, mn, mx, st, off, nv) \
+    {{ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {n, DISPLAY_TYPE_INT, nv, nullptr, nullptr, nullptr}}
+#define PARAM_STEP_BPM(n, mn, mx, st, off, nv) \
+    {{ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {n, DISPLAY_TYPE_STEP_SEQ_BPM, nv, nullptr, nullptr, nullptr}}
+#define PARAM_ARP_PATTERN(n, off) \
+    {{ParamAccess::Bitfield, (uint16_t)(off), 0, 0xFFFF, 0.0f}, {n, DISPLAY_TYPE_ARP_PATTERN, 0, nullptr, nullptr, nullptr}}
+#define PARAM_CHAR(n, off) \
+    {{ParamAccess::Char, (uint16_t)(off), 0, 127, 0.0f}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}}
+#define PARAM_STEP(n, off) \
+    {{ParamAccess::U8, (uint16_t)(off), 0, 15, 0.0f}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}}
 
 /*
  * =============================================================
@@ -246,36 +213,36 @@ const char* midiNoteCurves[] = {"Flat", "+Lin", "+Ln8", "+Exp", "-Lin", "-Ln8", 
 const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"))) = {
     /* Engine1 */
     PARAM_ENUM("Algo", ALGO_END - 1, offsetof(Engine1Params, algo), ALGO_END, algoNames),
-    PARAM_FLOAT("Velo", 0, 16, offsetof(Engine1Params, velocity), DISPLAY_TYPE_INT, 17),
+    PARAM_FLOAT("Velo", 0, 16, 1.0f, offsetof(Engine1Params, velocity), DISPLAY_TYPE_INT, 17),
     PARAM_ENUM("Mode", 2, offsetof(Engine1Params, playMode), 3, polyMonoNames),
-    PARAM_FLOAT("Speed", 0, 12, offsetof(Engine1Params, glideSpeed), DISPLAY_TYPE_INT, 13),
+    PARAM_FLOAT("Speed", 0, 12, 1.0f, offsetof(Engine1Params, glideSpeed), DISPLAY_TYPE_INT, 13),
     /* Engine2 */
     PARAM_ENUM("Glide", 2, offsetof(Engine2Params, glideType), 3, glideTypeNames),
-    PARAM_FLOAT("Spread", 0, 1, offsetof(Engine2Params, unisonSpread), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Detune", -1, 1, offsetof(Engine2Params, unisonDetune), DISPLAY_TYPE_FLOAT, 201),
-    PARAM_FLOAT("", 0, 1, offsetof(Engine2Params, pfm3Version), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Spread", 0, 1, 0.01f, offsetof(Engine2Params, unisonSpread), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Detune", -1, 1, 0.01f, offsetof(Engine2Params, unisonDetune), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("", 0, 1, 0.01f, offsetof(Engine2Params, pfm3Version), DISPLAY_TYPE_FLOAT, 101),
     /* Mod: 6 operators x (IM, Velo) */
-    PARAM_FLOAT("IM", 0, 16, offsetof(EngineIm1, modulationIndex1), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Velo", 0, 16, offsetof(EngineIm1, modulationIndexVelo1), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("IM", 0, 16, 0.01f, offsetof(EngineIm1, modulationIndex1), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Velo", 0, 16, 0.01f, offsetof(EngineIm1, modulationIndexVelo1), DISPLAY_TYPE_FLOAT, 1601),
     /* OscMix: 6 operators x (Mix, Pan) */
-    PARAM_FLOAT("Mix", 0, 1, offsetof(EngineMix1, mixOsc1), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Pan", -1, 1, offsetof(EngineMix1, panOsc1), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("Mix", 0, 1, 0.01f, offsetof(EngineMix1, mixOsc1), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Pan", -1, 1, 0.01f, offsetof(EngineMix1, panOsc1), DISPLAY_TYPE_FLOAT, 201),
     /* Osc: 6 operators x 4 */
     PARAM_ENUM_ORDERED("Shap", OSC_SHAPE_LAST - 1, offsetof(OscillatorParams, shape), OSC_SHAPE_LAST, oscShapeNames, oscShapeNamesOrder,
                        oscShapeNamesPosition),
     PARAM_ENUM_ORDERED("FTyp", 2, offsetof(OscillatorParams, frequencyType), 3, oscTypeNames, oscTypeNamesOrder, oscTypeNamesPosition),
-    PARAM_FLOAT("Freq", 0, 16, offsetof(OscillatorParams, frequencyMul), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 193),
-    PARAM_FLOAT("FTun", -9, 9, offsetof(OscillatorParams, detune), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 1801),
+    PARAM_FLOAT("Freq", 0, 16, 1.0f/12.0f, offsetof(OscillatorParams, frequencyMul), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 193),
+    PARAM_FLOAT("FTun", -9, 9, 0.01f, offsetof(OscillatorParams, detune), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 1801),
     /* EnvTime: 6 operators x 4 */
-    PARAM_FLOAT("Attk", 0, 16, offsetof(EnvelopeTimeMemory, attackTime), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Deca", 0, 16, offsetof(EnvelopeTimeMemory, decayTime), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Sust", 0, 16, offsetof(EnvelopeTimeMemory, sustainTime), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Rel", 0, 16, offsetof(EnvelopeTimeMemory, releaseTime), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Attk", 0, 16, 0.01f, offsetof(EnvelopeTimeMemory, attackTime), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Deca", 0, 16, 0.01f, offsetof(EnvelopeTimeMemory, decayTime), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Sust", 0, 16, 0.01f, offsetof(EnvelopeTimeMemory, sustainTime), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Rel", 0, 16, 0.01f, offsetof(EnvelopeTimeMemory, releaseTime), DISPLAY_TYPE_FLOAT, 1601),
     /* EnvLevel: 6 operators x 4 */
-    PARAM_FLOAT("Attk", 0, 1, offsetof(EnvelopeLevelMemory, attackLevel), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Deca", 0, 1, offsetof(EnvelopeLevelMemory, decayLevel), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Sust", 0, 1, offsetof(EnvelopeLevelMemory, sustainLevel), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Rel", 0, 1, offsetof(EnvelopeLevelMemory, releaseLevel), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Attk", 0, 1, 0.01f, offsetof(EnvelopeLevelMemory, attackLevel), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Deca", 0, 1, 0.01f, offsetof(EnvelopeLevelMemory, decayLevel), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Sust", 0, 1, 0.01f, offsetof(EnvelopeLevelMemory, sustainLevel), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Rel", 0, 1, 0.01f, offsetof(EnvelopeLevelMemory, releaseLevel), DISPLAY_TYPE_FLOAT, 101),
     /* EnvCurve: 6 operators x 4 */
     PARAM_ENUM("Attk", CURVE_TYPE_MAX - 1, offsetof(EnvelopeCurveParams, attackCurve), CURVE_TYPE_MAX, envCurveNames),
     PARAM_ENUM("Dec", CURVE_TYPE_MAX - 1, offsetof(EnvelopeCurveParams, decayCurve), CURVE_TYPE_MAX, envCurveNames),
@@ -284,41 +251,41 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     /* Matrix: 12 rows x 4 */
     PARAM_ENUM_ORDERED("Srce", MATRIX_SOURCE_MAX - 1, offsetof(MatrixRowParams, source), MATRIX_SOURCE_MAX, matrixSourceNames,
                        matrixSourceOrder, matrixSourcePosition),
-    PARAM_FLOAT("Mult", -10, 24, offsetof(MatrixRowParams, mul), DISPLAY_TYPE_FLOAT, 3401),
+    PARAM_FLOAT("Mult", -10, 24, 0.01f, offsetof(MatrixRowParams, mul), DISPLAY_TYPE_FLOAT, 3401),
     PARAM_ENUM_ORDERED("Dest1", DESTINATION_MAX - 1, offsetof(MatrixRowParams, dest1), DESTINATION_MAX, matrixDestNames, matrixTargetOrder,
                        matrixTargetPosition),
     PARAM_ENUM_ORDERED("Dest2", DESTINATION_MAX - 1, offsetof(MatrixRowParams, dest2), DESTINATION_MAX, matrixDestNames, matrixTargetOrder,
                        matrixTargetPosition),
     /* Performance */
-    PARAM_FLOAT("p1", -1, 1, offsetof(PerformanceRowParams, perf1), DISPLAY_TYPE_FLOAT, 201),
-    PARAM_FLOAT("p2", -1, 1, offsetof(PerformanceRowParams, perf2), DISPLAY_TYPE_FLOAT, 201),
-    PARAM_FLOAT("p3", -1, 1, offsetof(PerformanceRowParams, perf3), DISPLAY_TYPE_FLOAT, 201),
-    PARAM_FLOAT("p4", -1, 1, offsetof(PerformanceRowParams, perf4), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("p1", -1, 1, 0.01f, offsetof(PerformanceRowParams, perf1), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("p2", -1, 1, 0.01f, offsetof(PerformanceRowParams, perf2), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("p3", -1, 1, 0.01f, offsetof(PerformanceRowParams, perf3), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("p4", -1, 1, 0.01f, offsetof(PerformanceRowParams, perf4), DISPLAY_TYPE_FLOAT, 201),
     /* LfoOsc: 3 x 4 */
     PARAM_ENUM("Shap", LFO_TYPE_MAX - 1, offsetof(LfoParams, shape), LFO_TYPE_MAX, lfoShapeNames),
-    PARAM_FLOAT("Freq", 0, 99.9f, offsetof(LfoParams, freq), DISPLAY_TYPE_FLOAT_LFO_FREQUENCY, LFO_FREQ_MAX_TIMES_10 + 1 + 9),
-    PARAM_FLOAT("Bias", -1, 1, offsetof(LfoParams, bias), DISPLAY_TYPE_FLOAT, 201),
-    PARAM_FLOAT("KSyn", -0.01f, 16, offsetof(LfoParams, keybRamp), DISPLAY_TYPE_LFO_KSYN, 1602),
+    PARAM_FLOAT("Freq", 0, 99.9f, 0.1f, offsetof(LfoParams, freq), DISPLAY_TYPE_FLOAT_LFO_FREQUENCY, LFO_FREQ_MAX_TIMES_10 + 1 + 9),
+    PARAM_FLOAT("Bias", -1, 1, 0.01f, offsetof(LfoParams, bias), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("KSyn", -0.01f, 16, 0.01f, offsetof(LfoParams, keybRamp), DISPLAY_TYPE_LFO_KSYN, 1602),
     /* LfoPhase */
-    PARAM_FLOAT("Phase", 0, 1, offsetof(LfoPhaseRowParams, phaseLfo1), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Phase", 0, 1, offsetof(LfoPhaseRowParams, phaseLfo2), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Phase", 0, 1, offsetof(LfoPhaseRowParams, phaseLfo3), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Phase", 0, 1, 0.01f, offsetof(LfoPhaseRowParams, phaseLfo1), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Phase", 0, 1, 0.01f, offsetof(LfoPhaseRowParams, phaseLfo2), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Phase", 0, 1, 0.01f, offsetof(LfoPhaseRowParams, phaseLfo3), DISPLAY_TYPE_FLOAT, 101),
     /* LfoEnv1 */
-    PARAM_FLOAT("Attk", 0, 16, offsetof(EnvelopeLfoParams, attack), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Deca", 0, 16, offsetof(EnvelopeLfoParams, decay), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Sust", 0, 1, offsetof(EnvelopeLfoParams, sustain), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Rele", 0, 16, offsetof(EnvelopeLfoParams, release), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Attk", 0, 16, 0.01f, offsetof(EnvelopeLfoParams, attack), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Deca", 0, 16, 0.01f, offsetof(EnvelopeLfoParams, decay), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Sust", 0, 1, 0.01f, offsetof(EnvelopeLfoParams, sustain), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Rele", 0, 16, 0.01f, offsetof(EnvelopeLfoParams, release), DISPLAY_TYPE_FLOAT, 1601),
     /* LfoEnv2 */
-    PARAM_FLOAT("Sile", 0, 16, offsetof(Envelope2LfoParams, silence), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Attk", 0, 16, offsetof(Envelope2LfoParams, attack), DISPLAY_TYPE_FLOAT, 1601),
-    PARAM_FLOAT("Deca", 0, 16, offsetof(Envelope2LfoParams, decay), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Sile", 0, 16, 0.01f, offsetof(Envelope2LfoParams, silence), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Attk", 0, 16, 0.01f, offsetof(Envelope2LfoParams, attack), DISPLAY_TYPE_FLOAT, 1601),
+    PARAM_FLOAT("Deca", 0, 16, 0.01f, offsetof(Envelope2LfoParams, decay), DISPLAY_TYPE_FLOAT, 1601),
     PARAM_ENUM("Loop", LFO_ENV2_LOOP_ATTACK, offsetof(Envelope2LfoParams, loop), 3, lofEnv2Loop),
     /* LfoSeq: 2 x 2 */
-    PARAM_STEP_BPM("Bpm", 10, 245, offsetof(StepSequencerParams, bpm), 236),
-    PARAM_FLOAT("Gate", 0, 1, offsetof(StepSequencerParams, gate), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_STEP_BPM("Bpm", 10, 245, 1.0f, offsetof(StepSequencerParams, bpm), 236),
+    PARAM_FLOAT("Gate", 0, 1, 0.01f, offsetof(StepSequencerParams, gate), DISPLAY_TYPE_FLOAT, 101),
     /* MidiCurve: 2 x 3 */
     PARAM_ENUM("Befo", MIDI_NOTE_CURVE_MAX - 1, offsetof(MidiNoteCurveRowParams, curveBefore), MIDI_NOTE_CURVE_MAX, midiNoteCurves),
-    PARAM_INTEGER("Brk", 0, 127, offsetof(MidiNoteCurveRowParams, breakNote), 128),
+    PARAM_INTEGER("Brk", 0, 127, 1.0f, offsetof(MidiNoteCurveRowParams, breakNote), 128),
     PARAM_ENUM("Afte", MIDI_NOTE_CURVE_MAX - 1, offsetof(MidiNoteCurveRowParams, curveAfter), MIDI_NOTE_CURVE_MAX, midiNoteCurves),
     /* StepSeq: 2 x 16 */
     PARAM_STEP("Step", 0),
@@ -342,9 +309,9 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
 const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"))) = {
     /* Arp1 */
     PARAM_ENUM("Clock", 2, offsetof(EngineArp1, clock), 3, clockName),
-    PARAM_INTEGER("BPM", 10, 240, offsetof(EngineArp1, BPM), 231),
+    PARAM_INTEGER("BPM", 10, 240, 1.0f, offsetof(EngineArp1, BPM), 231),
     PARAM_ENUM("Dire", 11, offsetof(EngineArp1, direction), 12, dirName),
-    PARAM_INTEGER("Octav", 1, 3, offsetof(EngineArp1, octave), 3),
+    PARAM_INTEGER("Octav", 1, 3, 1.0f, offsetof(EngineArp1, octave), 3),
     /* Arp2 */
     PARAM_ENUM("Ptrn", ARPEGGIATOR_PATTERN_COUNT - 1, offsetof(EngineArp2, pattern), ARPEGGIATOR_PATTERN_COUNT, patternName),
     PARAM_ENUM("Divi", 16, offsetof(EngineArp2, division), 17, divNames),
@@ -354,14 +321,14 @@ const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"
     PARAM_ARP_PATTERN("", 0),
     /* Effect1 */
     PARAM_ENUM_ORDERED("Type", FILTER_LAST - 1, offsetof(EffectRowParams, type), FILTER_LAST, fxName, filtersOrder, filtersPosition),
-    PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param1), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param2), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Gain", 0, 2, offsetof(EffectRowParams, param3), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("", 0, 1, 0.01f, offsetof(EffectRowParams, param1), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("", 0, 1, 0.01f, offsetof(EffectRowParams, param2), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Gain", 0, 2, 0.01f, offsetof(EffectRowParams, param3), DISPLAY_TYPE_FLOAT, 201),
     /* Effect2 */
     PARAM_ENUM("Type", FILTER2_LAST - 1, offsetof(EffectRowParams, type), FILTER2_LAST, fx2Name),
-    PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param1), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("", 0, 1, offsetof(EffectRowParams, param2), DISPLAY_TYPE_FLOAT, 101),
-    PARAM_FLOAT("Gain", 0, 2, offsetof(EffectRowParams, param3), DISPLAY_TYPE_FLOAT, 201),
+    PARAM_FLOAT("", 0, 1, 0.01f, offsetof(EffectRowParams, param1), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("", 0, 1, 0.01f, offsetof(EffectRowParams, param2), DISPLAY_TYPE_FLOAT, 101),
+    PARAM_FLOAT("Gain", 0, 2, 0.01f, offsetof(EffectRowParams, param3), DISPLAY_TYPE_FLOAT, 201),
     /* PresetName: 12 chars */
     PARAM_CHAR("", 0),
     PARAM_CHAR("", 1),
@@ -378,32 +345,32 @@ const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"
 };
 
 static const ParamBlock engineBlocks[(int)Pfm3Block::Count] = {
-    {0, offsetof(Pfm3TimbreParams, engine1), 0, 0, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Engine},
-    {4, offsetof(Pfm3TimbreParams, engine2), 216, 216, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Engine},
-    {8, offsetof(Pfm3TimbreParams, engineIm1), 4, 4, 6, 2, 8, 2, 2, (uint8_t)ParamStore::Engine},
-    {10, offsetof(Pfm3TimbreParams, engineMix1), 16, 16, 6, 2, 8, 2, 2, (uint8_t)ParamStore::Engine},
-    {12, offsetof(Pfm3TimbreParams, osc1), 44, 44, 6, 4, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {16, offsetof(Pfm3TimbreParams, env1Time), 68, 68, 6, 4, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {20, offsetof(Pfm3TimbreParams, env1Level), 92, 92, 6, 4, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {24, offsetof(Pfm3TimbreParams, env1Curve), 220, 0xFFFF, 6, 4, 16, 4, 0, (uint8_t)ParamStore::Engine},
-    {28, offsetof(Pfm3TimbreParams, matrixRowState1), 116, 116, 12, 4, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {32, offsetof(Pfm3TimbreParams, performance1), 164, 164, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Engine},
-    {36, offsetof(Pfm3TimbreParams, lfoOsc1), 168, 168, 3, 4, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {40, offsetof(Pfm3TimbreParams, lfoPhases), 180, 180, 1, 3, 0, 0, 0, (uint8_t)ParamStore::Engine},
-    {43, offsetof(Pfm3TimbreParams, lfoEnv1), 184, 184, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Engine},
-    {47, offsetof(Pfm3TimbreParams, lfoEnv2), 188, 188, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Engine},
-    {51, offsetof(Pfm3TimbreParams, lfoSeq1), 192, 192, 2, 2, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {53, offsetof(Pfm3TimbreParams, midiNote1Curve), 200, 200, 2, 3, 16, 4, 4, (uint8_t)ParamStore::Engine},
-    {56, offsetof(Pfm3TimbreParams, lfoSteps1), 0xFFFF, 0xFFFF, 2, 16, 16, 0, 0, (uint8_t)ParamStore::Engine},
+    {0, offsetof(Pfm3TimbreParams, engine1), 0, 1, 4, 0, 0, (uint8_t)ParamStore::Engine},
+    {4, offsetof(Pfm3TimbreParams, engine2), 216, 1, 4, 0, 0, (uint8_t)ParamStore::Engine},
+    {8, offsetof(Pfm3TimbreParams, engineIm1), 4, 6, 2, 8, 2, (uint8_t)ParamStore::Engine},
+    {10, offsetof(Pfm3TimbreParams, engineMix1), 16, 6, 2, 8, 2, (uint8_t)ParamStore::Engine},
+    {12, offsetof(Pfm3TimbreParams, osc1), 44, 6, 4, 16, 4, (uint8_t)ParamStore::Engine},
+    {16, offsetof(Pfm3TimbreParams, env1Time), 68, 6, 4, 16, 4, (uint8_t)ParamStore::Engine},
+    {20, offsetof(Pfm3TimbreParams, env1Level), 92, 6, 4, 16, 4, (uint8_t)ParamStore::Engine},
+    {24, offsetof(Pfm3TimbreParams, env1Curve), 220, 6, 4, 16, 4, (uint8_t)ParamStore::Engine},
+    {28, offsetof(Pfm3TimbreParams, matrixRowState1), 116, 12, 4, 16, 4, (uint8_t)ParamStore::Engine},
+    {32, offsetof(Pfm3TimbreParams, performance1), 164, 1, 4, 0, 0, (uint8_t)ParamStore::Engine},
+    {36, offsetof(Pfm3TimbreParams, lfoOsc1), 168, 3, 4, 16, 4, (uint8_t)ParamStore::Engine},
+    {40, offsetof(Pfm3TimbreParams, lfoPhases), 180, 1, 3, 0, 0, (uint8_t)ParamStore::Engine},
+    {43, offsetof(Pfm3TimbreParams, lfoEnv1), 184, 1, 4, 0, 0, (uint8_t)ParamStore::Engine},
+    {47, offsetof(Pfm3TimbreParams, lfoEnv2), 188, 1, 4, 0, 0, (uint8_t)ParamStore::Engine},
+    {51, offsetof(Pfm3TimbreParams, lfoSeq1), 192, 2, 2, 16, 4, (uint8_t)ParamStore::Engine},
+    {53, offsetof(Pfm3TimbreParams, midiNote1Curve), 200, 2, 3, 16, 4, (uint8_t)ParamStore::Engine},
+    {56, offsetof(Pfm3TimbreParams, lfoSteps1), 0xFFFF, 2, 16, 16, 0, (uint8_t)ParamStore::Engine},
 };
 
 static const ParamBlock commonBlocks[(int)CommonBlock::Count] = {
-    {0, offsetof(TimbreSharedParams, engineArp1), 28, 28, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Shared},
-    {4, offsetof(TimbreSharedParams, engineArp2), 32, 32, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Shared},
-    {8, offsetof(TimbreSharedParams, engineArpUserPatterns), 0xFFFF, 36, 4, 1, 4, 0, 1, (uint8_t)ParamStore::Shared},
-    {9, offsetof(TimbreSharedParams, effect1), 40, 40, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Shared},
-    {13, offsetof(TimbreSharedParams, effect2), 244, 0xFFFF, 1, 4, 0, 0, 0, (uint8_t)ParamStore::Shared},
-    {17, offsetof(TimbreSharedParams, presetName), 0xFFFF, 228, 1, 12, 0, 0, 1, (uint8_t)ParamStore::Shared},
+    {0, offsetof(TimbreSharedParams, engineArp1), 28, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
+    {4, offsetof(TimbreSharedParams, engineArp2), 32, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
+    {8, offsetof(TimbreSharedParams, engineArpUserPatterns), 0xFFFF, 4, 1, 4, 0, (uint8_t)ParamStore::Shared},
+    {9, offsetof(TimbreSharedParams, effect1), 40, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
+    {13, offsetof(TimbreSharedParams, effect2), 244, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
+    {17, offsetof(TimbreSharedParams, presetName), 0xFFFF, 1, 12, 0, 0, (uint8_t)ParamStore::Shared},
 };
 
 static const CcEntry ccEntries[] = {
@@ -482,7 +449,6 @@ static uint8_t ccToEntry[128];
 static uint16_t flatToEngineParam[260];
 static uint16_t flatToCommonParam[260];
 
-static ParamRef nrpnToParam[256];
 static bool tablesReady = false;
 
 /* Readable at runtime (gdb) to confirm Phase 1 table validation. */
@@ -517,18 +483,6 @@ uint16_t pfm3FlatIndex(Pfm3Param id) {
         return 0xFFFF;
     }
     return (uint16_t)(b.flatBase + pfm3ParamElementOf(id) * b.flatStride + pfm3ParamFieldOf(id));
-}
-
-uint16_t pfm3Nrpn(Pfm3Param id) {
-    uint8_t block = pfm3ParamBlockOf(id);
-    if (block == (uint8_t)Pfm3Block::EnvCurve || block == (uint8_t)Pfm3Block::StepSeq) {
-        return 0xFFFF;
-    }
-    uint16_t flat = pfm3FlatIndex(id);
-    if (flat == 0xFFFF) {
-        return 0xFFFF;
-    }
-    return (uint16_t)Pfm3Midi::getMidiIndexFromMemory(flat);
 }
 
 float pfm3GetParam(const Pfm3TimbreParams& params, Pfm3Param id) {
@@ -609,21 +563,6 @@ uint16_t commonFlatIndex(CommonParamId id) {
     return (uint16_t)(b.flatBase + commonElementOf(id) * b.flatStride + commonFieldOf(id));
 }
 
-uint16_t commonNrpn(CommonParamId id) {
-    uint8_t block = commonBlockOf(id);
-    if (block == (uint8_t)CommonBlock::PresetName) {
-        return (uint16_t)(228 + commonFieldOf(id));
-    }
-    if (block == (uint8_t)CommonBlock::ArpPattern) {
-        return (uint16_t)(36 + commonElementOf(id));
-    }
-    uint16_t flat = commonFlatIndex(id);
-    if (flat == 0xFFFF) {
-        return 0xFFFF;
-    }
-    return (uint16_t)Pfm3Midi::getMidiIndexFromMemory(flat);
-}
-
 float commonGetParam(const TimbreSharedParams& shared, CommonParamId id) {
     const ParamDesc& d = commonDesc(id);
     const uint8_t* p = (const uint8_t*)&shared + commonOffset(id);
@@ -687,10 +626,6 @@ CommonParamId commonFlatToParam(uint16_t flat) {
     return (CommonParamId)flatToCommonParam[flat];
 }
 
-const ParamRef& pfm3NrpnToParam(uint16_t nrpn) {
-    return nrpnToParam[nrpn & 0xFF];
-}
-
 const CcEntry* pfm3CcEntry(uint8_t cc) {
     if (cc >= 128 || ccToEntry[cc] == 0xFF) {
         return nullptr;
@@ -700,8 +635,6 @@ const CcEntry* pfm3CcEntry(uint8_t cc) {
 
 float pfm3ApplyMidiTransform(MidiTransform transform, uint8_t value) {
     switch (transform) {
-    case MidiTransform::Float100:
-        return (float)value * 0.01f;
     case MidiTransform::Float127:
         return (float)value * (1.0f / 127.0f);
     case MidiTransform::Bipolar:
@@ -742,11 +675,6 @@ void pfm3InitTables() {
     }
     tablesReady = true;
 
-    for (int i = 0; i < 256; i++) {
-        nrpnToParam[i].id = PFM3_PARAM_NONE;
-        nrpnToParam[i].store = 0;
-        nrpnToParam[i].transform = MidiTransform::Raw;
-    }
     for (int i = 0; i < 260; i++) {
         flatToEngineParam[i] = PFM3_PARAM_NONE;
         flatToCommonParam[i] = PFM3_PARAM_NONE;
@@ -780,34 +708,6 @@ void pfm3InitTables() {
     }
     for (unsigned i = 0; i < sizeof(ccEntries) / sizeof(ccEntries[0]); i++) {
         ccToEntry[ccEntries[i].cc] = (uint8_t)i;
-    }
-    for (int b = 0; b < (int)Pfm3Block::Count; b++) {
-        const ParamBlock& block = engineBlocks[b];
-        for (int element = 0; element < block.count; element++) {
-            for (int field = 0; field < block.fieldCount; field++) {
-                Pfm3Param id = pfm3Param((Pfm3Block)b, (uint8_t)element, (uint8_t)field);
-                uint16_t nrpn = pfm3Nrpn(id);
-                if (nrpn != 0xFFFF && nrpn < 256) {
-                    nrpnToParam[nrpn].id = (uint16_t)id;
-                    nrpnToParam[nrpn].store = (uint8_t)ParamStore::Engine;
-                    nrpnToParam[nrpn].transform = pfm3FullDesc(id).midi.nrpn;
-                }
-            }
-        }
-    }
-    for (int b = 0; b < (int)CommonBlock::Count; b++) {
-        const ParamBlock& block = commonBlocks[b];
-        for (int element = 0; element < block.count; element++) {
-            for (int field = 0; field < block.fieldCount; field++) {
-                CommonParamId id = commonParam((CommonBlock)b, (uint8_t)element, (uint8_t)field);
-                uint16_t nrpn = commonNrpn(id);
-                if (nrpn != 0xFFFF && nrpn < 256) {
-                    nrpnToParam[nrpn].id = (uint16_t)id;
-                    nrpnToParam[nrpn].store = (uint8_t)ParamStore::Shared;
-                    nrpnToParam[nrpn].transform = commonFullDesc(id).midi.nrpn;
-                }
-            }
-        }
     }
 
     int position = 0;
@@ -886,13 +786,6 @@ bool pfm3ValidateTables() {
                 if (!accessSizeOk(d.access, pfm3Offset(id), sizeof(Pfm3TimbreParams))) {
                     return false;
                 }
-                uint16_t nrpn = pfm3Nrpn(id);
-                if (nrpn != 0xFFFF) {
-
-                    if (nrpnToParam[nrpn].id != (uint16_t)id) {
-                        return false;
-                    }
-                }
             }
         }
     }
@@ -908,13 +801,6 @@ bool pfm3ValidateTables() {
                 }
                 if (!accessSizeOk(d.access, commonOffset(id), sizeof(TimbreSharedParams))) {
                     return false;
-                }
-                uint16_t nrpn = commonNrpn(id);
-                if (nrpn != 0xFFFF) {
-
-                    if (nrpnToParam[nrpn].id != (uint16_t)id) {
-                        return false;
-                    }
                 }
             }
         }

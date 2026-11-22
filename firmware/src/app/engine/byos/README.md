@@ -76,7 +76,9 @@ back when a parameter changes in the editor (`midiParamFeedback`). Incoming
 CCs are applied with `propagateNewEngineParamValueFromExternal`, so they update
 audio and UI but are not echoed.
 
-There is no NRPN map and no `midiPatchParam()` patch dump.
+There is no NRPN map: `midiData()` ignores `MIDI_DATA_NRPN`, `nrpnError()`
+stays `0xFF` and `getNextNrpn()` stays `nullptr`, so NRPNs are ignored without a
+reply.
 
 ## Editor
 

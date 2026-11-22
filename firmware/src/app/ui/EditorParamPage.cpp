@@ -407,7 +407,7 @@ void EditorParamPage::applyTicks(int flatIndex, int ticks) {
     if ((uint16_t)pid != PFM3_PARAM_NONE && pfm3ParamBlockOf(pid) == (uint8_t)Pfm3Block::LfoOsc && pfm3ParamFieldOf(pid) == 1) {
         maxValue = LFO_FREQ_MAX + 0.9f;
     }
-    float inc = ui.values > 1.0f ? (maxValue - desc.min) / (ui.values - 1.0f) : 0.0f;
+    float inc = desc.step;
 
     float newValue;
     float oldValue;
@@ -726,7 +726,7 @@ EditorParamInfo EditorParamPage::paramInfoFor(int encoder) const {
         }
     }
     info.nameCount = (uint8_t)ui.values;
-    info.incValue = ui.values > 1.0f ? (info.max - info.min) / (ui.values - 1.0f) : 0.0f;
-    info.step = info.incValue;
+    info.incValue = desc.step;
+    info.step = desc.step;
     return info;
 }

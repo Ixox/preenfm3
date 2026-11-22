@@ -13,10 +13,10 @@
 #include <stdint.h>
 
 #include "Common.h"
-#include "PersistenceMagic.h"
-#include "engine/pfm3/Pfm3Preset.h"
 #include "MidiData.h"
+#include "PersistenceMagic.h"
 #include "TimbreParams.h"
+#include "engine/pfm3/Pfm3Preset.h"
 
 class Timbre;
 class Voice;
@@ -149,8 +149,23 @@ public:
     }
 
     // Engine-owned MIDI data (CC, NRPN, aftertouch, pitch bend, MPE).
+    // For MIDI_DATA_NRPN, false means the write was rejected; nrpnError()
+    // then returns the error code to send (0xFF = no reply).
     virtual bool midiData(int timbre, const struct MidiData& data) {
         return false;
+    }
+
+    // NRPN error for the last MIDI_DATA_NRPN, or 0xFF when there is none.
+    virtual uint8_t nrpnError() const {
+        return 0xFF;
+    }
+
+    // Main-loop NRPN response stream: startNrpnResponse() sets it up,
+    // getNextNrpn() returns one message per call and nullptr when done.
+    virtual void startNrpnResponse(uint8_t channel, uint16_t address, uint16_t value) {
+    }
+    virtual const struct MidiParamMessage* getNextNrpn() {
+        return nullptr;
     }
 
     // Map a generic engine-parameter change to an outgoing CC/NRPN message.
@@ -159,9 +174,8 @@ public:
         return false;
     }
 
-    // Enumerate the patch as outgoing NRPN messages. `index` starts at 0 and
-    // is advanced by the caller; return false when the patch is exhausted.
-    virtual bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const {
+    // Mixer/global counterpart of midiParamFeedback, used for NRPN feedback.
+    virtual bool midiMixerFeedback(int timbre, int valueType, float newValue, struct MidiParamMessage& out) const {
         return false;
     }
 

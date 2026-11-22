@@ -115,7 +115,6 @@ enum class ParamAccess : uint8_t { Float, U8, U16, Bitfield, Char, Custom };
 
 enum class MidiTransform : uint8_t {
     Raw,
-    Float100,
     Float127,
     Bipolar,
     ImTimes10,
@@ -150,6 +149,7 @@ struct ParamDesc {
     uint16_t fieldOffset;
     float min;
     float max;
+    float step; // 0 = raw (char / bitfield / step index), no quantization
 };
 
 struct ParamUiDesc {
@@ -161,33 +161,20 @@ struct ParamUiDesc {
     const unsigned char* valueOrderReversed;
 };
 
-struct ParamMidiDesc {
-    MidiTransform nrpn;
-};
-
 struct ParamFullDescription {
     ParamDesc desc;
     ParamUiDesc ui;
-    ParamMidiDesc midi;
 };
 
 struct ParamBlock {
     uint16_t descBase;  // first descriptor for element 0, field 0
     uint16_t liveBase;  // byte offset of element 0 in the live store
     uint16_t flatBase;  // flat Pfm3Preset index for defaults, 0xFFFF if N/A
-    uint16_t nrpnBase;  // legacy NRPN of element 0, 0xFFFF if not addressable
     uint8_t count;      // number of elements
     uint8_t fieldCount; // fields per element
     uint8_t liveStride; // bytes per element in the live store
     uint8_t flatStride; // flat indices per element
-    uint8_t nrpnStride; // NRPN indices per element
     uint8_t store;      // ParamStore
-};
-
-struct ParamRef {
-    uint16_t id;
-    uint8_t store;
-    MidiTransform transform;
 };
 
 /* Engine table */
@@ -197,7 +184,6 @@ const ParamFullDescription& pfm3FullDesc(Pfm3Param id);
 uint16_t pfm3DescIndex(Pfm3Param id);
 uint16_t pfm3Offset(Pfm3Param id);
 uint16_t pfm3FlatIndex(Pfm3Param id);
-uint16_t pfm3Nrpn(Pfm3Param id);
 
 float pfm3GetParam(const Pfm3TimbreParams& params, Pfm3Param id);
 void pfm3SetParam(Pfm3TimbreParams& params, Pfm3Param id, float value);
@@ -209,13 +195,11 @@ const ParamFullDescription& commonFullDesc(CommonParamId id);
 uint16_t commonDescIndex(CommonParamId id);
 uint16_t commonOffset(CommonParamId id);
 uint16_t commonFlatIndex(CommonParamId id);
-uint16_t commonNrpn(CommonParamId id);
 
 float commonGetParam(const TimbreSharedParams& shared, CommonParamId id);
 void commonSetParam(TimbreSharedParams& shared, CommonParamId id, float value);
 
 /* Tables and validation */
-const ParamRef& pfm3NrpnToParam(uint16_t nrpn);
 Pfm3Param pfm3FlatToParam(uint16_t flat);
 CommonParamId commonFlatToParam(uint16_t flat);
 const CcEntry* pfm3CcEntry(uint8_t cc);

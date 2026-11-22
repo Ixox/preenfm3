@@ -106,12 +106,24 @@ public:
 
     bool midiData(const struct MidiData& data);
 
-    bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const {
-        return engineImpl_->midiPatchParam(timbre, index, out);
+    uint8_t nrpnError() const {
+        return engineImpl_->nrpnError();
+    }
+
+    void startNrpnResponse(uint8_t channel, uint16_t address, uint16_t value) {
+        engineImpl_->startNrpnResponse(channel, address, value);
+    }
+
+    const struct MidiParamMessage* getNextNrpn() {
+        return engineImpl_->getNextNrpn();
     }
 
     bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const {
         return engineImpl_->midiParamFeedback(paramId, context, newValue, out);
+    }
+
+    bool midiMixerFeedback(int timbre, int valueType, float newValue, struct MidiParamMessage& out) const {
+        return engineImpl_->midiMixerFeedback(timbre, valueType, newValue, out);
     }
 
     void loadDx7Patch(const uint8_t* packedPatch);

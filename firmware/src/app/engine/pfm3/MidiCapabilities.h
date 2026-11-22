@@ -11,15 +11,10 @@
 #define MIDI_CAPABILITIES_H_
 
 /*
- * Capability protocol exposed over NRPN:
- *   [127,126] feature bits
- *   [127,125] maximum LFO shape index
- *   [127,124] capability protocol version
+ * NRPN v2 capability values (doc/nrpn_spec_v2.md):
+ *   [127,67..71] CAP_PROTOCOL_VERSION, feature bits lo/hi, max voices, max timbres
  */
 #define MIDI_CAPABILITY_PROTOCOL_VERSION 1
-
-/* Number of NRPN messages returned by the engine capability block. */
-#define MIDI_CAPABILITY_NRPN_COUNT 3
 
 #define MIDI_FEATURE_OPERATOR_PHASE        (1u << 1)
 #define MIDI_FEATURE_OPERATOR_WARP         (1u << 2)
@@ -35,8 +30,5 @@
  * All other capability bits remain cleared.
  */
 #define MIDI_SUPPORTED_FEATURES 0
-
-/* Current firmware implements the first 8 LFO shapes (0..7). */
-#define MIDI_MAX_LFO_SHAPE 7
 
 #endif

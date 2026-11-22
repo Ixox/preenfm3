@@ -48,7 +48,7 @@ struct Nrpn {
     bool readyToSend;
 };
 
-enum ActionType { LOAD_PRESET, SEND_PATCH_AS_NRPN };
+enum ActionType { LOAD_PRESET, SEND_NRPN_RESPONSE };
 
 struct AsyncActionDetail {
     uint8_t actionType;
@@ -81,7 +81,7 @@ public:
     void newMessageData(unsigned char byte);
     void midiEventReceived(MidiEvent& midiEvent);
     void midiEventForInstrument1MPE(MidiEvent& midiEvent);
-    void controlChange(int timbre, MidiEvent& midiEvent);
+    void controlChange(int timbre, MidiEvent& midiEvent, bool ownsChannel);
     void setSynth(Synth* synth);
     void setVisualInfo(VisualInfo* visualInfo);
 
@@ -113,7 +113,6 @@ public:
     void newTimbre(int timbre) {
         currentTimbre_ = timbre;
     }
-    void sendCurrentPatchAsNrpns(int timbre, int replyChannel = -1);
 
     // Some actions must not be called from the audio thread
     void processAsyncActions();
@@ -121,7 +120,6 @@ public:
 private:
     void sendMidiParamFeedback(int timbre, const struct MidiParamMessage& message);
     void sendNrpn(uint8_t channel, uint16_t param, uint16_t value);
-    void sendCapabilities(uint8_t timbre, uint8_t channel);
     uint8_t analyseSysexBuffer(uint8_t* sysexBuffer, uint16_t size);
 
     struct MidiEventState currentEventState_;

@@ -14,8 +14,8 @@
 #include "Env.h"
 #include "Lfo.h"
 #include "Osc.h"
-#include "Pfm3Preset.h"
 #include "Pfm3Param.h"
+#include "Pfm3Preset.h"
 #include "Pfm3VoiceState.h"
 #include "SynthEngine.h"
 #include "TimbreParams.h"
@@ -49,7 +49,10 @@ struct Pfm3TimbreContext {
  */
 class Preenfm3Engine : public SynthEngine {
 public:
-    Preenfm3Engine() : timbre_(nullptr), synthState_(nullptr), hexter_(nullptr), pfm3Preset_(nullptr) {
+    Preenfm3Engine()
+        : timbre_(nullptr), synthState_(nullptr), hexter_(nullptr), pfm3Preset_(nullptr), nrpnQueueCount_(0), nrpnQueueIndex_(0),
+          lastNrpnError_(0xFF), nrpnDumpActive_(false), nrpnDumpEndPending_(false), nrpnDumpMultiBlock_(false), nrpnDumpSingleBlock_(0),
+          nrpnDumpBlockCursor_(0), nrpnDumpBlockCount_(0), nrpnDumpLsb_(0), nrpnDumpParamCount_(0) {
     }
 
     struct Pfm3Preset* getPfm3Preset() const {
@@ -121,8 +124,11 @@ public:
         return true;
     }
     bool midiData(int timbre, const struct MidiData& data) override;
+    uint8_t nrpnError() const override;
+    void startNrpnResponse(uint8_t channel, uint16_t address, uint16_t value) override;
+    const struct MidiParamMessage* getNextNrpn() override;
     bool midiParamFeedback(int paramId, int context, float newValue, struct MidiParamMessage& out) const override;
-    bool midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const override;
+    bool midiMixerFeedback(int timbre, int valueType, float newValue, struct MidiParamMessage& out) const override;
 
     Osc& osc(int index) {
         return osc_[index];
@@ -165,6 +171,19 @@ private:
     void afterParamsLoadVoice(Voice* voice);
     void setPfm3ValueFromMidi(int index, float newValue);
     void setStepValueFromMidi(int whichStepSeq, int step, int newValue);
+    bool applyEngineParam(Pfm3Param id, float value);
+    bool applyCommonParam(CommonParamId id, float value);
+    bool applyPresetNameChar(uint8_t index, float value);
+    bool applyMixerField(uint8_t field, float value);
+    bool applyGlobalField(uint8_t field, float value);
+    float mixerFieldValue(uint8_t field) const;
+    float globalFieldValue(uint8_t field) const;
+    void startDump(bool multiBlock, uint8_t block, uint8_t blockCount);
+    bool nextDumpMessage(struct MidiParamMessage& out);
+    uint8_t dumpBlockAt(uint8_t cursor) const;
+    static bool isDumpBlockSupported(uint8_t block);
+    static uint16_t dumpBlockSize(uint8_t block);
+    uint16_t dumpParamValue(uint8_t block, uint8_t lsb);
     bool midiCcData(uint8_t cc, uint8_t value);
     bool midiNrpnData(uint16_t param, uint16_t value);
     void resetMatrix(Voice* voice);
@@ -178,6 +197,19 @@ private:
     SynthState* synthState_;
     Hexter* hexter_;
     Pfm3Preset* pfm3Preset_;
+    MidiParamMessage nrpnQueue_[6];
+    uint8_t nrpnQueueCount_;
+    uint8_t nrpnQueueIndex_;
+    uint8_t lastNrpnError_;
+    bool nrpnDumpActive_;
+    bool nrpnDumpEndPending_;
+    bool nrpnDumpMultiBlock_;
+    uint8_t nrpnDumpSingleBlock_;
+    uint8_t nrpnDumpBlockCursor_;
+    uint8_t nrpnDumpBlockCount_;
+    uint16_t nrpnDumpLsb_;
+    uint16_t nrpnDumpParamCount_;
+    MidiParamMessage nrpnDumpMessage_;
     Pfm3TimbreContext* context_;
     int timbreNumber_;
     int stepSelect_[2];
