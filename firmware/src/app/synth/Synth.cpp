@@ -591,10 +591,10 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
         break;
     }
     case MIXER_VALUE_GLOBAL_SETTINGS_3:
-        // Did we change the reverb preset
+        // timbre 0 = reverb preset, timbre 1 = master FX return level
         if (timbre == 0) {
             this->synthState_->mixerState_.fxBus_.presetChanged(this->synthState_->mixerState_.reverbPreset_);
-        } else if (timbre >= 3 && timbre <= 5) {
+        } else if (timbre >= 1 && timbre <= 5) {
             this->synthState_->mixerState_.fxBus_.paramChanged();
         }
         break;
@@ -721,10 +721,54 @@ void Synth::setNewMixerValueFromMidi(int timbre, int mixerValue, float newValue)
         break;
     }
     case MIXER_VALUE_SEND: {
+        if (newValue < 0.0f)
+            newValue = 0.0f;
+        else if (newValue > 1.0f)
+            newValue = 1.0f;
         float oldValue = this->synthState_->mixerState_.instrumentState_[timbre].send;
         this->synthState_->mixerState_.instrumentState_[timbre].send = newValue;
         if (oldValue != newValue) {
             this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, newValue);
+        }
+        break;
+    }
+    case MIXER_VALUE_COMPRESSOR: {
+        int compProfile = (int)newValue;
+        if (compProfile < 0)
+            compProfile = 0;
+        if (compProfile > 6)
+            compProfile = 6;
+        float oldValue = (float)this->synthState_->mixerState_.instrumentState_[timbre].compressorType;
+        this->synthState_->mixerState_.instrumentState_[timbre].compressorType = compProfile;
+        newMixerValue(MIXER_VALUE_COMPRESSOR, timbre, oldValue, (float)compProfile);
+        if (oldValue != (float)compProfile) {
+            this->synthState_->propagateNewMixerValueFromExternal(timbre, mixerValue, oldValue, (float)compProfile);
+        }
+        break;
+    }
+    case MIXER_VALUE_GLOBAL_SETTINGS_3: {
+        if (timbre == 0) {
+            int revPreset = (int)(newValue + 0.5f);
+            if (revPreset < 0)
+                revPreset = 0;
+            else if (revPreset > 18)
+                revPreset = 18;
+            float oldValue = (float)this->synthState_->mixerState_.reverbPreset_;
+            this->synthState_->mixerState_.reverbPreset_ = (uint8_t)revPreset;
+            this->synthState_->mixerState_.fxBus_.presetChanged(revPreset);
+            if (oldValue != (float)revPreset) {
+                this->synthState_->propagateNewMixerValueFromExternal(0, mixerValue, oldValue, (float)revPreset);
+            }
+        } else if (timbre == 1) {
+            if (newValue < 0.0f)
+                newValue = 0.0f;
+            else if (newValue > 1.0f)
+                newValue = 1.0f;
+            float oldValue = this->synthState_->mixerState_.reverbLevel_;
+            this->synthState_->mixerState_.reverbLevel_ = newValue;
+            if (oldValue != newValue) {
+                this->synthState_->propagateNewMixerValueFromExternal(1, mixerValue, oldValue, newValue);
+            }
         }
         break;
     }

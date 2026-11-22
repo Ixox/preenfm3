@@ -179,9 +179,12 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
     if (block == CommonBlock::Effect1 || block == CommonBlock::Effect2) {
         int effect = (block == CommonBlock::Effect1) ? (int)pfm3Preset()->effect1.type : (int)pfm3Preset()->effect2.type;
         int field = commonFieldOf(cid);
-        const char* name = (field >= 1) ? ((block == CommonBlock::Effect1) ? fx1RowDisplay[effect].paramName[field - 1]
-                                                                           : fx2RowDisplay[effect].paramName[field - 1])
-                                        : nullptr;
+        if (field == 0) {
+            tft_->print(paramInfoFor(button).name);
+            return;
+        }
+        const char* name =
+            (block == CommonBlock::Effect1) ? fx1RowDisplay[effect].paramName[field - 1] : fx2RowDisplay[effect].paramName[field - 1];
         if (name != nullptr) {
             tft_->print(name);
         } else {

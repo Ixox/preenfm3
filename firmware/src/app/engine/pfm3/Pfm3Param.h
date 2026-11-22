@@ -127,7 +127,9 @@ enum class MidiTransform : uint8_t {
     Percent,
     Linear8,
     Bipolar64,
-    UnisonDetune
+    UnisonDetune,
+    PlayMode,
+    GlideSpeed
 };
 
 enum class CcKind : uint8_t { Engine, Shared, EnvAllAttackModulator, EnvAllAttackCarrier, EnvAllReleaseModulator, EnvAllReleaseCarrier };

@@ -14,6 +14,7 @@
 #include <stddef.h>
 
 #include "Common.h"
+#include "MidiControlChange.h"
 #include "Pfm3ControlChange.h"
 #include "Pfm3Midi.h"
 #include "Pfm3Params.h"
@@ -406,6 +407,8 @@ static const ParamBlock commonBlocks[(int)CommonBlock::Count] = {
 };
 
 static const CcEntry ccEntries[] = {
+    {CC_GLIDE, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Engine1, 0, 3), MidiTransform::GlideSpeed},
+    {CC_PLAY_MODE, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Engine1, 0, 2), MidiTransform::PlayMode},
     {CC_UNISON_DETUNE, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Engine2, 0, 2), MidiTransform::UnisonDetune},
     {CC_UNISON_SPREAD, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Engine2, 0, 1), MidiTransform::Float127},
     {CC_ALGO, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Engine1, 0, 0), MidiTransform::Raw},
@@ -423,6 +426,10 @@ static const CcEntry ccEntries[] = {
     {CC_PAN3, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 2, 1), MidiTransform::Bipolar},
     {CC_MIX4, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 3, 0), MidiTransform::Float127},
     {CC_PAN4, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 3, 1), MidiTransform::Bipolar},
+    {CC_MIX5, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 4, 0), MidiTransform::Float127},
+    {CC_PAN5, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 4, 1), MidiTransform::Bipolar},
+    {CC_MIX6, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 5, 0), MidiTransform::Float127},
+    {CC_PAN6, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::OscMix, 5, 1), MidiTransform::Bipolar},
     {CC_MATRIXROW1_MUL, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Matrix, 0, 1), MidiTransform::MatrixMul},
     {CC_MATRIXROW2_MUL, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Matrix, 1, 1), MidiTransform::MatrixMul},
     {CC_MATRIXROW3_MUL, CcKind::Engine, (uint16_t)pfm3Param(Pfm3Block::Matrix, 2, 1), MidiTransform::MatrixMul},
@@ -610,9 +617,6 @@ uint16_t commonNrpn(CommonParamId id) {
     if (block == (uint8_t)CommonBlock::ArpPattern) {
         return (uint16_t)(36 + commonElementOf(id));
     }
-    if (block == (uint8_t)CommonBlock::Effect2) {
-        return 0xFFFF;
-    }
     uint16_t flat = commonFlatIndex(id);
     if (flat == 0xFFFF) {
         return 0xFFFF;
@@ -722,6 +726,10 @@ float pfm3ApplyMidiTransform(MidiTransform transform, uint8_t value) {
         return ((float)value - 64.0f) * (2.0f / 127.0f);
     case MidiTransform::UnisonDetune:
         return (float)value * (1.0f / 64.0f) - 1.0f;
+    case MidiTransform::PlayMode:
+        return (value < 3) ? (float)value : (float)((value * 3) / 128);
+    case MidiTransform::GlideSpeed:
+        return (float)value * (12.0f / 127.0f);
     case MidiTransform::Raw:
     default:
         return (float)value;
@@ -880,9 +888,7 @@ bool pfm3ValidateTables() {
                 }
                 uint16_t nrpn = pfm3Nrpn(id);
                 if (nrpn != 0xFFFF) {
-                    if (nrpn >= 240 || (nrpn >= 220 && nrpn < 228)) {
-                        return false;
-                    }
+
                     if (nrpnToParam[nrpn].id != (uint16_t)id) {
                         return false;
                     }
@@ -905,9 +911,7 @@ bool pfm3ValidateTables() {
                 }
                 uint16_t nrpn = commonNrpn(id);
                 if (nrpn != 0xFFFF) {
-                    if (nrpn >= 240 || (nrpn >= 220 && nrpn < 228)) {
-                        return false;
-                    }
+
                     if (nrpnToParam[nrpn].id != (uint16_t)id) {
                         return false;
                     }

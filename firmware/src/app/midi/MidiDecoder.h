@@ -87,8 +87,7 @@ public:
 
     void newMixerValueFromExternal(int timbre, int mixerValueType, float oldValue, float newValue);
     void newEngineParamValue(int timbre, int paramId, int context, float oldValue, float newValue);
-    void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue) {
-    }
+    void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue);
     void newMixerEdit(int oldButton, int newButton) {
     }
 
@@ -114,13 +113,15 @@ public:
     void newTimbre(int timbre) {
         currentTimbre_ = timbre;
     }
-    void sendCurrentPatchAsNrpns(int timbre);
+    void sendCurrentPatchAsNrpns(int timbre, int replyChannel = -1);
 
     // Some actions must not be called from the audio thread
     void processAsyncActions();
 
 private:
     void sendMidiParamFeedback(int timbre, const struct MidiParamMessage& message);
+    void sendNrpn(uint8_t channel, uint16_t param, uint16_t value);
+    void sendCapabilities(uint8_t timbre, uint8_t channel);
     uint8_t analyseSysexBuffer(uint8_t* sysexBuffer, uint16_t size);
 
     struct MidiEventState currentEventState_;

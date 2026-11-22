@@ -382,6 +382,9 @@ ships release binaries and IDE project files.
   exposure; additional NRPN mappings for the step sequencer.
 - **Files:** `MidiDecoder.cpp`, `MidiDecoder.h`, `Synth.cpp`,
   `PreenFMFileType.cpp`.
+- **Status here:** CC/NRPN infrastructure ported locally; pvig-only feature
+  ranges are ignored and advertised through the local capability protocol. See
+  `doc/web-editor-changes.md`.
 - **Commits:** `75087a8`, `54ef23e`, `265dbb1`, `ab33c52`
 
 #### c. Documentation and cleanup
@@ -449,6 +452,7 @@ Changes from pvig's branch that have been ported into this repository.
 | `cd19c34`, `2837e43` | Hermite delay interpolation in the per-timbre FX path (`delayInterpolationHermite` / `hermiteInterpolation`) | PORTED |
 | `f38af5d`, `805d6f7`, `d120c09` | ADAA on `LPWS`, `SAT`, `SIGMOID`, `FOLD`, `WRAP`, `LPXOR`, `LPXOR2`, `ORYX3`, `18DB`, `LADDER2`, `TEEBEE`, `SVFLH` + `FxBus` `WARM`/`FUZZ` | PORTED |
 | `d120c09` | `sqrtf` optimization: `hwSqrtf()` (`vsqrt.f32`) in FxBus saturation, `fastInvSqrt()`, and `vsqrt.f32` in `tanh4ADAA1_F()` | PORTED |
+| `54ef23e`, `75087a8` | CC/NRPN compatibility infrastructure: pvig CC map, all-row NRPN decode, full patch dump name/rows/step/MFX, NRPN feedback; local capability protocol added | PORTED (unsupported feature ranges hidden by capabilities) |
 
 ## Chronological commit list
 

@@ -84,7 +84,6 @@ const uint8_t algo5[] = {
     IM, 2, 3, 2,
     IM, 3, 4, 3,
     IM, 4, 4, 2,
-    IM, 4, 4, 2,
     FEEDBACK, 6, 4, 4,
     END,
 };

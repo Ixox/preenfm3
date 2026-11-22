@@ -9,6 +9,7 @@
 
 #include "Preenfm3Engine.h"
 #include "Hexter.h"
+#include "MidiCapabilities.h"
 #include "MidiControlChange.h"
 #include "Pfm3ControlChange.h"
 #include "Pfm3FlashFormat.h"
@@ -5278,10 +5279,10 @@ void Preenfm3Engine::deserializePfm3Preset(const struct Pfm3Preset& in) {
 void Preenfm3Engine::setPfm3ValueFromMidi(int index, float newValue) {
     const ParamDesc* d;
     const ParamUiDesc* ui;
-    Pfm3Param topId = pfm3FlatToParam((uint16_t)index);
-    if ((uint16_t)topId != PFM3_PARAM_NONE) {
-        d = &pfm3Desc(topId);
-        ui = &pfm3FullDesc(topId).ui;
+    Pfm3Param engineParamId = pfm3FlatToParam((uint16_t)index);
+    if ((uint16_t)engineParamId != PFM3_PARAM_NONE) {
+        d = &pfm3Desc(engineParamId);
+        ui = &pfm3FullDesc(engineParamId).ui;
     } else {
         CommonParamId cid = commonFlatToParam((uint16_t)index);
         if (cid == COMMON_PARAM_NONE) {
@@ -5292,7 +5293,13 @@ void Preenfm3Engine::setPfm3ValueFromMidi(int index, float newValue) {
     }
     float oldValue = ((float*)getPfm3Preset())[index];
 
-    if (newValue > d->max) {
+    // Special case for Clock frequency values in LFO osc Frequency, we need to accept values > max value 
+    float maxValue = d->max;
+    if ((uint16_t)engineParamId != PFM3_PARAM_NONE && pfm3ParamBlockOf(engineParamId) == (uint8_t)Pfm3Block::LfoOsc && pfm3ParamFieldOf(engineParamId) == 1) {
+        maxValue = LFO_FREQ_MAX + 0.9f;
+    }
+
+    if (newValue > maxValue) {
         // in v2, matrix target were removed so some values are > to max value but we need to accept it
         bool mustConstraint = true;
         if (ui->valueOrder != NULL) {
@@ -5303,7 +5310,7 @@ void Preenfm3Engine::setPfm3ValueFromMidi(int index, float newValue) {
             }
         }
         if (mustConstraint) {
-            newValue = d->max;
+            newValue = maxValue;
         }
     } else if (newValue < d->min) {
         newValue = d->min;
@@ -5438,6 +5445,26 @@ void Preenfm3Engine::setStepValueFromMidi(int whichStepSeq, int step, int newVal
     }
 }
 
+/*
+ * Apply one incoming NRPN to the PFM3 engine.
+ *
+ * param is the 14-bit NRPN address (paramMSB << 7 | paramLSB);
+ * value is the 14-bit data. Returns true when the NRPN was recognised.
+ *
+ * Routing cases, in order:
+ * - paramMSB < 2: legacy PreenFM2 NRPN map via pfm3NrpnToParam().
+ *   Engine params use setPfm3ValueFromMidi(); common params may write a
+ *   preset-name character or an arp user pattern instead.
+ * - paramMSB == 2, paramLSB 44..67: operator envelope curves (NRPN 300..323),
+ *   mapped to EnvCurve[(lsb - 44) / 4] field (lsb - 44) % 4.
+ * - paramMSB == 2 or 3, paramLSB < 16: step-sequencer step values; only
+ *   valueLSB (0..15) is used.
+ * - paramMSB == 5 or 6: step-sequencer modes/loop length; unsupported here.
+ * - otherwise: generic editor row through Pfm3Midi::getMemoryIndexFromMidi(),
+ *   including rows whose legacy NRPN index is >= 256.
+ *
+ * Float100 and float display types are converted with value * 0.01 + min.
+ */
 bool Preenfm3Engine::midiNrpnData(uint16_t param, uint16_t value) {
     uint8_t paramMSB = param >> 7;
     uint8_t paramLSB = param & 0x7f;
@@ -5482,8 +5509,46 @@ bool Preenfm3Engine::midiNrpnData(uint16_t param, uint16_t value) {
         return true;
     }
 
-    if (paramMSB < 4) {
+    // Operator envelope curves: [2,44..67] (NRPN 300..323).
+    // Kept out of nrpnToParam because their flat NRPN (220..243) overlaps the preset name.
+    if (paramMSB == 2 && paramLSB >= 44 && paramLSB < 68) {
+        uint8_t idx = paramLSB - 44;
+        Pfm3Param id = pfm3Param(Pfm3Block::EnvCurve, (uint8_t)(idx / 4), (uint8_t)(idx % 4));
+        setPfm3ValueFromMidi(pfm3FlatIndex(id), (float)value);
+        return true;
+    }
+
+    if ((paramMSB == 2 || paramMSB == 3) && paramLSB < 16) {
         setStepValueFromMidi(paramMSB - 2, paramLSB, valueLSB);
+        return true;
+    }
+
+    // Step-sequencer modes/loop length are not supported here.
+    if (paramMSB == 5 || paramMSB == 6) {
+        return false;
+    }
+
+    // All editor rows, including rows whose legacy NRPN index is >= 256.
+    int memoryIndex = Pfm3Midi::getMemoryIndexFromMidi(param);
+    float floatValue = (float)value;
+    Pfm3Param pid = pfm3FlatToParam((uint16_t)memoryIndex);
+    if ((uint16_t)pid != PFM3_PARAM_NONE) {
+        const ParamFullDescription& full = pfm3FullDesc(pid);
+        if (full.ui.displayType == DISPLAY_TYPE_FLOAT || full.ui.displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
+            full.ui.displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || full.ui.displayType == DISPLAY_TYPE_LFO_KSYN) {
+            floatValue = floatValue * .01f + full.desc.min;
+        }
+        setPfm3ValueFromMidi((uint16_t)memoryIndex, floatValue);
+        return true;
+    }
+    CommonParamId cid = commonFlatToParam((uint16_t)memoryIndex);
+    if (cid != COMMON_PARAM_NONE) {
+        const ParamFullDescription& full = commonFullDesc(cid);
+        if (full.ui.displayType == DISPLAY_TYPE_FLOAT || full.ui.displayType == DISPLAY_TYPE_FLOAT_OSC_FREQUENCY ||
+            full.ui.displayType == DISPLAY_TYPE_FLOAT_LFO_FREQUENCY || full.ui.displayType == DISPLAY_TYPE_LFO_KSYN) {
+            floatValue = floatValue * .01f + full.desc.min;
+        }
+        setPfm3ValueFromMidi((uint16_t)memoryIndex, floatValue);
         return true;
     }
     return false;
@@ -5532,6 +5597,12 @@ bool Preenfm3Engine::midiParamFeedback(int paramId, int context, float newValue,
             if (field == 0) { // algo
                 out.ccValue = newValue;
                 out.cc = CC_ALGO;
+            } else if (field == 2) { // play mode
+                out.cc = CC_PLAY_MODE;
+                out.ccValue = newValue * (127.0f / 2.0f) + .1f;
+            } else if (field == 3) { // glide speed
+                out.cc = CC_GLIDE;
+                out.ccValue = newValue * (127.0f / 12.0f) + .1f;
             }
             break;
         case Pfm3Block::Mod:
@@ -5548,6 +5619,12 @@ bool Preenfm3Engine::midiParamFeedback(int paramId, int context, float newValue,
                 } else {
                     out.ccValue = (newValue + 1.0f) * 50.0f + .1f;
                 }
+            } else if (element == 4) {
+                out.cc = (field == 0) ? CC_MIX5 : CC_PAN5;
+                out.ccValue = (field == 0) ? (newValue * 100.0f + .1f) : ((newValue + 1.0f) * 50.0f + .1f);
+            } else if (element == 5) {
+                out.cc = (field == 0) ? CC_MIX6 : CC_PAN6;
+                out.ccValue = (field == 0) ? (newValue * 100.0f + .1f) : ((newValue + 1.0f) * 50.0f + .1f);
             }
             break;
         case Pfm3Block::Osc:
@@ -5678,13 +5755,29 @@ bool Preenfm3Engine::midiParamFeedback(int paramId, int context, float newValue,
 }
 
 bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessage& out) const {
-    (void)timbre;
-
     const int nameCount = 12;
-    const int paramCount = pfm3FlatIndex(pfm3Param(Pfm3Block::Engine2, 0, 3)) + 1;
+    const int paramCount = Pfm3PresetLayout::presetNameStart;
     const int stepCount = 2 * 16;
 
     out.isNrpn = true;
+
+    // Capability block, so a patch dump is self-describing.
+    if (index < MIDI_CAPABILITY_NRPN_COUNT) {
+        out.nrpn = (127 << 7) | (126 - index);
+        switch (index) {
+        case 0:
+            out.nrpnValue = MIDI_SUPPORTED_FEATURES;
+            break;
+        case 1:
+            out.nrpnValue = MIDI_MAX_LFO_SHAPE;
+            break;
+        default:
+            out.nrpnValue = MIDI_CAPABILITY_PROTOCOL_VERSION;
+            break;
+        }
+        return true;
+    }
+    index -= MIDI_CAPABILITY_NRPN_COUNT;
 
     // Preset name.
     if (index < nameCount) {
@@ -5703,7 +5796,9 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
         } else {
             CommonParamId cid = commonFlatToParam((uint16_t)index);
             if (cid == COMMON_PARAM_NONE) {
-                return false;
+                // Unused flat slot: skip it without ending the patch dump.
+                out.isNrpn = false;
+                return true;
             }
             full = &commonFullDesc(cid);
         }
@@ -5728,6 +5823,30 @@ bool Preenfm3Engine::midiPatchParam(int timbre, int index, struct MidiParamMessa
         int step = index % 16;
         out.nrpn = ((whichStepSeq + 2) << 7) | step;
         out.nrpnValue = getSeqStepValue(whichStepSeq, step);
+        return true;
+    }
+    index -= stepCount;
+
+    // Timbre & master FX: [4,0..3].
+    if (index < 4) {
+        const MixerInstrumentState& inst = synthState_->mixerState_.instrumentState_[timbre];
+        int valueToSend = 0;
+        switch (index) {
+        case 0:
+            valueToSend = (int)(inst.send * 100.0f + 0.5f);
+            break;
+        case 1:
+            valueToSend = (int)inst.compressorType;
+            break;
+        case 2:
+            valueToSend = (int)(synthState_->mixerState_.reverbLevel_ * 100.0f + 0.5f);
+            break;
+        case 3:
+            valueToSend = (int)synthState_->mixerState_.reverbPreset_;
+            break;
+        }
+        out.nrpn = (4 << 7) | index;
+        out.nrpnValue = valueToSend;
         return true;
     }
 
