@@ -494,7 +494,7 @@ public:
     bool scalaSettingsChanged(int timbre);
 
     struct Pfm3Preset* pfm3Preset_;
-    struct Pfm3Preset backupPfm3Preset_;
+    struct Pfm3Preset* backupPfm3Preset_;
     MixerState mixerState_;
     struct FullState fullState_;
     char stepSelect_[2];

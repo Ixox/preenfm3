@@ -29,6 +29,31 @@
 #include "preenfm3lib.h"
 #include "stdlib.h"
 #include <stdbool.h>
+
+/* The custom RAM sections have no load image (they are removed from the
+   .bin by objcopy), so the startup code does not initialise them. Clear
+   them before the static constructors run. */
+extern uint32_t _sram_d1[], _eram_d1[];
+extern uint32_t _sram_d2[], _eram_d2[];
+extern uint32_t _sram_d2b[], _eram_d2b[];
+extern uint32_t _sram_d2c[], _eram_d2c[];
+extern uint32_t _sram_d3[], _eram_d3[];
+extern uint32_t _sram_itcm[], _eram_itcm[];
+
+static void zeroRange(uint32_t* start, uint32_t* end) {
+    while (start < end) {
+        *start++ = 0;
+    }
+}
+
+void ZeroCustomRam(void) {
+    zeroRange(_sram_d1, _eram_d1);
+    zeroRange(_sram_d2, _eram_d2);
+    zeroRange(_sram_d2b, _eram_d2b);
+    zeroRange(_sram_d2c, _eram_d2c);
+    zeroRange(_sram_d3, _eram_d3);
+    zeroRange(_sram_itcm, _eram_itcm);
+}
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

@@ -158,34 +158,64 @@ SECTIONS
     . = ALIGN(4);
   } >DTCMRAM
  
-  .ram_d1 : 
+  /* Engine state and large CPU-only buffers (write-through cacheable). */
+  .ram_d1 (NOLOAD) :
   {
+    . = ALIGN(4);
+    _sram_d1 = .;
     *(.ram_d1)
+    . = ALIGN(4);
+    _eram_d1 = .;
   } >RAM_D1
   
-  .ram_d2 : 
+  /* Audio buffers next to the SAI DMA (write-through cacheable). */
+  .ram_d2 (NOLOAD) :
   {
+    . = ALIGN(4);
+    _sram_d2 = .;
     *(.ram_d2)
+    . = ALIGN(4);
+    _eram_d2 = .;
   } >RAM_D2
 
-  .ram_d2b : 
+  /* SD / SPI2 DMA and FatFs buffers (non-cacheable, shareable). */
+  .ram_d2b (NOLOAD) :
   {
+    . = ALIGN(4);
+    _sram_d2b = .;
     *(.ram_d2b)
+    . = ALIGN(4);
+    _eram_d2b = .;
   } >RAM_D2B
 
-  .ram_d2c :
+  /* Spare DMA-safe staging (non-cacheable, shareable). */
+  .ram_d2c (NOLOAD) :
   {
+    . = ALIGN(4);
+    _sram_d2c = .;
     *(.ram_d2c)
+    . = ALIGN(4);
+    _eram_d2c = .;
   } >RAM_D2C
   
-  .ram_d3 : 
+  /* Cold sequencer data (write-back cacheable). */
+  .ram_d3 (NOLOAD) :
   {
+    . = ALIGN(4);
+    _sram_d3 = .;
     *(.ram_d3)
+    . = ALIGN(4);
+    _eram_d3 = .;
   } >RAM_D3
   
-  .instruction_ram : 
+  /* Hot audio lookup tables (ITCM, never cached). */
+  .instruction_ram (NOLOAD) :
   {
+    . = ALIGN(4);
+    _sram_itcm = .;
     *(.instruction_ram)
+    . = ALIGN(4);
+    _eram_itcm = .;
   } >ITCMRAM
 
   /* Remove information from the standard libraries */

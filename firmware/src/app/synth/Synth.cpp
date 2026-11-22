@@ -19,6 +19,7 @@
 #include "Menu.h"
 #include "Sequencer.h"
 #include "stm32h7xx_hal.h"
+#include "waves.h"
 
 extern RNG_HandleTypeDef hrng;
 extern float noise[32];
@@ -41,9 +42,11 @@ inline float sqrt3(const float x) {
 }
 
 void Synth::init(SynthState* synthState) {
+    initWaveTables();
+
     voicePool_.init();
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
-        timbres_[t].resetPfm3PresetToDefault();
+        timbres_[t].resetPfm3PresetToDefault(t);
         timbres_[t].initVoicePool(&voicePool_);
         timbres_[t].init(synthState, t);
         for (int v = 0; v < MAX_NUMBER_OF_VOICES; v++) {

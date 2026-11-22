@@ -644,12 +644,12 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
 
     switch (nextMenu->menuState) {
     case MENU_PRESET_LOAD_SELECT:
-        copySynthParams((char*)synthState_->pfm3Preset_, (char*)&synthState_->backupPfm3Preset_);
+        copySynthParams((char*)synthState_->pfm3Preset_, (char*)synthState_->backupPfm3Preset_);
         fullState->preenFMBank = synthState_->getStorage()->getPatchBank()->getFile(fullState->preenFMBankNumber);
         synthState_->loadPreset(currentTimbre, fullState->preenFMBank, fullState->preenFMPresetNumber, synthState_->pfm3Preset_);
         break;
     case MENU_PRESET_LOAD_SELECT_DX7_BANK:
-        copySynthParams((char*)synthState_->pfm3Preset_, (char*)&synthState_->backupPfm3Preset_);
+        copySynthParams((char*)synthState_->pfm3Preset_, (char*)synthState_->backupPfm3Preset_);
         fullState->preenFMBank = synthState_->getStorage()->getDX7SysexFile()->getFile(fullState->dx7BankNumber);
         synthState_->loadDx7Patch(currentTimbre, fullState->preenFMBank, fullState->dx7PresetNumber, synthState_->pfm3Preset_);
         break;
@@ -702,7 +702,7 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
         }
         break;
     case MENU_PRESET_RANDOMIZER:
-        copySynthParams((char*)synthState_->pfm3Preset_, (char*)&synthState_->backupPfm3Preset_);
+        copySynthParams((char*)synthState_->pfm3Preset_, (char*)synthState_->backupPfm3Preset_);
         break;
     case MENU_SD_CREATE_PRESET_FILE:
         copyAndTransformString(fullState->name, "Bank");
@@ -762,7 +762,7 @@ const MenuItem* ScreenMenu::getMenuBack(int currentTimbre) {
         // Put back original preset
         synthState_->propagateNoteOff();
         synthState_->propagateBeforeNewParamsLoad(currentTimbre);
-        copySynthParams((char*)&synthState_->backupPfm3Preset_, (char*)synthState_->pfm3Preset_);
+        copySynthParams((char*)synthState_->backupPfm3Preset_, (char*)synthState_->pfm3Preset_);
         synthState_->propagateAfterNewParamsLoad(currentTimbre);
         break;
     case MENU_PRESET_LOAD_SELECT:
@@ -770,7 +770,7 @@ const MenuItem* ScreenMenu::getMenuBack(int currentTimbre) {
         synthState_->propagateNoteOff();
         synthState_->propagateBeforeNewParamsLoad(currentTimbre);
         // Put back original preset
-        copySynthParams((char*)&synthState_->backupPfm3Preset_, (char*)synthState_->pfm3Preset_);
+        copySynthParams((char*)synthState_->backupPfm3Preset_, (char*)synthState_->pfm3Preset_);
         synthState_->propagateAfterNewParamsLoad(currentTimbre);
         break;
     default:

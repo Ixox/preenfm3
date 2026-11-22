@@ -87,7 +87,7 @@ struct RowEncoder {
 typedef enum { FILE_OK = 0, FILE_READ_ONLY, FILE_EMPTY } FileType;
 
 struct WaveTable {
-    float* table;
+    const float* table;
     int max;
     float useFreq;
     float floatToAdd;

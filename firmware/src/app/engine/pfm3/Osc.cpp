@@ -31,7 +31,7 @@ float oscValues4[32];
 float oscValuesFeedback[32];
 int Osc::oscValuesCpt = 1;
 
-// User waveforms
+// User waveforms (DTCM).
 float userWaveform[6][1024] __attribute__((section(".instruction_ram")));
 
 // clang-format off

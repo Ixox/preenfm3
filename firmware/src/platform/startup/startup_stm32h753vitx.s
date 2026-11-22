@@ -91,6 +91,8 @@ LoopFillZerobss:
 
 /* Call the clock system intitialization function.*/
   bl  SystemInit   
+/* Clear the custom RAM sections before constructors use them. */
+  bl  ZeroCustomRam
 /* Call static constructors */
     bl __libc_init_array
 /* Call the application's entry point.*/

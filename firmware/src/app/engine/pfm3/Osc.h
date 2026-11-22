@@ -20,7 +20,9 @@
 #include "Matrix.h"
 #include "SynthStateAware.h"
 
+extern "C" {
 extern float sinTable[];
+}
 
 struct OscState {
     float index;
@@ -85,7 +87,7 @@ public:
     inline float* getNextBlock(struct OscState* oscState) {
         int shape = (int)oscillator_->shape;
         int max = waveTables[shape].max;
-        float* wave = waveTables[shape].table;
+        const float* wave = waveTables[shape].table;
         float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
         float fIndex = oscState->index;
         int iIndex;
@@ -130,7 +132,7 @@ public:
                                                        float freqMultiplier, float* lastValue) {
         int shape = (int)oscillator_->shape;
         int max = waveTables[shape].max;
-        float* wave = waveTables[shape].table;
+        const float* wave = waveTables[shape].table;
         float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
         float fIndex = oscState->index;
         int iIndex;
@@ -176,7 +178,7 @@ public:
     float* getNextBlockHQ(struct OscState* oscState) {
         int shape = (int)oscillator_->shape;
         int max = waveTables[shape].max;
-        float* wave = waveTables[shape].table;
+        const float* wave = waveTables[shape].table;
         float freq = oscState->frequency * waveTables[shape].precomputedValue + waveTables[shape].floatToAdd;
         float fIndex = oscState->index;
         int iIndex;

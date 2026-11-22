@@ -24,7 +24,7 @@
 enum { TFT_NUMBER_OF_WAVEFORM_EXT = 14, TFT_DRAW_ENVELOPPE, TFT_DRAW_LFO };
 
 struct WaveFormExt {
-    float* waveForms;
+    const float* waveForms;
     int size;
 };
 
@@ -37,7 +37,7 @@ public:
     FirmwareTftDisplay();
     virtual ~FirmwareTftDisplay();
 
-    void initWaveFormExt(int index, float* waveform, int size);
+    void initWaveFormExt(int index, const float* waveform, int size);
 
     void oscilloBgActionOperatorShape(int wfNumber);
     void oscilloBgActionEnvelope();
@@ -53,7 +53,7 @@ public:
     void clearActions();
 
 private:
-    void oscilloBgDrawOperatorShape(float* waveForm, int size);
+    void oscilloBgDrawOperatorShape(const float* waveForm, int size);
     void oscilloBgDrawEnvelope();
     void oscilloBgDrawLfo();
     void oscilloFillWithRand(int randtype);

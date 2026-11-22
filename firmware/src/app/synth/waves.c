@@ -1,4 +1,6 @@
-float sinTable[] = {// =================================================================
+#include <string.h>
+
+static const float sinTableFlash[] = {// =================================================================
                     // SIN : order 20 / 2048 steps
                     // average : 0.0 / amplitude : 2.0
                     0,
@@ -2051,7 +2053,7 @@ float sinTable[] = {// =========================================================
                     -0.003067956763,
                     0.0f};
 
-float squareTable[] = {// =================================================================
+static const float squareTableFlash[] = {// =================================================================
                        // SQUARE : order 20 / 2048 steps
                        // average : 0.0 / amplitude : 2.35959731680782
                        0,
@@ -4103,7 +4105,7 @@ float squareTable[] = {// ======================================================
                        -0.066163686765,
                        -0.033102555752};
 
-float sawTable[] = {// =================================================================
+static const float sawTableFlash[] = {// =================================================================
                     // SAWTOOTH : order 20 / 2048 steps
                     // average : 0.0 / amplitude : 1.13095898406061
                     0,
@@ -6155,7 +6157,7 @@ float sawTable[] = {// =========================================================
                     0.069016371627,
                     0.034531497709};
 
-float sinPosTable[] = {// =================================================================
+static const float sinPosTableFlash[] = {// =================================================================
                        // SINPOS : order 20 / 1024 steps
                        // average : 0.6366177749955104 / amplitude : 1.0
                        -1,
@@ -7183,7 +7185,7 @@ float sinPosTable[] = {// ======================================================
                        -0.980723852258,
                        -0.990361744692};
 
-float sinOrZeroTable[] = {// =================================================================
+static const float sinOrZeroTableFlash[] = {// =================================================================
                           // SINORZERO : order 20 / 1024 steps
                           // average : 0.31830888749775543 / amplitude : 1.0
                           -0.466940057836,
@@ -8211,7 +8213,7 @@ float sinOrZeroTable[] = {// ===================================================
                           -0.466940057836,
                           -0.466940057836};
 
-float sinSquareTable[] = {// =================================================================
+static const float sinSquareTableFlash[] = {// =================================================================
                           // SINSQUARE : order 20 / 1024 steps
                           // average : 0.49999999999999994 / amplitude : 1.0
                           -1,
@@ -9238,3 +9240,25 @@ float sinSquareTable[] = {// ===================================================
                           -0.999322384588,
                           -0.999698818696,
                           -0.999924701839};
+
+
+/*
+ * The waveform tables are read inside the audio callback, so keep a copy in
+ * ITCM. The flash arrays above are the load image; the custom sections have
+ * no load image, so initWaveTables() fills the ITCM copies at startup.
+ */
+float sinTable[sizeof(sinTableFlash) / sizeof(float)];
+float squareTable[sizeof(squareTableFlash) / sizeof(float)];
+float sawTable[sizeof(sawTableFlash) / sizeof(float)];
+float sinPosTable[sizeof(sinPosTableFlash) / sizeof(float)];
+float sinOrZeroTable[sizeof(sinOrZeroTableFlash) / sizeof(float)];
+float sinSquareTable[sizeof(sinSquareTableFlash) / sizeof(float)];
+
+void initWaveTables(void) {
+    memcpy(sinTable, sinTableFlash, sizeof(sinTableFlash));
+    memcpy(squareTable, squareTableFlash, sizeof(squareTableFlash));
+    memcpy(sawTable, sawTableFlash, sizeof(sawTableFlash));
+    memcpy(sinPosTable, sinPosTableFlash, sizeof(sinPosTableFlash));
+    memcpy(sinOrZeroTable, sinOrZeroTableFlash, sizeof(sinOrZeroTableFlash));
+    memcpy(sinSquareTable, sinSquareTableFlash, sizeof(sinSquareTableFlash));
+}

@@ -48,7 +48,7 @@ void FirmwareTftDisplay::clearActions() {
     operatorInQueue_ = 0;
 }
 
-void FirmwareTftDisplay::initWaveFormExt(int index, float* waveform, int size) {
+void FirmwareTftDisplay::initWaveFormExt(int index, const float* waveform, int size) {
     waveForm_[index].waveForms = waveform;
     waveForm_[index].size = size;
 }
@@ -98,7 +98,7 @@ void FirmwareTftDisplay::additionalActions() {
     }
 }
 
-void FirmwareTftDisplay::oscilloBgDrawOperatorShape(float* waveForm, int size) {
+void FirmwareTftDisplay::oscilloBgDrawOperatorShape(const float* waveForm, int size) {
 
     int indexMiddle = 50 * 160;
     uint16_t oscilloColor = tftPalette565[COLOR_YELLOW];
@@ -462,7 +462,7 @@ void FirmwareTftDisplay::oscilloBgDrawLfo() {
     switch ((int)oscilParams1_[0]) {
     case 0: {
         // Sin
-        float* samples = waveForm_[0].waveForms;
+        const float* samples = waveForm_[0].waveForms;
         int size = waveForm_[0].size;
         for (int x = 0; x < 160; x++) {
             float index = ((float)x) * ((float)size) / 160.0f * oscilParams1_[1] + size * oscilParams1_[4];

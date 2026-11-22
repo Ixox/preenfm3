@@ -17,7 +17,7 @@
 
 #include "Lfo.h"
 
-// Standard 128kb memory
+// Engine state in RAM_D1.
 float Pfm3Lfo::invTab[2048] __attribute__((section(".ram_d1")));
 int Pfm3Lfo::initTab = 0;
 

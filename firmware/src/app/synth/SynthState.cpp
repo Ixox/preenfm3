@@ -29,8 +29,11 @@
 extern Synth synth;
 extern RNG_HandleTypeDef hrng;
 
+static Pfm3Preset backupPfm3PresetStorage_ __attribute__((section(".ram_d3")));
+
 SynthState::SynthState() {
     operatorNumber_ = 0;
+    backupPfm3Preset_ = &backupPfm3PresetStorage_;
 
     // First default preset
     fullState_.synthMode = SYNTH_MODE_MIXER;

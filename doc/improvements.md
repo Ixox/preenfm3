@@ -1,7 +1,8 @@
 # Improvements
 
 Known issues and suggested improvements for the preenFM3 firmware, covering
-STM32H7 cache/MPU correctness, the display pipeline and audio performance.
+STM32H7 cache/MPU correctness, the display pipeline, audio performance and
+broader project-level work.
 
 ## Table of Contents
 
@@ -35,6 +36,7 @@ STM32H7 cache/MPU correctness, the display pipeline and audio performance.
   - [Audio performance suggested order of work](#audio-performance-suggested-order-of-work)
   - [Also noticed (correctness, not performance)](#also-noticed-correctness-not-performance)
 - [MPU suggested order of work](#mpu-suggested-order-of-work)
+- [Broader project improvements](#broader-project-improvements)
 
 ---
 
@@ -542,3 +544,83 @@ integer overload, the difference is truncated before the comparison. Prefer
    policy (non-cacheable `RAM_D2B`/`RAM_D2C`, write-through `RAM_D1`/`RAM_D2`).
 6. Add a comment for every DMA buffer stating its cache policy: the MPU region
    comments cover this; add per-buffer notes when touching those buffers.
+
+---
+
+## Broader project improvements
+
+Additional project-level ideas, orthogonal to the (now fixed) MPU and display
+items above. These are candidates, not confirmed priorities.
+
+1. **Add CI and host-side tests.** There is no `.github/` and no test target.
+   Build firmware and bootloader on every push, and add host tests for pure
+   logic: `Pfm3FlashFormat` round-trip and `pfm3Version` migration, DX7 patch
+   unpacking (`Hexter`), algorithm tables and preset layout. This is the
+   highest-leverage change: the `envCurves1To4` out-of-bounds access and the
+   `Env`/`Lfo` ODR problems were only caught because LTO happened to warn.
+
+2. **Enable stricter warnings and a curated `-Werror`.** Only `-Wall` is
+   enabled. Add `-Wextra`, `-Wodr` (with LTO), `-Wstringop-overflow`,
+   `-Wshadow` and `-Wdouble-promotion` for the float DSP. Fix the resulting
+   set and enforce a clean subset in CI so the flags cannot regress.
+
+3. **Define and enforce a memory-placement policy.** Done: see
+   [memory_map.md](memory_map.md). Cold preset mirrors moved out of DTCM, the
+   built-in waveform tables moved to DTCM (with a flash load image), the user
+   waveform buffers moved to ITCM, `tft` moved to `.ram_d1`, and the
+   custom RAM sections are zeroed before the constructors. Enforcement lives
+   in `firmware/src/app/synth/StaticAsserts.cpp` (on-flash layout and DTCM
+   budgets) and `cmake/check_firmware_memory.cmake` (95 % post-build limit).
+   Raising `MAX_NUMBER_OF_VOICES` is now an ordinary budget decision; DTCM is
+   at 75 %, so the limiting regions are RAM_D1/RAM_D2.
+
+4. **Build a preset-compatibility harness.** Keep golden PFM3/DX7/BYX preset
+   blobs and run them through `pfm3ParamsToFlash()` / `pfm3FlashToParams()` in
+   both directions, including the `pfm3Version` migration path. The
+   `FlashSynthParams` size/offset asserts now exist in
+   `firmware/src/app/synth/StaticAsserts.cpp`; the round-trip tests remain.
+
+5. **Keep a repeatable CPU benchmark.** The DWT counter already exists
+   (`SHOW_CPU_USAGE`). Add a fixed benchmark set (for example a 10-note DX7
+   patch and a 16-note PFM3 patch) and record the results in the repository.
+   The ITCM and LTO experiments were only meaningful because they could be
+   measured the same way.
+
+6. **Split the largest translation units.** `Preenfm3Engine.cpp` (~5.5k
+   lines), `Voice.cpp` (~4k), `EditorPfm3.cpp` (~3.4k) and `Timbre.cpp`
+   (~3.2k) slow down builds and complicate review. Extract parameter
+   pages/display code, voice-pool/mixer helpers and engine-specific parameter
+   handling.
+
+7. **Close out the remaining audio-path list.** Remove
+   `HAL_RNG_GenerateRandomNumber()` from `Synth::buildNewSampleBlock()`, add
+   the `FILTER_OFF` / `FILTER2_OFF` early returns, and fix the `abs()` →
+   `fabsf()` correctness issue. Measure each with the benchmark from item 5.
+
+8. **Run measured DX7 hot-path experiments.** The per-block `exp()` in
+   `Dx7Note::compute()` (amp modulation), the virtual `FmCore::render()` call
+   and the 64-bit `Sin::lookup()` interpolation are candidates. The earlier
+   micro-optimisations were rolled back because the gain was small; revisit
+   only with a benchmark and a listen test.
+
+9. **Make the build reproducible.** Pin the GCC 16.2 toolchain in CI or a
+   devcontainer, export `compile_commands.json`, add a `clang-tidy`
+   configuration, and document why `-fno-tree-vectorize` and LTO are required
+   (GCC 16 issues) so they are not removed later.
+
+10. **Unify the storage boundary.** The firmware has
+    `firmware/src/app/storage/`, while the bootloader calls FatFs and the SD
+    BSP directly. Either extract a small shared storage layer (or document the
+    boundary), and validate file sizes/CRC before copying firmware or preset
+    data.
+
+11. **Harden the bootloader.** Verify the application CRC/hash and size
+    before jumping, add a recovery path for a corrupted application, and keep
+    the SD/FatFs error handling explicit. This is separate from the flash-write
+    logic.
+
+12. **Clean up the documentation and third-party isolation.** Update the stale
+    16-voice references (`doc/audio_path_architecture.md`,
+    `doc/preenfm3_engine.md`, `doc/dx7_engine.md` and this file), and consider
+    wrapping the vendored MSFA code in `namespace msfa` so an `Env`/`Lfo`-style
+    ODR collision cannot reappear.

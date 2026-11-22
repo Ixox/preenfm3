@@ -43,6 +43,7 @@ extern TIM_HandleTypeDef htim1;
 #define RAM_D1_SECTION  __attribute__((section(".ram_d1")))
 #define RAM_D2_SECTION  __attribute__((section(".ram_d2")))
 #define RAM_D2B_SECTION __attribute__((section(".ram_d2b")))
+#define RAM_D2C_SECTION __attribute__((section(".ram_d2c")))
 #define RAM_D3_SECTION  __attribute__((section(".ram_d3")))
 
 SynthState synthState;
@@ -53,7 +54,7 @@ ScreenMixer displayMixer;
 ScreenSequencer displaySequencer;
 MidiDecoder midiDecoder;
 Encoders encoders;
-FirmwareTftDisplay tft;
+FirmwareTftDisplay tft RAM_D1_SECTION;
 TftAlgo tftAlgo;
 Synth synth;
 Storage sdCard;

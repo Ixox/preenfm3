@@ -61,7 +61,7 @@ public:
     void syncArpUserPatterns();
     void setStepSequencerSteps(int whichStepSeq);
     void handleNullFlatParam(int row);
-    void resetPfm3PresetToDefault();
+    void resetPfm3PresetToDefault(int timbreNumber);
     void setPresetNameChar(int index, char c);
     void setPresetName(const char* name);
     void engineParamChanged(int paramId, int context, float oldValue, float newValue);
@@ -210,7 +210,7 @@ public:
     void midiClockSongPositionStep(int songPosition);
 
     struct Pfm3Preset* getPfm3Preset() {
-        return &pfm3Preset_;
+        return pfm3Preset_;
     }
 
     TimbreSharedParams& sharedParams() {
@@ -251,7 +251,7 @@ public:
     }
 
     char* getPresetName() {
-        return pfm3Preset_.presetName;
+        return pfm3Preset_->presetName;
     }
 
     float getNumberOfVoiceInverse() {
@@ -387,7 +387,8 @@ private:
     SynthEngine* engineImpl_;
     // Flat Pfm3Preset mirror for the editor and storage.
     // The PFM3 DSP state is owned by Pfm3TimbreParams in Preenfm3Engine.
-    struct Pfm3Preset pfm3Preset_;
+    // The mirror itself lives in .ram_d1 (see pfm3Presets_ in Timbre.cpp).
+    struct Pfm3Preset* pfm3Preset_;
     // Engine-neutral per-timbre parameters: arpeggiator, FX1/FX2 rows and
     // preset name. Static because Timbre lives in DTCMRAM and this block is
     // too large to inline; the array itself is placed in .ram_d1.

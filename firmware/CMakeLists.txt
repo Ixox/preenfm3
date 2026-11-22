@@ -137,3 +137,18 @@ add_custom_command(TARGET preenfm3_firmware POST_BUILD
         ${CMAKE_CURRENT_BINARY_DIR}/preenfm3_firmware.hex
     COMMENT "Generating firmware .bin/.hex (version ${FIRMWARE_VERSION}, variant ${PRE_ENFM3_FW_VARIANT})"
 )
+
+# Fail the build if a RAM region exceeds its budget (see doc/memory_map.md).
+# Lower PRE_ENFM3_MEMORY_THRESHOLD for a stricter check; 100 disables the
+# failure (the linker still refuses a real overflow).
+if(NOT DEFINED PRE_ENFM3_MEMORY_THRESHOLD)
+    set(PRE_ENFM3_MEMORY_THRESHOLD 95)
+endif()
+add_custom_command(TARGET preenfm3_firmware POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        -DSIZE_TOOL=${CMAKE_SIZE}
+        -DPRE_ENFM3_MEMORY_THRESHOLD=${PRE_ENFM3_MEMORY_THRESHOLD}
+        -DELF=$<TARGET_FILE:preenfm3_firmware>
+        -P ${CMAKE_SOURCE_DIR}/cmake/check_firmware_memory.cmake
+    COMMENT "Checking firmware memory budget (threshold ${PRE_ENFM3_MEMORY_THRESHOLD}%)"
+)

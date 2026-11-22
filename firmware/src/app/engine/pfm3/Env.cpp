@@ -17,7 +17,7 @@
 
 #include "Env.h"
 
-// ram_d1
+// ITCM: hot envelope table, filled by initTab.
 float Pfm3Env::incTab[1601] __attribute__((section(".instruction_ram")));
 
 int Pfm3Env::initTab = 0;
@@ -37,8 +37,8 @@ float envLog[] = {0.000000, 0.000080, 0.00018,  0.000495, 0.001016, 0.001775, 0.
                   0.407643, 0.431201, 0.455557, 0.480722, 0.506701, 0.533505, 0.561143, 0.589623, 0.618952, 0.64914,  0.680195,
                   0.712123, 0.744936, 0.778638, 0.81324,  0.848748, 0.88517,  0.922515, 0.960788, 1};
 
-// User curves
-float userEnvCurves[4][64] __attribute__((section(".instruction_ram")));
+// User curves (DTCM).
+float userEnvCurves[4][64];
 
 struct table allLfoTables[CURVE_TYPE_MAX] = {{envExponential, 63},   {envLinear, 1},         {envLog, 63},          {userEnvCurves[0], 63},
                                              {userEnvCurves[1], 63}, {userEnvCurves[2], 63}, {userEnvCurves[3], 63}};

@@ -38,5 +38,5 @@ void Porta::init_sr(double sampleRate) {
     }
 }
 
-int32_t Porta::rates[128] __attribute__((section(".ram_d2c")));
-int32_t Porta::rates_glissando[128] __attribute__((section(".ram_d2c")));
+int32_t Porta::rates[128] __attribute__((section(".ram_d1")));
+int32_t Porta::rates_glissando[128] __attribute__((section(".ram_d1")));
