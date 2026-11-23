@@ -18,6 +18,8 @@
  */
 
 #include "EditorDx7.h"
+
+#include "Dx7Logo.h"
 #include "EditorDx7Algo.h"
 #include "ScreenEditor.h"
 
@@ -248,6 +250,17 @@ EditorDx7::EditorDx7() {
         operatorChangedCounter_[i] = 0;
         highlightedOperator_[i] = 0;
     }
+
+    theme_.pageLabelColor = COLOR_WHITE;
+    theme_.buttonBackground = COLOR_LIGHT_GRAY;
+    theme_.buttonText = COLOR_BLACK;
+    theme_.buttonTextInactive = COLOR_DARK_GRAY;
+    theme_.buttonIndicatorActive = COLOR_WHITE;
+    theme_.buttonIndicatorInactive = COLOR_BLACK;
+    theme_.paramNameColor = COLOR_LIGHT_GRAY;
+    theme_.paramValueColor = COLOR_RED;
+    theme_.paramValueChangedColor = COLOR_RED;
+    theme_.buttonSelectorFilled = false;
 }
 
 void EditorDx7::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
@@ -319,12 +332,17 @@ void EditorDx7::displayValue(uint8_t paramId, uint8_t value) {
 }
 
 void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
+    if (color == COLOR_WHITE) {
+        color = getTheme().paramValueColor;
+    } else if (color == COLOR_YELLOW) {
+        color = getTheme().paramValueChangedColor;
+    }
     struct FullState* fullState = &synthState_->fullState_;
     const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;
     }
-    const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[encoder];
+    const EditorSlot slot = page->states[getButtonState(page)]->slots[encoder];
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
@@ -340,6 +358,11 @@ void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
 
 void EditorDx7::drawAlgorithm() {
     tft_->drawAlgoTable(EditorDx7Algo::table(timbre()->getPatchMemory()[134]));
+}
+
+void EditorDx7::displayEditorTitle() {
+    // 240x52 asset centred in the free title band (y=21..159).
+    tft_->drawLogoAt(&dx7Logo, 0, 64);
 }
 
 EditorSelectorKind EditorDx7::selectorKind(int button) const {
@@ -358,12 +381,12 @@ void EditorDx7::drawEditorButton(int button, const struct EditorMenu* editMenu, 
 }
 
 void EditorDx7::printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                                  const struct EditorPageButton* page) {
+                                   const struct EditorPageButton* page) {
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_MEDIUM_GRAY);
+    tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
     if (slot.id != DX7_NONE) {
         tft_->print(dx7Params[slot.id].name);
@@ -383,7 +406,7 @@ void EditorDx7::encoderTurned(int encoder, int ticks) {
     if (page == nullptr) {
         return;
     }
-    const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[encoder];
+    const EditorSlot slot = page->states[getButtonState(page)]->slots[encoder];
 
     if (slot.id == DX7_NONE) {
         return;
@@ -429,7 +452,7 @@ void EditorDx7::newEngineParamValue(int& refreshStatus, int timbre, int paramId,
     // Need to know where on the page the parameter is, to update it.
     int slotPosition = -1;
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
-        const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[e];
+        const EditorSlot slot = page->states[getButtonState(page)]->slots[e];
         if (slot.id == paramId) {
             slotPosition = e;
             break;
@@ -494,7 +517,8 @@ void EditorDx7::buttonPressed(int button) {
             selectOperator(button, 5);
         } else if (editPage_ == button) {
             if (page->stateCount > 0) {
-                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->stateCount;
+                uint8_t& state = buttonStateRef(page->buttonId);
+                state = (state + 1) % page->stateCount;
             }
         } else if (button < editMenu->buttonCount) {
             if (editMenu->buttons[button]->stateCount > 0) {

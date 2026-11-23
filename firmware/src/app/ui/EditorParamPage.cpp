@@ -498,7 +498,7 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
     (void)page;
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_MEDIUM_GRAY);
+    tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
     if (slot.kind == EditorSlotKind::Custom) {
         if (slot.context == (uint8_t)EditorCustomContext::ArpAdvanced) {
@@ -555,6 +555,11 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
 }
 
 void EditorParamPage::displayParamValue(int encoder, TFT_COLOR color) {
+    if (color == COLOR_WHITE) {
+        color = getTheme().paramValueColor;
+    } else if (color == COLOR_YELLOW) {
+        color = getTheme().paramValueChangedColor;
+    }
     EditorSlot slot = slotForEncoder(encoder);
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
@@ -864,8 +869,8 @@ void EditorParamPage::buttonPressed(int button) {
         }
         if (editPage_ == button) {
             if (page->stateCount > 0) {
-                synthState_->fullState_.buttonState[page->buttonId] =
-                    (synthState_->fullState_.buttonState[page->buttonId] + 1) % page->stateCount;
+                uint8_t& state = buttonStateRef(page->buttonId);
+                state = (state + 1) % page->stateCount;
                 updatePage();
             }
         } else {

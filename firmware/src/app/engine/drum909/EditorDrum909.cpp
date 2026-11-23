@@ -11,7 +11,9 @@
 
 #include <string.h>
 
+#include "Drum909Logo.h"
 #include "Drum909Params.h"
+#include "Drum909TitleLogo.h"
 #include "ScreenEditor.h"
 #include "SynthState.h"
 #include "Timbre.h"
@@ -190,21 +192,34 @@ static const struct EditorPageButton percButton = {
     "Perc", BUTTONID_ENGINE_PAGE_4, 3, { &rs0State, &cp0State, &cp1State }
 };
 static const struct EditorPageButton hatButton = {
-    "Hat", BUTTONID_ENGINE_PAGE_5, 8,
-    { &ch0State, &ch1State, &oh0State, &oh1State, &cr0State, &cr1State, &rd0State, &rd1State }
+    "Hat", BUTTONID_ENGINE_PAGE_5, 4, { &ch0State, &ch1State, &oh0State, &oh1State }
 };
 static const struct EditorPageButton kitButton = {
     "Kit", BUTTONID_ENGINE_PAGE_6, 1, { &kitState }
 };
+static const struct EditorPageButton rideButton = {
+    "Ride", BUTTONID_ENGINE_PAGE_7, 4, { &cr0State, &cr1State, &rd0State, &rd1State }
+};
 
 static const struct EditorMenu drum909Menu = {
-    "Engine",
+    "Parts",
     6,
-    { &bdButton, &sdButton, &tomButton, &percButton, &hatButton, &kitButton }
+    { &bdButton, &sdButton, &tomButton, &percButton, &hatButton, &rideButton }
+};
+static const struct EditorMenu drum909KitMenu = {
+    "Kit",
+    1,
+    { &kitButton }
 };
 // clang-format on
 
 EditorDrum909::EditorDrum909() {
+    theme_.pageLabelColor = COLOR_ORANGE;
+    theme_.buttonBackground = COLOR_ORANGE;
+    theme_.buttonText = COLOR_BLACK;
+    theme_.buttonTextInactive = COLOR_BLACK;
+    theme_.buttonIndicatorActive = COLOR_WHITE;
+    theme_.buttonIndicatorInactive = COLOR_BLACK;
 }
 
 void EditorDrum909::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
@@ -226,6 +241,9 @@ const struct EditorMenu* EditorDrum909::getEngineMenu(int page) const {
     if (page == 0) {
         return &drum909Menu;
     }
+    if (page == 1) {
+        return &drum909KitMenu;
+    }
     return nullptr;
 }
 
@@ -239,17 +257,12 @@ Timbre* EditorDrum909::timbre() {
 }
 
 void EditorDrum909::drawAlgorithm() {
-    static const int algoX = 160;
-    static const int algoY = 160;
-    static const int algoWidth = 80;
-    static const int algoHeight = 100;
-    static const char* text = "9W9";
-    static const int textLength = 3;
+    tft_->drawLogo(&drum909Logo);
+}
 
-    int x = algoX + (algoWidth - textLength * TFT_BIG_CHAR_WIDTH) / 2;
-    int y = algoY + (algoHeight - TFT_BIG_CHAR_HEIGHT) / 2;
-    tft_->setCursorInPixel(x, y);
-    tft_->print(text, COLOR_CYAN, COLOR_BLACK);
+void EditorDrum909::displayEditorTitle() {
+    // 240x64 asset centred in the free title band (y=21..159).
+    tft_->drawLogoAt(&drum909TitleLogo, 0, 58);
 }
 
 void EditorDrum909::drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) {
@@ -263,7 +276,7 @@ void EditorDrum909::printParameterName(int button, const EditorSlot& slot, const
 
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_MEDIUM_GRAY);
+    tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
     // The third column starts at pixel 176; only 5 big chars fit before 240.
@@ -279,6 +292,11 @@ void EditorDrum909::printParameterName(int button, const EditorSlot& slot, const
 }
 
 void EditorDrum909::displayParamValue(int encoder, TFT_COLOR color) {
+    if (color == COLOR_WHITE) {
+        color = getTheme().paramValueColor;
+    } else if (color == COLOR_YELLOW) {
+        color = getTheme().paramValueChangedColor;
+    }
     const EditorSlot slot = slotForEncoder(encoder);
 
     uint8_t x = getEncoderX(encoder);
@@ -360,7 +378,8 @@ void EditorDrum909::buttonPressed(int button) {
     case BUTTON_SWITCH_6:
         if (editPage_ == button) {
             if (page->stateCount > 0) {
-                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->stateCount;
+                uint8_t& state = buttonStateRef(page->buttonId);
+                state = (state + 1) % page->stateCount;
             }
         } else if (button < editMenu->buttonCount) {
             if (editMenu->buttons[button]->stateCount > 0) {

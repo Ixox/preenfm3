@@ -19,6 +19,7 @@
 
 #include "EditorPfm3.h"
 #include "EditorPfm3Algo.h"
+#include "Pfm3Logo.h"
 #include "Pfm3ParamUiData.h"
 #include "Pfm3Preset.h"
 #include "ScreenEditor.h"
@@ -38,6 +39,8 @@ EditorPfm3::EditorPfm3() {
     for (int i = 0; i < 6; i++) {
         bufferParam_[i] = 0.0f;
     }
+    
+    theme_.buttonSelectorFilled = false;
 }
 
 const char* syncNames[] = {"Int", "Ext"};
@@ -542,7 +545,7 @@ void EditorPfm3::updatePage() const {
     if (button == nullptr) {
         return;
     }
-    uint8_t state = synthState_->fullState_.buttonState[button->buttonId];
+    uint8_t state = getButtonState(button->buttonId);
     if (state >= (uint8_t)button->stateCount) {
         state = 0;
     }
@@ -582,6 +585,11 @@ SynthEngineType EditorPfm3::getEngineType() const {
 
 const char* EditorPfm3::getEngineName() const {
     return "preenfm3";
+}
+
+void EditorPfm3::displayEditorTitle() {
+    // 100x100 asset centred in the free title band (y=21..159).
+    tft_->drawLogoAt(&pfm3Logo, 70, 40);
 }
 
 const struct EditorMenu* EditorPfm3::getEngineMenu(int page) const {

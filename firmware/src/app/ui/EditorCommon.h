@@ -33,6 +33,7 @@ public:
     void init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) override;
     SynthEngineType getEngineType() const override;
     const char* getEngineName() const override;
+    const EditorTheme& getTheme() const override;
     const struct EditorMenu* getEngineMenu(int page) const override;
     const struct EditorMenu* getCommonMenu(int commonPage) const;
 };

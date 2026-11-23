@@ -40,11 +40,12 @@ public:
     const struct EditorMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
     void drawAlgorithm() override;
+    void displayEditorTitle() override;
     void printPageHeader() override;
     void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
     EditorSelectorKind selectorKind(int button) const override;
     void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                           const struct EditorPageButton* page) override;
+                            const struct EditorPageButton* page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
     void encoderTurned(int encoder, int ticks) override;
     void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) override;

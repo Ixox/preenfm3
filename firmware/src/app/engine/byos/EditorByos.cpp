@@ -9,6 +9,7 @@
 
 #include "EditorByos.h"
 
+#include "ByosLogo.h"
 #include "ByosParams.h"
 #include "ScreenEditor.h"
 #include "SynthState.h"
@@ -141,13 +142,13 @@ void EditorByos::drawEditorButton(int button, const struct EditorMenu* editMenu,
 }
 
 void EditorByos::printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                                   const struct EditorPageButton* page) {
+                                    const struct EditorPageButton* page) {
     (void)editMenu;
     (void)page;
 
     uint8_t x = getEncoderX(button);
     tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_MEDIUM_GRAY);
+    tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
     if (slot.id != BYOS_PARAM_NONE) {
         tft_->print(byosParamNames[slot.id]);
@@ -157,6 +158,11 @@ void EditorByos::printParameterName(int button, const EditorSlot& slot, const st
 }
 
 void EditorByos::displayParamValue(int encoder, TFT_COLOR color) {
+    if (color == COLOR_WHITE) {
+        color = getTheme().paramValueColor;
+    } else if (color == COLOR_YELLOW) {
+        color = getTheme().paramValueChangedColor;
+    }
     const EditorSlot slot = slotForEncoder(encoder);
 
     uint8_t x = getEncoderX(encoder);
@@ -258,7 +264,7 @@ void EditorByos::newEngineParamValue(int& refreshStatus, int timbre, int paramId
     }
 
     for (int e = 0; e < NUMBER_OF_ENCODERS; e++) {
-        const EditorSlot slot = page->states[fullState->buttonState[page->buttonId]]->slots[e];
+        const EditorSlot slot = page->states[getButtonState(page)]->slots[e];
         if (slot.id == paramId) {
             displayParamValue(e, COLOR_WHITE);
         }
@@ -287,7 +293,8 @@ void EditorByos::buttonPressed(int button) {
     case BUTTON_SWITCH_6:
         if (editPage_ == button) {
             if (page->stateCount > 0) {
-                fullState->buttonState[page->buttonId] = (fullState->buttonState[page->buttonId] + 1) % page->stateCount;
+                uint8_t& state = buttonStateRef(page->buttonId);
+                state = (state + 1) % page->stateCount;
             }
         } else if (button < editMenu->buttonCount) {
             if (editMenu->buttons[button]->stateCount > 0) {
@@ -302,21 +309,14 @@ void EditorByos::buttonPressed(int button) {
 }
 
 void EditorByos::drawAlgorithm() {
-    // Same 80x100 box as the PFM3/DX7 algorithm (TFT_ALGO_X/Y in TftDisplay.cpp).
-    static const int algoX = 160;
-    static const int algoY = 160;
-    static const int algoWidth = 80;
-    static const int algoHeight = 100;
-    static const char* lines[] = {"Your", "Synth", "Here"};
-    static const int lineLength[] = {4, 5, 4};
+    tft_->drawLogo(&byosLogo);
+}
 
-    int y = algoY + (algoHeight - 3 * TFT_BIG_CHAR_HEIGHT) / 2;
-    for (int i = 0; i < 3; i++) {
-        int x = algoX + (algoWidth - lineLength[i] * TFT_BIG_CHAR_WIDTH) / 2;
-        tft_->setCursorInPixel(x, y);
-        tft_->print(lines[i], COLOR_CYAN, COLOR_BLACK);
-        y += TFT_BIG_CHAR_HEIGHT;
-    }
+void EditorByos::displayEditorTitle() {
+    static const char* title = "code it !";
+    static const int length = 9;
+    tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
+    tft_->print(title, COLOR_RED, COLOR_BLACK);
 }
 
 void EditorByos::slowTick() {

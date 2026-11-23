@@ -28,6 +28,7 @@ public:
     const struct EditorMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
     void drawAlgorithm() override;
+    void displayEditorTitle() override;
     void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
     void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
                             const struct EditorPageButton* page) override;

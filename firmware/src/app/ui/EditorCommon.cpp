@@ -18,6 +18,7 @@
  */
 
 #include "EditorCommon.h"
+#include "ScreenEditor.h"
 #include "SynthState.h"
 
 // clang-format off
@@ -101,6 +102,11 @@ SynthEngineType EditorCommon::getEngineType() const {
 
 const char* EditorCommon::getEngineName() const {
     return "";
+}
+
+const EditorTheme& EditorCommon::getTheme() const {
+    EditorEngine* engine = parent_ != nullptr ? parent_->editorForEngine() : nullptr;
+    return engine != nullptr ? engine->getTheme() : EditorEngine::getTheme();
 }
 
 const struct EditorMenu* EditorCommon::getEngineMenu(int page) const {

@@ -36,6 +36,7 @@ public:
     void init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) override;
     SynthEngineType getEngineType() const override;
     const char* getEngineName() const override;
+    void displayEditorTitle() override;
     const struct EditorMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
     void drawAlgorithm() override;

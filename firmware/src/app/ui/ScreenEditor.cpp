@@ -17,15 +17,15 @@
 
 #include "ScreenEditor.h"
 #include "EditorCommon.h"
-#include "SynthEngineFactory.h"
-#include "engine/msfa/EditorDx7.h"
-#include "engine/pfm3/EditorPfm3.h"
-#include "engine/pfm3/Preenfm3Engine.h"
 #include "ScreenTypes.h"
+#include "SynthEngineFactory.h"
 #include "SynthState.h"
 #include "Timbre.h"
 #include "engine/byos/EditorByos.h"
 #include "engine/drum909/EditorDrum909.h"
+#include "engine/msfa/EditorDx7.h"
+#include "engine/pfm3/EditorPfm3.h"
+#include "engine/pfm3/Preenfm3Engine.h"
 #include "preenfm3.h"
 #include <FirmwareTftDisplay.h>
 #include <string.h>
@@ -186,16 +186,14 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
         case 15:
         case 14: {
             int button = 19 - refreshStatus;
-            tft_->drawButton(mainMenuName(button), 270, 29, button, 0, 1);
+            const EditorTheme& theme = engineEditor->getTheme();
+            tft_->drawButton(mainMenuName(button), 270, 29, button, 0, 1, theme.buttonBackground, theme.buttonText,
+                             theme.buttonTextInactive, theme.buttonIndicatorActive, theme.buttonIndicatorInactive);
             break;
         }
-        case 13: {
-            const char* title = engineEditor->getEngineName();
-            int length = strlen(title);
-            tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
-            tft_->print(title, COLOR_CYAN, COLOR_BLACK);
+        case 13:
+            engineEditor->displayEditorTitle();
             break;
-        }
         case 11:
             break;
         case 10:
@@ -221,17 +219,20 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
             tft_->oscilloForceNextDisplay();
             engineEditor->drawAlgorithm();
             break;
-        case 20:
+        case 20: {
+            const EditorTheme& theme = editor->getTheme();
             tft_->pauseRefresh();
             tft_->fillArea(0, 40, 240, 120, COLOR_BLACK);
             tft_->fillArea(0, 270, 240, 30, COLOR_BLACK);
+            tft_->fillArea(0, LINE_ROW_NAME * TFT_BIG_CHAR_HEIGHT, 240, TFT_BIG_CHAR_HEIGHT, theme.pageLabelBackground);
             tft_->setCursor(0, 2);
-            tft_->setCharBackgroundColor(COLOR_BLACK);
-            tft_->setCharColor(COLOR_CYAN);
+            tft_->setCharBackgroundColor(theme.pageLabelBackground);
+            tft_->setCharColor(theme.pageLabelColor);
             editor->printPageHeader();
-            tft_->print(page->states[synthState_->fullState_.buttonState[page->buttonId]]->stateLabel);
+            tft_->print(page->states[editor->getButtonState(page)]->stateLabel);
             editor->preparePage();
             break;
+        }
         case 18:
         case 17:
         case 16:

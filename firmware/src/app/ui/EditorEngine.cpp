@@ -18,8 +18,40 @@
  */
 
 #include "EditorEngine.h"
+
+#include <string.h>
+
 #include "ScreenEditor.h"
 #include "SynthState.h"
+
+void EditorEngine::displayEditorTitle() {
+    const char* title = getEngineName();
+    int length = (int)strlen(title);
+    tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
+    tft_->print(title, COLOR_CYAN, COLOR_BLACK);
+}
+
+uint8_t EditorEngine::getButtonState(uint8_t buttonId) const {
+    if (buttonId >= BUTTONID_ENGINE_PAGE_1 && buttonId <= BUTTONID_ENGINE_PAGE_8) {
+        return enginePageState_[buttonId - BUTTONID_ENGINE_PAGE_1];
+    }
+    return synthState_->fullState_.buttonState[buttonId];
+}
+
+uint8_t EditorEngine::getButtonState(const struct EditorPageButton* page) const {
+    uint8_t state = getButtonState(page->buttonId);
+    if (state >= (uint8_t)page->stateCount) {
+        state = 0;
+    }
+    return state;
+}
+
+uint8_t& EditorEngine::buttonStateRef(uint8_t buttonId) {
+    if (buttonId >= BUTTONID_ENGINE_PAGE_1 && buttonId <= BUTTONID_ENGINE_PAGE_8) {
+        return enginePageState_[buttonId - BUTTONID_ENGINE_PAGE_1];
+    }
+    return synthState_->fullState_.buttonState[buttonId];
+}
 
 const struct EditorMenu* EditorEngine::currentEditMenu() const {
     return parent_->getMainMenu(synthState_->fullState_.mainPage);
@@ -43,11 +75,7 @@ EditorSlot EditorEngine::slotForEncoder(int encoder) const {
         EditorSlot none = {EditorSlotKind::Empty, 0, 0};
         return none;
     }
-    uint8_t state = synthState_->fullState_.buttonState[page->buttonId];
-    if (state >= (uint8_t)page->stateCount) {
-        state = 0;
-    }
-    return page->states[state]->slots[encoder];
+    return page->states[getButtonState(page)]->slots[encoder];
 }
 
 int EditorEngine::currentTimbre() const {
@@ -56,14 +84,19 @@ int EditorEngine::currentTimbre() const {
 
 void EditorEngine::drawOperatorSelector(int button, int maxOperator) {
     const FullState& fs = synthState_->fullState_;
+    const EditorTheme& theme = getTheme();
     tft_->drawButtonBiState(270, 29, button, operatorNumber_, maxOperator, fs.buttonState[BUTTONID_OPERATOR_1_2 + button - 3],
-                            (button - 3) * 2);
+                            (button - 3) * 2, theme.buttonBackground, theme.buttonText, theme.buttonTextInactive,
+                            theme.buttonIndicatorActive, theme.buttonIndicatorInactive, theme.buttonSelectorFilled);
 }
 
 void EditorEngine::drawMatrixSelector(int button, uint8_t pageButtonId, int maxRow) {
     const FullState& fs = synthState_->fullState_;
+    const EditorTheme& theme = getTheme();
     tft_->drawButtonBiState(270, 29, button, editPage_ * 2 + fs.buttonState[pageButtonId], maxRow,
-                            fs.buttonState[BUTTONID_MATRIX_1_2 + button], button * 2);
+                            fs.buttonState[BUTTONID_MATRIX_1_2 + button], button * 2, theme.buttonBackground, theme.buttonText,
+                            theme.buttonTextInactive, theme.buttonIndicatorActive, theme.buttonIndicatorInactive,
+                            theme.buttonSelectorFilled);
 }
 
 void EditorEngine::selectOperator(int button, int maxOperator) {
@@ -84,11 +117,14 @@ void EditorEngine::selectOperator(int button, int maxOperator) {
 }
 
 void EditorEngine::drawEditorButtonDefault(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) {
+    const EditorTheme& theme = getTheme();
     if (button < editMenu->buttonCount) {
         const struct EditorPageButton* buttonPage = editMenu->buttons[button];
         tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->stateCount,
-                         editPage_ == button ? synthState_->fullState_.buttonState[page->buttonId] + 1 : 0);
+                         editPage_ == button ? getButtonState(page->buttonId) + 1 : 0, theme.buttonBackground, theme.buttonText,
+                         theme.buttonTextInactive, theme.buttonIndicatorActive, theme.buttonIndicatorInactive);
     } else {
-        tft_->drawButton("", 270, 29, button, 0, 0);
+        tft_->drawButton("", 270, 29, button, 0, 0, theme.buttonBackground, theme.buttonText, theme.buttonTextInactive,
+                         theme.buttonIndicatorActive, theme.buttonIndicatorInactive);
     }
 }

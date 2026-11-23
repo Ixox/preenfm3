@@ -28,6 +28,21 @@
 class SynthState;
 class ScreenEditor;
 
+// Per-engine UI colours. Defaults reproduce the historic PFM3 look.
+struct EditorTheme {
+    TFT_COLOR pageLabelColor = COLOR_CYAN;
+    TFT_COLOR pageLabelBackground = COLOR_BLACK;
+    TFT_COLOR buttonBackground = COLOR_DARK_BLUE;
+    TFT_COLOR buttonText = COLOR_WHITE;
+    TFT_COLOR buttonTextInactive = COLOR_GRAY;
+    TFT_COLOR buttonIndicatorActive = COLOR_WHITE;
+    TFT_COLOR buttonIndicatorInactive = COLOR_GRAY;
+    bool buttonSelectorFilled = true;
+    TFT_COLOR paramNameColor = COLOR_MEDIUM_GRAY;
+    TFT_COLOR paramValueColor = COLOR_WHITE;
+    TFT_COLOR paramValueChangedColor = COLOR_YELLOW;
+};
+
 enum CommonPage { COMMON_PAGE_NONE = -1, COMMON_PAGE_ARP_FX = 0, COMMON_PAGE_COUNT };
 
 struct EditorParamInfo {
@@ -68,6 +83,16 @@ public:
     virtual SynthEngineType getEngineType() const = 0;
     // Display name of the engine.
     virtual const char* getEngineName() const = 0;
+    // Engine UI colours.
+    virtual const EditorTheme& getTheme() const {
+        return theme_;
+    }
+    // State of a page button. Engine-page ids are stored per editor so that
+    // switching engines cannot reuse a stale, out-of-range state index.
+    uint8_t getButtonState(uint8_t buttonId) const;
+    // Same, clamped to the page's state count so a stale index from another
+    // engine can never be used to index page->states[].
+    uint8_t getButtonState(const struct EditorPageButton* page) const;
     // Menu for an engine-owned main page, or nullptr.
     virtual const struct EditorMenu* getEngineMenu(int page) const = 0;
     // Map an engine main page to a shared page, or COMMON_PAGE_NONE.
@@ -110,6 +135,8 @@ public:
     // Draw the timbre's algorithm (editors without one do nothing).
     virtual void drawAlgorithm() {
     }
+    // Draw the engine title on the editor main page.
+    virtual void displayEditorTitle();
     // Page header prefix ("Op N" on operator pages, ...).
     virtual void printPageHeader() {
     }
@@ -117,7 +144,7 @@ public:
     virtual void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) = 0;
     // Draw one parameter name.
     virtual void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                                   const struct EditorPageButton* page) = 0;
+                                    const struct EditorPageButton* page) = 0;
     // Extra work after the page header (operator highlight, hidden params, ...).
     virtual void preparePage() {
     }
@@ -224,6 +251,8 @@ protected:
     void selectOperator(int button, int maxOperator);
     void drawEditorButtonDefault(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page);
 
+    uint8_t& buttonStateRef(uint8_t buttonId);
+
     ScreenEditor* parent_ = nullptr;
     SynthState* synthState_ = nullptr;
     FirmwareTftDisplay* tft_ = nullptr;
@@ -231,6 +260,8 @@ protected:
     uint8_t editPage_ = 0;
     uint8_t operatorNumber_ = 0;
     uint8_t editPageSelected_[6] = {0, 0, 0, 0, 0, 0};
+    uint8_t enginePageState_[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    EditorTheme theme_;
 };
 
 #endif
