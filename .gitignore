@@ -1,4 +1,5 @@
 build/
+build-tests/
 **/DebugLQFP*
 **/Release*
 **/pfm3_firmware*

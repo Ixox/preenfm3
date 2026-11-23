@@ -13,10 +13,13 @@
 #include <stddef.h>
 
 // PFM3 preset compatibility: these values are the on-flash contract.
-static_assert(sizeof(Pfm3Preset) == 1008, "Pfm3Preset layout changed");
-static_assert(sizeof(FlashSynthParams) == 936, "FlashSynthParams layout changed");
+static_assert(sizeof(ArpAdvancedParams) == 40, "ArpAdvancedParams layout changed");
+static_assert(sizeof(Pfm3Preset) == 1048, "Pfm3Preset layout changed");
+static_assert(sizeof(FlashSynthParams) == 976, "FlashSynthParams layout changed");
 static_assert(sizeof(EnvelopeCurveFlashMemory1) == 16, "envelope curve block 1 changed");
 static_assert(sizeof(EnvelopeCurveFlashMemory2) == 8, "envelope curve block 2 changed");
+static_assert(offsetof(Pfm3Preset, arpAdvanced) == 1008, "arpAdvanced offset changed");
+static_assert(offsetof(FlashSynthParams, arpAdvanced) == 936, "arpAdvanced flash offset changed");
 static_assert(offsetof(FlashSynthParams, presetName) == 720, "presetName offset changed");
 static_assert(offsetof(FlashSynthParams, envCurves1To4) == 896, "envCurves1To4 offset changed");
 static_assert(offsetof(FlashSynthParams, envCurves5To6) == 912, "envCurves5To6 offset changed");

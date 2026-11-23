@@ -854,7 +854,7 @@ void EditorPfm3::drawEditorButton(int button, const struct EditorMenu* editMenu,
 }
 
 void EditorPfm3::printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                                   const struct EditorPageButton* page) {
+                                    const struct EditorPageButton* page) {
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
@@ -1043,6 +1043,10 @@ void EditorPfm3::buttonPressed(int button) {
 }
 
 void EditorPfm3::buttonLongPressed(int instrument, int button) {
+    if (isInArpPatternPage()) {
+        EditorParamPage::buttonLongPressed(instrument, button);
+        return;
+    }
     if (button == BUTTON_PREVIOUS_INSTRUMENT) {
         // Can be copied ?
         bool canBeCopied = isInMatrixPage(synthState_->fullState_.mainPage) || isInOperatorPage(synthState_->fullState_.mainPage) ||

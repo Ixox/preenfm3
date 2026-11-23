@@ -14,7 +14,7 @@
 
 /* Full table: engine/storage + editor + MIDI per field. */
 extern const ParamFullDescription pfm3EngineParams[72];
-extern const ParamFullDescription pfm3CommonParams[29];
+extern const ParamFullDescription pfm3CommonParams[68];
 
 /*
  * Editor name/order tables. They live in Pfm3ParamTable.cpp so the full

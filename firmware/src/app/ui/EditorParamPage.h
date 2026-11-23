@@ -26,6 +26,9 @@
 // Ids of the `Action` slots handled by EditorParamPage.
 enum class EditorActionId : uint8_t { LfoSync = 0, StepSync = 1 };
 
+// `Custom` slot families, selected by EditorSlot::context.
+enum class EditorCustomContext : uint8_t { ArpPattern = 0, ArpAdvanced = 1 };
+
 /*
  * Generic menu/encoder page mechanics over the flat Pfm3Preset model.
  * Used by the PFM3 editor and by the shared Arp/Fx page. Engine-specific
@@ -37,12 +40,13 @@ public:
 
     void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
     void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                           const struct EditorPageButton* page) override;
+                            const struct EditorPageButton* page) override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
     void newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) override;
     void slowTick() override;
     void encoderTurned(int encoder, int ticks) override;
     void buttonPressed(int button) override;
+    void buttonLongPressed(int instrument, int button) override;
     void preparePage() override;
     void refreshOscilloBG() override;
     int getStepSelection(int which) const override;
@@ -55,7 +59,14 @@ public:
 
 protected:
     void encoderTurnedForStepSequencer(int whichStepSeq, int encoder, int ticks);
-    void encoderTurnedForArpPattern(int num, int ticks);
+    void encoderTurnedForCustom(int encoder, const EditorSlot& slot, int ticks);
+    void displayCustomValue(int encoder, const EditorSlot& slot, TFT_COLOR color);
+    void getArpStepDisplay(int index, bool factory, uint16_t& mask, uint16_t& accent, int& length, int modes[16]) const;
+    bool isInArpPatternPage() const;
+    bool copyArpUserPattern();
+    bool pasteArpUserPattern();
+    void queueArpStepsBg();
+    void queueArpStepsBg(const ArpBgUpdate& update);
     struct Pfm3Preset* pfm3Preset() const;
     void encoderTurnedFlat(int flatIndex, int ticks);
     void encoderTurnedCustomAction(EditorActionId action, int ticks);
@@ -67,6 +78,10 @@ protected:
     uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
     float lfoFreqPreviousValue_[5];
     char patternSelect_;
+    arp_pattern_t arpPatternBuffer_;
+    uint8_t arpStepModesBuffer_[16];
+    uint8_t arpPatternLengthBuffer_;
+    bool arpPatternBufferValid_;
 };
 
 #endif

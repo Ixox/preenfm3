@@ -43,7 +43,7 @@ public:
     void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
     EditorSelectorKind selectorKind(int button) const override;
     void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
-                           const struct EditorPageButton* page) override;
+                            const struct EditorPageButton* page) override;
     void preparePage() override;
     void displayParamValue(int encoder, TFT_COLOR color) override;
     void encoderTurned(int encoder, int ticks) override;

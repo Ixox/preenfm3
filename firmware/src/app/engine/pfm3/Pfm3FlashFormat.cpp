@@ -29,12 +29,16 @@ void pfm3ParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams*
     copyFloat((float*)&params->engine1, (float*)&flashMemory->engine1, 4);
     copyFloat((float*)&params->engine2, (float*)&flashMemory->engine2, 4);
 
-    // VERSION : 1.0
-    flashMemory->engine2.pfm3Version = 1.0f;
+    // Stamp the format this firmware writes; the version is not preset data.
+    flashMemory->engine2.pfm3Version = PFM3_PATCH_VERSION;
 
     if (saveArp) {
         copyFloat((float*)&params->engineArp1, (float*)&flashMemory->engineArp1, 4 * 2);
         flashMemory->engineArpUserPatterns = params->engineArpUserPatterns;
+        flashMemory->arpAdvanced = params->arpAdvanced;
+        if (!arpAdvancedIsValid(flashMemory->arpAdvanced)) {
+            arpAdvancedDefaults(flashMemory->arpAdvanced);
+        }
     } else {
         flashMemory->engineArp1.clock = 0;
         flashMemory->engineArp1.BPM = 90;
@@ -43,8 +47,9 @@ void pfm3ParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams*
         flashMemory->engineArp2.division = 12;
         flashMemory->engineArp2.duration = 14;
         flashMemory->engineArp2.latche = 0;
-        for (int p = 0; p < ARRAY_SIZE(flashMemory->engineArpUserPatterns.patterns); ++p)
+        for (int p = 0; p < (int)ARRAY_SIZE(flashMemory->engineArpUserPatterns.patterns); ++p)
             flashMemory->engineArpUserPatterns.patterns[p] = 0;
+        flashMemory->arpAdvanced = ArpAdvancedParams{};
     }
 
     flashMemory->flashEngineIm1.modulationIndex1 = params->engineIm1.modulationIndex1;
@@ -133,6 +138,12 @@ void pfm3FlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Pr
     if (loadArp) {
         copyFloat((float*)&flashMemory->engineArp1, (float*)&params->engineArp1, 4 * 2);
         params->engineArpUserPatterns = flashMemory->engineArpUserPatterns;
+        params->arpAdvanced = flashMemory->arpAdvanced;
+        if (!arpAdvancedIsValid(params->arpAdvanced)) {
+            arpAdvancedDefaults(params->arpAdvanced);
+        }
+    } else {
+        arpAdvancedDefaults(params->arpAdvanced);
     }
 
     params->engineIm1.modulationIndex1 = flashMemory->flashEngineIm1.modulationIndex1;
@@ -313,5 +324,9 @@ void pfm3FlashToParams(const struct FlashSynthParams* flashMemory, struct Pfm3Pr
         } else {
             params->engine2.glideType = GLIDE_TYPE_OFF;
         }
+    }
+
+    if (params->engine2.pfm3Version < PFM3_PATCH_VERSION) {
+        params->engine2.pfm3Version = PFM3_PATCH_VERSION;
     }
 }

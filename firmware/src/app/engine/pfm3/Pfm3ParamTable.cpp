@@ -49,7 +49,8 @@ const char* glideTypeNames[] = {
 };
 
 const char* clockName[] = {"Off ", "Int ", "Ext "};
-const char* dirName[] = {"Up  ", "Down", "U&D ", "Play", "Rand", "Chrd", "RtUp", "RtDn", "RtUD", "ShUp", "ShDn", "ShUD"};
+const char* dirName[] = {"Up  ", "Down", "U&D ", "Play", "Rand", "Chrd", "RtUp", "RtDn", "RtUD", "ShUp", "ShDn",
+                         "ShUD", "D&U ", "U&Di", "Conv", "Div ", "Thmb", "Pnky", "Walk", "Strd", "Leap", "OctN"};
 
 const char* divNames[] = {"2/1 ", "3/2 ", "1/1 ", "3/4 ", "2/3 ", "1/2 ", "3/8 ", "1/3 ", "1/4 ",
                           "1/6 ", "1/8 ", "1/12", "1/16", "1/24", "1/32", "1/48", "1/96"};
@@ -160,14 +161,14 @@ const unsigned char matrixSourceOrder[MATRIX_SOURCE_MAX] = {0,  1,  2,  3,  4,  
 unsigned char matrixSourcePosition[MATRIX_SOURCE_MAX];
 
 const char* matrixDestNames[DESTINATION_MAX] = {
-    "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4",
-    "Pan 4", "Mix *", "Pan *", "o1 Fq", "o2 Fq", "o3 Fq", "o4 Fq", "o5 Fq", "o6 Fq", "o* Fq", "Atk 1", "Atk 2", "Atk 3", "Atk 4",
-    "Atk 5", "Atk 6", "Atk C", "Rel C", "mtx 1", "mtx 2", "mtx 3", "mtx 4", "lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G",
-    "Fx1 1", "o* Fh", "Dec C", "Atk M", "Dec M", "Rel M", "FdBck", "Fx1 2", "fx1Am", "Fx2 1", "Fx2 2", "Fx2Am",
+    "None ", "Gate ", "IM 1 ", "IM 2 ", "IM 3 ", "IM 4 ", "IMAll", "Mix 1", "Pan 1", "Mix 2", "Pan 2", "Mix 3", "Pan 3", "Mix 4", "Pan 4",
+    "Mix *", "Pan *", "o1 Fq", "o2 Fq", "o3 Fq", "o4 Fq", "o5 Fq", "o6 Fq", "o* Fq", "Atk 1", "Atk 2", "Atk 3", "Atk 4", "Atk 5", "Atk 6",
+    "Atk C", "Rel C", "mtx 1", "mtx 2", "mtx 3", "mtx 4", "lfo1F", "lfo2F", "lfo3F", "env2S", "stp1G", "stp2G", "Fx1 1", "o* Fh", "Dec C",
+    "Atk M", "Dec M", "Rel M", "FdBck", "Fx1 2", "fx1Am", "Fx2 1", "Fx2 2", "Fx2Am", "Arp+ ", "ArpVl", "ArpGt", "ArpDv", "ArpRt",
 };
-const unsigned char matrixTargetOrder[DESTINATION_MAX] = {0,  1,  2,  3,  4,  5,  48, 6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
-                                                          17, 18, 19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29, 30, 45, 44, 46,
-                                                          31, 47, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53};
+const unsigned char matrixTargetOrder[DESTINATION_MAX] = {0,  1,  2,  3,  4,  5,  48, 6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                                                          19, 20, 21, 22, 23, 43, 24, 25, 26, 27, 28, 29, 30, 45, 44, 46, 31, 47, 32, 33,
+                                                          34, 35, 36, 37, 38, 39, 40, 41, 42, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58};
 
 unsigned char matrixTargetPosition[DESTINATION_MAX];
 
@@ -188,22 +189,56 @@ const char* midiNoteCurves[] = {"Flat", "+Lin", "+Ln8", "+Exp", "-Lin", "-Ln8", 
  * The order must match engineBlocks: each block's descBase points here and
  * fieldCount says how many descriptors it owns.
  */
-#define PARAM_FLOAT(n, mn, mx, st, off, dt, nv) \
-    {{ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {n, dt, nv, nullptr, nullptr, nullptr}}
-#define PARAM_ENUM(n, mx, off, nv, names) \
-    {{ParamAccess::Float, (uint16_t)(off), 0, mx, 1.0f}, {n, DISPLAY_TYPE_STRINGS, nv, names, nullptr, nullptr}}
-#define PARAM_ENUM_ORDERED(n, mx, off, nv, names, ord, pos) \
-    {{ParamAccess::Float, (uint16_t)(off), 0, mx, 1.0f}, {n, DISPLAY_TYPE_STRINGS, nv, names, ord, pos}}
-#define PARAM_INTEGER(n, mn, mx, st, off, nv) \
-    {{ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {n, DISPLAY_TYPE_INT, nv, nullptr, nullptr, nullptr}}
-#define PARAM_STEP_BPM(n, mn, mx, st, off, nv) \
-    {{ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {n, DISPLAY_TYPE_STEP_SEQ_BPM, nv, nullptr, nullptr, nullptr}}
-#define PARAM_ARP_PATTERN(n, off) \
-    {{ParamAccess::Bitfield, (uint16_t)(off), 0, 0xFFFF, 0.0f}, {n, DISPLAY_TYPE_ARP_PATTERN, 0, nullptr, nullptr, nullptr}}
-#define PARAM_CHAR(n, off) \
-    {{ParamAccess::Char, (uint16_t)(off), 0, 127, 0.0f}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}}
-#define PARAM_STEP(n, off) \
-    {{ParamAccess::U8, (uint16_t)(off), 0, 15, 0.0f}, {n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr}}
+#define PARAM_FLOAT(n, mn, mx, st, off, dt, nv)                                                                                            \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {                                                                               \
+            n, dt, nv, nullptr, nullptr, nullptr                                                                                           \
+        }                                                                                                                                  \
+    }
+#define PARAM_ENUM(n, mx, off, nv, names)                                                                                                  \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), 0, mx, 1.0f}, {                                                                              \
+            n, DISPLAY_TYPE_STRINGS, nv, names, nullptr, nullptr                                                                           \
+        }                                                                                                                                  \
+    }
+#define PARAM_ENUM_ORDERED(n, mx, off, nv, names, ord, pos)                                                                                \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), 0, mx, 1.0f}, {                                                                              \
+            n, DISPLAY_TYPE_STRINGS, nv, names, ord, pos                                                                                   \
+        }                                                                                                                                  \
+    }
+#define PARAM_INTEGER(n, mn, mx, st, off, nv)                                                                                              \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {                                                                               \
+            n, DISPLAY_TYPE_INT, nv, nullptr, nullptr, nullptr                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_STEP_BPM(n, mn, mx, st, off, nv)                                                                                             \
+    {                                                                                                                                      \
+        {ParamAccess::Float, (uint16_t)(off), mn, mx, st}, {                                                                               \
+            n, DISPLAY_TYPE_STEP_SEQ_BPM, nv, nullptr, nullptr, nullptr                                                                    \
+        }                                                                                                                                  \
+    }
+#define PARAM_CUSTOM(n, mn, mx)                                                                                                            \
+    {                                                                                                                                      \
+        {ParamAccess::Custom, 0, mn, mx, 0.0f}, {                                                                                          \
+            n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_ARP_STATE(n)  PARAM_CUSTOM(n, 0, 2)
+#define PARAM_ARP_ACTION(n) PARAM_CUSTOM(n, 0, 7)
+#define PARAM_CHAR(n, off)                                                                                                                 \
+    {                                                                                                                                      \
+        {ParamAccess::Char, (uint16_t)(off), 0, 127, 0.0f}, {                                                                              \
+            n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr                                                                             \
+        }                                                                                                                                  \
+    }
+#define PARAM_STEP(n, off)                                                                                                                 \
+    {                                                                                                                                      \
+        {ParamAccess::U8, (uint16_t)(off), 0, 15, 0.0f}, {                                                                                 \
+            n, DISPLAY_TYPE_NONE, 0, nullptr, nullptr, nullptr                                                                             \
+        }                                                                                                                                  \
+    }
 
 /*
  * =============================================================
@@ -231,7 +266,7 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     PARAM_ENUM_ORDERED("Shap", OSC_SHAPE_LAST - 1, offsetof(OscillatorParams, shape), OSC_SHAPE_LAST, oscShapeNames, oscShapeNamesOrder,
                        oscShapeNamesPosition),
     PARAM_ENUM_ORDERED("FTyp", 2, offsetof(OscillatorParams, frequencyType), 3, oscTypeNames, oscTypeNamesOrder, oscTypeNamesPosition),
-    PARAM_FLOAT("Freq", 0, 16, 1.0f/12.0f, offsetof(OscillatorParams, frequencyMul), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 193),
+    PARAM_FLOAT("Freq", 0, 16, 1.0f / 12.0f, offsetof(OscillatorParams, frequencyMul), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 193),
     PARAM_FLOAT("FTun", -9, 9, 0.01f, offsetof(OscillatorParams, detune), DISPLAY_TYPE_FLOAT_OSC_FREQUENCY, 1801),
     /* EnvTime: 6 operators x 4 */
     PARAM_FLOAT("Attk", 0, 16, 0.01f, offsetof(EnvelopeTimeMemory, attackTime), DISPLAY_TYPE_FLOAT, 1601),
@@ -306,19 +341,58 @@ const ParamFullDescription pfm3EngineParams[72] __attribute__((section(".rodata"
     PARAM_STEP("Step", 15),
 };
 
-const ParamFullDescription pfm3CommonParams[29] __attribute__((section(".rodata"))) = {
+const ParamFullDescription pfm3CommonParams[68] __attribute__((section(".rodata"))) = {
     /* Arp1 */
     PARAM_ENUM("Clock", 2, offsetof(EngineArp1, clock), 3, clockName),
     PARAM_INTEGER("BPM", 10, 240, 1.0f, offsetof(EngineArp1, BPM), 231),
-    PARAM_ENUM("Dire", 11, offsetof(EngineArp1, direction), 12, dirName),
+    PARAM_ENUM("Dire", 21, offsetof(EngineArp1, direction), 22, dirName),
     PARAM_INTEGER("Octav", 1, 3, 1.0f, offsetof(EngineArp1, octave), 3),
     /* Arp2 */
     PARAM_ENUM("Ptrn", ARPEGGIATOR_PATTERN_COUNT - 1, offsetof(EngineArp2, pattern), ARPEGGIATOR_PATTERN_COUNT, patternName),
     PARAM_ENUM("Divi", 16, offsetof(EngineArp2, division), 17, divNames),
     PARAM_ENUM("Dura", 16, offsetof(EngineArp2, duration), 17, divNames),
     PARAM_ENUM("Latc", 1, offsetof(EngineArp2, latche), 2, activeName),
-    /* ArpPattern: 4 x 1 */
-    PARAM_ARP_PATTERN("", 0),
+    PARAM_CUSTOM("Usr1", 1, 16),
+    PARAM_CUSTOM("Usr2", 1, 16),
+    PARAM_CUSTOM("Usr3", 1, 16),
+    PARAM_CUSTOM("Usr4", 1, 16),
+    PARAM_CUSTOM("Seed", 0, 15),
+    PARAM_CUSTOM("Swng", 0, 50),
+    PARAM_CUSTOM("Grve", 0, 9),
+    PARAM_CUSTOM("Humn", 0, 100),
+    /* ArpPattern: 4 x (16 steps x state/action) */
+    PARAM_ARP_STATE("S0"),
+    PARAM_ARP_ACTION("A0"),
+    PARAM_ARP_STATE("S1"),
+    PARAM_ARP_ACTION("A1"),
+    PARAM_ARP_STATE("S2"),
+    PARAM_ARP_ACTION("A2"),
+    PARAM_ARP_STATE("S3"),
+    PARAM_ARP_ACTION("A3"),
+    PARAM_ARP_STATE("S4"),
+    PARAM_ARP_ACTION("A4"),
+    PARAM_ARP_STATE("S5"),
+    PARAM_ARP_ACTION("A5"),
+    PARAM_ARP_STATE("S6"),
+    PARAM_ARP_ACTION("A6"),
+    PARAM_ARP_STATE("S7"),
+    PARAM_ARP_ACTION("A7"),
+    PARAM_ARP_STATE("S8"),
+    PARAM_ARP_ACTION("A8"),
+    PARAM_ARP_STATE("S9"),
+    PARAM_ARP_ACTION("A9"),
+    PARAM_ARP_STATE("SA"),
+    PARAM_ARP_ACTION("AA"),
+    PARAM_ARP_STATE("SB"),
+    PARAM_ARP_ACTION("AB"),
+    PARAM_ARP_STATE("SC"),
+    PARAM_ARP_ACTION("AC"),
+    PARAM_ARP_STATE("SD"),
+    PARAM_ARP_ACTION("AD"),
+    PARAM_ARP_STATE("SE"),
+    PARAM_ARP_ACTION("AE"),
+    PARAM_ARP_STATE("SF"),
+    PARAM_ARP_ACTION("AF"),
     /* Effect1 */
     PARAM_ENUM_ORDERED("Type", FILTER_LAST - 1, offsetof(EffectRowParams, type), FILTER_LAST, fxName, filtersOrder, filtersPosition),
     PARAM_FLOAT("", 0, 1, 0.01f, offsetof(EffectRowParams, param1), DISPLAY_TYPE_FLOAT, 101),
@@ -366,11 +440,11 @@ static const ParamBlock engineBlocks[(int)Pfm3Block::Count] = {
 
 static const ParamBlock commonBlocks[(int)CommonBlock::Count] = {
     {0, offsetof(TimbreSharedParams, engineArp1), 28, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
-    {4, offsetof(TimbreSharedParams, engineArp2), 32, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
-    {8, offsetof(TimbreSharedParams, engineArpUserPatterns), 0xFFFF, 4, 1, 4, 0, (uint8_t)ParamStore::Shared},
-    {9, offsetof(TimbreSharedParams, effect1), 40, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
-    {13, offsetof(TimbreSharedParams, effect2), 244, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
-    {17, offsetof(TimbreSharedParams, presetName), 0xFFFF, 1, 12, 0, 0, (uint8_t)ParamStore::Shared},
+    {4, offsetof(TimbreSharedParams, engineArp2), 32, 1, 12, 0, 0, (uint8_t)ParamStore::Shared},
+    {16, offsetof(TimbreSharedParams, engineArpUserPatterns), 0xFFFF, 4, 32, 4, 0, (uint8_t)ParamStore::Shared},
+    {48, offsetof(TimbreSharedParams, effect1), 40, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
+    {52, offsetof(TimbreSharedParams, effect2), 244, 1, 4, 0, 0, (uint8_t)ParamStore::Shared},
+    {56, offsetof(TimbreSharedParams, presetName), 0xFFFF, 1, 12, 0, 0, (uint8_t)ParamStore::Shared},
 };
 
 static const CcEntry ccEntries[] = {
@@ -560,11 +634,51 @@ uint16_t commonFlatIndex(CommonParamId id) {
     if (b.flatBase == 0xFFFF) {
         return 0xFFFF;
     }
+    if (commonBlockOf(id) == (uint8_t)CommonBlock::Arp2 && commonFieldOf(id) >= 4) {
+        // The Arp2 lengths/seed/swing/groove/humanize live in arpAdvanced.
+        return 0xFFFF;
+    }
     return (uint16_t)(b.flatBase + commonElementOf(id) * b.flatStride + commonFieldOf(id));
 }
 
 float commonGetParam(const TimbreSharedParams& shared, CommonParamId id) {
     const ParamDesc& d = commonDesc(id);
+    if (d.access == ParamAccess::Custom) {
+        const CommonBlock block = (CommonBlock)commonBlockOf(id);
+        const int field = commonFieldOf(id);
+        if (block == CommonBlock::ArpPattern) {
+            const int pattern = commonElementOf(id);
+            const int step = field >> 1;
+            const arp_pattern_t word = shared.engineArpUserPatterns.patterns[pattern];
+            if ((field & 1) == 0) {
+                if (!((ARP_PATTERN_GETMASK(word) >> step) & 0x1u)) {
+                    return 0.0f;
+                }
+                return ((ARP_PATTERN_GETACCENT(word) >> step) & 0x1u) ? 2.0f : 1.0f;
+            }
+            return (float)arpAdvancedGetStepMode(shared.arpAdvanced, pattern, step);
+        }
+        if (block == CommonBlock::Arp2 && field >= 4) {
+            switch (field) {
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                return (float)arpAdvancedGetUserLength(shared.arpAdvanced, field - 4);
+            case 8:
+                return (float)arpAdvancedGetEuclideanSeed(shared.arpAdvanced);
+            case 9:
+                return (float)arpAdvancedGetSwing(shared.arpAdvanced);
+            case 10:
+                return (float)arpAdvancedGetGroove(shared.arpAdvanced);
+            case 11:
+                return (float)arpAdvancedGetHumanize(shared.arpAdvanced);
+            default:
+                break;
+            }
+        }
+        return 0.0f;
+    }
     const uint8_t* p = (const uint8_t*)&shared + commonOffset(id);
     switch (d.access) {
     case ParamAccess::Float:
@@ -583,6 +697,71 @@ float commonGetParam(const TimbreSharedParams& shared, CommonParamId id) {
 
 void commonSetParam(TimbreSharedParams& shared, CommonParamId id, float value) {
     const ParamDesc& d = commonDesc(id);
+    if (d.access == ParamAccess::Custom) {
+        const CommonBlock block = (CommonBlock)commonBlockOf(id);
+        const int field = commonFieldOf(id);
+        int ivalue = (int)(value + 0.5f);
+        if (block == CommonBlock::ArpPattern) {
+            const int pattern = commonElementOf(id);
+            const int step = field >> 1;
+            if ((field & 1) == 0) {
+                if (ivalue < 0) {
+                    ivalue = 0;
+                } else if (ivalue > 2) {
+                    ivalue = 2;
+                }
+                arp_pattern_t word = shared.engineArpUserPatterns.patterns[pattern];
+                uint16_t mask = ARP_PATTERN_GETMASK(word);
+                uint16_t accent = ARP_PATTERN_GETACCENT(word);
+                const uint16_t bit = (uint16_t)(1u << step);
+                if (ivalue == 0) {
+                    mask &= (uint16_t)~bit;
+                    accent &= (uint16_t)~bit;
+                } else {
+                    mask |= bit;
+                    if (ivalue == 2) {
+                        accent |= bit;
+                    } else {
+                        accent &= (uint16_t)~bit;
+                    }
+                }
+                shared.engineArpUserPatterns.patterns[pattern] = ARP_PATTERN_ACCENT(mask, accent);
+            } else {
+                if (ivalue < 0) {
+                    ivalue = 0;
+                } else if (ivalue > 7) {
+                    ivalue = 7;
+                }
+                arpAdvancedSetStepMode(shared.arpAdvanced, pattern, step, ivalue);
+            }
+            return;
+        }
+        if (block == CommonBlock::Arp2 && field >= 4) {
+            switch (field) {
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                arpAdvancedSetUserLength(shared.arpAdvanced, field - 4, ivalue);
+                break;
+            case 8:
+                arpAdvancedSetEuclideanSeed(shared.arpAdvanced, ivalue);
+                break;
+            case 9:
+                arpAdvancedSetSwing(shared.arpAdvanced, ivalue);
+                break;
+            case 10:
+                arpAdvancedSetGroove(shared.arpAdvanced, ivalue);
+                break;
+            case 11:
+                arpAdvancedSetHumanize(shared.arpAdvanced, ivalue);
+                break;
+            default:
+                break;
+            }
+        }
+        return;
+    }
     uint8_t* p = (uint8_t*)&shared + commonOffset(id);
     switch (d.access) {
     case ParamAccess::Float: {
@@ -743,7 +922,7 @@ static bool accessSizeOk(ParamAccess access, uint16_t offset, uint16_t limit) {
 bool pfm3ValidateTables() {
     pfm3InitTables();
 
-    if (sizeof(Pfm3Preset) != 1008) {
+    if (sizeof(Pfm3Preset) != 1048) {
         return false;
     }
 

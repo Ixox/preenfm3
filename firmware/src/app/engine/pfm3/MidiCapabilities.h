@@ -29,6 +29,6 @@
  * Features currently implemented by this firmware.
  * All other capability bits remain cleared.
  */
-#define MIDI_SUPPORTED_FEATURES 0
+#define MIDI_SUPPORTED_FEATURES MIDI_FEATURE_EXTENDED_ARP
 
 #endif

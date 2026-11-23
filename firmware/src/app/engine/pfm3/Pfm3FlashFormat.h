@@ -74,6 +74,7 @@ struct FlashSynthParams {
     struct EnvelopeCurveFlashMemory1 envCurves1To4;
     struct EnvelopeCurveFlashMemory2 envCurves5To6;
     struct EffectRowParams effect2;
+    struct ArpAdvancedParams arpAdvanced;
 };
 
 void pfm3ParamsToFlash(const struct Pfm3Preset* params, struct FlashSynthParams* flashMemory, bool saveArp);

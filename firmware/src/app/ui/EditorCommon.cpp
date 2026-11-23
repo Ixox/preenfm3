@@ -37,10 +37,21 @@ static const EditorPageState arp2GenericState = {
     {
         BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 0), 1),
         BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 3), 1),
+        { EditorSlotKind::Custom, 0, (uint8_t)EditorCustomContext::ArpPattern },
+        { EditorSlotKind::Custom, 1, (uint8_t)EditorCustomContext::ArpPattern },
+        { EditorSlotKind::Custom, 2, (uint8_t)EditorCustomContext::ArpPattern },
+        { EditorSlotKind::Custom, 3, (uint8_t)EditorCustomContext::ArpPattern },
+    } };
+
+static const EditorPageState arp3GenericState = {
+    "Arp Feel",
+    {
+        { EditorSlotKind::Custom, 0, (uint8_t)EditorCustomContext::ArpAdvanced },
+        { EditorSlotKind::Custom, 1, (uint8_t)EditorCustomContext::ArpAdvanced },
+        { EditorSlotKind::Custom, 2, (uint8_t)EditorCustomContext::ArpAdvanced },
         BUTTON_EMPTY(),
-        { EditorSlotKind::Custom, 0, 0 },
-        { EditorSlotKind::Custom, 1, 0 },
-        { EditorSlotKind::Custom, 2, 0 },
+        BUTTON_EMPTY(),
+        BUTTON_EMPTY(),
     } };
 
 static const EditorPageState fx1GenericState = {
@@ -69,7 +80,8 @@ static const EditorPageState fx2GenericState = {
 EditorCommon::EditorCommon() {
 }
 
-static const struct EditorPageButton pfm3ButtonArpeggiator = {"Arp", BUTTONID_EDIT_ARPEGIATOR, 2, {&arp1GenericState, &arp2GenericState}};
+static const struct EditorPageButton pfm3ButtonArpeggiator = {
+    "Arp", BUTTONID_EDIT_ARPEGIATOR, 3, {&arp1GenericState, &arp2GenericState, &arp3GenericState}};
 
 static const struct EditorPageButton pfm3ButtonFx1 = {"Fx1", BUTTONID_ONLY_ONE_STATE, 1, {&fx1GenericState}};
 

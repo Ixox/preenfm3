@@ -33,6 +33,7 @@ struct TimbreSharedParams {
     struct EffectRowParams effect1;
     struct EffectRowParams effect2;
     char presetName[13];
+    struct ArpAdvancedParams arpAdvanced;
 };
 
 struct Pfm3TimbreParams {

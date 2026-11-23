@@ -583,16 +583,15 @@ bool Preenfm3Engine::midiMixerFeedback(int timbre, int valueType, float newValue
 
 /*
  * Preset/block dump. The decoder drains getNextNrpn() from the main loop.
- * Block 19 (ArpPattern) is deferred: per-step layout not implemented yet.
  */
 static const uint8_t DUMP_BLOCKS[] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 99, 100, 101,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 99, 100, 101,
 };
 static const uint8_t DUMP_BLOCK_COUNT = (uint8_t)(sizeof(DUMP_BLOCKS) / sizeof(DUMP_BLOCKS[0]));
 
-// True for blocks a v2 dump can stream (ArpPattern 19 is deferred).
+// True for blocks a v2 dump can stream.
 bool Preenfm3Engine::isDumpBlockSupported(uint8_t block) {
-    return block <= 18 || block == 20 || block == 21 || block == 99 || block == 100 || block == 101;
+    return block <= 21 || block == 99 || block == 100 || block == 101;
 }
 
 // Number of LSB values (parameters) in one dump block.
@@ -602,9 +601,6 @@ uint16_t Preenfm3Engine::dumpBlockSize(uint8_t block) {
         return (uint16_t)b.count * b.fieldCount;
     }
     if (block <= 21) {
-        if (block == 19) {
-            return 0;
-        }
         const ParamBlock& b = commonBlock(commonParam((CommonBlock)(block - Pfm3Nrpn::MSB_COMMON_FIRST), 0, 0));
         return (uint16_t)b.count * b.fieldCount;
     }

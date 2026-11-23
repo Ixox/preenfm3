@@ -100,7 +100,8 @@ const struct Pfm3Preset defaultPreset  = {
         // Effect 2
         { 0, 0.5, 0.5, 1.0} ,
         // Name
-        "Default"
+        "Default",
+        ARP_ADVANCED_DEFAULT
 };
 
 const struct Pfm3Preset preenMainPreset  = {
@@ -189,7 +190,8 @@ const struct Pfm3Preset preenMainPreset  = {
         { 1, 0, 1, 0} ,
         // Effect 2
         { 0, 0.5, 0.5, 1.0} ,
-        "Sound"
+        "Sound",
+        ARP_ADVANCED_DEFAULT
 };
 
 const struct Pfm3Preset newPresetParams  = {
@@ -275,6 +277,7 @@ const struct Pfm3Preset newPresetParams  = {
         { 1, 0, 1, 0} ,
         // Effect 2
         { 0, 0.5, 0.5, 1.0} ,
-        "Default"
+        "Default",
+        ARP_ADVANCED_DEFAULT
 };
 // clang-format on

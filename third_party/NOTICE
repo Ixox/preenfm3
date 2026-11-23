@@ -22,6 +22,13 @@ MSFA (Dexed) -- vendored under third_party/msfa
   ../LICENSE). Apache-2.0 code can be combined with GPL-3.0; the Apache-2.0
   files remain under Apache-2.0.
 
+doctest -- vendored under third_party/doctest
+--------------------------------------------
+- doctest is a single-header C++ testing framework by Viktor Kirilov.
+- The vendored copy is v2.4.11 and keeps its MIT license header; the full
+  MIT text is in third_party/doctest/LICENSE.txt.
+- It is used only by the host test target under tests/, not by the firmware.
+
 Other components
 ----------------
 Other directories under third_party/ retain their own license headers. Refer

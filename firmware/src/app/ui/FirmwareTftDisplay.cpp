@@ -35,6 +35,16 @@ FirmwareTftDisplay::FirmwareTftDisplay() : TftDisplay() {
     envInQueue_ = 0;
     lfoInQueue_ = 0;
     operatorInQueue_ = 0;
+    arpFullInQueue_ = 0;
+    arpPartialInQueue_ = 0;
+    arpStepSelected_ = 0;
+    arpStepLength_ = 16;
+    arpStepModeMask_ = 0;
+    for (int k = 0; k < 16; k++) {
+        arpStepLevels_[k] = 0;
+        arpStepColors_[k] = COLOR_WHITE;
+        arpStepModeColors_[k] = COLOR_WHITE;
+    }
 }
 
 FirmwareTftDisplay::~FirmwareTftDisplay() {
@@ -46,6 +56,9 @@ void FirmwareTftDisplay::clearActions() {
     envInQueue_ = 0;
     lfoInQueue_ = 0;
     operatorInQueue_ = 0;
+    arpFullInQueue_ = 0;
+    arpPartialInQueue_ = 0;
+    arpPending_ = ArpBgUpdate();
 }
 
 void FirmwareTftDisplay::initWaveFormExt(int index, const float* waveform, int size) {
@@ -60,6 +73,8 @@ void FirmwareTftDisplay::additionalActions() {
         envInQueue_ = 0;
         lfoInQueue_ = 0;
         operatorInQueue_ = 0;
+        arpFullInQueue_ = 0;
+        arpPartialInQueue_ = 0;
     }
 
     switch (currentAction_.actionType) {
@@ -90,6 +105,17 @@ void FirmwareTftDisplay::additionalActions() {
             } else if (currentAction_.param1 == TFT_DRAW_LFO) {
                 oscilloBgDrawLfo();
                 lfoInQueue_--;
+            } else if (currentAction_.param1 == TFT_DRAW_ARP_STEPS) {
+                if (currentAction_.param2 == 1) {
+                    drawArpStepsFull();
+                    arpPending_ = ArpBgUpdate();
+                    arpFullInQueue_--;
+                } else {
+                    if (!arpPending_.full) {
+                        drawArpStepsPartial();
+                    }
+                    arpPartialInQueue_--;
+                }
             }
             currentAction_.actionType = 0;
             oscilloForceNextDisplay();
@@ -181,6 +207,222 @@ void FirmwareTftDisplay::oscilloBgActionEnvelope() {
     tftActions_.insert(newAction);
 
     oscilloIsClean_ = false;
+}
+
+void FirmwareTftDisplay::oscilloBgSetArpSteps(const uint8_t levels[16], const uint8_t colors[16], const uint8_t modeColors[16],
+                                              uint16_t modeMask, int selected, int length) {
+    for (int k = 0; k < 16; k++) {
+        arpStepLevels_[k] = levels[k] > 15 ? 15 : levels[k];
+        arpStepColors_[k] = colors[k];
+        arpStepModeColors_[k] = modeColors[k];
+    }
+    arpStepModeMask_ = modeMask;
+    arpStepSelected_ = (uint8_t)((selected < 0) ? 0 : (selected > 15 ? 15 : selected));
+    arpStepLength_ = (uint8_t)((length < 1) ? 1 : (length > 16 ? 16 : length));
+}
+
+static const int kArpIndexLow = 98 * 160 + 1;
+static const int kArpBandBottom = 97 - (ARP_STEP_BAR_MAX_HEIGHT - 1);
+static const int kArpBandTop = 97;
+static const int kArpModeBottom = kArpBandBottom + (ARP_STEP_BAR_MAX_HEIGHT - ARP_STEP_BAR_MODE_SIZE);
+static const int kArpLineBottom = kArpBandBottom - 5;
+
+static int arpCellWidth(int k) {
+    int w = ARP_STEP_BAR_WIDTH;
+    const int x0 = k * ARP_STEP_PITCH;
+    if (x0 + w > 158) {
+        w = 158 - x0;
+    }
+    return w;
+}
+
+void FirmwareTftDisplay::oscilloBgArp(const ArpBgUpdate& update) {
+    if (update.full) {
+        arpPending_.full = true;
+        arpPending_.stepMask = 0;
+        arpPending_.modeMask = 0;
+        arpPending_.cursorMask = 0;
+        arpPending_.lengthMask = 0;
+        queueArpSteps(true);
+        return;
+    }
+    if (arpPending_.full) {
+        return;
+    }
+    arpPending_.stepMask |= update.stepMask;
+    arpPending_.modeMask |= update.modeMask;
+    arpPending_.cursorMask |= update.cursorMask;
+    arpPending_.lengthMask |= update.lengthMask;
+    queueArpSteps(false);
+}
+
+void FirmwareTftDisplay::queueArpSteps(bool full) {
+    if (full) {
+        if (arpFullInQueue_ == 0) {
+            arpFullInQueue_++;
+            TFTAction newAction;
+            newAction.actionType = TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM;
+            newAction.param1 = TFT_DRAW_ARP_STEPS;
+            newAction.param2 = 1;
+            newAction.param3 = 0;
+            tftActions_.insert(newAction);
+            oscilloIsClean_ = false;
+        }
+        return;
+    }
+    if (arpFullInQueue_ == 0 && arpPartialInQueue_ == 0) {
+        arpPartialInQueue_++;
+        TFTAction newAction;
+        newAction.actionType = TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM;
+        newAction.param1 = TFT_DRAW_ARP_STEPS;
+        newAction.param2 = 0;
+        newAction.param3 = 1;
+        tftActions_.insert(newAction);
+        oscilloIsClean_ = false;
+    }
+}
+
+void FirmwareTftDisplay::drawArpStepCell(int k) {
+    const int x0 = k * ARP_STEP_PITCH;
+    const int w = arpCellWidth(k);
+    const int stepH = (arpStepLevels_[k] * (ARP_STEP_BAR_MAX_HEIGHT - ARP_STEP_BAR_MODE_SIZE)) / 15;
+    const uint16_t color = tftPalette565[arpStepColors_[k]];
+    const uint16_t black = tftPalette565[COLOR_BLACK];
+    for (int y = kArpBandBottom; y < kArpModeBottom; y++) {
+        uint16_t* row = &bgOscillo_[kArpIndexLow + x0 - y * 160];
+        const uint16_t c = (y < kArpBandBottom + stepH) ? color : black;
+        for (int x = 0; x < w; x++) {
+            row[x] = c;
+        }
+    }
+}
+
+void FirmwareTftDisplay::drawArpModeCell(int k) {
+    const int x0 = k * ARP_STEP_PITCH;
+    const int w = arpCellWidth(k);
+    const bool hasMode = ((arpStepModeMask_ >> k) & 0x1u) != 0;
+    const uint16_t color = hasMode ? tftPalette565[arpStepModeColors_[k]] : tftPalette565[COLOR_BLACK];
+    for (int y = kArpModeBottom; y <= kArpBandTop; y++) {
+        uint16_t* row = &bgOscillo_[kArpIndexLow + x0 - y * 160];
+        for (int x = 0; x < w; x++) {
+            row[x] = color;
+        }
+    }
+}
+
+void FirmwareTftDisplay::drawArpEndLine(int length, bool draw) {
+    if (length < 1 || length > 16) {
+        return;
+    }
+    int x = length * ARP_STEP_PITCH - 1;
+    if (x < 0) {
+        x = 0;
+    } else if (x > 157) {
+        x = 157;
+    }
+    if (draw) {
+        const uint16_t color = tftPalette565[COLOR_RED];
+        for (int y = kArpLineBottom; y <= kArpBandTop; y++) {
+            bgOscillo_[kArpIndexLow + x - y * 160] = color;
+        }
+    } else if (length == 16) {
+        // The length-16 end line sits inside the last step: restore the cell
+        // and the area below the baseline down to the cursor bottom.
+        drawArpStepCell(15);
+        drawArpModeCell(15);
+        const uint16_t black = tftPalette565[COLOR_BLACK];
+        for (int y = kArpLineBottom; y < kArpBandBottom - 1; y++) {
+            bgOscillo_[kArpIndexLow + x - y * 160] = black;
+        }
+    } else {
+        const uint16_t separator = tftPalette565[COLOR_DARK_GRAY];
+        for (int y = kArpBandBottom - 1; y <= kArpBandTop; y++) {
+            bgOscillo_[kArpIndexLow + x - y * 160] = separator;
+        }
+        const uint16_t black = tftPalette565[COLOR_BLACK];
+        for (int y = kArpLineBottom; y < kArpBandBottom - 1; y++) {
+            bgOscillo_[kArpIndexLow + x - y * 160] = black;
+        }
+    }
+}
+
+void FirmwareTftDisplay::clearArpArrow(int k) {
+    const int center = k * ARP_STEP_PITCH + ARP_STEP_BAR_WIDTH / 2;
+    static const uint8_t arrowWidths[4] = {1, 3, 5, 7};
+    const uint16_t black = tftPalette565[COLOR_BLACK];
+    for (int row = 0; row < 4; row++) {
+        const int half = arrowWidths[row] / 2;
+        const int y = kArpBandBottom - 2 - row;
+        for (int x = center - half; x <= center + half; x++) {
+            if (x >= 0 && x <= 157) {
+                bgOscillo_[kArpIndexLow + x - y * 160] = black;
+            }
+        }
+    }
+}
+
+void FirmwareTftDisplay::drawArpArrow(int k) {
+    const int center = k * ARP_STEP_PITCH + ARP_STEP_BAR_WIDTH / 2;
+    static const uint8_t arrowWidths[4] = {1, 3, 5, 7};
+    const uint16_t color = tftPalette565[COLOR_YELLOW];
+    for (int row = 0; row < 4; row++) {
+        const int half = arrowWidths[row] / 2;
+        const int y = kArpBandBottom - 2 - row;
+        for (int x = center - half; x <= center + half; x++) {
+            if (x >= 0 && x <= 157) {
+                bgOscillo_[kArpIndexLow + x - y * 160] = color;
+            }
+        }
+    }
+}
+
+void FirmwareTftDisplay::drawArpBaselineSeparators() {
+    const uint16_t color = tftPalette565[COLOR_DARK_GRAY];
+    for (int x = 0; x < 158; x++) {
+        bgOscillo_[kArpIndexLow + x - (kArpBandBottom - 1) * 160] = color;
+    }
+    for (int k = 1; k < 16; k++) {
+        const int x = k * ARP_STEP_PITCH - 1;
+        for (int y = kArpBandBottom - 1; y <= kArpBandTop; y++) {
+            bgOscillo_[kArpIndexLow + x - y * 160] = color;
+        }
+    }
+}
+
+void FirmwareTftDisplay::drawArpStepsFull() {
+    drawArpBaselineSeparators();
+    for (int k = 0; k < 16; k++) {
+        drawArpStepCell(k);
+        drawArpModeCell(k);
+    }
+    drawArpEndLine(arpStepLength_, true);
+    drawArpArrow(arpStepSelected_);
+}
+
+void FirmwareTftDisplay::drawArpStepsPartial() {
+    const ArpBgUpdate d = arpPending_;
+    for (int k = 0; k < 16; k++) {
+        if ((d.stepMask >> k) & 0x1u) {
+            drawArpStepCell(k);
+        }
+        if ((d.modeMask >> k) & 0x1u) {
+            drawArpModeCell(k);
+        }
+    }
+    for (int l = 0; l < 16; l++) {
+        if ((d.lengthMask >> l) & 0x1u) {
+            drawArpEndLine(l + 1, false);
+        }
+    }
+    for (int k = 0; k < 16; k++) {
+        if ((d.cursorMask >> k) & 0x1u) {
+            clearArpArrow(k);
+        }
+    }
+    // Draw the current end line before the arrow so the arrow stays on top.
+    drawArpEndLine(arpStepLength_, true);
+    drawArpArrow(arpStepSelected_);
+    arpPending_ = ArpBgUpdate();
 }
 
 void FirmwareTftDisplay::oscilloBgSetEnvelope(float a, float d, float s, float r, float aL, float dL, float sL, float rL, int8_t aCurve,

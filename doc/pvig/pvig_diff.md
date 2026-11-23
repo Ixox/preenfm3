@@ -113,6 +113,10 @@ ships release binaries and IDE project files.
   levels 1..4 for <=2400, <=4800, <=9600 and above; when warp is active the
   selection frequency is multiplied by `1 + |warp|`.
 - **Why:** reduces aliasing for high notes and strong FM.
+- **Status here:** not ported yet; the current tree has no mipmap
+  infrastructure. See
+  [Wave mipmap tables: implementation notes](#wave-mipmap-tables-implementation-notes)
+  at the end of this document for the port plan and performance impact.
 - **Files:** `Osc.cpp`, `Osc.h`, `waves.c`, `SynthState.h`.
 - **Commits:** `f38af5d`, `e18d87d`
 
@@ -294,6 +298,11 @@ ships release binaries and IDE project files.
 - **Files:** `Timbre.cpp`, `Timbre.h`, `Common.h`, `FMDisplayEditor.cpp`,
   `SynthState.cpp`, `Presets.cpp`.
 - **Commits:** `51fdaaa`, `1892537`, `38ea75b`, `a9b0852`.
+- **Status:** PORTED. Storage (Phase 0), runtime core (Phase 1), Euclidean
+  factory masks/caching (Phase 2), the Arp2/Arp3 UI (Phase 3, including the
+  background step grid and partial redraws) and NRPN (Phase 4: Arp2 fields
+  4..11, per-step ArpPattern block 19, capability bit 6) are implemented; see
+  `doc/pvig/arp.md`. Hardware verification remains.
 
 ### 6. Step sequencer improvements
 
@@ -527,3 +536,180 @@ Changes from pvig's branch that have been ported into this repository.
 | 67 | 2026-11-15 | `cad3af0` | Limit preset |
 | 68 | 2026-11-15 | `e0906cb` | PFM3_PATCH_VERSION 1.7f |
 | 69 | 2026-11-15 | `d120c09` | sqrtf optimization, adaa on Glue & Fuzz |
+
+## Wave mipmap tables: implementation notes
+
+This section describes what the pvig mipmaps do, what is missing in the
+current tree, how to port them, and the expected CPU cost.
+
+### What a mipmap is
+
+A wavetable has fixed harmonic content. When the oscillator plays high enough,
+some of those harmonics go above Nyquist and fold back down as inharmonic
+tones: the familiar fizzy/metallic aliasing. FM makes this worse because the
+instantaneous frequency can be high even on a low note.
+
+A mipmap is a precomputed, band-limited copy of the same wavetable. Higher
+levels contain progressively fewer harmonics, and the oscillator picks the
+level that still fits below Nyquist for the current frequency. This is the
+audio equivalent of texture mipmaps in graphics. It does not add harmonics; it
+removes artefacts.
+
+### What pvig does
+
+- `buildShapeMipmaps(baseTable, size, hLevel3, level1, level2, level3,
+  level4)` in `Osc.cpp` builds four levels from the base table using `sinTable`
+  as the sine basis. Level 1 keeps harmonics 1..10, level 2 keeps 1..5, level 3
+  keeps 1..`hLevel3`, and level 4 keeps only the fundamental.
+- The tables are `sawMipmaps`, `squareMipmapsL1L2` / `squareMipmapsL3L4`,
+  `sinZeroMipmaps`, `sinPosMipmaps`, and `sq4MipmapsL1L2` /
+  `sq4MipmapsL3L4`. `waveMipmapTables[shape][0..4]` points at the base table
+  and the four levels.
+- `getWaveTableMipmap(shape, freqHz)` uses the base table up to 1200 Hz, then
+  level 1 up to 2400 Hz, level 2 up to 4800 Hz, level 3 up to 9600 Hz, and
+  level 4 above that. It uses `fabsf(freqHz)`; when warp is active, pvig
+  multiplies the selection frequency by `1 + |warp|`.
+- Selection happens per sample in `getNextSample()` because `oscState->frequency`
+  includes per-sample FM. Block paths (`getNextBlock()`,
+  `getNextBlockWithFeedbackAndEnveloppe()`) select once at block start.
+- A mipmap level must have the same number of entries as its base table,
+  because `WaveTable::max` is shared and the render paths mask with `max`.
+
+### Status in this repository
+
+- There is no mipmap infrastructure in the current tree: no
+  `waveMipmapTables`, no `buildShapeMipmaps()`, no `getWaveTableMipmap()`, and
+  `sinSquareTable` still holds the old `s^2` data.
+- `f38af5d` is only partially ported. Its ADAA part is in `VoiceFx.cpp` and
+  `FxBus.cpp`; its mipmaps are not. The commit message also mentions HQ 2x, but
+  the 2x oversampling code landed in `cd19c34` and is not ported either.
+- `e18d87d` (`s^2` -> `s_q4`) is not ported. The S_Q4 table has 1024 values.
+  The `LFO_S_Q4` alias from pvig does not apply here because this tree has no
+  `LFO_SIN_SQUARE`.
+
+### Port plan
+
+#### Shared infrastructure
+
+- Add the mipmap arrays and
+  `const float* waveMipmapTables[NUMBER_OF_WAVETABLES][5]` in `Osc.cpp`.
+- Initialise every `waveMipmapTables[shape][level]` to the base table first, so
+  shapes without mipmaps (sine, random, off, user waveforms) keep working.
+- Add `buildShapeMipmaps()` and build the tables in `Osc::init()`, inside the
+  existing `waveTables[0].precomputedValue <= 0` guard. This runs after
+  `initWaveTables()` has filled the base tables.
+- Add `getWaveTableMipmap()` to `Osc.h` and use it in `getNextSample()`
+  (per sample) and in the block paths (once per block).
+- Add a fast path for shapes whose `waveMipmapTables[shape][1]` still points at
+  the base table, so non-mipmapped shapes skip the threshold logic.
+
+#### §1.j: `s^2` -> `s_q4`
+
+- Replace `sinSquareTableFlash` in `waves.c` with the 1024-value
+  `S_Q4 (TX81Z W4)` data from `e18d87d` / `d120c09`, and update the comment
+  header.
+- Add `OSC_SHAPE_S_Q4 = OSC_SHAPE_SIN_SQUARE` in `SynthState.h`.
+- Rename the display name from `"s^2 "` to `"s_q4"` in `Pfm3ParamTable.cpp`
+  and `EditorByos.cpp`.
+- Build `sq4MipmapsL1L2` / `sq4MipmapsL3L4` from `sinSquareTable` and register
+  levels 1..4 for `OSC_SHAPE_SIN_SQUARE`.
+
+#### §1.f: saw, square, sinZero, sinPos
+
+- Build `sawMipmaps` (4 x 2048), `squareMipmapsL1L2` / `squareMipmapsL3L4`
+  (2 x 2048 each), `sinZeroMipmaps` (4 x 1024), and `sinPosMipmaps` (4 x 1024)
+  with the same helper.
+- Register levels 1..4 for `OSC_SHAPE_SAW`, `OSC_SHAPE_SQUARE`,
+  `OSC_SHAPE_SIN_ZERO`, and `OSC_SHAPE_SIN_POS`.
+
+### Memory budget
+
+Total mipmap data is 112 KB: saw 32 KB, square 32 KB, sinZero 16 KB, sinPos
+16 KB, and s_q4 16 KB. §1.j is the 16 KB s_q4 part; §1.f is the remaining
+96 KB and the main memory decision. Current region usage from the built ELF:
+
+| Region | Used | Headroom under 95 % |
+|---|---|---|
+| DTCM | 95,332 / 131,072 (72.7 %) | ~28.5 KB |
+| RAM_D1 | 405,140 / 524,288 (77.3 %) | ~90.8 KB |
+| RAM_D2 | 121,992 / 131,072 (93.1 %) | ~2.5 KB |
+| RAM_D2B | 72,100 / 131,072 (55.0 %) | ~51.2 KB |
+| RAM_D2C | 24,144 / 32,768 (73.7 %) | ~6.8 KB |
+| RAM_D3 | 48,040 / 65,536 (73.3 %) | ~13.9 KB |
+| ITCM | 51,464 / 64,512 (79.8 %) | ~9.6 KB |
+
+Two viable placements:
+
+- **Option A, no DTCM growth:** put saw, square L1L2, sq4 L1L2, and sinZero in
+  `.ram_d1` (+72 KB -> 91.3 %), and square L3L4, sinPos, and sq4 L3L4 in
+  `.ram_d2b` (+40 KB -> 86.3 %). DTCM stays at 72.7 %.
+- **Option B, sinZero in DTCM:** put saw, square L1L2, and sq4 L1L2 in
+  `.ram_d1` (+56 KB -> 88.2 %), square L3L4, sinPos, and sq4 L3L4 in
+  `.ram_d2b` (+40 KB -> 86.3 %), and sinZero in DTCM (+16 KB -> 85.4 %).
+  Recommended if audio speed matters more than DTCM headroom.
+
+Not viable: all mipmaps in RAM_D1 (~99 %), sinZero in RAM_D3 (~98 %), or
+sinZero in ITCM (overflows). `waveMipmapTables` itself is only ~280 B.
+
+### Performance impact
+
+- **Per-sample selection.** The hottest PFM3 algorithms call `getNextSample()`
+  up to four times per sample (see the 4-call loops in `Preenfm3Engine.cpp`).
+  At 20 voices and 47.9 kHz that is about 3.8 M calls/s. A selector cost of
+  roughly 5-10 cycles per call is 4-8 % of 480 MHz. Typical 2-3-call
+  algorithms are about 2-6 %.
+- **Block paths.** `getNextBlock()` and
+  `getNextBlockWithFeedbackAndEnveloppe()` select once per 32-sample block, so
+  their cost is negligible.
+- **Cache.** The base tables live in DTCM; mipmaps live in cacheable RAM_D1 /
+  RAM_D2B. The tables are shared by all voices, so the active working set is
+  the few tables currently in use, not the full 112 KB. Some D-cache misses are
+  still expected when several shapes/levels are active.
+- **Code size and I-cache.** `getNextSample()` is inlined at roughly 92 call
+  sites. The selector increases flash use and I-cache pressure. Flash has room,
+  but the hot loops are worth watching.
+- **Practical expectation.** Sine and low/mid notes are essentially unchanged.
+  Rich waves at high notes cost a few percent. Worst case (20 voices,
+  four-call algorithm, high notes) is roughly 5-10 %. The documented 10-note
+  PFM3 benchmark is 36.2 % CPU; a rich-wave patch should add roughly 2-4
+  percentage points, less for sine-based patches.
+- **s_q4 itself costs no CPU.** It is only table data. Presets using shape 3
+  will change character because the waveform changes from sine-squared to
+  TX81Z W4.
+
+### How to measure
+
+The firmware already has a CPU meter:
+
+- `Synth::getCpuUsage()`, shown on the TFT when `MIDICONFIG_CPU_USAGE` is
+  enabled (`firmware/src/app/preenfm3.cpp`).
+- DWT cycle counter helpers in `firmware/src/platform/clock/dwt.h`.
+
+Suggested benchmark:
+
+1. 10 notes, one timbre, no FX, sine operators: baseline.
+2. Same with saw or square at a high note: mipmap path.
+3. 20 voices, using an algorithm with four `getNextSample()` calls per sample.
+4. Repeat with all shapes set to sine after the change, to separate the
+   selector cost from the table-cache effect.
+
+### Mitigations if the cost is too high
+
+- Fast-path pointer check for shapes without mipmaps.
+- Select once per block from the base frequency (`mainFrequencyPlusMatrix`)
+  instead of per sample; cheaper, but FM peaks will alias again.
+- Branchless level calculation (`level = (f > 1200) + (f > 2400) + ...`).
+- Put the hottest tables in DTCM (Option B).
+- Reduce the number of levels or use smaller tables. Smaller tables require a
+  per-level `max` and phase increment, which is more invasive than the current
+  design.
+
+### Caveats
+
+- The threshold switch is hard; pvig does not crossfade between levels. A slow
+  vibrato across 1200/2400/4800/9600 Hz can produce a slight timbre step.
+- Only the built-in rich shapes get mipmaps. Sine, random, off, and user
+  waveforms fall back to the base table.
+- Mipmaps reduce aliasing; they do not add warmth or harmonics. Some patches
+  may sound slightly tamer at very high notes because the extra harmonics
+  cannot exist at those frequencies anyway.

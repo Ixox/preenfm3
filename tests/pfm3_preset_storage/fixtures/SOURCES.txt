@@ -1,0 +1,13 @@
+Preset fixtures
+===============
+
+Each file is one 1024-byte patch slot (128 slots per bank), taken from the
+user's pfm3 SD-card examples on 2026-11-23.
+
+- preen_00.slot     <- pfm3_SD/pfm3/Preen.bnk, slot 0, name "Preen"
+- boogalu_00.slot   <- pfm3_SD/pfm3/BOOGALU.bnk, slot 0, name "WhyEy"
+- elements_00.slot  <- pfm3_SD/pfm3/Elements.bnk, slot 0, name "Hydrogen"
+
+All three are old V1 slots: trailer magic 0 (PRESET_VERSION1), patch version
+1.0, and the bytes at offset 936..975 (the arpAdvanced block) are zero.
+They are used to check backward-compatible load behaviour.

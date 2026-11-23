@@ -15,10 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "FirmwareTftDisplay.h"
 #include "MixerState.h"
 #include "PatchBank.h"
 #include "Sequencer.h"
-#include "FirmwareTftDisplay.h"
 #include "Timbre.h"
 #include <MixerBank.h>
 #include <ScalaFile.h>
@@ -96,7 +96,7 @@ void MixerBank::removeDefaultMixer() {
 bool MixerBank::saveDefaultMixer() {
     bool savedOK = true;
 
-    FRESULT fatFSResult = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_OPEN_ALWAYS | FA_WRITE);
+    FRESULT fatFSResult = f_open(&mixerFile, getFileName(DEFAULT_MIXER), FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
     if (fatFSResult == FR_OK) {
         f_lseek(&mixerFile, 0);
         savedOK = saveMixerData(&mixerFile, 0, this->mixerState_);
@@ -120,8 +120,13 @@ bool MixerBank::saveMixerData(FIL* file, uint8_t mixerNumber, MixerState* mixerS
 
     for (int t = 0; t < NUMBER_OF_TIMBRES; t++) {
         uint8_t* slot = (uint8_t*)(storageBuffer + ALIGNED_PATCH_SIZE * t + ALIGNED_MIXER_SIZE);
-        for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
-            slot[p] = 0;
+        UINT byteRead = 0;
+        f_lseek(file, mixerNumber * FULL_MIXER_SIZE + ALIGNED_MIXER_SIZE + t * ALIGNED_PATCH_SIZE);
+        const FRESULT readResult = f_read(file, slot, ALIGNED_PATCH_SIZE, &byteRead);
+        if (readResult != FR_OK || byteRead != ALIGNED_PATCH_SIZE) {
+            for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
+                slot[p] = 0;
+            }
         }
         this->timbre_[t]->getStorageBlob(slot, ALIGNED_PATCH_SIZE - 5);
         *(uint32_t*)(&slot[ALIGNED_PATCH_SIZE - 5]) = this->timbre_[t]->getStorageMagic();
@@ -259,7 +264,7 @@ bool MixerBank::saveMixer(const struct PFM3File* mixer, int mixerNumber, char* m
 
     fsu_->copy(this->mixerState_->mixName_, mixerName, 12);
 
-    FRESULT result = f_open(&mixerFile, fullBankName, FA_WRITE);
+    FRESULT result = f_open(&mixerFile, fullBankName, FA_READ | FA_WRITE);
     if (result == FR_OK) {
         // Point to asked mixer
         f_lseek(&mixerFile, FULL_MIXER_SIZE * mixerNumber);

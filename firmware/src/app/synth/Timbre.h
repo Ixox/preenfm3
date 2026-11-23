@@ -69,6 +69,8 @@ public:
     int getStorageNameOffset(uint32_t magic) const;
     const char* getStorageDefaultName(uint32_t magic) const;
     void setSharedParams(const TimbreSharedParams& shared);
+    void setArpAdvanced(const ArpAdvancedParams& arp);
+    void setArpUserPattern(int index, arp_pattern_t pattern);
     void setNewEffectParam(int encoder);
     // Arpegiator
     void arpeggiatorNoteOn(char note, char velocity);
@@ -301,7 +303,16 @@ private:
     void OnMidiStart();
     void OnMidiStop();
     void OnMidiClock();
-    void SendNote(uint8_t note, uint8_t velocity);
+    void SendNote(uint8_t note, uint8_t velocity, int stepMode = -1);
+    void updateArpStrum();
+    void stopArpRatchet();
+    void updateArpRatchet();
+    int getArpStepTicks() const;
+    uint16_t getArpeggiatorAccentMask() const;
+    int getArpeggiatorPatternLength() const;
+    int getArpeggiatorStepMode() const;
+    void updateArpPresetCache(int pattern) const;
+    void resetArpPatternState();
 
     /** --------------FX conf--------------  */
     void fxAfterBlock();
@@ -455,6 +466,41 @@ private:
     int8_t start_step_;
     uint8_t ignore_note_off_messages_;
     uint8_t recording_;
+    uint8_t chord_cycle_;
+    uint16_t extClockCounter_;
+    float extBlocksPerTick_;
+
+    float arpRatchetSubBlocks_;
+    float arpRatchetGateBlocks_;
+    float arpRatchetTotalBlocks_;
+    float arpRatchetElapsedBlocks_;
+    float arpRatchetSubElapsed_;
+    uint8_t arpRatchetNotes_[8];
+    uint8_t arpRatchetCount_;
+    uint8_t arpRatchetVelocity_;
+    uint8_t arpRatchetHitIndex_;
+    uint8_t arpRatchetSubDiv_;
+    int8_t arpRatchetSign_;
+    bool arpRatchetGateOpen_;
+    bool arpRatchetActive_;
+
+    uint8_t arpStrumNotes_[8];
+    uint8_t arpStrumVelocities_[8];
+    uint16_t arpStrumDelay_[8];
+    uint8_t arpStrumCount_;
+    uint8_t arpPendingStepMode_;
+    float arpSwingStepScale_;
+
+    mutable uint8_t arpPresetCachePattern_;
+    mutable uint8_t arpPresetCacheSeed_;
+    mutable uint16_t arpPresetCacheAcc_;
+    mutable uint16_t arpPresetCacheTie_;
+    mutable uint16_t arpPresetCacheOct_;
+    mutable uint16_t arpPresetCacheRt_;
+    mutable uint16_t arpPresetCacheOctDown_;
+    mutable uint16_t arpPresetCacheDyad_;
+    mutable uint16_t arpPresetCacheChord_;
+    mutable uint16_t arpPresetCacheSlap_;
 
     uint8_t lowerNote_;
     float lowerNoteFrequency_;

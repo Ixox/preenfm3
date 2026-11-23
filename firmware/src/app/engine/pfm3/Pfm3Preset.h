@@ -92,7 +92,11 @@ struct Pfm3Preset {
     struct EnvelopeCurveParams env6Curve;
     struct EffectRowParams effect2;
     char presetName[13];
+    struct ArpAdvancedParams arpAdvanced;
 };
+
+static const size_t PFM3_LEGACY_PRESET_SIZE = 1008;
+static const size_t PFM3_PRESET_SIZE = 1048;
 
 /*
  * Float offsets in the flat Pfm3Preset layout.
@@ -106,6 +110,8 @@ static const int sharedBlockEnd = offsetof(Pfm3Preset, osc1) / sizeof(float);
 static const int pfm3BlockBStart = offsetof(Pfm3Preset, osc1) / sizeof(float);
 static const int effect2Start = offsetof(Pfm3Preset, effect2) / sizeof(float);
 static const int presetNameStart = offsetof(Pfm3Preset, presetName) / sizeof(float);
+static const int arpAdvancedStart = offsetof(Pfm3Preset, arpAdvanced) / sizeof(float);
+static const int arpAdvancedEnd = arpAdvancedStart + sizeof(ArpAdvancedParams) / sizeof(float);
 static const int sharedGap = sharedBlockEnd - sharedBlockStart;
 } // namespace Pfm3PresetLayout
 

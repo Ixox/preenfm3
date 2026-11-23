@@ -140,7 +140,7 @@ Current field counts:
 | MidiCurve | 2 | 3 | 5 |
 | StepSeq | 2 | 16 | 31 |
 | Arp1 | 1 | 4 | 3 |
-| Arp2 | 1 | 9 | 8 |
+| Arp2 | 1 | 12 | 11 |
 | ArpPattern | 4 | 32 | 127 |
 | Effect1 | 1 | 4 | 3 |
 | Effect2 | 1 | 4 | 3 |
@@ -149,6 +149,10 @@ Current field counts:
 
 `ArpPattern` uses the full LSB range (0..127): 4 patterns × 16 steps × 2
 fields. All other blocks fit below 64.
+
+`Arp2` field mapping: 0 = `Ptrn`, 1 = `Divi`, 2 = `Dura`, 3 = `Latc`,
+4..7 = `Usr1..Usr4` lengths, 8 = Euclidean seed, 9 = swing, 10 = groove,
+11 = humanize.
 
 All data blocks except `Global` (101) are scoped to the timbre of the MIDI
 channel. `PresetName` (99) and `Mixer` (100) are per-timbre; `Global` (101) is
@@ -207,8 +211,8 @@ connect time (§7.2).
 ## 6. ArpPattern layout
 
 v2 replaces the legacy 16-bit arp mask with one state and one action per step;
-the firmware must store this per-step data. Pattern lengths and the Euclidean
-seed live in `Arp2` (block 18, fields 4..8).
+the firmware must store this per-step data. Pattern lengths, Euclidean seed
+and swing/groove/humanize live in `Arp2` (block 18, fields 4..11).
 
 `ArpPattern` (MSB 19) is the only block that uses the full LSB range:
 
@@ -221,7 +225,8 @@ LSB = pattern * 32 + step * 2 + field
 - `field`: 0 = state, 1 = action
 
 State values: `0 = Off`, `1 = On`, `2 = Accent`.
-Action values: `0 = Norm`, `1 = Tie`, `2 = Oct+`, `3 = Rt*2`, `4 = Chrd`, `5 = Slap`.
+Action values: `0 = Norm`, `1 = Tie`, `2 = Oct+`, `3 = Rt*2`, `4 = Chrd`,
+`5 = Slap`, `6 = Dyad`, `7 = Oct-`.
 
 Max LSB = `3*32 + 15*2 + 1 = 127`.
 
@@ -285,7 +290,7 @@ The following list is valid for `CAP_PROTOCOL_VERSION = 1`.
 | 3   | engine decimation                |
 | 4   | voice priority                   |
 | 5   | step-sequencer modes             |
-| 6   | extended arp                     |
+| 6   | extended arp (step modes, lengths, seed, swing/groove/humanize) |
 | 7   | extended matrix destinations     |
 | 8   | LFO envelope curves              |
 | 9..27 | reserved                       |
@@ -456,7 +461,8 @@ model, no `Pfm3Param`) will implement v2 later; the spec is the target for both.
    - `MSB == 127` → control command handler.
 3. Replace `midiPatchParam()` with a block/parameter iterator for the dump,
    including `EnvCurve`, `ArpPattern` and `StepSeq`.
-4. Add per-step arp storage (state/action) and the Arp2 lengths/seed.
+4. Add per-step arp storage (state/action) and the Arp2 lengths/seed/
+   swing/groove/humanize.
 5. Keep the CC mapping untouched (separate concern).
 6. Remove the legacy NRPN index tables once the editor uses v2.
 7. Pace the dump and allow cancellation; the current loop blocks the main loop.
@@ -529,8 +535,13 @@ The synth replies with `[127, 64]`, the name and blocks, then `[127, 65]`.
 | ArpPattern Usr1 step 0 state = On | `[19, 0] = 1` |
 | ArpPattern Usr1 step 0 action = Tie | `[19, 1] = 1` |
 | ArpPattern Usr4 step 15 action = Slap | `[19, 127] = 5` |
+| ArpPattern Usr2 step 0 action = Dyad | `[19, 33] = 6` |
+| ArpPattern Usr4 step 15 action = Oct- | `[19, 127] = 7` |
 | Arp2 Usr1 length = 8 | `[18, 4] = 8` |
 | Arp2 Euclidean seed = 3 | `[18, 8] = 3` |
+| Arp2 swing = 25 | `[18, 9] = 25` |
+| Arp2 groove = 3 | `[18, 10] = 3` |
+| Arp2 humanize = 50 | `[18, 11] = 50` |
 | Request preset dump | `[127, 0] = 0` |
 | Request capabilities | `[127, 3] = 0` |
 
@@ -554,5 +565,5 @@ Reserved values must be ignored by receivers and must not be reused.
   at 99, mixer at 100, global at 101; command domain at 127 (4 commands,
   8 responses, `CAP_` capability responses); unified 14-bit value encoding;
   scope 0 dump = preset + per-timbre mixer + global; per-step arp pattern;
-  Arp2 lengths/seed.
+  Arp2 lengths/seed/swing/groove/humanize; ArpPattern 8 actions.
 - **v1** — legacy PreenFM2 NRPN map plus ad-hoc editor ranges (superseded).

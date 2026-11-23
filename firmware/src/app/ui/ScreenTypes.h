@@ -28,6 +28,7 @@ extern const char* polyMonoNames[];
 #define CUSTOM_CHAR_NOTE (char)7
 
 extern arp_pattern_t lut_res_arpeggiator_patterns[ARPEGGIATOR_PRESET_PATTERN_COUNT];
+extern const uint16_t lut_res_arpeggiator_ties[ARPEGGIATOR_PRESET_PATTERN_COUNT];
 
 extern int getLength(const char* str);
 
@@ -58,8 +59,8 @@ struct EditorSlot {
 };
 
 // EditorPageState slot initializers. Context defaults to 0 (engine-owned).
-#define BUTTON_SIMPLE_PARAM(...) { EditorSlotKind::Param, __VA_ARGS__ }
-#define BUTTON_EMPTY()           { EditorSlotKind::Empty, 0, 0 }
+#define BUTTON_SIMPLE_PARAM(...) {EditorSlotKind::Param, __VA_ARGS__}
+#define BUTTON_EMPTY()           {EditorSlotKind::Empty, 0, 0}
 
 struct EditorPageState {
     const char* stateLabel;

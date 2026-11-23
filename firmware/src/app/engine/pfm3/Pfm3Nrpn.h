@@ -143,16 +143,6 @@ inline Address resolve(uint8_t msb, uint8_t lsb) {
     }
 
     if (msb >= MSB_COMMON_FIRST && msb <= MSB_COMMON_LAST) {
-        if (msb == MSB_COMMON_FIRST + (uint8_t)CommonBlock::ArpPattern) {
-            // Per-step arp pattern not implemented yet (feature bit 6 = 0).
-            a.error = ERROR_UNSUPPORTED_BLOCK;
-            return a;
-        }
-        if (msb == MSB_COMMON_FIRST + (uint8_t)CommonBlock::Arp2 && lsb >= 4) {
-            // Arp2 lengths / seed are deferred (feature bit 6 = 0).
-            a.error = ERROR_UNSUPPORTED_BLOCK;
-            return a;
-        }
         CommonBlock block = (CommonBlock)(msb - MSB_COMMON_FIRST);
         const ParamBlock& b = commonBlock(commonParam(block, 0, 0));
         if (b.fieldCount == 0) {

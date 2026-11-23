@@ -62,6 +62,12 @@ EditorParamPage::EditorParamPage() {
         lfoFreqPreviousValue_[l] = -1.0f;
     }
     patternSelect_ = 0;
+    arpPatternBuffer_ = 0;
+    arpPatternLengthBuffer_ = 16;
+    arpPatternBufferValid_ = false;
+    for (int k = 0; k < 16; k++) {
+        arpStepModesBuffer_[k] = ARP_STEP_MODE_NORM;
+    }
 }
 
 int EditorParamPage::getStepSelection(int which) const {
@@ -105,58 +111,381 @@ void EditorParamPage::encoderTurnedForStepSequencer(int whichStepSeq, int encode
     }
 }
 
-void EditorParamPage::encoderTurnedForArpPattern(int encoder, int ticks) {
-    Pfm3Preset* preset = pfm3Preset();
-    if (encoder == 0) {
-        // Encoder 0: move cursor
-        int oldPos = patternSelect_;
-        int newPos = oldPos;
-        newPos += (ticks > 0 ? 1 : -1);
+bool EditorParamPage::isInArpPatternPage() const {
+    const struct EditorPageButton* page = currentPage();
+    return page != nullptr && page->buttonId == BUTTONID_EDIT_ARPEGIATOR && synthState_->fullState_.buttonState[page->buttonId] == 1;
+}
 
-        if (newPos > 15) {
-            newPos = 0;
-        } else if (newPos < 0) {
-            newPos = 15;
+bool EditorParamPage::copyArpUserPattern() {
+    Pfm3Preset* preset = pfm3Preset();
+    const int pattern = (int)preset->engineArp2.pattern;
+    if (pattern < 0 || pattern >= ARPEGGIATOR_PATTERN_COUNT) {
+        parent_->displayPopup(COLOR_RED, "Cannot", 6);
+        return false;
+    }
+    const bool factory = pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    uint16_t mask = 0;
+    uint16_t accent = 0;
+    int length = 16;
+    int modes[16];
+    getArpStepDisplay(pattern, factory, mask, accent, length, modes);
+
+    arpPatternBuffer_ = ARP_PATTERN_ACCENT(mask, accent);
+    for (int k = 0; k < 16; k++) {
+        arpStepModesBuffer_[k] = (uint8_t)modes[k];
+    }
+    arpPatternLengthBuffer_ = (uint8_t)length;
+    arpPatternBufferValid_ = true;
+    if (factory) {
+        parent_->displayPopup(COLOR_GREEN, "Copy Fct", 8);
+    } else {
+        parent_->displayPopup(COLOR_GREEN, "Copy Usr", 8);
+    }
+    return true;
+}
+
+bool EditorParamPage::pasteArpUserPattern() {
+    Pfm3Preset* preset = pfm3Preset();
+    const int pattern = (int)preset->engineArp2.pattern;
+    if (pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT || !arpPatternBufferValid_) {
+        parent_->displayPopup(COLOR_RED, "Cannot", 6);
+        return false;
+    }
+    const int userIndex = pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    if (userIndex < 0 || userIndex >= ARPEGGIATOR_USER_PATTERN_COUNT) {
+        parent_->displayPopup(COLOR_RED, "Cannot", 6);
+        return false;
+    }
+    Timbre* timbre = synthState_->getTimbre(currentTimbre());
+    timbre->setArpUserPattern(userIndex, arpPatternBuffer_);
+
+    ArpAdvancedParams adv = timbre->sharedParams().arpAdvanced;
+    for (int k = 0; k < 16; k++) {
+        arpAdvancedSetStepMode(adv, userIndex, k, arpStepModesBuffer_[k]);
+    }
+    arpAdvancedSetUserLength(adv, userIndex, arpPatternLengthBuffer_);
+    timbre->setArpAdvanced(adv);
+
+    for (int e = 2; e < NUMBER_OF_ENCODERS; e++) {
+        displayParamValue(e, COLOR_WHITE);
+    }
+    queueArpStepsBg();
+    parent_->displayPopup(COLOR_GREEN, "Paste Usr", 9);
+    return true;
+}
+
+void EditorParamPage::buttonLongPressed(int instrument, int button) {
+    (void)instrument;
+    if (!isInArpPatternPage()) {
+        return;
+    }
+    if (button == BUTTON_PREVIOUS_INSTRUMENT) {
+        copyArpUserPattern();
+    } else if (button == BUTTON_NEXT_INSTRUMENT) {
+        pasteArpUserPattern();
+    }
+}
+
+static void printPaddedInt(FirmwareTftDisplay* tft, int value, int width) {
+    char buf[8];
+    if (width > 7) {
+        width = 7;
+    } else if (width < 1) {
+        width = 1;
+    }
+    for (int i = 0; i < width; i++) {
+        buf[i] = ' ';
+    }
+    buf[width] = 0;
+    int pos = width - 1;
+    if (value == 0) {
+        buf[pos--] = '0';
+    }
+    while (value > 0 && pos >= 0) {
+        buf[pos--] = (char)('0' + (value % 10));
+        value /= 10;
+    }
+    tft->print(buf);
+}
+
+static const char* arpStepModeName(int mode) {
+    static const char* names[ARP_STEP_MODE_COUNT] = {"Norm", "Tie ", "Oct+", "Rt*2", "Chrd", "Slap", "Dyad", "Oct-"};
+    if (mode < 0 || mode >= ARP_STEP_MODE_COUNT) {
+        mode = 0;
+    }
+    return names[mode];
+}
+
+static TFT_COLOR arpStepColor(int mode, bool accentOn) {
+    switch (mode) {
+    case ARP_STEP_MODE_TIE:
+        return COLOR_CYAN;
+    case ARP_STEP_MODE_OCT_UP:
+        return COLOR_BLUE;
+    case ARP_STEP_MODE_RATCHET2:
+        return COLOR_GREEN;
+    case ARP_STEP_MODE_CHORD:
+        return COLOR_YELLOW;
+    case ARP_STEP_MODE_SLAP:
+        return COLOR_RED;
+    case ARP_STEP_MODE_DYAD:
+        return COLOR_ORANGE;
+    case ARP_STEP_MODE_OCT_DOWN:
+        return COLOR_LIGHT_GREEN;
+    default:
+        return accentOn ? COLOR_RED : COLOR_WHITE;
+    }
+}
+
+void EditorParamPage::getArpStepDisplay(int index, bool factory, uint16_t& mask, uint16_t& accent, int& length, int modes[16]) const {
+    Pfm3Preset* preset = pfm3Preset();
+    for (int k = 0; k < 16; k++) {
+        modes[k] = ARP_STEP_MODE_NORM;
+    }
+    if (factory) {
+        if (index < 0 || index >= ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+            index = 0;
         }
-        if (newPos != oldPos) {
-            patternSelect_ = newPos;
-            synthState_->propagateNewEngineParamValue(currentTimbre(), (int)commonParam(CommonBlock::ArpPattern, 0, 0), 1, oldPos,
-                                                      patternSelect_);
+        uint16_t tie = 0, oct = 0, rt = 0, octDown = 0, dyad = 0, chord = 0, slap = 0;
+        const int seed = arpAdvancedGetEuclideanSeed(preset->arpAdvanced);
+        arpComputePresetMasks(ARP_PATTERN_GETMASK(lut_res_arpeggiator_patterns[index]),
+                              ARP_PATTERN_GETACCENT(lut_res_arpeggiator_patterns[index]), lut_res_arpeggiator_ties[index], seed, &accent,
+                              &tie, &oct, &rt, &octDown, &dyad, &chord, &slap);
+        mask = ARP_PATTERN_GETMASK(lut_res_arpeggiator_patterns[index]);
+        length = arpPresetLength(seed);
+        for (int k = 0; k < 16; k++) {
+            const uint16_t bit = (uint16_t)(1u << k);
+            if (tie & bit) {
+                modes[k] = ARP_STEP_MODE_TIE;
+            } else if (oct & bit) {
+                modes[k] = ARP_STEP_MODE_OCT_UP;
+            } else if (rt & bit) {
+                modes[k] = ARP_STEP_MODE_RATCHET2;
+            } else if (octDown & bit) {
+                modes[k] = ARP_STEP_MODE_OCT_DOWN;
+            } else if (dyad & bit) {
+                modes[k] = ARP_STEP_MODE_DYAD;
+            } else if (chord & bit) {
+                modes[k] = ARP_STEP_MODE_CHORD;
+            } else if (slap & bit) {
+                modes[k] = ARP_STEP_MODE_SLAP;
+            }
         }
-    } else if (encoder == 1) {
-        // Change value(s)
-        if (preset->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT) {
+        return;
+    }
+
+    const int user = index - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    const arp_pattern_t word = preset->engineArpUserPatterns.patterns[user];
+    mask = ARP_PATTERN_GETMASK(word);
+    accent = ARP_PATTERN_GETACCENT(word);
+    length = arpAdvancedGetUserLength(preset->arpAdvanced, user);
+    for (int k = 0; k < 16; k++) {
+        modes[k] = arpAdvancedGetStepMode(preset->arpAdvanced, user, k);
+    }
+}
+
+void EditorParamPage::displayCustomValue(int encoder, const EditorSlot& slot, TFT_COLOR color) {
+    (void)color;
+    Pfm3Preset* preset = pfm3Preset();
+    const int index = (int)preset->engineArp2.pattern;
+    const bool factory = index < ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    const int sel = (int)patternSelect_;
+
+    if (slot.context == (uint8_t)EditorCustomContext::ArpAdvanced) {
+        const ArpAdvancedParams& adv = preset->arpAdvanced;
+        switch (slot.id) {
+        case 0:
+            printPaddedInt(tft_, arpAdvancedGetSwing(adv), 3);
+            break;
+        case 1:
+            printPaddedInt(tft_, arpAdvancedGetGroove(adv), 2);
+            break;
+        case 2:
+            printPaddedInt(tft_, arpAdvancedGetHumanize(adv), 3);
+            break;
+        default:
+            break;
+        }
+        return;
+    }
+
+    uint16_t mask = 0;
+    uint16_t accent = 0;
+    int length = 16;
+    int modes[16];
+    getArpStepDisplay(index, factory, mask, accent, length, modes);
+
+    if (slot.id == 0) {
+        // Cursor value: selected step, 1..16. The steps themselves are drawn
+        // in the oscilloscope background by queueArpStepsBg().
+        printPaddedInt(tft_, sel + 1, 3);
+        return;
+    }
+
+    if (slot.id == 1) {
+        static const char* states[3] = {"Off ", "On  ", "Acc "};
+        const bool on = ((mask >> sel) & 0x1u) != 0;
+        const bool acc = ((accent >> sel) & 0x1u) != 0;
+        if (factory) {
+            tft_->setCharColor(COLOR_DARK_GRAY);
+        }
+        tft_->print(states[on ? (acc ? 2 : 1) : 0]);
+        return;
+    }
+
+    if (slot.id == 2) {
+        if (factory) {
+            tft_->setCharColor(COLOR_DARK_GRAY);
+        }
+        tft_->print(arpStepModeName(modes[sel]));
+        return;
+    }
+
+    if (factory) {
+        printPaddedInt(tft_, arpAdvancedGetEuclideanSeed(preset->arpAdvanced), 3);
+    } else {
+        printPaddedInt(tft_, length, 3);
+    }
+}
+
+void EditorParamPage::encoderTurnedForCustom(int encoder, const EditorSlot& slot, int ticks) {
+    Pfm3Preset* preset = pfm3Preset();
+    Timbre* timbre = synthState_->getTimbre(currentTimbre());
+    const int index = (int)preset->engineArp2.pattern;
+    const bool factory = index < ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    const int dir = (ticks > 0) ? 1 : -1;
+
+    if (slot.context == (uint8_t)EditorCustomContext::ArpAdvanced) {
+        ArpAdvancedParams adv = timbre->sharedParams().arpAdvanced;
+        switch (slot.id) {
+        case 0:
+            arpAdvancedSetSwing(adv, arpAdvancedGetSwing(adv) + dir);
+            break;
+        case 1:
+            arpAdvancedSetGroove(adv, arpAdvancedGetGroove(adv) + dir);
+            break;
+        case 2:
+            arpAdvancedSetHumanize(adv, arpAdvancedGetHumanize(adv) + dir);
+            break;
+        default:
             return;
         }
-        arp_pattern_t pattern = preset->engineArpUserPatterns.patterns[(int)preset->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT];
-        const uint16_t oldMask = ARP_PATTERN_GETMASK(pattern);
-        uint16_t newMask = oldMask;
-
-        uint16_t bitsToModify = 0;
-        switch (encoder) {
-        case 1:
-            bitsToModify = 0x1 << patternSelect_;
-            break; // modify single note
-        case 2:
-            bitsToModify = 0x1111 << (patternSelect_ & 3);
-            break; // modify all
-        case 3:
-            bitsToModify = 0xf << ((patternSelect_ >> 2) << 2);
-            break; // modify entire bar
-        }
-        if (ticks > 0) {
-            newMask |= bitsToModify;
-        } else {
-            newMask &= ~bitsToModify;
-        }
-
-        if (oldMask != newMask) {
-            ARP_PATTERN_SETMASK(pattern, newMask);
-            preset->engineArpUserPatterns.patterns[(int)preset->engineArp2.pattern - ARPEGGIATOR_PRESET_PATTERN_COUNT] = pattern;
-            synthState_->propagateNewEngineParamValue(currentTimbre(), (int)commonParam(CommonBlock::ArpPattern, 0, 0), 1, oldMask,
-                                                      newMask);
-        }
+        timbre->setArpAdvanced(adv);
+        displayParamValue(encoder, COLOR_YELLOW);
+        return;
     }
+
+    const int oldStep = (int)patternSelect_;
+    ArpBgUpdate update;
+
+    switch (slot.id) {
+    case 0: {
+        int pos = (int)patternSelect_ + dir;
+        if (pos < 0) {
+            pos = 15;
+        } else if (pos > 15) {
+            pos = 0;
+        }
+        patternSelect_ = (char)pos;
+        update.cursorMask = (uint16_t)((1u << oldStep) | (1u << (int)patternSelect_));
+        displayParamValue(2, COLOR_WHITE);
+        displayParamValue(3, COLOR_WHITE);
+        displayParamValue(4, COLOR_WHITE);
+        break;
+    }
+    case 1: {
+        if (factory) {
+            return;
+        }
+        const int user = index - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+        arp_pattern_t word = preset->engineArpUserPatterns.patterns[user];
+        uint16_t mask = ARP_PATTERN_GETMASK(word);
+        uint16_t accent = ARP_PATTERN_GETACCENT(word);
+        const int sel = (int)patternSelect_;
+        const bool on = ((mask >> sel) & 0x1u) != 0;
+        const bool acc = ((accent >> sel) & 0x1u) != 0;
+        int state = on ? (acc ? 2 : 1) : 0;
+        state += dir;
+        if (state < 0) {
+            state = 0;
+        } else if (state > 2) {
+            state = 2;
+        }
+        if (state == 0) {
+            mask &= (uint16_t)~(1u << sel);
+            accent &= (uint16_t)~(1u << sel);
+        } else if (state == 1) {
+            mask |= (uint16_t)(1u << sel);
+            accent &= (uint16_t)~(1u << sel);
+        } else {
+            mask |= (uint16_t)(1u << sel);
+            accent |= (uint16_t)(1u << sel);
+        }
+        ARP_PATTERN_SETMASK(word, mask);
+        ARP_PATTERN_SETACCENT(word, accent);
+        timbre->setArpUserPattern(user, word);
+        update.stepMask = (uint16_t)(1u << (int)patternSelect_);
+        displayParamValue(2, COLOR_WHITE);
+        displayParamValue(3, COLOR_YELLOW);
+        break;
+    }
+    case 2: {
+        if (factory) {
+            return;
+        }
+        const int user = index - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+        ArpAdvancedParams adv = timbre->sharedParams().arpAdvanced;
+        int mode = arpAdvancedGetStepMode(adv, user, (int)patternSelect_) + dir;
+        if (mode < 0) {
+            mode = 0;
+        } else if (mode >= ARP_STEP_MODE_COUNT) {
+            mode = ARP_STEP_MODE_COUNT - 1;
+        }
+        arpAdvancedSetStepMode(adv, user, (int)patternSelect_, mode);
+        timbre->setArpAdvanced(adv);
+        update.modeMask = (uint16_t)(1u << (int)patternSelect_);
+        displayParamValue(2, COLOR_WHITE);
+        displayParamValue(3, COLOR_WHITE);
+        displayParamValue(4, COLOR_YELLOW);
+        break;
+    }
+    case 3: {
+        ArpAdvancedParams adv = timbre->sharedParams().arpAdvanced;
+        if (factory) {
+            int seed = arpAdvancedGetEuclideanSeed(adv) + dir;
+            if (seed < 0) {
+                seed = 0;
+            } else if (seed > 15) {
+                seed = 15;
+            }
+            arpAdvancedSetEuclideanSeed(adv, seed);
+            timbre->setArpAdvanced(adv);
+            update.full = true;
+            displayParamValue(2, COLOR_WHITE);
+            displayParamValue(3, COLOR_WHITE);
+            displayParamValue(4, COLOR_WHITE);
+        } else {
+            const int user = index - ARPEGGIATOR_PRESET_PATTERN_COUNT;
+            const int oldLength = arpAdvancedGetUserLength(adv, user);
+            int length = oldLength + dir;
+            if (length < 1) {
+                length = 1;
+            } else if (length > 16) {
+                length = 16;
+            }
+            arpAdvancedSetUserLength(adv, user, length);
+            timbre->setArpAdvanced(adv);
+            update.lengthMask = (uint16_t)((1u << (oldLength - 1)) | (1u << (length - 1)));
+            displayParamValue(2, COLOR_WHITE);
+        }
+        displayParamValue(5, COLOR_YELLOW);
+        break;
+    }
+    default:
+        update.full = true;
+        break;
+    }
+    queueArpStepsBg(update);
 }
 
 void EditorParamPage::drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) {
@@ -171,6 +500,34 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
     tft_->setCharBackgroundColor(COLOR_BLACK);
     tft_->setCharColor(COLOR_MEDIUM_GRAY);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
+    if (slot.kind == EditorSlotKind::Custom) {
+        if (slot.context == (uint8_t)EditorCustomContext::ArpAdvanced) {
+            static const char* names[3] = {"Swing", "Grve", "Humn"};
+            tft_->print(names[slot.id < 3 ? slot.id : 0]);
+        } else {
+            const bool factory = (int)pfm3Preset()->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT;
+            if (factory && (slot.id == 1 || slot.id == 2)) {
+                tft_->setCharColor(COLOR_DARK_GRAY);
+            }
+            switch (slot.id) {
+            case 0:
+                tft_->print("Cursr");
+                break;
+            case 1:
+                tft_->print("Step");
+                break;
+            case 2:
+                tft_->print("Mode");
+                break;
+            case 3:
+                tft_->print(factory ? "Eucl" : "Len");
+                break;
+            default:
+                break;
+            }
+        }
+        return;
+    }
     if (slot.kind != EditorSlotKind::Param) {
         return;
     }
@@ -202,11 +559,9 @@ void EditorParamPage::displayParamValue(int encoder, TFT_COLOR color) {
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
     if (slot.kind == EditorSlotKind::Custom) {
-        EditorParamInfo info = {};
-        info.displayType = DISPLAY_TYPE_ARP_PATTERN;
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCharColor(color);
-        updateEncoderValueWithoutCursor((int)slot.id, 0, info, 0.0f, 0.0f);
+        displayCustomValue(encoder, slot, color);
         return;
     }
     if (slot.kind != EditorSlotKind::Param || hideParam_[encoder]) {
@@ -238,7 +593,13 @@ void EditorParamPage::newEngineParamValue(int& refreshStatus, int timbre, int pa
         return;
     }
     if (context == 1 && commonBlockOf((CommonParamId)paramId) == (uint8_t)CommonBlock::ArpPattern) {
-        displayParamValue(3, COLOR_WHITE);
+        const EditorSlot gridSlot = slotForEncoder(2);
+        if (gridSlot.kind == EditorSlotKind::Custom && gridSlot.context == (uint8_t)EditorCustomContext::ArpPattern) {
+            for (int e = 2; e < NUMBER_OF_ENCODERS; e++) {
+                displayParamValue(e, COLOR_WHITE);
+            }
+            queueArpStepsBg();
+        }
         return;
     }
     int encoder = -1;
@@ -260,7 +621,16 @@ void EditorParamPage::newEngineParamValue(int& refreshStatus, int timbre, int pa
     CommonBlock block = (CommonBlock)commonBlockOf((CommonParamId)paramId);
     uint8_t field = commonFieldOf((CommonParamId)paramId);
     if (block == CommonBlock::Arp2 && field == 0) {
-        refreshStatus = 3;
+        // Pattern changed: names can change colour (Step/Mode are only
+        // editable on user patterns), so redraw names as well as values.
+        refreshStatus = 12;
+        const EditorSlot gridSlot = slotForEncoder(2);
+        if (gridSlot.kind == EditorSlotKind::Custom && gridSlot.context == (uint8_t)EditorCustomContext::ArpPattern) {
+            for (int e = 2; e < NUMBER_OF_ENCODERS; e++) {
+                displayParamValue(e, COLOR_WHITE);
+            }
+            queueArpStepsBg();
+        }
     } else if ((block == CommonBlock::Effect1 || block == CommonBlock::Effect2) && field == 0) {
         resetHideParams();
         refreshStatus = 11;
@@ -300,7 +670,7 @@ void EditorParamPage::slowTick() {
 void EditorParamPage::encoderTurned(int encoder, int ticks) {
     EditorSlot slot = slotForEncoder(encoder);
     if (slot.kind == EditorSlotKind::Custom) {
-        encoderTurnedForArpPattern((int)slot.id, ticks);
+        encoderTurnedForCustom(encoder, slot, ticks);
         return;
     }
     if (slot.kind == EditorSlotKind::Param) {
@@ -507,6 +877,7 @@ void EditorParamPage::buttonPressed(int button) {
                 setEditPage(button);
             }
         }
+        refreshOscilloBG();
         break;
     }
     }
@@ -516,8 +887,50 @@ void EditorParamPage::preparePage() {
     resetHideParams();
 }
 
+void EditorParamPage::queueArpStepsBg() {
+    ArpBgUpdate update;
+    update.full = true;
+    queueArpStepsBg(update);
+}
+
+void EditorParamPage::queueArpStepsBg(const ArpBgUpdate& update) {
+    if (!isInArpPatternPage()) {
+        return;
+    }
+    Pfm3Preset* preset = pfm3Preset();
+    const int index = (int)preset->engineArp2.pattern;
+    const bool factory = index < ARPEGGIATOR_PRESET_PATTERN_COUNT;
+    uint16_t mask = 0;
+    uint16_t accent = 0;
+    int length = 16;
+    int modes[16];
+    getArpStepDisplay(index, factory, mask, accent, length, modes);
+
+    uint8_t levels[16];
+    uint8_t colors[16];
+    uint8_t modeColors[16];
+    uint16_t modeMask = 0;
+    for (int k = 0; k < 16; k++) {
+        const bool on = ((mask >> k) & 0x1u) != 0;
+        const bool acc = ((accent >> k) & 0x1u) != 0;
+        const bool isMode = modes[k] != ARP_STEP_MODE_NORM;
+        levels[k] = on ? 15 : 0;
+        colors[k] = (uint8_t)(acc ? COLOR_RED : COLOR_WHITE);
+        modeColors[k] = (uint8_t)(isMode ? arpStepColor(modes[k], acc) : COLOR_WHITE);
+        if (isMode) {
+            modeMask |= (uint16_t)(1u << k);
+        }
+    }
+    tft_->oscilloBgSetArpSteps(levels, colors, modeColors, modeMask, (int)patternSelect_, length);
+    tft_->oscilloBgArp(update);
+}
+
 void EditorParamPage::refreshOscilloBG() {
-    tft_->oscilloBgActionClear();
+    if (isInArpPatternPage()) {
+        queueArpStepsBg();
+    } else {
+        tft_->oscilloBgActionClear();
+    }
 }
 
 void EditorParamPage::resetHideParams() {

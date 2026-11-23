@@ -16,8 +16,8 @@
  */
 
 #include "PatchBank.h"
-#include "engine/pfm3/Pfm3Preset.h"
 #include "Timbre.h"
+#include "engine/pfm3/Pfm3Preset.h"
 
 __attribute__((section(".ram_d2c"))) struct PFM3File preenFMBankAlloc[NUMBEROFPREENFMBANKS];
 
@@ -125,8 +125,11 @@ const char* PatchBank::loadPatchName(const struct PFM3File* bank, int patchNumbe
 void PatchBank::savePatch(const struct PFM3File* bank, int patchNumber, Timbre* timbre) {
     const char* fullBankName = getFullName(bank->name);
 
-    for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
-        storageBuffer[p] = 0;
+    const int loaded = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, storageBuffer, ALIGNED_PATCH_SIZE);
+    if (loaded != ALIGNED_PATCH_SIZE) {
+        for (int p = 0; p < ALIGNED_PATCH_SIZE; p++) {
+            storageBuffer[p] = 0;
+        }
     }
 
     timbre->getStorageBlob((uint8_t*)storageBuffer, ALIGNED_PATCH_SIZE - 5);
