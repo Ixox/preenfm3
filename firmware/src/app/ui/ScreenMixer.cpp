@@ -31,7 +31,8 @@ const char* outDisplay[] = {"1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", " 
 const char* compDisplay[] = {"Off", "Glue", "Punch", "Tube", "Limit", "Drive", "Fuzz"};
 const char* engineDisplay[] = {SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
                                SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DX7),
-                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS)};
+                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS),
+                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DRUM909)};
 const char* enableNames[] = {"Off", "On"};
 const char* levelMeterWhere[] = {"Off", "Mix", "All"};
 const char* scalaMapNames[] = {"Keybrd", "Continu"};

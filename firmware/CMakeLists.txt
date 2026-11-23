@@ -9,17 +9,40 @@ file(GLOB_RECURSE FIRMWARE_SOURCES CONFIGURE_DEPENDS
     ${FIRMWARE_DIR}/src/platform/*.cpp
 )
 
+# 9W9 drum engine: sample and lookup tables generated from the vendored WAVs.
+set(DRUM909_DIR ${PROJECT_SOURCE_DIR}/third_party/9W9)
+set(DRUM909_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/drum909)
+set(DRUM909_GEN_SAMPLES ${DRUM909_GEN_DIR}/x0x_drum_samples.h)
+set(DRUM909_GEN_TABLES ${DRUM909_GEN_DIR}/x0x_drum_tables.h)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_custom_command(
+    OUTPUT ${DRUM909_GEN_SAMPLES} ${DRUM909_GEN_TABLES}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DRUM909_GEN_DIR}
+    COMMAND ${Python3_EXECUTABLE} ${DRUM909_DIR}/tools/gen_drum_samples.py ${DRUM909_GEN_SAMPLES}
+    DEPENDS
+        ${DRUM909_DIR}/tools/gen_drum_samples.py
+        ${DRUM909_DIR}/assets/909/hh.wav
+        ${DRUM909_DIR}/assets/909/ride.wav
+        ${DRUM909_DIR}/assets/909/crash.wav
+    COMMENT "Generating 9W9 drum sample and lookup tables"
+    VERBATIM
+)
+add_custom_target(drum909_generated DEPENDS ${DRUM909_GEN_SAMPLES} ${DRUM909_GEN_TABLES})
+
 add_executable(preenfm3_firmware
     ${FIRMWARE_SOURCES}
     ${FIRMWARE_DIR}/src/platform/startup/startup_stm32h753vitx.s
     ${PROJECT_SOURCE_DIR}/preen_lib/src/display/TftAlgo.cpp
 )
 
+add_dependencies(preenfm3_firmware drum909_generated)
+
 # Own include directories must come before the linked INTERFACE directories so
 # that firmware/src/platform/cubemx/stm32h7xx_hal_conf.h wins over preen_lib's.
 target_include_directories(preenfm3_firmware PRIVATE
     ${FIRMWARE_DIR}/include
     ${FIRMWARE_DIR}/src/app
+    ${DRUM909_GEN_DIR}
     ${FIRMWARE_DIR}/src/app/midi
     ${FIRMWARE_DIR}/src/app/storage
     ${FIRMWARE_DIR}/src/app/synth
@@ -76,6 +99,7 @@ target_link_libraries(preenfm3_firmware PRIVATE
     stm32_usb_midi
     hexter
     msfa
+    drum909
     mutable_midipal
     fonts
     m

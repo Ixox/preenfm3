@@ -14,6 +14,7 @@
 Preenfm3Engine SynthEngineFactory::pfm3Engines_[NUMBER_OF_TIMBRES];
 Dx7SynthEngine SynthEngineFactory::dx7Engines_[NUMBER_OF_TIMBRES];
 ByosEngine SynthEngineFactory::byosEngines_[NUMBER_OF_TIMBRES];
+Drum909Engine SynthEngineFactory::drum909Engines_[NUMBER_OF_TIMBRES];
 
 namespace {
 struct StorageMagicEntry {
@@ -26,6 +27,7 @@ const StorageMagicEntry storageMagics[] = {
     {PRESET_VERSION2, SYNTH_ENGINE_PFM3},
     {PRESET_DX7, SYNTH_ENGINE_DX7},
     {PRESET_BYOS, SYNTH_ENGINE_BYOS},
+    {PRESET_DRUM909, SYNTH_ENGINE_DRUM909},
 };
 } // namespace
 
@@ -58,6 +60,8 @@ const char* SynthEngineFactory::getEngineDisplayName(SynthEngineType type) {
         return "DX7";
     case SYNTH_ENGINE_BYOS:
         return "BYOS";
+    case SYNTH_ENGINE_DRUM909:
+        return "909";
     default:
         return "";
     }
@@ -68,6 +72,7 @@ void SynthEngineFactory::init(Timbre* timbre, SynthState* synthState) {
     pfm3Engines_[timbreNumber].init(timbre, synthState);
     dx7Engines_[timbreNumber].init(timbre, synthState);
     byosEngines_[timbreNumber].init(timbre, synthState);
+    drum909Engines_[timbreNumber].init(timbre, synthState);
 }
 
 SynthEngine* SynthEngineFactory::get(SynthEngineType type, int timbreNumber) {
@@ -76,6 +81,9 @@ SynthEngine* SynthEngineFactory::get(SynthEngineType type, int timbreNumber) {
     }
     if (type == SYNTH_ENGINE_BYOS) {
         return static_cast<SynthEngine*>(&byosEngines_[timbreNumber]);
+    }
+    if (type == SYNTH_ENGINE_DRUM909) {
+        return static_cast<SynthEngine*>(&drum909Engines_[timbreNumber]);
     }
     return static_cast<SynthEngine*>(&pfm3Engines_[timbreNumber]);
 }

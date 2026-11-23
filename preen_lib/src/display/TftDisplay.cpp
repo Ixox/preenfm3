@@ -1306,6 +1306,15 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
             fillArea(left + BUTTON_WIDTH / 5 * 3, y + 19, BUTTON_WIDTH / 5, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
             fillArea(left + BUTTON_WIDTH / 5 * 4, y + 19, BUTTON_WIDTH / 5, 2, activeState == 5 ? COLOR_WHITE : COLOR_GRAY);
             break;
+        default: {
+            // Generic indicator for pages with more than 5 states (9W9 TOM/HAT).
+            const uint8_t segment = BUTTON_WIDTH / numberOfStates;
+            for (uint8_t k = 0; k < numberOfStates; k++) {
+                const uint8_t w = (k == numberOfStates - 1) ? (BUTTON_WIDTH - segment * (numberOfStates - 1)) : segment;
+                fillArea(left + k * segment, y + 19, w, 2, activeState == k + 1 ? COLOR_WHITE : COLOR_GRAY);
+            }
+            break;
+        }
         }
     } else {
         if (numberOfStates > 0) {

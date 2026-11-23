@@ -29,6 +29,17 @@ doctest -- vendored under third_party/doctest
   MIT text is in third_party/doctest/LICENSE.txt.
 - It is used only by the host test target under tests/, not by the firmware.
 
+9W9 / X0X -- vendored under third_party/9W9
+-------------------------------------------
+- 9W9 is a TR-909 emulation by athousanddetails (schwung-9W9). The vendored
+  DSP is the bare-metal C port from X0X (charlesvestal/fm1-x0x),
+  firmware/src/dsp/.
+- The vendored files (drum909.c, drum909.h, drum909_dsp.h, fastmath.h,
+  x0x_param.h) keep their GPL-3.0 SPDX headers. The preenFM3 firmware as a
+  whole is GPL-3.0, so the licenses are compatible.
+- assets/909/{hh,ride,crash}.wav and tools/gen_drum_samples.py also come from
+  X0X; see assets/909/README.txt for the sample credits.
+
 Other components
 ----------------
 Other directories under third_party/ retain their own license headers. Refer

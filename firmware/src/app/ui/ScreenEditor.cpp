@@ -25,6 +25,7 @@
 #include "SynthState.h"
 #include "Timbre.h"
 #include "engine/byos/EditorByos.h"
+#include "engine/drum909/EditorDrum909.h"
 #include "preenfm3.h"
 #include <FirmwareTftDisplay.h>
 #include <string.h>
@@ -33,6 +34,7 @@ static EditorDx7 dx7EditorInstance;
 static EditorPfm3 pfm3EditorInstance;
 static EditorCommon commonEditorInstance;
 static EditorByos byosEditorInstance;
+static EditorDrum909 drum909EditorInstance;
 
 ScreenEditor::ScreenEditor() {
     firstEditor_ = nullptr;
@@ -54,6 +56,7 @@ void ScreenEditor::init(SynthState* synthState, FirmwareTftDisplay* tft) {
     pfm3EditorInstance.init(this, synthState, tft);
     commonEditorInstance.init(this, synthState, tft);
     byosEditorInstance.init(this, synthState, tft);
+    drum909EditorInstance.init(this, synthState, tft);
 }
 
 void ScreenEditor::insertEditor(EditorEngine* editor) {

@@ -27,6 +27,7 @@ class Voice {
     friend class Preenfm3Engine;
     friend class Dx7SynthEngine;
     friend class ByosEngine;
+    friend class Drum909Engine;
 
 public:
     Voice();

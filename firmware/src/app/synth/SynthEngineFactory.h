@@ -14,6 +14,7 @@
 #include "engine/msfa/Dx7SynthEngine.h"
 #include "engine/pfm3/Preenfm3Engine.h"
 #include "engine/byos/ByosEngine.h"
+#include "engine/drum909/Drum909Engine.h"
 
 class Timbre;
 class SynthState;
@@ -39,6 +40,7 @@ private:
     static Preenfm3Engine pfm3Engines_[NUMBER_OF_TIMBRES];
     static Dx7SynthEngine dx7Engines_[NUMBER_OF_TIMBRES];
     static ByosEngine byosEngines_[NUMBER_OF_TIMBRES];
+    static Drum909Engine drum909Engines_[NUMBER_OF_TIMBRES];
 };
 
 #endif

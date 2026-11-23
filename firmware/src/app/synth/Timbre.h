@@ -38,6 +38,7 @@ class Timbre {
     friend class Dx7SynthEngine;
     friend class Preenfm3Engine;
     friend class ByosEngine;
+    friend class Drum909Engine;
 
 public:
     Timbre();

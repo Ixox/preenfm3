@@ -17,7 +17,8 @@ enum PRESET_VERSION {
     PRESET_VERSION1 = 0,
     PRESET_VERSION2 = 292928062, // random 32 bits number for the first preenfm3
     PRESET_DX7 = 1297303090,     // random 32 bits number for DX7 presets
-    PRESET_BYOS = 0x42594F53     // "BYOS"
+    PRESET_BYOS = 0x42594F53,    // "BYOS"
+    PRESET_DRUM909 = 0x44393039  // "D909"
 };
 
 #define PRESET_CURRENT_VERSION PRESET_VERSION1

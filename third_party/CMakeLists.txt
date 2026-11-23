@@ -195,3 +195,15 @@ target_sources(msfa INTERFACE
     ${TP}/msfa/platform_stubs.cc
     ${TP}/msfa/msfa_init.cc
 )
+
+# ---------------------------------------------------------------------------
+# 9W9 TR-909 drum engine (X0X port)
+# ---------------------------------------------------------------------------
+
+add_library(drum909 INTERFACE)
+target_include_directories(drum909 INTERFACE
+    ${TP}/9W9
+)
+target_sources(drum909 INTERFACE
+    ${TP}/9W9/drum909.c
+)

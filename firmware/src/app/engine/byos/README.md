@@ -1,11 +1,13 @@
 # BYOS — Bring Your Own Synth
 
-BYOS is the third engine example, next to PFM3 and DX7. It is deliberately
-small: two additive oscillators, one linear AR envelope, seven parameters, a
-minimal editor and a simple MIDI CC map.
+BYOS is an **example engine**, not a production engine. It is registered in the
+mixer so you can hear and edit it, but its purpose is to be copied and modified
+into your own `SynthEngine`.
 
-It is meant to show how little an engine needs to provide, and which files
-outside the engine/editor folder must be touched to register it.
+It is deliberately small: two additive oscillators, one linear AR envelope,
+seven parameters, a minimal editor and a simple MIDI CC map. It shows how
+little an engine needs to provide, and which files outside the engine/editor
+folder must be touched to register it.
 
 ## Files in this folder
 
@@ -144,7 +146,7 @@ blob).
 `SynthEngineFactory::getEngineDisplayName()`, so it does not contain any BYOS
 string.
 
-## Cloning BYOS for a real engine
+## Using BYOS as a template
 
 1. Copy this folder and rename `Byos*` to your engine name.
 2. Implement the required `SynthEngine` methods (`init`, `afterNewParamsLoad`,
@@ -156,7 +158,9 @@ string.
 4. Apply the outside changes listed above.
 5. Build, flash, and check the mixer, editor pages, CC and preset save/load.
 
-## Limitations
+## Deliberate limitations
+
+These are intentional for a minimal example, not bugs:
 
 - No NRPN/patch dump for a PC editor.
 - No matrix, LFO, unison, mono, glide or per-operator output level.
