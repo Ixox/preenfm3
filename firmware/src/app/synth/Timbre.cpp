@@ -357,6 +357,7 @@ void Timbre::init(SynthState* synthState, int timbreNumber) {
 
     SynthEngineFactory::init(this, synthState);
     engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
+    clampVoicesToEngineMax();
     sharedParams().engineArp1 = preenMainPreset.engineArp1;
     sharedParams().engineArp2 = preenMainPreset.engineArp2;
     sharedParams().engineArpUserPatterns = preenMainPreset.engineArpUserPatterns;
@@ -396,12 +397,27 @@ void Timbre::initVoicePointer(int n, Voice* voice) {
 
 void Timbre::setEngine(SynthEngineType engine) {
     if (engine_ == engine && engineImpl_ != nullptr) {
+        clampVoicesToEngineMax();
         return;
     }
     stopPlayingNow();
     engine_ = engine;
     engineImpl_ = SynthEngineFactory::get(engine_, timbreNumber_);
     engineImpl_->afterNewParamsLoad();
+    clampVoicesToEngineMax();
+}
+
+void Timbre::clampVoicesToEngineMax() {
+    if (engineImpl_ == nullptr) {
+        return;
+    }
+    const int max = (int)engineImpl_->getMaxVoices();
+    if (mixerState_ != nullptr && mixerState_->instrumentState_[timbreNumber_].numberOfVoices > max) {
+        mixerState_->instrumentState_[timbreNumber_].numberOfVoices = (uint8_t)max;
+    }
+    if (maxVoices_ > max) {
+        numberOfVoicesChanged((uint8_t)max);
+    }
 }
 
 void Timbre::loadDx7Patch(const uint8_t* packedPatch) {

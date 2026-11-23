@@ -460,6 +460,13 @@ bool Preenfm3Engine::applyMixerField(uint8_t field, float rawValue) {
         break;
     }
 
+    if (field == 6) {
+        const int maxVoices = timbre_->getEngineMaxVoices();
+        if (inst.numberOfVoices > maxVoices) {
+            inst.numberOfVoices = (uint8_t)maxVoices;
+        }
+    }
+
     float newValue = mixerFieldValue(field);
     if (oldValue != newValue) {
         synthState_->propagateNewMixerValueFromExternal(timbreNumber_, mixerValueType(field), oldValue, newValue);

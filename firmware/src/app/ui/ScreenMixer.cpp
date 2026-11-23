@@ -447,7 +447,8 @@ void ScreenMixer::displayMixerValue(int timbre) {
                 tft_->setCharColor(COLOR_RED);
             }
             tft_->print("1-");
-            tft_->print(numberOfVoice > MAX_NUMBER_OF_VOICES ? MAX_NUMBER_OF_VOICES : numberOfVoice);
+            const int maxVoices = synthState_->getTimbre(timbre)->getEngineMaxVoices();
+            tft_->print(numberOfVoice > maxVoices ? maxVoices : numberOfVoice);
             return;
         }
     } else {
@@ -843,7 +844,7 @@ void ScreenMixer::encoderTurned(int encoder, int ticks) {
 
         float maxValue;
         if (mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES) {
-            maxValue = MAX_NUMBER_OF_VOICES;
+            maxValue = synthState_->getTimbre(encoder)->getEngineMaxVoices();
         } else {
             maxValue = buttonStateParam->maxValue;
         }

@@ -250,6 +250,12 @@ public:
     virtual uint8_t getPlayMode() const {
         return PLAY_MODE_POLY;
     }
+
+    // Maximum polyphony this engine supports (Mixer "Max voices" cap).
+    virtual uint8_t getMaxVoices() const {
+        return MAX_NUMBER_OF_VOICES;
+    }
+
     virtual bool supportsStepSequencer() const {
         return true;
     }

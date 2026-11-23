@@ -94,6 +94,10 @@ public:
         return engine_;
     }
 
+    uint8_t getEngineMaxVoices() const {
+        return engineImpl_ != nullptr ? engineImpl_->getMaxVoices() : MAX_NUMBER_OF_VOICES;
+    }
+
     int8_t getTimbreNumber() const {
         return timbreNumber_;
     }
@@ -286,6 +290,7 @@ public:
     }
 
 private:
+    void clampVoicesToEngineMax();
     int allocateVoice(int note);
     int reuseVoice(int voiceIndex);
     bool adoptVoice(Voice* voice, int voiceIndex);

@@ -552,9 +552,13 @@ void Synth::afterNewMixerLoad() {
     }
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
+        timbres_[timbre].setEngine((SynthEngineType)this->synthState_->mixerState_.instrumentState_[timbre].engine);
+        const int maxVoices = timbres_[timbre].getEngineMaxVoices();
+        if (this->synthState_->mixerState_.instrumentState_[timbre].numberOfVoices > maxVoices) {
+            this->synthState_->mixerState_.instrumentState_[timbre].numberOfVoices = (uint8_t)maxVoices;
+        }
         synthState_->scalaSettingsChanged(timbre);
         timbres_[timbre].numberOfVoicesChanged(this->synthState_->mixerState_.instrumentState_[timbre].numberOfVoices);
-        timbres_[timbre].setEngine((SynthEngineType)this->synthState_->mixerState_.instrumentState_[timbre].engine);
         timbres_[timbre].afterNewParamsLoad();
         // values to force check lfo used
         timbres_[timbre].verifyLfoUsed(0, 0.0f, 1.0f);
@@ -612,19 +616,34 @@ void Synth::newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, flo
     case MIXER_VALUE_ENGINE:
         timbres_[timbre].setEngine((SynthEngineType)((int)newValue));
         allNoteOff(timbre);
+        if (oldValue != newValue) {
+            const int maxVoices = timbres_[timbre].getEngineMaxVoices();
+            synthState_->mixerState_.instrumentState_[timbre].numberOfVoices = (uint8_t)maxVoices;
+            timbres_[timbre].numberOfVoicesChanged((uint8_t)maxVoices);
+        }
         break;
-    case MIXER_VALUE_NUMBER_OF_VOICES:
+    case MIXER_VALUE_NUMBER_OF_VOICES: {
         // If unison stop sound !
         if (timbres_[timbre].isUnisonMode()) {
             timbres_[timbre].stopPlayingNow();
         }
 
-        if (newValue == oldValue) {
+        const int maxVoices = timbres_[timbre].getEngineMaxVoices();
+        int value = (int)newValue;
+        if (value > maxVoices) {
+            value = maxVoices;
+        } else if (value < 0) {
+            value = 0;
+        }
+        synthState_->mixerState_.instrumentState_[timbre].numberOfVoices = (uint8_t)value;
+
+        if (value == (int)oldValue) {
             return;
         }
 
-        timbres_[timbre].numberOfVoicesChanged(newValue);
+        timbres_[timbre].numberOfVoicesChanged((uint8_t)value);
         break;
+    }
     case MIXER_VALUE_COMPRESSOR:
         switch ((int)newValue) {
         case 0:
