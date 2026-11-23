@@ -95,6 +95,7 @@
 
 
 __attribute__((section(".ram_d2c"))) uint8_t dummySector[512];
+static uint8_t blockLenSet = 0;
 
 /** @addtogroup BSP
   * @{
@@ -271,6 +272,7 @@ void spi2TransferComplete() {
 int32_t ADAFRUIT_802_SD_Init(uint32_t Instance)
 {
   int32_t ret = BSP_ERROR_NONE;
+  blockLenSet = 0;
 
   if(Instance >= SD_INSTANCES_NBR)
   {
@@ -286,6 +288,11 @@ int32_t ADAFRUIT_802_SD_Init(uint32_t Instance)
     if(SD_GoIdleState() != BSP_ERROR_NONE)
     {
       ret = BSP_ERROR_UNKNOWN_FAILURE;
+    }
+    else
+    {
+      /* Card is initialised: run SPI2 faster for data transfers. */
+      (void)BSP_SPI_SetBaudRate(SPI_BAUDRATEPRESCALER_4);
     }
   }
 
@@ -362,14 +369,17 @@ int32_t PFM3_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlo
   uint32_t response;
   uint16_t BlockSize = 512;
   uint8_t flag_SDHC = (CardType == ADAFRUIT_802_CARD_SDHC ? 1 : 0);
-  /* Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
-     Check if the SD acknowledged the set block length command: R1 response (0x00: no errors) */
-  response = SD_SendCmd(SD_CMD_SET_BLOCKLEN, BlockSize, 0xFF, SD_ANSWER_R1_EXPECTED);
-  SD_IO_CSState(1);
-  SD_IO_WriteByte(SD_DUMMY_BYTE);
-  if ( response != SD_R1_NO_ERROR)
+  /* Set the block length once after init (1 command instead of one per call). */
+  if (!blockLenSet)
   {
-     goto error;
+    response = SD_SendCmd(SD_CMD_SET_BLOCKLEN, BlockSize, 0xFF, SD_ANSWER_R1_EXPECTED);
+    SD_IO_CSState(1);
+    SD_IO_WriteByte(SD_DUMMY_BYTE);
+    if ( response != SD_R1_NO_ERROR)
+    {
+       goto error;
+    }
+    blockLenSet = 1;
   }
 
   // Xavier's note : Very important
@@ -464,14 +474,17 @@ int32_t PFM3_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfB
   uint16_t BlockSize = 512;
   uint8_t flag_SDHC = (CardType == ADAFRUIT_802_CARD_SDHC ? 1 : 0);
 
-  /* Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
-     Check if the SD acknowledged the set block length command: R1 response (0x00: no errors) */
-  response = SD_SendCmd(SD_CMD_SET_BLOCKLEN, BlockSize, 0xFF, SD_ANSWER_R1_EXPECTED);
-  SD_IO_CSState(1);
-  SD_IO_WriteByte(SD_DUMMY_BYTE);
-  if ( response != SD_R1_NO_ERROR)
+  /* Set the block length once after init (1 command instead of one per call). */
+  if (!blockLenSet)
   {
-    goto error;
+    response = SD_SendCmd(SD_CMD_SET_BLOCKLEN, BlockSize, 0xFF, SD_ANSWER_R1_EXPECTED);
+    SD_IO_CSState(1);
+    SD_IO_WriteByte(SD_DUMMY_BYTE);
+    if ( response != SD_R1_NO_ERROR)
+    {
+      goto error;
+    }
+    blockLenSet = 1;
   }
 
   /* Initialize the address */
@@ -707,8 +720,6 @@ int32_t ADAFRUIT_802_SD_GetCardInfo(uint32_t Instance, ADAFRUIT_802_SD_CardInfo_
 static int32_t SD_IO_Init(void)
 {
   int32_t ret = BSP_ERROR_NONE;
-  uint8_t counter = 0, tmp;
-  GPIO_InitTypeDef  GPIO_InitStruct;
 
   /*------------Put SD in SPI mode--------------*/
   /* SD SPI Config */
@@ -721,20 +732,21 @@ static int32_t SD_IO_Init(void)
     /* SD chip select high */
     ADAFRUIT_802_SD_CS_HIGH();
 
-    /* Send dummy byte 0xFF, 10 times with CS high */
-    /* Rise CS and MOSI for 80 clocks cycles */
-    tmp = SD_DUMMY_BYTE;
-
-    do
+    /* Flush a card left mid-transfer by a warm reset: clock out a full
+       sector of 0xFF with CS and MOSI high before CMD0 so any pending
+       data block or response is discarded. */
+    for (uint32_t i = 0; i < sizeof(dummySector); i++)
     {
-      /* Send dummy byte 0xFF */
-      if(BSP_SPI_Send(&tmp, 1U) != BSP_ERROR_NONE)
-      {
-        ret = BSP_ERROR_PERIPH_FAILURE;
-        break;
-      }
-      counter++;
-    }while(counter <= 9U);
+      dummySector[i] = 0xFFU;
+    }
+    if(BSP_SPI_Send(dummySector, sizeof(dummySector)) != BSP_ERROR_NONE)
+    {
+      ret = BSP_ERROR_PERIPH_FAILURE;
+    }
+    else
+    {
+      HAL_Delay(2);
+    }
   }
 
   return ret;
@@ -1250,6 +1262,8 @@ static int32_t SD_GoIdleState(void)
         return BSP_ERROR_UNKNOWN_FAILURE;
       }
     }
+    /* Give a busy card (finishing a previous write) time to answer CMD0. */
+    HAL_Delay(1);
   }while((uint8_t)(response & 0xFFU) != (uint8_t)SD_R1_IN_IDLE_STATE);
 
   /* Send CMD8 (SD_CMD_SEND_IF_COND) to check the power supply status

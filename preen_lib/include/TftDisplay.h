@@ -44,7 +44,8 @@ enum {
     TFT_STANDARD_LAST_ACTION = TFT_WAITCYCLE,
     TFT_HIGHLIGHT_ALGO_FEEDBACK,
     TFT_ERASE_HIGHLIGHT_ALGO_FEEDBACK,
-    TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM
+    TFT_DRAW_OSCILLO_BACKGROUND_WAVEFORM,
+    TFT_DRAW_LOGO
 };
 
 #define TFT_WIDTH           240
@@ -84,6 +85,15 @@ enum TFT_COLOR {
 
 enum TFTActionType { clear, charAt };
 
+// Flash-resident L4 logo: 2 pixels per byte, MSB first, width must be even.
+// The CLUT holds 16 ARGB8888 entries (the DMA2D has no RGB565 CLUT mode).
+struct TftLogo {
+    const uint8_t* data;
+    const uint32_t* clut;
+    uint8_t width;
+    uint8_t height;
+};
+
 struct TFTAction {
     uint8_t actionType = 0;
     uint8_t param1 = 0;
@@ -91,7 +101,10 @@ struct TFTAction {
     uint8_t param3 = 0;
     uint16_t param4 = 0;
     uint8_t param5 = 0;
-    const uint8_t* algoTable = nullptr;
+    union {
+        const uint8_t* algoTable = nullptr;
+        const TftLogo* logo;
+    };
 };
 
 #define OSCILLO_WIDTH 160
@@ -146,12 +159,15 @@ public:
     void setDirtyArea(uint16_t y, uint16_t height);
 
     void drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t numberOfStates, uint8_t activeState,
-                    TFT_COLOR background = COLOR_DARK_BLUE);
+                    TFT_COLOR background = COLOR_DARK_BLUE, TFT_COLOR textColor = COLOR_WHITE, TFT_COLOR textColorInactive = COLOR_GRAY,
+                    TFT_COLOR indicatorActive = COLOR_WHITE, TFT_COLOR indicatorInactive = COLOR_GRAY);
     void drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color, TFT_COLOR background);
     void drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
                                 TFT_COLOR background);
     void drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection,
-                           uint8_t buttonState, int8_t baseNumber);
+                           uint8_t buttonState, int8_t baseNumber, TFT_COLOR background = COLOR_DARK_BLUE,
+                           TFT_COLOR textColor = COLOR_WHITE, TFT_COLOR textColorInactive = COLOR_GRAY,
+                           TFT_COLOR indicatorActive = COLOR_WHITE, TFT_COLOR indicatorInactive = COLOR_GRAY, bool filled = true);
 
     void clear();
     void clearMixerValues();
@@ -167,6 +183,8 @@ public:
     void oscilloRecord32Samples(float* samples);
 
     void drawAlgoTable(const uint8_t* algoTable);
+    void drawLogo(const TftLogo* logo);
+    void drawLogoAt(const TftLogo* logo, uint8_t x, uint16_t y);
     void highlightOperator(int op);
     void eraseHighlightOperator(int op);
     void highlightIM(uint8_t imNum, uint8_t opSource, uint8_t opDest);

@@ -203,6 +203,16 @@ SECTIONS
     *(.ram_d2b)
   } >RAM_D2B
   
+  /* DMA-safe FatFs area, must be reachable by the SDMMC IDMA. */
+  .ram_d2c (NOLOAD) :
+  {
+    . = ALIGN(4);
+    _sram_d2c = .;
+    *(.ram_d2c)
+    . = ALIGN(4);
+    _eram_d2c = .;
+  } >RAM_D2C
+  
   /* User_heap_stack section, used to check that there is enough "RAM_D1" Ram  type memory left */
   ._user_heap_stack (NOLOAD) :
   {

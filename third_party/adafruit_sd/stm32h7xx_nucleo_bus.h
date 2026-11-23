@@ -76,6 +76,7 @@ typedef struct
   */
 int32_t BSP_SPI_Init(void);
 int32_t BSP_SPI_DeInit(void);
+int32_t BSP_SPI_SetBaudRate(uint32_t baudrate_presc);
 #if (USE_HAL_SPI_REGISTER_CALLBACKS == 1)
 int32_t BSP_SPI_RegisterMspCallbacks(uint32_t Instance, BSP_SPI_Cb_t *CallBacks);
 int32_t BSP_SPI_RegisterDefaultMspCallbacks(uint32_t Instance);

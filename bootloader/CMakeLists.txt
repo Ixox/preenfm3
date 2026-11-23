@@ -83,6 +83,7 @@ message(STATUS "preenFM3 bootloader version: ${BOOTLOADER_VERSION}")
 # The bootloader is flashed at 0x08000000; the firmware starts at 0x08020000.
 # Exclude the RAM-only sections from the binary, as scripts/create_object*.sh do.
 set(BOOTLOADER_OBJCOPY_REMOVE
+    -R .ram_d2c
     -R .ram_d2b
     -R .ram_d2
     -R .ram_d1

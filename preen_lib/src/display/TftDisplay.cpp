@@ -699,6 +699,82 @@ void TftDisplay::processActionStep() {
             currentAction_.actionType = 0;
         }
         break;
+    case TFT_DRAW_LOGO: {
+        const TftLogo* logo = currentAction_.logo;
+        // param5: 0 = algorithm box (clear + centre), 1 = absolute top-left.
+        const bool atPosition = currentAction_.param5 != 0;
+        switch (currentAction_.param3) {
+        case 0:
+            if (atPosition) {
+                // The asset carries its own background; no box clear needed.
+                currentAction_.param3 = 1;
+                break;
+            }
+            // Clear the whole 80x100 box in tftMemory.
+            if (PFM_IS_DMA2D_READY()) {
+                MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_R2M);
+                WRITE_REG(hdma2d.Instance->OCOLR, tftPalette565[COLOR_BLACK]);
+
+                MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 80);
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
+                PFM_START_DMA2D();
+
+                currentAction_.param3 = 1;
+            }
+            break;
+        case 1:
+            // Load the 16-entry ARGB8888 CLUT into the foreground layer.
+            if (PFM_IS_DMA2D_READY() && (hdma2d.Instance->FGPFCCR & DMA2D_FGPFCCR_START) == 0) {
+                WRITE_REG(hdma2d.Instance->FGCMAR, (uint32_t)logo->clut);
+                MODIFY_REG(hdma2d.Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
+                           (64 << DMA2D_FGPFCCR_CS_Pos) | (DMA2D_CCM_ARGB8888 << DMA2D_FGPFCCR_CCM_Pos));
+                SET_BIT(hdma2d.Instance->FGPFCCR, DMA2D_FGPFCCR_START);
+
+                currentAction_.param3 = 2;
+            }
+            break;
+        case 2:
+            // Wait for the CLUT load, then blit L4 from flash.
+            if ((hdma2d.Instance->FGPFCCR & DMA2D_FGPFCCR_START) == 0) {
+                uint16_t x;
+                uint16_t y;
+                if (atPosition) {
+                    x = currentAction_.param1;
+                    y = currentAction_.param2;
+                } else {
+                    // Algorithm logos stick to the right border of the 80x100 box.
+                    x = TFT_ALGO_X + 80 - logo->width;
+                    y = TFT_ALGO_Y + (100 - logo->height) / 2;
+                }
+
+                MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_PFC);
+                MODIFY_REG(hdma2d.Instance->FGPFCCR, DMA2D_FGPFCCR_CM, DMA2D_INPUT_L4);
+                WRITE_REG(hdma2d.Instance->FGOR, 0);
+                WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)logo->data);
+                MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - logo->width);
+                MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (logo->height | (logo->width << DMA2D_POSITION_NLR_PL)));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + y * 240 + x));
+                PFM_START_DMA2D();
+
+                currentAction_.param3 = 3;
+            }
+            break;
+        case 3:
+            if (PFM_IS_DMA2D_READY()) {
+                // Restore the A8 mode used by the algorithm overlay.
+                MODIFY_REG(hdma2d.Instance->FGPFCCR, (DMA2D_FGPFCCR_CM | DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM), DMA2D_INPUT_A8);
+                if (atPosition) {
+                    setDirtyArea(currentAction_.param2, logo->height);
+                } else {
+                    setDirtyArea(TFT_ALGO_Y, 100);
+                }
+                currentAction_.actionType = 0;
+            }
+            break;
+        }
+        break;
+    }
     case TFT_RESTART_REFRESH:
         tftRefreshing_ = true;
         // start from the top
@@ -1187,6 +1263,32 @@ void TftDisplay::drawAlgoTable(const uint8_t* algoTable) {
     tftActions_.insert(newAction);
 }
 
+void TftDisplay::drawLogo(const TftLogo* logo) {
+    if (logo == nullptr) {
+        return;
+    }
+    TFTAction newAction;
+    newAction.actionType = TFT_DRAW_LOGO;
+    newAction.param3 = 0;
+    newAction.param5 = 0;
+    newAction.logo = logo;
+    tftActions_.insert(newAction);
+}
+
+void TftDisplay::drawLogoAt(const TftLogo* logo, uint8_t x, uint16_t y) {
+    if (logo == nullptr) {
+        return;
+    }
+    TFTAction newAction;
+    newAction.actionType = TFT_DRAW_LOGO;
+    newAction.param1 = x;
+    newAction.param2 = y;
+    newAction.param3 = 0;
+    newAction.param5 = 1;
+    newAction.logo = logo;
+    tftActions_.insert(newAction);
+}
+
 void TftDisplay::clearAlgoFG() {
     TFTAction newAction;
     newAction.actionType = TFT_CLEAR_ALGO_FG;
@@ -1271,7 +1373,8 @@ void TftDisplay::waitCycle(uint16_t waitCycle) {
 #define BUTTON_WIDTH 72
 
 void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t numberOfStates,
-                            uint8_t activeState, TFT_COLOR background) {
+                            uint8_t activeState, TFT_COLOR background, TFT_COLOR textColor, TFT_COLOR textColorInactive,
+                            TFT_COLOR indicatorActive, TFT_COLOR indicatorInactive) {
 
     uint8_t x = (buttonNumber % 3) * 80 + 40; // 40 / 120 / 200
     y += buttonNumber > 2 ? dyLine2 : 0;
@@ -1282,43 +1385,43 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
 
         switch (numberOfStates) {
         case 1:
-            fillArea(left, y + 20, BUTTON_WIDTH, 1, COLOR_WHITE);
+            fillArea(left, y + 20, BUTTON_WIDTH, 1, indicatorActive);
             break;
         case 2:
-            fillArea(left, y + 19, BUTTON_WIDTH / 2, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(x, y + 19, BUTTON_WIDTH / 2, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 2, 2, activeState == 1 ? indicatorActive : indicatorInactive);
+            fillArea(x, y + 19, BUTTON_WIDTH / 2, 2, activeState == 2 ? indicatorActive : indicatorInactive);
             break;
         case 3:
-            fillArea(left, y + 19, BUTTON_WIDTH / 3, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 3, y + 19, BUTTON_WIDTH / 3, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 3 * 2, y + 19, BUTTON_WIDTH / 3, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 3, 2, activeState == 1 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 3, y + 19, BUTTON_WIDTH / 3, 2, activeState == 2 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 3 * 2, y + 19, BUTTON_WIDTH / 3, 2, activeState == 3 ? indicatorActive : indicatorInactive);
             break;
         case 4:
-            fillArea(left, y + 19, BUTTON_WIDTH / 4, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 4, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(x, y + 19, BUTTON_WIDTH / 4, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 4 * 3, y + 19, BUTTON_WIDTH / 4, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 4, 2, activeState == 1 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 4, y + 19, 18, 2, activeState == 2 ? indicatorActive : indicatorInactive);
+            fillArea(x, y + 19, BUTTON_WIDTH / 4, 2, activeState == 3 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 4 * 3, y + 19, BUTTON_WIDTH / 4, 2, activeState == 4 ? indicatorActive : indicatorInactive);
             break;
         case 5:
-            fillArea(left, y + 19, BUTTON_WIDTH / 5, 2, activeState == 1 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 5, y + 19, 18, 2, activeState == 2 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 5 * 2, y + 19, BUTTON_WIDTH / 5, 2, activeState == 3 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 5 * 3, y + 19, BUTTON_WIDTH / 5, 2, activeState == 4 ? COLOR_WHITE : COLOR_GRAY);
-            fillArea(left + BUTTON_WIDTH / 5 * 4, y + 19, BUTTON_WIDTH / 5, 2, activeState == 5 ? COLOR_WHITE : COLOR_GRAY);
+            fillArea(left, y + 19, BUTTON_WIDTH / 5, 2, activeState == 1 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 5, y + 19, 18, 2, activeState == 2 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 5 * 2, y + 19, BUTTON_WIDTH / 5, 2, activeState == 3 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 5 * 3, y + 19, BUTTON_WIDTH / 5, 2, activeState == 4 ? indicatorActive : indicatorInactive);
+            fillArea(left + BUTTON_WIDTH / 5 * 4, y + 19, BUTTON_WIDTH / 5, 2, activeState == 5 ? indicatorActive : indicatorInactive);
             break;
         default: {
             // Generic indicator for pages with more than 5 states (9W9 TOM/HAT).
             const uint8_t segment = BUTTON_WIDTH / numberOfStates;
             for (uint8_t k = 0; k < numberOfStates; k++) {
                 const uint8_t w = (k == numberOfStates - 1) ? (BUTTON_WIDTH - segment * (numberOfStates - 1)) : segment;
-                fillArea(left + k * segment, y + 19, w, 2, activeState == k + 1 ? COLOR_WHITE : COLOR_GRAY);
+                fillArea(left + k * segment, y + 19, w, 2, activeState == k + 1 ? indicatorActive : indicatorInactive);
             }
             break;
         }
         }
     } else {
         if (numberOfStates > 0) {
-            fillArea(left, y + 20, BUTTON_WIDTH, 1, COLOR_GRAY);
+            fillArea(left, y + 20, BUTTON_WIDTH, 1, indicatorInactive);
         }
     }
 
@@ -1330,10 +1433,10 @@ void TftDisplay::drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint
     y = y + 1;
 
     if (numberOfStates > 0) {
-        setCharColor(activeState > 0 ? COLOR_WHITE : COLOR_GRAY);
+        setCharColor(activeState > 0 ? textColor : textColorInactive);
     } else {
         // No state.. simple button
-        setCharColor(COLOR_WHITE);
+        setCharColor(textColor);
     }
     setCharBackgroundColor(background);
     setCursorInPixel(x, y);
@@ -1363,13 +1466,23 @@ void TftDisplay::drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2
 }
 
 void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection,
-                                   uint8_t buttonState, int8_t baseNumber) {
+                                   uint8_t buttonState, int8_t baseNumber, TFT_COLOR background, TFT_COLOR textColor,
+                                   TFT_COLOR textColorInactive, TFT_COLOR indicatorActive, TFT_COLOR indicatorInactive, bool filled) {
     y += buttonNumber > 2 ? dyLine2 : 0;
 
     uint8_t x1 = (buttonNumber % 3) * 80 + 4;
 
-    fillArea(x1, y, BUTTON_WIDTH, 21, COLOR_DARK_BLUE);
-    setCharBackgroundColor(COLOR_DARK_BLUE);
+    fillArea(x1, y, BUTTON_WIDTH, 21, background);
+    TFT_COLOR inner = background;
+    if (!filled) {
+        fillArea(x1 + 1, y + 1, BUTTON_WIDTH - 2, 21 - 2, COLOR_BLACK);
+        inner = COLOR_BLACK;
+        // Outlined buttons always use white labels.
+        textColor = COLOR_WHITE;
+    }
+    setCharBackgroundColor(inner);
+
+    const uint8_t barY = filled ? 19 : 18;
 
     for (int b = 0; b < 2; b++) {
         uint8_t drawnSubButton = baseNumber + b;
@@ -1379,22 +1492,22 @@ void TftDisplay::drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNu
         }
 
         int x2 = x1 + b * BUTTON_WIDTH / 2;
-        if (currentSelection == drawnSubButton) {
-            // Current operator
-            setCharColor(COLOR_WHITE);
-            fillArea(x2, y + 19, BUTTON_WIDTH / 2, 2, COLOR_WHITE);
-        } else {
-            setCharColor(COLOR_GRAY);
-            if (b == buttonState) {
-                fillArea(x2, y + 20, BUTTON_WIDTH / 2, 1, COLOR_GRAY);
-            }
-        }
+        const bool selected = (currentSelection == drawnSubButton);
 
+        setCharColor(selected ? textColor : textColorInactive);
+        int cursorX = x2 + 12;
         if (unlikely(drawnSubButton >= 9)) {
-            x2 -= 5;
+            cursorX -= 5;
         }
-        setCursorInPixel(x2 + 12, y + 1);
+        setCursorInPixel(cursorX, y + 1);
         print(drawnSubButton + 1);
+
+        // Draw the state bar after the character so the glyph cannot clip it.
+        if (selected) {
+            fillArea(x2, y + barY, BUTTON_WIDTH / 2, 2, indicatorActive);
+        } else if (b == buttonState) {
+            fillArea(x2, y + barY + 1, BUTTON_WIDTH / 2, 1, indicatorInactive);
+        }
     }
 }
 

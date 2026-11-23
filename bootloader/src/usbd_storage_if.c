@@ -101,15 +101,8 @@ int8_t PFM3_SD_IsWriteProtected_FS(uint8_t lun) {
  */
 int8_t PFM3_SD_Read_FS(uint8_t lun, uint8_t* buf, uint32_t blk_addr, uint16_t blk_len) {
     int8_t res = USBD_FAIL;
-    uint32_t timeout = 100000;
 
     if (PFM3_SD_ReadBlocks((uint32_t*)buf, (uint32_t)(blk_addr), blk_len, SD_DATATIMEOUT, dmaForSDAccess) == BSP_ERROR_NONE) {
-        /* wait until the Write operation is finished */
-        while (ADAFRUIT_802_SD_GetCardState(0) != BSP_ERROR_NONE) {
-            if (timeout-- == 0) {
-                return USBD_FAIL;
-            }
-        }
         readDisplayCounter = 500;
         res = USBD_OK;
     }

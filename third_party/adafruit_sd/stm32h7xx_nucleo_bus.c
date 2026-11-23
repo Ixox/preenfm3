@@ -103,6 +103,21 @@ int32_t BSP_SPI_Init(void)
 }
 
 /**
+  * @brief  Change the SPI clock prescaler (run SD fast after init).
+  * @param  baudrate_presc SPI baud rate prescaler
+  * @retval BSP status
+  */
+int32_t BSP_SPI_SetBaudRate(uint32_t baudrate_presc)
+{
+  sd_spi2.Init.BaudRatePrescaler = baudrate_presc;
+  if (HAL_SPI_Init(&sd_spi2) != HAL_OK)
+  {
+    return BSP_ERROR_PERIPH_FAILURE;
+  }
+  return BSP_ERROR_NONE;
+}
+
+/**
   * @brief  DeInitializes SPI HAL.
   * @retval None
   */

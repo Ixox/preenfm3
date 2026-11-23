@@ -357,9 +357,18 @@ void formatFlash(int firmwareSize) {
     tft.print("Formatting");
     HAL_Delay(20);
 
-    // Use firmware size, no need to format more
-    int number = firmwareSize / 131072 + 1;
+    // Erase every 128 KB sector touched by the firmware. The user area starts
+    // at APPLICATION_ADDRESS (bank 1, sector 1) and may continue into bank 2.
+    const uint32_t sectorSize = 131072;
+    // FLASH_If_Write programs 32 bytes at a time, so the last written word may
+    // extend past the file end; round up to be sure that word is erased.
+    uint32_t endAddress = APPLICATION_ADDRESS + ((uint32_t)firmwareSize + 31) / 32 * 32;
+    int number = (int)((endAddress - APPLICATION_ADDRESS + sectorSize - 1) / sectorSize);
     for (int k = 0; k < number; k++) {
+        uint32_t sectorAddress = APPLICATION_ADDRESS + (uint32_t)k * sectorSize;
+        bool bank2 = sectorAddress >= ADDR_FLASH_SECTOR_0_BANK2;
+        uint32_t bankBase = bank2 ? ADDR_FLASH_SECTOR_0_BANK2 : ADDR_FLASH_SECTOR_0_BANK1;
+
         tft.setCharColor(COLOR_LIGHT_GRAY);
         tft.setCursor(9, 11);
         tft.print((k + 1));
@@ -371,10 +380,10 @@ void formatFlash(int firmwareSize) {
         FLASH_If_Init();
 
         pEraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
-        pEraseInit.Sector = k + 1;
+        pEraseInit.Sector = (sectorAddress - bankBase) / sectorSize;
         pEraseInit.NbSectors = 1;
         pEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
-        pEraseInit.Banks = FLASH_BANK_1;
+        pEraseInit.Banks = bank2 ? FLASH_BANK_2 : FLASH_BANK_1;
 
         if (HAL_FLASHEx_Erase(&pEraseInit, &SectorError) != HAL_OK) {
             tft.setCharColor(COLOR_RED);

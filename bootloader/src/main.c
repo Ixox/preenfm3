@@ -74,6 +74,7 @@ static void MX_DMA2D_Init(void);
 /* USER CODE BEGIN 0 */
 bool dmaForSDAccess = true;
 void bootJumpToApplication(uint32_t applicationAddress);
+extern uint32_t _sram_d2c[], _eram_d2c[];
 /* USER CODE END 0 */
 
 /**
@@ -131,6 +132,12 @@ int main(void) {
     MX_SPI1_Init();
     MX_SPI2_Init();
     MX_DMA2D_Init();
+
+    /* .ram_d2c is NOLOAD and outside .bss, so zero it before FatFs uses it. */
+    for (uint32_t* p = _sram_d2c; p < _eram_d2c; p++) {
+        *p = 0;
+    }
+
     MX_FATFS_Init(dmaForSDAccess);
 
     bootloaderInit();
@@ -205,7 +212,7 @@ void SystemClock_Config(void) {
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI1 | RCC_PERIPHCLK_SPI2 | RCC_PERIPHCLK_USB;
     PeriphClkInitStruct.PLL2.PLL2M = 1;
     PeriphClkInitStruct.PLL2.PLL2N = 40;
-    PeriphClkInitStruct.PLL2.PLL2P = 4;
+    PeriphClkInitStruct.PLL2.PLL2P = 5;
     PeriphClkInitStruct.PLL2.PLL2Q = 40;
     PeriphClkInitStruct.PLL2.PLL2R = 2;
     PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;

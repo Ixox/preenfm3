@@ -81,7 +81,8 @@ int preenfm3LibInitGpio() {
     HAL_GPIO_Init(HC165_DATA_GPIO_Port, &GPIO_InitStruct);
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOE, SD_CS_Pin | LED_TEST_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOE, SD_CS_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOE, LED_TEST_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin, GPIO_PIN_RESET);
 
     /*Configure GPIO pin Output Level */
@@ -134,10 +135,21 @@ void preenfm3ForceTftBacklight() {
 }
 
 uint32_t preenfm3LibInitSD() {
-    uint32_t sdReturn = ADAFRUIT_802_SD_Init(0);
+    uint32_t sdReturn = 0;
     uint32_t sdReturn2 = 0;
-    if (sdReturn == 0) {
-        sdReturn2 = f_mount(&USERFatFS, USERPath, 1);
+    // The card keeps its state across a warm reset; retry so a card that is
+    // still finishing the previous session can settle.
+    for (int attempt = 0; attempt < 3; attempt++) {
+        sdReturn = ADAFRUIT_802_SD_Init(0);
+        if (sdReturn == 0) {
+            sdReturn2 = f_mount(&USERFatFS, USERPath, 1);
+            if (sdReturn2 == 0) {
+                return 0;
+            }
+        } else {
+            sdReturn2 = 0;
+        }
+        HAL_Delay(10);
     }
     return sdReturn + sdReturn2 * 1000;
 }
