@@ -37,6 +37,7 @@ extern UART_HandleTypeDef huart1;
 // NRPN v2 command domain and error response (transport framing only).
 #define NRPN_MSB_CONTROL    127
 #define NRPN_RESPONSE_ERROR 66
+#define NRPN_MSB_UI_SIM     120
 
 static inline float ccToPercentFloat(unsigned char ccValue) {
     int percent = ((int)ccValue * 100 + 63) / 127;
@@ -623,6 +624,26 @@ void MidiDecoder::controlChange(int timbre, MidiEvent& midiEvent, bool ownsChann
                 return;
             }
 
+            if (paramMSB == NRPN_MSB_UI_SIM) {
+                if (paramLSB > 17) {
+                    // Value out of range: single error frame, safe from the ISR.
+                    sendNrpn(midiEvent.channel, (NRPN_MSB_CONTROL << 7) | NRPN_RESPONSE_ERROR, 1);
+                    sendMidiDin5Out();
+                    sendMidiUsbOut();
+                    return;
+                }
+                // Encoder ticks are signed 14-bit two's complement.
+                int16_t ticks = (int16_t)((uint16_t)value << 2) >> 2;
+                AsyncAction asyncAction;
+                asyncAction.fullBytes = 0l;
+                asyncAction.action.actionType = SIMULATE_UI;
+                asyncAction.action.param1 = paramLSB;
+                asyncAction.action.param2 = (uint8_t)((uint16_t)ticks & 0xFF);
+                asyncAction.action.param3 = (uint8_t)(((uint16_t)ticks >> 8) & 0xFF);
+                asyncActions.insert(asyncAction);
+                return;
+            }
+
             if (paramMSB == NRPN_MSB_CONTROL) {
                 // Command-domain response: decoded by the engine from the main
                 // loop (MIDI parsing runs in the audio ISR).
@@ -872,6 +893,16 @@ void MidiDecoder::processAsyncActions() {
                 }
             }
             sendMidiUsbOut();
+            break;
+        }
+        case SIMULATE_UI: {
+            uint8_t lsb = asyncAction.action.param1;
+            int16_t ticks = (int16_t)((uint16_t)asyncAction.action.param2 | ((uint16_t)asyncAction.action.param3 << 8));
+            if (lsb <= BUTTON_SWITCH_SEQUENCER) {
+                synthState_->buttonPressed(lsb);
+            } else if (lsb >= BUTTON_ENCODER_1 && lsb <= BUTTON_ENCODER_6) {
+                synthState_->encoderTurned(lsb - BUTTON_ENCODER_1, ticks);
+            }
             break;
         }
         }

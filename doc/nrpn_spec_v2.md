@@ -96,7 +96,9 @@ the synth's existing "receives NRPN" configuration.
 | 99      | **PresetName**                                                |
 | 100     | **Mixer** (per timbre)                                        |
 | 101     | **Global**                                                    |
-| 102..126| reserved                                                      |
+| 102..119| reserved                                                      |
+| 120     | **UI simulation**                                             |
+| 121..126| reserved                                                      |
 | 127     | **Control / Editor protocol**                                 |
 
 Block ids are append-only once released. Reserved ids must not be reused for a
@@ -411,6 +413,32 @@ in the address.
 `scope 0` includes the mixer for the addressed timbre and the global state.
 String fields (`mixName`, `scalaScaleFileName`) are out of scope for v2.
 
+### 10.3 UI simulation — MSB 120
+
+Simulates front-panel buttons and encoder turns. The action is global (it does
+not depend on the timbre). Accepted on any MIDI channel mapped to a timbre,
+when "receives NRPN" is enabled.
+
+`LSB = id`.
+
+| LSB | Control |
+|----:|---------|
+| 0..5 | switch 1..6 |
+| 6 | menu |
+| 7 | previous instrument |
+| 8 | next instrument |
+| 9 | mixer |
+| 10 | edit |
+| 11 | sequencer |
+| 12..17 | encoder 0..5 (turn) |
+
+- Button (`LSB 0..11`): value is ignored (send 0).
+- Encoder (`LSB 12..17`): value is signed 14-bit two's complement ticks:
+  `ticks = (int16_t)(value << 2) >> 2`, `value = (uint16_t)ticks & 0x3FFF`.
+  Examples: +1 = 1, -1 = 16383, +12 = 12, -12 = 16372.
+- Encoder push buttons are not simulated.
+- `LSB > 17` → `[127, 66] = 1` (ERROR value out of range).
+
 ---
 
 ## 11. Errors
@@ -542,6 +570,10 @@ The synth replies with `[127, 64]`, the name and blocks, then `[127, 65]`.
 | Arp2 swing = 25 | `[18, 9] = 25` |
 | Arp2 groove = 3 | `[18, 10] = 3` |
 | Arp2 humanize = 50 | `[18, 11] = 50` |
+| UI simulation: EDIT button | `[120, 10] = 0` |
+| UI simulation: encoder 0 +1 tick | `[120, 12] = 1` |
+| UI simulation: encoder 2 -1 tick | `[120, 14] = 16383` |
+| UI simulation: invalid id | `[120, 18] = 0` → `[127, 66] = 1` |
 | Request preset dump | `[127, 0] = 0` |
 | Request capabilities | `[127, 3] = 0` |
 
@@ -550,7 +582,7 @@ The synth replies with `[127, 64]`, the name and blocks, then `[127, 65]`.
 ## 16. Reserved ranges
 
 - MSB `22..98`: future data blocks.
-- MSB `102..126`: reserved.
+- MSB `102..119` and `121..126`: reserved.
 - Control command LSB `4..63`: reserved.
 - Control response LSB `72..127`: reserved.
 - Feature bits `9..27`: reserved.
@@ -561,6 +593,7 @@ Reserved values must be ignored by receivers and must not be reused.
 
 ## 17. Change log
 
+- **v2.1** — add the MSB 120 UI simulation block (12 buttons, 6 encoder turns).
 - **v2** — clean-slate block-based address space; one MSB per block; preset name
   at 99, mixer at 100, global at 101; command domain at 127 (4 commands,
   8 responses, `CAP_` capability responses); unified 14-bit value encoding;

@@ -48,7 +48,7 @@ struct Nrpn {
     bool readyToSend;
 };
 
-enum ActionType { LOAD_PRESET, SEND_NRPN_RESPONSE };
+enum ActionType { LOAD_PRESET, SEND_NRPN_RESPONSE, SIMULATE_UI };
 
 struct AsyncActionDetail {
     uint8_t actionType;
