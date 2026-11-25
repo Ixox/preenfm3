@@ -107,7 +107,6 @@ static void MX_SAI2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 // PW for TFT backlight
 static void MX_TIM1_Init(void);

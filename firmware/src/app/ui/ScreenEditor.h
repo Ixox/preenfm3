@@ -58,7 +58,7 @@ public:
     void setPresetModified(int timbre, bool state);
     void resetAllPresetModified();
     void displayPreset();
-    void displayPopup(TFT_COLOR color, char* text, uint8_t length);
+    void displayPopup(TFT_COLOR color, const char* text, uint8_t length);
 
     void encoderTurned(int encoder, int ticks);
     void encoderTurnedWhileButtonPressed(int encoder, int ticks, int button);
@@ -81,7 +81,6 @@ private:
 
     bool presetModifed_[NUMBER_OF_TIMBRES];
     int currentTimbre_;
-
 };
 
 #endif

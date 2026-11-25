@@ -350,7 +350,6 @@ void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
     } else if (color == COLOR_YELLOW) {
         color = getTheme().paramValueChangedColor;
     }
-    struct FullState* fullState = &synthState_->fullState_;
     const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;

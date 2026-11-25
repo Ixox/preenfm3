@@ -119,10 +119,10 @@ protected:
     int remove(FILE_ENUM file);
     const char* getFileName(FILE_ENUM file);
     const char* getFullName(const char* fileName);
-    int load(FILE_ENUM file, int seek, void* bytes, int size);
-    int load(const char* fileName, int seek, void* bytes, int size);
-    int save(FILE_ENUM file, int seek, void* bytes, int size);
-    int save(const char* fileName, int seek, void* bytes, int size);
+    int load(FILE_ENUM file, int seek, void* bytes, uint32_t size);
+    int load(const char* fileName, int seek, void* bytes, uint32_t size);
+    int save(FILE_ENUM file, int seek, void* bytes, uint32_t size);
+    int save(const char* fileName, int seek, void* bytes, uint32_t size);
     int checkSize(FILE_ENUM file);
     int checkSize(const char* fileName);
 

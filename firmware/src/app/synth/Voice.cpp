@@ -27,8 +27,7 @@ Voice::Voice(void) {
     index_ = 0;
 
     // Init FX variables
-    v0L_ = v1L_ = v2L_ = v3L_ = v4L_ = v5L_ = v6L_ = v7L_ = v8L_ = v0R_ = v1R_ = v2R_ = v3R_ = v4R_ = v5R_ = v6R_ = v7R_ = v8R_ = v8R_ =
-        0.0f;
+    v0L_ = v1L_ = v2L_ = v3L_ = v4L_ = v5L_ = v6L_ = v7L_ = v8L_ = v0R_ = v1R_ = v2R_ = v3R_ = v4R_ = v5R_ = v6R_ = v7R_ = v8R_ = 0.0f;
     fxParam1PlusMatrix_ = -1.0;
     fxNoteTrigger_ = 0;
 }

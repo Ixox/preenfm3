@@ -249,6 +249,8 @@ void SynthState::encoderTurned(int encoder, int ticks) {
         displaySequencer_->encoderTurned(currentTimbre_, encoder, ticks);
         break;
     }
+    default:
+        break;
     }
 }
 
@@ -364,6 +366,8 @@ void SynthState::buttonLongPressed(int button) {
         break;
     case SYNTH_MODE_EDITOR:
         displayEditor_->buttonLongPressed(currentTimbre_, button);
+        break;
+    default:
         break;
     }
 }

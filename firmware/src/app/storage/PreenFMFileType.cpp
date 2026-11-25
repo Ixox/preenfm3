@@ -44,6 +44,8 @@ const char* PreenFMFileType::getFileName(FILE_ENUM file) {
         return DEFAULT_SEQUENCE_NAME;
     case PROPERTIES:
         return PROPERTIES_NAME;
+    default:
+        return "";
     }
 }
 
@@ -66,14 +68,14 @@ const char* PreenFMFileType::getFullName(const char* fileName) {
 }
 
 int PreenFMFileType::remove(FILE_ENUM file) {
-    f_unlink(getFileName(file));
+    return f_unlink(getFileName(file));
 }
 
-int PreenFMFileType::load(FILE_ENUM file, int seek, void* bytes, int size) {
+int PreenFMFileType::load(FILE_ENUM file, int seek, void* bytes, uint32_t size) {
     return load(getFileName(file), seek, bytes, size);
 }
 
-int PreenFMFileType::load(const char* fileName, int seek, void* bytes, int size) {
+int PreenFMFileType::load(const char* fileName, int seek, void* bytes, uint32_t size) {
 
     FRESULT fatFSResult = f_open(&file, fileName, FA_READ);
     if (seek == 0 && size == 0) {
@@ -127,11 +129,11 @@ int PreenFMFileType::saveData(FIL& file, void* bytes, uint32_t size) {
     return toReturn;
 }
 
-int PreenFMFileType::save(FILE_ENUM file, int seek, void* bytes, int size) {
+int PreenFMFileType::save(FILE_ENUM file, int seek, void* bytes, uint32_t size) {
     return save(getFileName(file), seek, bytes, size);
 }
 
-int PreenFMFileType::save(const char* fileName, int seek, void* bytes, int size) {
+int PreenFMFileType::save(const char* fileName, int seek, void* bytes, uint32_t size) {
     FRESULT fatFSResult = f_open(&file, fileName, FA_OPEN_ALWAYS | FA_WRITE);
     int toReturn = 0;
     if (fatFSResult == FR_OK) {

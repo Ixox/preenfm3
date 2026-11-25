@@ -167,6 +167,8 @@ void MidiDecoder::newByte(unsigned char byte) {
                 currentEventState_.index = 0;
             }
             break;
+        default:
+            break;
         }
     }
 }
@@ -360,6 +362,8 @@ void MidiDecoder::midiEventReceived(MidiEvent& midiEvent) {
         this->songPosition_ = ((int)midiEvent.value[1] << 7) + midiEvent.value[0];
         this->synth_->midiClockSetSongPosition(this->songPosition_, true);
         break;
+    default:
+        break;
     }
 }
 
@@ -387,6 +391,8 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
             this->synth_->getTimbre(0)->midiData(data);
             break;
         }
+        default:
+            break;
         }
         return;
     }
@@ -432,6 +438,8 @@ void MidiDecoder::midiEventForInstrument1MPE(MidiEvent& midiEvent) {
         this->synth_->getTimbre(0)->midiData(data);
         break;
     }
+    default:
+        break;
     }
 }
 

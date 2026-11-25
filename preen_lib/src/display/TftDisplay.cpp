@@ -1180,7 +1180,6 @@ void TftDisplay::oscilloRrefresh() {
         memcpy(oscilloHistory_[oscilloHistoryIndex_], oscilloSmoothedY_, OSCILLO_WIDTH);
         oscilloHistoryIndex_ = (oscilloHistoryIndex_ + 1) % OSCILLO_TRAIL_FRAMES;
     }
-    uint8_t latestSlot = (oscilloHistoryIndex_ + OSCILLO_TRAIL_FRAMES - 1) % OSCILLO_TRAIL_FRAMES;
 
     // flatOscillo must be displayed only once
     if (total == 0) {

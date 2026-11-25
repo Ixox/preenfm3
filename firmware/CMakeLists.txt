@@ -36,7 +36,6 @@ add_executable(preenfm3_firmware
 )
 
 add_dependencies(preenfm3_firmware drum909_generated)
-
 # Own include directories must come before the linked INTERFACE directories so
 # that firmware/src/platform/cubemx/stm32h7xx_hal_conf.h wins over preen_lib's.
 target_include_directories(preenfm3_firmware PRIVATE

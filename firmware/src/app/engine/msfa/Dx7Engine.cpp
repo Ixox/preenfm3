@@ -183,7 +183,6 @@ bool dx7VoiceRender(Dx7VoiceState* state, Dx7TimbreState* ts, float* out) {
         state->bufferPos = 0;
     }
 
-    int32_t raw0 = state->buffer[state->bufferPos];
     for (int i = 0; i < BLOCK_SIZE; i++) {
         int32_t val = state->buffer[state->bufferPos + i] >> 4;
         int32_t clip = val < -(1 << 24) ? -32768 : (val >= (1 << 24) ? 32767 : (val >> 9));

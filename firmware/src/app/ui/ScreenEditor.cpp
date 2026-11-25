@@ -415,7 +415,7 @@ void ScreenEditor::buttonPressedMenuPage(int button) {
     }
 }
 
-void ScreenEditor::displayPopup(TFT_COLOR color, char* text, uint8_t length) {
+void ScreenEditor::displayPopup(TFT_COLOR color, const char* text, uint8_t length) {
     tft_->fillArea(60, 66, 120, 36, color);
     tft_->fillArea(62, 68, 116, 32, COLOR_BLACK);
     tft_->setCharBackgroundColor(COLOR_BLACK);

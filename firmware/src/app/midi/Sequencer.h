@@ -171,7 +171,7 @@ public:
         return sequenceName_;
     }
     void setSequenceName(const char* newName);
-    char* getSequenceNameInBuffer(char* buffer);
+    const char* getSequenceNameInBuffer(char* buffer);
     uint8_t getInstrumentStepSeq(int instrument) {
         return instrumentStepSeq_[instrument];
     }

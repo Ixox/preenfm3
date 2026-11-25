@@ -1108,6 +1108,8 @@ void EditorParamPage::updateEncoderValueWithoutCursor(int encoder, int element, 
             }
         }
     } break;
+    default:
+        break;
     }
 
     tft_->setCharColor(COLOR_WHITE);

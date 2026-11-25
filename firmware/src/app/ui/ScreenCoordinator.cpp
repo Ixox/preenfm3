@@ -86,6 +86,8 @@ void ScreenCoordinator::refreshAllScreenByStep() {
     case SYNTH_MODE_SEQUENCER:
         sequencer_->refreshSequencerByStep(currentTimbre_, refreshStatus_, endRefreshStatus_);
         break;
+    default:
+        break;
     }
 
     if (refreshStatus_ > 0) {
@@ -187,6 +189,8 @@ void ScreenCoordinator::newSynthMode(FullState* fullState) {
         refreshStatus_ = 21;
         sequencer_->cleanCurrentState();
         break;
+    default:
+        break;
     }
 }
 
@@ -239,6 +243,8 @@ void ScreenCoordinator::midiClock(bool show) {
     case SYNTH_MODE_SEQUENCER:
         tft_->setCharBackgroundColor(COLOR_YELLOW_DARK);
         break;
+    default:
+        break;
     }
     tft_->setCharColor(COLOR_WHITE);
     if (show) {
@@ -268,6 +274,8 @@ void ScreenCoordinator::noteOn(int timbre, bool show) {
         break;
     case SYNTH_MODE_SEQUENCER:
         tft_->setCharBackgroundColor(COLOR_YELLOW_DARK);
+        break;
+    default:
         break;
     }
     tft_->setCharColor(COLOR_WHITE);

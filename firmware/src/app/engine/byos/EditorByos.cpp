@@ -274,7 +274,6 @@ void EditorByos::newEngineParamValue(int& refreshStatus, int timbre, int paramId
     (void)oldValue;
     (void)newValue;
 
-    struct FullState* fullState = &synthState_->fullState_;
     const struct EditorPageButton* page = currentPage();
     if (page == nullptr) {
         return;

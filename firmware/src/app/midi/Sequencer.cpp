@@ -766,7 +766,7 @@ void Sequencer::loadStateVersion2(uint8_t* buffer) {
     }
 }
 
-char* Sequencer::getSequenceNameInBuffer(char* buffer) {
+const char* Sequencer::getSequenceNameInBuffer(char* buffer) {
     SEQ_VERSION version = (SEQ_VERSION)buffer[0];
     switch (version) {
     case SEQ_VERSION1:

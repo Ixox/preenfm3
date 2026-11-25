@@ -32,7 +32,7 @@ public:
     Pfm3Lfo();
     virtual ~Pfm3Lfo() {
     }
-    virtual void init(Matrix* matrix, SourceEnum source, DestinationEnum dest);
+    void init(Matrix* matrix, SourceEnum source, DestinationEnum dest);
 
     /*
      * All calls to these functions are currently type-specific, and the
