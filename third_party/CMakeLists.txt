@@ -1,9 +1,9 @@
 # Third-party libraries used by preenFM3.
 #
-# The STM32 HAL, CMSIS, USB device, FatFs, Adafruit SD, ILI9341 and Hexter
+# The STM32 HAL, CMSIS, TinyUSB, FatFs, Adafruit SD, ILI9341 and Hexter
 # targets are INTERFACE libraries: they carry sources and include paths, but
 # they are compiled in the consumer target so each consumer can use its own
-# stm32h7xx_hal_conf.h / usbd_conf.h / FreeRTOS-style configuration.
+# stm32h7xx_hal_conf.h / tusb_config.h / FreeRTOS-style configuration.
 
 set(TP ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -30,48 +30,24 @@ target_sources(stm32h7xx_hal INTERFACE ${STM32H7XX_HAL_SOURCES})
 target_link_libraries(stm32h7xx_hal INTERFACE stm32h7xx_cmsis)
 
 # ---------------------------------------------------------------------------
-# STM32 USB Device Library
+# TinyUSB (trimmed: src/ + LICENSE only)
 # ---------------------------------------------------------------------------
 
-add_library(stm32_usb_core INTERFACE)
-target_include_directories(stm32_usb_core INTERFACE
-    ${TP}/stm32_usb_device/Core/Inc
+add_library(tinyusb INTERFACE)
+target_include_directories(tinyusb INTERFACE
+    ${TP}/tinyusb/src
+    ${TP}/stm32h7xx/cmsis/Device/ST/STM32H7xx/Include
 )
-target_sources(stm32_usb_core INTERFACE
-    ${TP}/stm32_usb_device/Core/Src/usbd_core.c
-    ${TP}/stm32_usb_device/Core/Src/usbd_ctlreq.c
-    ${TP}/stm32_usb_device/Core/Src/usbd_ioreq.c
+target_sources(tinyusb INTERFACE
+    ${TP}/tinyusb/src/tusb.c
+    ${TP}/tinyusb/src/common/tusb_fifo.c
+    ${TP}/tinyusb/src/device/usbd.c
+    ${TP}/tinyusb/src/class/audio/audio_device.c
+    ${TP}/tinyusb/src/class/midi/midi_device.c
+    ${TP}/tinyusb/src/class/msc/msc_device.c
+    ${TP}/tinyusb/src/portable/synopsys/dwc2/dcd_dwc2.c
+    ${TP}/tinyusb/src/portable/synopsys/dwc2/dwc2_common.c
 )
-
-add_library(stm32_usb_msc INTERFACE)
-target_include_directories(stm32_usb_msc INTERFACE
-    ${TP}/stm32_usb_device/Class/MSC/Inc
-)
-target_sources(stm32_usb_msc INTERFACE
-    ${TP}/stm32_usb_device/Class/MSC/Src/usbd_msc.c
-    ${TP}/stm32_usb_device/Class/MSC/Src/usbd_msc_bot.c
-    ${TP}/stm32_usb_device/Class/MSC/Src/usbd_msc_data.c
-    ${TP}/stm32_usb_device/Class/MSC/Src/usbd_msc_scsi.c
-)
-target_link_libraries(stm32_usb_msc INTERFACE stm32_usb_core)
-
-add_library(stm32_usb_audio INTERFACE)
-target_include_directories(stm32_usb_audio INTERFACE
-    ${TP}/stm32_usb_device/Class/AUDIO/Inc
-)
-target_sources(stm32_usb_audio INTERFACE
-    ${TP}/stm32_usb_device/Class/AUDIO/Src/usbd_audio.c
-)
-target_link_libraries(stm32_usb_audio INTERFACE stm32_usb_core)
-
-add_library(stm32_usb_midi INTERFACE)
-target_include_directories(stm32_usb_midi INTERFACE
-    ${TP}/stm32_usb_device/Class/MIDI/Inc
-)
-target_sources(stm32_usb_midi INTERFACE
-    ${TP}/stm32_usb_device/Class/MIDI/Src/usbd_midi.c
-)
-target_link_libraries(stm32_usb_midi INTERFACE stm32_usb_core)
 
 # ---------------------------------------------------------------------------
 # FatFs + Adafruit SD BSP

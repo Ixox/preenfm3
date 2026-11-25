@@ -135,10 +135,9 @@ Largest symbols per region, from
 | 3,072 | `scalaFrequency` (6 × 128 floats) |
 | 1,776 | `sdCard` |
 | 1,760 | `synthState` |
-| 1,032 ×2 | `hpcd_USB_OTG_FS`, `__malloc_av_` |
+| 1,032 | `__malloc_av_` |
 | 1,024 | `userEnvCurves` (4 × 64 floats) |
 | 768 ×2 | `algoOpInformation`, `EditorPfm3Algo::modulationIndex` |
-| 708 | `hUsbDeviceFS` |
 
 **ITCM** — 51,464 B
 

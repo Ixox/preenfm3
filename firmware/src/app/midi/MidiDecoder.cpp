@@ -16,14 +16,12 @@
  */
 
 extern "C" {
-#include "usbd_midi.h"
+#include "usb_midi.h"
 }
 
 #include "MidiData.h"
 #include "MidiDecoder.h"
 #include "RingBuffer.h"
-
-extern USBD_HandleTypeDef hUsbDeviceFS;
 
 // Let's call it MidiOut despite USB spec
 uint8_t usbMidiOutBuff[64];
@@ -835,7 +833,7 @@ void MidiDecoder::sendMidiUsbOutIfBufferFull() {
 void MidiDecoder::sendMidiUsbOut() {
     if (usbMidiOutBuffWrt != usbMidiOutBuff && this->synthState_->fullState_.midiConfigValue[MIDICONFIG_USB] == USBMIDI_IN_AND_OUT) {
 
-        USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, usbMidiOutBuff, usbMidiOutBuffWrt - usbMidiOutBuff);
+        usbMidiQueue(usbMidiOutBuff, (uint32_t)(usbMidiOutBuffWrt - usbMidiOutBuff));
         // go back to begining of buffer
         usbMidiOutBuffWrt = usbMidiOutBuff;
     }

@@ -89,7 +89,7 @@ The linker sections map as follows (`firmware/preenfm3_2MB.ld:161-179`):
 - `MX_SAI1_Init()`, `MX_SAI2_Init()`
 - `MX_SPI1_Init()`, `MX_SPI2_Init()`
 - `MX_FATFS_Init()`
-- `MX_USB_DEVICE_Init()`
+- `usbInit()`
 
 Until the MPU is enabled, the default memory map applies. Writes made in that window may populate the D-cache with attributes that differ from the final MPU attributes. Changing MPU attributes later does not clean or invalidate existing cache lines.
 

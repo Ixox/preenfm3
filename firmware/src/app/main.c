@@ -20,7 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_device.h"
+#include "usb_glue.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -184,7 +184,6 @@ int main(void) {
     MX_SPI1_Init();
     MX_SPI2_Init();
     MX_FATFS_Init(USE_DMA_FOR_SD_ACCESS);
-    MX_USB_DEVICE_Init();
     MX_USART1_UART_Init();
     MX_TIM1_Init();
 
@@ -197,6 +196,7 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
     while (1) {
+        usbTask();
         preenfm3Loop();
         /* USER CODE END WHILE */
 

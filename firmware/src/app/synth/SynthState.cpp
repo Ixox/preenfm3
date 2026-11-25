@@ -44,6 +44,7 @@ SynthState::SynthState() {
     // https://en.wikipedia.org/wiki/C_(musical_note)
     // Frequency of note 60 C4 :
     fullState_.midiConfigValue[MIDICONFIG_USB] = 2;
+    fullState_.midiConfigValue[MIDICONFIG_USB_AUDIO] = 1;
     fullState_.midiConfigValue[MIDICONFIG_RECEIVES] = 3;
     fullState_.midiConfigValue[MIDICONFIG_SENDS] = 1;
     fullState_.midiConfigValue[MIDICONFIG_PROGRAM_CHANGE] = 1;
@@ -477,11 +478,8 @@ void SynthState::slowTick() {
 }
 
 void SynthState::randomizePreset() {
-    timbres_[currentTimbre_].randomizePreset(
-        fullState_.randomizer.Oper,
-        fullState_.randomizer.EnvT,
-        fullState_.randomizer.IM,
-        fullState_.randomizer.Modl);
+    timbres_[currentTimbre_].randomizePreset(fullState_.randomizer.Oper, fullState_.randomizer.EnvT, fullState_.randomizer.IM,
+                                             fullState_.randomizer.Modl);
 }
 
 Timbre* SynthState::getTimbre(int timbre) {

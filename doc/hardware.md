@@ -109,7 +109,7 @@ The PLL2/PLL3 dividers are configured at `main.c:263-281`. SPI1/2/3 use PLL2P; S
 | SPI1 | SPI1 | ILI9341 TFT | PA5/PA6/PA7, PD8/PD9/PD10 | `MX_SPI1_Init()` (`main.c:452`) |
 | SPI2 | SPI2 | microSD card (SPI mode) | PA9/PB14/PB15, PE12 | `BSP_SPI_Init()` / `MX_SPI_Init()` (`stm32h7xx_nucleo_bus.c:80-100`) |
 | USART1 | USART1 | DIN MIDI | PB6/PB7 | `MX_USART1_UART_Init()` (`main.c:567`) |
-| USB OTG FS | USB | USB MIDI device | PA11/PA12 | `MX_USB_DEVICE_Init()` (`usb_device.c:68`) |
+| USB OTG FS | USB | USB MIDI + UAC2 capture | PA11/PA12 | `usbInit()` (`platform/usb/usb_glue.c`) |
 | TIM1 CH2 | TIM1 | TFT backlight PWM | PE11 | `MX_TIM1_Init()` (`main.c:660`) |
 | DMA1 | DMA1 | SAI TX streams | — | `MX_DMA_Init()` (`main.c:619`) |
 | DMA2 | DMA2 | SPI1/SPI2 streams | — | `MX_DMA_Init()` |
@@ -122,7 +122,9 @@ Not active in the normal build:
 - **TIM3** is declared in `main.c` but its init call is inside the disabled `#ifdef UNDEFINED_PREENFM3_NEEDS_CONTROL_ON_GPIO_INIT` block (`main.c:134-150`), and no active `MX_TIM3_Init()` implementation is linked.
 - **MDMA** has a handle declaration (`main.c:70`) but no initialization call.
 - **SDMMC** is not used; the SD card is on SPI2.
-- Internal ADC/DAC, I2C, CAN, Ethernet, LTDC and USB audio class are not enabled.
+- Internal ADC/DAC, I2C, CAN, Ethernet and LTDC are not enabled.
+- USB audio capture (UAC2, 48 kHz, 16-bit stereo) is enabled alongside
+  USB-MIDI via TinyUSB; see `doc/usb_audio.md`.
 
 ### Overclock Status
 
@@ -229,6 +231,12 @@ Both callbacks call `synth.buildNewSampleBlock()` and record oscilloscope sample
   - `out = 1`: Left only
   - `out = 2`: Right only
   - Same pattern repeats for DAC 2 and DAC 3
+
+### USB Audio Capture
+
+The three stereo DAC buffers are also summed, resampled from 47916 Hz to
+48000 Hz and sent to the host as 16-bit stereo over USB Audio Class 1.0. This
+runs alongside USB-MIDI as one composite device. See `doc/usb_audio.md`.
 
 ---
 
@@ -821,15 +829,27 @@ Button handling is in `Encoders::checkStatus()` (`Encoders.cpp:187-228`):
 
 **Transmit path:** `MidiDecoder::sendMidiDin5Out()` enables TXEIE. The same USART1 handler drains `usartBufferOut` into `TDR` and disables TXEIE when the buffer is empty (`MidiDecoder.cpp:1238-1242`, `preenfm3.cpp:387-395`).
 
-### USB MIDI
+### USB MIDI and audio
 
-The USB device is a full-speed OTG FS MIDI-class device on PA11 (DM) / PA12 (DP) (`firmware/Src/usbd_conf.c:76-88`). `MX_USB_DEVICE_Init()` registers `FS_Desc_Midi`, `USBD_MIDI` and `USBD_MIDI_fops_FS` (`firmware/Src/usb_device.c:90-130`). The descriptor uses VID `0x0483`, PID `0x5740`, product string `preenfm3` (`usbd_desc_midi.c:8-14`).
+The USB device is a full-speed composite device on PA11 (DM) / PA12 (DP),
+driven by **TinyUSB** (`firmware/src/platform/usb/`). It enumerates as
+`0483:5723`, product `"preenfm3"`: USB-MIDI on interfaces 0/1 and UAC2 stereo
+capture on interfaces 2/3 (`usb_glue.c`, `usb_descriptors.c`). See
+`doc/usb_audio.md` for the capture path.
 
-**Receive path:** `dataReceived()` calls `preenfm3_usbDataReceive()` (`usbd_midi_if.c:23-36`). That function parses 4-byte USB-MIDI event packets, cable 0, strips the CIN byte and queues the MIDI bytes in the `usbMidi` ring (`preenfm3.cpp:480-535`). If MIDI thru is enabled, the same bytes are also queued to `usartBufferOut` for DIN output.
+**Receive path:** `usbMidiTask()` reads 4-byte USB-MIDI event packets with
+`tud_midi_packet_read()` and passes them to `preenfm3_usbDataReceive()`
+(`platform/usb/usb_midi.c`, `preenfm3.cpp:524`). That function parses the CIN
+and cable number, strips the header and queues the MIDI bytes in the `usbMidi`
+ring. If MIDI thru is enabled, the bytes are also queued to `usartBufferOut`
+for DIN output.
 
-**Transmit path:** `MidiDecoder::writeMidiCCOut()` builds a 4-byte USB-MIDI packet in `usbMidiOutBuff` when `MIDICONFIG_USB == USBMIDI_IN_AND_OUT`; `sendMidiUsbOut()` transmits it on `MIDI_IN_EP` using `USBD_LL_Transmit()` (`MidiDecoder.cpp:1221-1257`).
+**Transmit path:** `MidiDecoder` queues bytes with `usbMidiQueue()`
+(`MidiDecoder.cpp`); `usbMidiTask()` sends them with `tud_midi_stream_write()`
+on EP `0x81`. The packet API is required on RX because
+`preenfm3_usbDataReceive()` expects USB-MIDI event packets, not a raw stream.
 
-USB MIDI modes are `Off`, `In`, and `In/Out` (`firmware/Src/hardware/Menu.h:48`, `Menu.cpp:32`).
+USB MIDI modes are `Off`, `In`, and `In/Out` (`firmware/src/app/synth/Menu.cpp`).
 
 ### MIDI Parser and Routing
 

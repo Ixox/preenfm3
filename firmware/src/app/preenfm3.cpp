@@ -30,6 +30,8 @@
 #include "SynthState.h"
 #include "ili9341.h"
 #include "stm32h7xx_hal.h"
+#include "usb_audio.h"
+#include "usb_glue.h"
 
 extern UART_HandleTypeDef huart1;
 extern SAI_HandleTypeDef hsai_BlockA1;
@@ -107,6 +109,10 @@ void preenfm3Init() {
     SynthEngineFactory::initDsp();
 
     dependencyInjection();
+
+    // The "Usb Audio" config is read at boot: it selects the duplex or the
+    // MIDI-only USB descriptor. A reboot is required to apply a change.
+    usbInit(synthState.fullState_.midiConfigValue[MIDICONFIG_USB_AUDIO] != 0);
 
     fmDisplay3.setRefreshStatus(20);
 
@@ -367,6 +373,22 @@ void preenfm3DecodeMidiIn() {
 // produce every sample the synth plays, so they are the hardest real-time
 // path in the firmware: short, non-blocking, allocation-free.
 
+// Add the USB playback stream (host -> device) to DAC1. The capture push is
+// done before this, so the host never records itself (no loopback).
+static void mixUsbPlayback(int32_t* dst) {
+    int32_t pb[BLOCK_SIZE * 2];
+    usbAudioPlaybackPull(pb, BLOCK_SIZE);
+    for (int i = 0; i < BLOCK_SIZE * 2; i++) {
+        int32_t v = dst[i] + pb[i];
+        if (v > 0x7FFFFF00) {
+            v = 0x7FFFFF00;
+        } else if (v < -0x7FFFFF00) {
+            v = -0x7FFFFF00;
+        }
+        dst[i] = v;
+    }
+}
+
 // Audio ISR (DMA complete): the first half is playing, so refill the second
 // half. Missing this deadline glitches the audio.
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef* hsai) {
@@ -374,6 +396,8 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef* hsai) {
         preenfm3DecodeMidiIn();
 
         saturatedOutput |= synth.buildNewSampleBlock(&waveform1[64], &waveform2[64], &waveform3[64]);
+        usbAudioPush(&waveform1[64], &waveform2[64], &waveform3[64], BLOCK_SIZE);
+        mixUsbPlayback(&waveform1[64]);
         __DSB();
         tft.oscilloRecord32Samples(timbreSamples);
     }
@@ -387,6 +411,8 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef* hsai) {
         preenfm3DecodeMidiIn();
 
         saturatedOutput |= synth.buildNewSampleBlock(waveform1, waveform2, waveform3);
+        usbAudioPush(waveform1, waveform2, waveform3, BLOCK_SIZE);
+        mixUsbPlayback(waveform1);
         __DSB();
         tft.oscilloRecord32Samples(timbreSamples);
     }

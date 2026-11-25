@@ -30,6 +30,7 @@ const char* midiReceives[] = {"None", "CC", "NRPN", "CC & NRPN"};
 const char* midiSends[] = {"None", "CC", "NRPN"};
 const char* encoderType[] = {"12", "24", "12i", "24i"};
 const char* usbMidiText[] = {"Off", "In", "In/Out"};
+const char* usbAudioText[] = {"Off", "On"};
 const char* version[] = {PFM3_FIRMWARE_VERSION};
 const char* tftAutoReinit[] = {"Off", "Auto"};
 const char* reverbParam[] = {"Hide", "Show"};
@@ -363,6 +364,12 @@ const struct MidiConfig midiConfig[]  = {
                 "usbmidi",
                 3,
 				usbMidiText
+        },
+        {
+                "Usb Audio",
+                "usbaudio",
+                2,
+                usbAudioText
         },
         {
                 "Receives",

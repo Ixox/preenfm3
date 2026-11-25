@@ -140,11 +140,9 @@ The C compiler include path list contains these groups. Many paths are duplicate
 
 ### Middleware
 
-- `${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}`
-- `${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Class/AUDIO/Inc}`
-- `${workspace_loc:/preenfm3/Middlewares/ST/STM32_USB_Device_Library/Class/MIDI/Inc}`
+- `${workspace_loc:/preenfm3/third_party/tinyusb/src}`
 - `${workspace_loc:/preenfm3/Middlewares/Third_Party/FatFs/src}`
-- Relative equivalents such as `Middlewares/ST/STM32_USB_Device_Library/Core/Inc` and `../Middlewares/...`
+- Relative equivalents such as `third_party/tinyusb/src` and `../third_party/...`
 
 ### Display / SD
 
@@ -254,7 +252,7 @@ third_party/
   stm32h7xx/
     hal/
     cmsis/
-  stm32_usb_device/
+  tinyusb/
   fatfs/
   adafruit_sd/
   ili9341/

@@ -165,6 +165,7 @@ Add `EditorNewEngine` and implement the required `EditorEngine` methods:
 
 - `getEngineType()` → `SYNTH_ENGINE_NEWENGINE`
 - `getEngineName()` → display name
+- `theme_` → engine UI colours (`EditorTheme`: page label, button background/text/state indicators, parameter names/values)
 - `getEngineMenu(page)` → menu for each engine page, or `nullptr`
 - `init(parent, synthState, tft)` → must call `parent->insertEditor(this)`
 - `drawEditorButton()`
@@ -215,10 +216,14 @@ common-page behavior.
    `getEngineDisplayName()` (keep it short for the TFT big font, e.g. `"NEW"`).
    If the engine needs one-time DSP tables, add `NewEngine::initGlobal()` and
    call it from `SynthEngineFactory::initDsp()`.
-3. `PersistenceMagic.h` — add a `PRESET_NEWENGINE` magic number.
-4. `SynthEngineFactory.cpp` — add
-   `{ PRESET_NEWENGINE, SYNTH_ENGINE_NEWENGINE }` to `storageMagics[]`.
-   `Timbre` and the storage layer then resolve the engine automatically.
+3. `PersistenceMagic.h` — add a `PRESET_NEWENGINE` magic and a
+   `PresetMagicInfo` row (`{ PRESET_NEWENGINE, SYNTH_ENGINE_NEWENGINE, "NEW" }`).
+   The magic must be a printable ASCII 4CC: the hex digits spell it
+   (`0x42594F53` = `"BYOS"`), even though it is stored little-endian.
+   `presetMagicInfo()` is the single source for magic → engine.
+4. `SynthEngineFactory.cpp` — no magic table change: it uses
+   `presetMagicInfo()`. `Timbre` and the storage layer then resolve the engine
+   automatically.
 5. `ScreenMixer.cpp` — no change: `engineDisplay[]` is built from
    `SynthEngineFactory::getEngineDisplayName()`.
 6. `ScreenEditor.cpp` — include `EditorNewEngine.h`, add a static

@@ -8,16 +8,14 @@ add_executable(preenfm3_bootloader
     ${BOOTLOADER_DIR}/src/FirmwareFile.cpp
     ${BOOTLOADER_DIR}/src/TftAlgo.cpp
     ${BOOTLOADER_DIR}/src/flash_if.c
-    ${BOOTLOADER_DIR}/src/stm32h7xx_hal_msp.c
     ${BOOTLOADER_DIR}/src/stm32h7xx_hal_msp_bootloader.c
     ${BOOTLOADER_DIR}/src/stm32h7xx_it.c
     ${BOOTLOADER_DIR}/src/system_stm32h7xx.c
     ${BOOTLOADER_DIR}/src/syscalls.c
     ${BOOTLOADER_DIR}/src/sysmem.c
-    ${BOOTLOADER_DIR}/src/usbd_storage_if.c
-    ${BOOTLOADER_DIR}/src/platform/usb/App/usb_device.c
-    ${BOOTLOADER_DIR}/src/platform/usb/App/usbd_desc.c
-    ${BOOTLOADER_DIR}/src/platform/usb/Target/usbd_conf.c
+    ${BOOTLOADER_DIR}/src/platform/usb/usb_glue.c
+    ${BOOTLOADER_DIR}/src/platform/usb/usb_descriptors.c
+    ${BOOTLOADER_DIR}/src/platform/usb/usb_msc.c
     ${BOOTLOADER_DIR}/src/startup/startup_stm32h753vitx.s
 )
 
@@ -25,8 +23,7 @@ add_executable(preenfm3_bootloader
 # that bootloader/include/stm32h7xx_hal_conf.h wins over the one in preen_lib.
 target_include_directories(preenfm3_bootloader PRIVATE
     ${BOOTLOADER_DIR}/include
-    ${BOOTLOADER_DIR}/src/platform/usb/App
-    ${BOOTLOADER_DIR}/src/platform/usb/Target
+    ${BOOTLOADER_DIR}/src/platform/usb
 )
 
 target_compile_definitions(preenfm3_bootloader PRIVATE
@@ -51,8 +48,7 @@ target_compile_options(preenfm3_bootloader PRIVATE
 
 target_link_libraries(preenfm3_bootloader PRIVATE
     preen_lib
-    stm32_usb_core
-    stm32_usb_msc
+    tinyusb
     m
 )
 

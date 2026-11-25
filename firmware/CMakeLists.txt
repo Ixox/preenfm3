@@ -51,6 +51,7 @@ target_include_directories(preenfm3_firmware PRIVATE
     ${FIRMWARE_DIR}/src/app/ui
     ${FIRMWARE_DIR}/src/platform/clock
     ${FIRMWARE_DIR}/src/platform/cubemx
+    ${FIRMWARE_DIR}/src/platform/usb
 )
 
 target_compile_definitions(preenfm3_firmware PRIVATE
@@ -94,9 +95,7 @@ set(PRE_ENFM3_FW_VARIANT "" CACHE STRING
 
 target_link_libraries(preenfm3_firmware PRIVATE
     preen_lib
-    stm32_usb_core
-    stm32_usb_audio
-    stm32_usb_midi
+    tinyusb
     hexter
     msfa
     drum909

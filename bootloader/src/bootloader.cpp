@@ -21,7 +21,7 @@
 #include "fatfs.h"
 #include "ili9341.h"
 #include "stm32h7xx_hal.h"
-#include "usb_device.h"
+#include "usb_glue.h"
 #include "version.h"
 
 Encoders encoders;
@@ -102,15 +102,13 @@ uint32_t getButtonPressed() {
 void bootloaderInit() {
     sdError = preenfm3LibInitSD();
 
-    MX_USB_DEVICE_Init();
-
     tft.init(&dummyAlgo); // Dummy value is OK, we won't use algo
     ILI9341_Init();
 
     tft.clear();
 
-    tft.fillArea(0, 0, 240, 23, COLOR_DARK_BLUE);
-    tft.setCharBackgroundColor(COLOR_DARK_BLUE);
+    tft.fillArea(0, 0, 240, 23, COLOR_BLUE_DARK);
+    tft.setCharBackgroundColor(COLOR_BLUE_DARK);
     tft.setCharColor(COLOR_YELLOW);
     tft.setCursorInPixel(10, 3);
     tft.print("pfm3 BootLoader ");
@@ -144,7 +142,7 @@ void displayFile(int fileNumber) {
     } else {
         tft.fillArea(0, 100, 240, 20, COLOR_BLACK);
         tft.setCharBackgroundColor(COLOR_BLACK);
-        tft.setCharColor(COLOR_CYAN);
+        tft.setCharColor(COLOR_CYAN_LIGHT);
         tft.setCursor(5, 5);
         tft.print(firmwares.getFile(fileNumber)->name);
     }
@@ -169,7 +167,7 @@ void bootloaderLoop() {
         tft.printSmallChars("FLASH");
         HAL_Delay(25);
 
-        tft.setCharColor(COLOR_LIGHT_GRAY);
+        tft.setCharColor(COLOR_GRAY_LIGHT);
         tft.setCursorSmallChar(8, 8);
         tft.printSmallChars("Firmware to flash");
         HAL_Delay(25);
@@ -306,7 +304,7 @@ void flashFirmware(const FirmwarePFM3File* pfm2File) {
         tft.setCursor(6, 10);
         tft.print("Flashing");
         HAL_Delay(20);
-        tft.setCharColor(COLOR_LIGHT_GRAY);
+        tft.setCharColor(COLOR_GRAY_LIGHT);
 
         while (offset < size) {
             float percent = offset * 100 / size;
@@ -369,7 +367,7 @@ void formatFlash(int firmwareSize) {
         bool bank2 = sectorAddress >= ADDR_FLASH_SECTOR_0_BANK2;
         uint32_t bankBase = bank2 ? ADDR_FLASH_SECTOR_0_BANK2 : ADDR_FLASH_SECTOR_0_BANK1;
 
-        tft.setCharColor(COLOR_LIGHT_GRAY);
+        tft.setCharColor(COLOR_GRAY_LIGHT);
         tft.setCursor(9, 11);
         tft.print((k + 1));
         tft.print("/");
@@ -474,7 +472,7 @@ void SDCardAccess() {
     tft.setCursor(2, 14);
     tft.print("Press MENU to exit");
 
-    MX_USB_DEVICE_Start();
+    usbInit();
 
     tft.setCharColor(COLOR_GRAY);
 
@@ -482,6 +480,7 @@ void SDCardAccess() {
     while (getButtonPressed() != 6) {
 
         HAL_Delay(2);
+        usbTask();
 
         // Animation while displaying R and W
         if (readDisplayCounter > 0) {
@@ -520,7 +519,7 @@ void SDCardAccess() {
         }
     }
 
-    MX_USB_DEVICE_Stop();
+    usbDeinit();
 
     fileSelect = 0;
     firmwares.reset();

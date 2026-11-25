@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -58,12 +57,19 @@ typedef enum
 /**
   * @brief  RAMECC handle Structure definition
   */
-
+#if (USE_HAL_RAMECC_REGISTER_CALLBACKS == 1)
 typedef struct __RAMECC_HandleTypeDef
+#else
+typedef struct
+#endif  /* USE_HAL_RAMECC_REGISTER_CALLBACKS */
 {
-  RAMECC_MonitorTypeDef           *Instance;                                                             /*!< Register base address        */
-  __IO HAL_RAMECC_StateTypeDef    State;                                                                 /*!< RAMECC state                 */
-  void                            (* DetectErrorCallback)( struct __RAMECC_HandleTypeDef *hramecc);     /*!< RAMECC error detect callback */
+  RAMECC_MonitorTypeDef           *Instance;                                                         /*!< Register base address        */
+  __IO HAL_RAMECC_StateTypeDef    State;                                                             /*!< RAMECC state                 */
+  __IO uint32_t                   ErrorCode;                                                         /*!< RAMECC Error Code            */
+  __IO uint32_t                   RAMECCErrorCode;                                                   /*!< RAMECC Detected Error Code   */
+#if (USE_HAL_RAMECC_REGISTER_CALLBACKS == 1)
+  void                            (* DetectErrorCallback)( struct __RAMECC_HandleTypeDef *hramecc);  /*!< RAMECC Error Detect callback */
+#endif  /* USE_HAL_RAMECC_REGISTER_CALLBACKS */
 }RAMECC_HandleTypeDef;
 
 /**
@@ -72,6 +78,32 @@ typedef struct __RAMECC_HandleTypeDef
 
 
 /* Exported constants --------------------------------------------------------*/
+/** @defgroup RAMECC_Exported_Constants RAMECC Exported Constants
+  * @{
+  */
+/** @defgroup RAMECC_Error_Codes RAMECC Error Codes
+  * @{
+  */
+#define HAL_RAMECC_ERROR_NONE              0x00000000U  /*!< RAMECC No Error         */
+#define HAL_RAMECC_ERROR_TIMEOUT           0x00000001U  /*!< RAMECC Timeout Error    */
+#define HAL_RAMECC_ERROR_BUSY              0x00000002U  /*!< RAMECC Busy Error       */
+#if (USE_HAL_RAMECC_REGISTER_CALLBACKS == 1)
+#define HAL_RAMECC_ERROR_INVALID_CALLBACK  0x00000003U  /*!< Invalid Callback error  */
+#endif  /* USE_HAL_RAMECC_REGISTER_CALLBACKS */
+
+/**
+  * @}
+  */
+
+/** @defgroup RAMECC_Error_Codes RAMECC Error Detected Codes
+  * @{
+  */
+#define HAL_RAMECC_NO_ERROR                           0x00000000U  /*!< RAMECC No Error Detected                      */
+#define HAL_RAMECC_SINGLEERROR_DETECTED               0x00000001U  /*!< RAMECC Single Error Detected                  */
+#define HAL_RAMECC_DOUBLEERROR_DETECTED               0x00000002U  /*!< RAMECC Double Error Detected                  */
+/**
+  * @}
+  */
 
 /** @defgroup RAMECC_Interrupt RAMECC interrupts
   * @{
@@ -105,6 +137,9 @@ typedef struct __RAMECC_HandleTypeDef
 /**
   * @}
   */
+/**
+  * @}
+  */
 
 /* Exported macro ------------------------------------------------------------*/
 /** @defgroup RAMECC_Exported_Macros RAMECC Exported Macros
@@ -119,21 +154,20 @@ typedef struct __RAMECC_HandleTypeDef
   * @param  __HANDLE__   : RAMECC handle.
   * @param  __INTERRUPT__: specifies the RAMECC interrupt sources to be enabled or disabled.
   *        This parameter can be one of the following values:
-  *           @arg RAMECC_IT_GLOBAL_E      : Global interrupt enable mask.
-  *           @arg RAMECC_IT_GLOBAL_SEE    : Global ECC single error interrupt enable.
-  *           @arg RAMECC_IT_GLOBAL_DEE    : Global ECC double error interrupt enable.
-  *           @arg RAMECC_IT_GLOBAL_DEBWE  : Global ECC double error on byte write (BW) interrupt enable.
-  *           @arg RAMECC_IT_GLOBAL_ALL    : All Global ECC interrupts enable mask.
-  *           @arg RAMECC_IT_MONITOR_SEE   : Monitor ECC single error interrupt enable.
-  *           @arg RAMECC_IT_MONITOR_DEE   : Monitor ECC double error interrupt enable.
-  *           @arg RAMECC_IT_MONITOR_DEBWE : Monitor ECC double error on byte write (BW) interrupt enable.
-  *           @arg RAMECC_IT_MONITOR_ALL   : All Monitor ECC interrupts enable mask.
+  *           @arg RAMECC_IT_GLOBAL_ENABLE         : Global interrupt enable mask.
+  *           @arg RAMECC_IT_GLOBAL_SINGLEERR_R    : Global ECC single error interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_DOUBLEERR_R    : Global ECC double error interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_DOUBLEERR_W    : Global ECC double error on byte write (BW) interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_ALL            : All Global ECC interrupts enable mask.
+  *           @arg RAMECC_IT_MONITOR_SINGLEERR_R   : Monitor ECC single error interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_DOUBLEERR_R   : Monitor ECC double error interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_DOUBLEERR_W   : Monitor ECC double error on byte write (BW) interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_ALL           : All Monitor ECC interrupts enable mask.
   * @retval None
   */
 #define __HAL_RAMECC_ENABLE_IT(__HANDLE__, __INTERRUPT__) ( \
 (IS_RAMECC_GLOBAL_INTERRUPT(__INTERRUPT__)) ? (__HAL_RAMECC_ENABLE_GLOBAL_IT((__HANDLE__), (__INTERRUPT__))) :\
 (__HAL_RAMECC_ENABLE_MONITOR_IT((__HANDLE__), (__INTERRUPT__))))
-
 
 
 #define __HAL_RAMECC_DISABLE_GLOBAL_IT(__HANDLE__, __INTERRUPT__) ((((RAMECC_TypeDef *)((uint32_t)(__HANDLE__)->Instance & 0xFFFFFF00U))->IER) &= ~((__INTERRUPT__) & ~RAMECC_IT_GLOBAL_ID))
@@ -144,15 +178,15 @@ typedef struct __RAMECC_HandleTypeDef
   * @param  __HANDLE__   : RAMECC handle.
   * @param  __INTERRUPT__: specifies the RAMECC interrupt sources to be enabled or disabled.
   *        This parameter can be one of the following values:
-  *           @arg RAMECC_IT_GLOBAL_E      : Global interrupt enable mask.
-  *           @arg RAMECC_IT_GLOBAL_SEE    : Global ECC single error interrupt enable.
-  *           @arg RAMECC_IT_GLOBAL_DEE    : Global ECC double error interrupt enable.
-  *           @arg RAMECC_IT_GLOBAL_DEBWE  : Global ECC double error on byte write (BW) interrupt enable.
-  *           @arg RAMECC_IT_GLOBAL_ALL    : All Global ECC interrupts enable mask.
-  *           @arg RAMECC_IT_MONITOR_SEE   : Monitor ECC single error interrupt enable.
-  *           @arg RAMECC_IT_MONITOR_DEE   : Monitor ECC double error interrupt enable.
-  *           @arg RAMECC_IT_MONITOR_DEBWE : Monitor ECC double error on byte write (BW) interrupt enable.
-  *           @arg RAMECC_IT_MONITOR_ALL   : All Monitor ECC interrupts enable mask.
+  *           @arg RAMECC_IT_GLOBAL_ENABLE         : Global interrupt enable mask.
+  *           @arg RAMECC_IT_GLOBAL_SINGLEERR_R    : Global ECC single error interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_DOUBLEERR_R    : Global ECC double error interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_DOUBLEERR_W    : Global ECC double error on byte write (BW) interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_ALL            : All Global ECC interrupts enable mask.
+  *           @arg RAMECC_IT_MONITOR_SINGLEERR_R   : Monitor ECC single error interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_DOUBLEERR_R   : Monitor ECC double error interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_DOUBLEERR_W   : Monitor ECC double error on byte write (BW) interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_ALL           : All Monitor ECC interrupts enable mask.
   * @retval None
   */
 #define __HAL_RAMECC_DISABLE_IT(__HANDLE__, __INTERRUPT__) ( \
@@ -160,16 +194,40 @@ typedef struct __RAMECC_HandleTypeDef
 (__HAL_RAMECC_DISABLE_MONITOR_IT((__HANDLE__), (__INTERRUPT__))))
 
 
+#define __HAL_RAMECC_GET_GLOBAL_IT_SOURCE(__HANDLE__, __INTERRUPT__) (((((RAMECC_TypeDef *)((uint32_t)(__HANDLE__)->Instance & 0xFFFFFF00U))->IER) & ((__INTERRUPT__) & ~RAMECC_IT_GLOBAL_ID)) ? SET : RESET)
+#define __HAL_RAMECC_GET_MONITOR_IT_SOURCE(__HANDLE__, __INTERRUPT__) ((((__HANDLE__)->Instance->CR) & ((__INTERRUPT__) & ~RAMECC_IT_GLOBAL_ID)) ? SET : RESET)
+
+/**
+  * @brief  Check whether the specified RAMECC interrupt source is enabled or not.
+  * @param  __HANDLE__    : Specifies the RAMECC Handle.
+  * @param  __INTERRUPT__ : Specifies the RAMECC interrupt source to check.
+  *          This parameter can be one of the following values:
+  *           @arg RAMECC_IT_GLOBAL_ENABLE         : Global interrupt enable mask.
+  *           @arg RAMECC_IT_GLOBAL_SINGLEERR_R    : Global ECC single error interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_DOUBLEERR_R    : Global ECC double error interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_DOUBLEERR_W    : Global ECC double error on byte write (BW) interrupt enable.
+  *           @arg RAMECC_IT_GLOBAL_ALL            : All Global ECC interrupts enable mask.
+  *           @arg RAMECC_IT_MONITOR_SINGLEERR_R   : Monitor ECC single error interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_DOUBLEERR_R   : Monitor ECC double error interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_DOUBLEERR_W   : Monitor ECC double error on byte write (BW) interrupt enable.
+  *           @arg RAMECC_IT_MONITOR_ALL           : All Monitor ECC interrupts enable mask.
+  * @retval The new state of __INTERRUPT__ (SET or RESET).
+  */
+#define __HAL_RAMECC_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__) (  \
+(IS_RAMECC_GLOBAL_INTERRUPT(__INTERRUPT__)) ? (__HAL_RAMECC_GET_GLOBAL_IT_SOURCE((__HANDLE__), (__INTERRUPT__))) :\
+(__HAL_RAMECC_GET_MONITOR_IT_SOURCE((__HANDLE__), (__INTERRUPT__))))
+
+
 /**
   * @brief  Get the RAMECC pending flags.
   * @param  __HANDLE__   : RAMECC handle.
   * @param  __FLAG__     : specifies the flag to clear.
   *          This parameter can be any combination of the following values:
-  *            @arg RAMECC_FLAG_SEDCF  : RAMECC instance ECC single error detected and corrected flag.
-  *            @arg RAMECC_FLAG_DEDF   : RAMECC instance ECC double error detected flag.
-  *            @arg RAMECC_FLAG_DEBWDF : RAMECC instance ECC double error on byte write (BW) detected flag.
-  *            @arg RAMECC_FLAGS_ALL   : RAMECC instance all flag.
-  * @retval None.
+  *            @arg RAMECC_FLAG_SINGLEERR_R  : RAMECC instance ECC single error detected and corrected flag.
+  *            @arg RAMECC_FLAG_DOUBLEERR_R  : RAMECC instance ECC double error detected flag.
+  *            @arg RAMECC_FLAG_DOUBLEERR_W  : RAMECC instance ECC double error on byte write (BW) detected flag.
+  *            @arg RAMECC_FLAGS_ALL         : RAMECC instance all flag.
+  * @retval The state of __FLAG__ (SET or RESET).
   */
 #define __HAL_RAMECC_GET_FLAG(__HANDLE__, __FLAG__) ((__HANDLE__)->Instance->SR &= (__FLAG__))
 
@@ -179,14 +237,20 @@ typedef struct __RAMECC_HandleTypeDef
   * @param  __HANDLE__   : RAMECC handle.
   * @param  __FLAG__     : specifies the flag to clear.
   *          This parameter can be any combination of the following values:
-  *            @arg RAMECC_FLAG_SEDCF  : RAMECC instance ECC single error detected and corrected flag.
-  *            @arg RAMECC_FLAG_DEDF   : RAMECC instance ECC double error detected flag.
-  *            @arg RAMECC_FLAG_DEBWDF : RAMECC instance ECC double error on byte write (BW) detected flag.
-  *            @arg RAMECC_FLAGS_ALL   : RAMECC instance all flag.
+  *            @arg RAMECC_FLAG_SINGLEERR_R  : RAMECC instance ECC single error detected and corrected flag.
+  *            @arg RAMECC_FLAG_DOUBLEERR_R  : RAMECC instance ECC double error detected flag.
+  *            @arg RAMECC_FLAG_DOUBLEERR_W  : RAMECC instance ECC double error on byte write (BW) detected flag.
+  *            @arg RAMECC_FLAGS_ALL         : RAMECC instance all flag.
   * @retval None.
   */
 #define __HAL_RAMECC_CLEAR_FLAG(__HANDLE__, __FLAG__) ((__HANDLE__)->Instance->SR &= ~(__FLAG__))
 
+/**
+  * @brief  Reset the RAMECC handle state.
+  * @param  __HANDLE__    : Specifies the RAMECC Handle.
+  * @retval None.
+  */
+#define __HAL_RAMECC_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_RAMECC_STATE_RESET)
 /**
   * @}
   */
@@ -197,10 +261,6 @@ typedef struct __RAMECC_HandleTypeDef
   * @brief    RAMECC Exported functions
   * @{
   */
-
-
-
-
 
 /** @defgroup RAMECC_Exported_Functions_Group1 Initialization and de-initialization functions
   * @brief    Initialization and de-initialization functions
@@ -220,21 +280,46 @@ HAL_StatusTypeDef HAL_RAMECC_StartMonitor(RAMECC_HandleTypeDef *hramecc);
 HAL_StatusTypeDef HAL_RAMECC_StopMonitor(RAMECC_HandleTypeDef *hramecc);
 HAL_StatusTypeDef HAL_RAMECC_EnableNotification(RAMECC_HandleTypeDef *hramecc, uint32_t Notifications);
 HAL_StatusTypeDef HAL_RAMECC_DisableNotification(RAMECC_HandleTypeDef *hramecc, uint32_t Notifications);
-void              HAL_RAMECC_IRQHandler(RAMECC_HandleTypeDef *hramecc);
-HAL_StatusTypeDef HAL_RAMECC_RegisterCallback(RAMECC_HandleTypeDef *hramecc, void (* pCallback)(RAMECC_HandleTypeDef *_hramecc));
-HAL_StatusTypeDef HAL_RAMECC_UnRegisterCallback(RAMECC_HandleTypeDef *hramecc);
+
 /**
   * @}
   */
 
-/** @defgroup RAMECC_Exported_Functions_Group3 Error informations functions
-  * @brief    Error informations functions
+/** @defgroup RAMECC_Exported_Functions_Group3 handle Interrupt and Callbacks Functions
+  * @brief    handle Interrupt and Callbacks Functions
   * @{
   */
-uint32_t HAL_RAMECC_GetFailingAddress(RAMECC_HandleTypeDef *hramecc);
-uint32_t HAL_RAMECC_GetFailingDataLow(RAMECC_HandleTypeDef *hramecc);
-uint32_t HAL_RAMECC_GetFailingDataHigh(RAMECC_HandleTypeDef *hramecc);
-uint32_t HAL_RAMECC_GetHammingErrorCode(RAMECC_HandleTypeDef *hramecc);
+void              HAL_RAMECC_IRQHandler(RAMECC_HandleTypeDef *hramecc);
+void              HAL_RAMECC_DetectErrorCallback(RAMECC_HandleTypeDef *hramecc);
+#if (USE_HAL_RAMECC_REGISTER_CALLBACKS == 1)
+HAL_StatusTypeDef HAL_RAMECC_RegisterCallback(RAMECC_HandleTypeDef *hramecc, void (* pCallback)(RAMECC_HandleTypeDef *_hramecc));
+HAL_StatusTypeDef HAL_RAMECC_UnRegisterCallback(RAMECC_HandleTypeDef *hramecc);
+#endif /* USE_HAL_RAMECC_REGISTER_CALLBACKS */
+/**
+  * @}
+  */
+
+/** @defgroup RAMECC_Exported_Functions_Group4 Error information functions
+  * @brief    Error information functions
+  * @{
+  */
+uint32_t HAL_RAMECC_GetFailingAddress(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_GetFailingDataLow(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_GetFailingDataHigh(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_GetHammingErrorCode(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_IsECCSingleErrorDetected(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_IsECCDoubleErrorDetected(const RAMECC_HandleTypeDef *hramecc);
+/**
+  * @}
+  */
+
+/** @defgroup RAMECC_Exported_Functions_Group5 State and Error Functions
+  * @brief    State and Error Functions
+  * @{
+  */
+HAL_RAMECC_StateTypeDef HAL_RAMECC_GetState(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_GetError(const RAMECC_HandleTypeDef *hramecc);
+uint32_t HAL_RAMECC_GetRAMECCError(const RAMECC_HandleTypeDef *hramecc);
 /**
   * @}
   */
@@ -257,27 +342,23 @@ uint32_t HAL_RAMECC_GetHammingErrorCode(RAMECC_HandleTypeDef *hramecc);
   * @{
   */
 
-#define IS_RAMECC_GLOBAL_INTERRUPT(INTERRUPT) ((((INTERRUPT) & RAMECC_IT_GLOBAL_ENABLE)      == RAMECC_IT_GLOBAL_ENABLE)      || \
-                                               (((INTERRUPT) & RAMECC_IT_GLOBAL_SINGLEERR_R) == RAMECC_IT_GLOBAL_SINGLEERR_R) || \
-                                               (((INTERRUPT) & RAMECC_IT_GLOBAL_DOUBLEERR_R) == RAMECC_IT_GLOBAL_DOUBLEERR_R) || \
-                                               (((INTERRUPT) & RAMECC_IT_GLOBAL_DOUBLEERR_W) == RAMECC_IT_GLOBAL_DOUBLEERR_W) || \
-                                               (((INTERRUPT) & RAMECC_IT_GLOBAL_ALL)         == RAMECC_IT_GLOBAL_ALL))
+#define IS_RAMECC_GLOBAL_INTERRUPT(INTERRUPT) (((INTERRUPT) == RAMECC_IT_GLOBAL_ENABLE)      || \
+                                               ((INTERRUPT) == RAMECC_IT_GLOBAL_SINGLEERR_R) || \
+                                               ((INTERRUPT) == RAMECC_IT_GLOBAL_DOUBLEERR_R) || \
+                                               ((INTERRUPT) == RAMECC_IT_GLOBAL_DOUBLEERR_W) || \
+                                               ((INTERRUPT) == RAMECC_IT_GLOBAL_ALL))
 
 
-#define IS_RAMECC_MONITOR_INTERRUPT(INTERRUPT) ((((INTERRUPT) & RAMECC_IT_MONITOR_SINGLEERR_R) == RAMECC_IT_MONITOR_SINGLEERR_R) || \
-                                                (((INTERRUPT) & RAMECC_IT_MONITOR_DOUBLEERR_R) == RAMECC_IT_MONITOR_DOUBLEERR_R) || \
-                                                (((INTERRUPT) & RAMECC_IT_MONITOR_DOUBLEERR_W) == RAMECC_IT_MONITOR_DOUBLEERR_W) || \
-                                                (((INTERRUPT) & RAMECC_IT_MONITOR_ALL)         == RAMECC_IT_MONITOR_ALL))
+#define IS_RAMECC_MONITOR_INTERRUPT(INTERRUPT) (((INTERRUPT) == RAMECC_IT_MONITOR_SINGLEERR_R) || \
+                                                ((INTERRUPT) == RAMECC_IT_MONITOR_DOUBLEERR_R) || \
+                                                ((INTERRUPT) == RAMECC_IT_MONITOR_DOUBLEERR_W) || \
+                                                ((INTERRUPT) == RAMECC_IT_MONITOR_ALL))
 
 #define IS_RAMECC_INTERRUPT(INTERRUPT) ((IS_RAMECC_GLOBAL_INTERRUPT(INTERRUPT)) || \
                                         (IS_RAMECC_MONITOR_INTERRUPT(INTERRUPT)))
 
 /**
   * @}
-  */
-
-/** @defgroup RAMECC_FLAG RAMECC Monitor flags
-  * @{
   */
 
 /* Private functions ---------------------------------------------------------*/
@@ -296,14 +377,8 @@ uint32_t HAL_RAMECC_GetHammingErrorCode(RAMECC_HandleTypeDef *hramecc);
 /**
   * @}
   */
-
-/**
-  * @}
-  */
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* STM32H7xx_HAL_RAMECC_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

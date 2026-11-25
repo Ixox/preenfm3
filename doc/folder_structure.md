@@ -132,9 +132,9 @@ Standalone bootloader at `0x08000000` (firmware starts at `0x08020000`).
 | `src/main.c`, `src/bootloader.cpp` | Entry point and update flow |
 | `src/FirmwareFile.cpp` | Firmware file handling |
 | `src/flash_if.c` | Internal flash programming |
-| `src/usbd_storage_if.c` | USB mass-storage export of the SD card |
+| `src/platform/usb/usb_msc.c` | TinyUSB MSC callbacks over the SD card |
 | `src/TftAlgo.cpp` | Dummy `TftAlgo` stub |
-| `src/platform/usb/` | USB device core/descriptors/configuration |
+| `src/platform/usb/` | TinyUSB glue, descriptors, MIDI and MSC |
 | `src/startup/` | `startup_stm32h753vitx.s` |
 | `STM32H753VITX_FLASH.ld` | Bootloader linker script |
 
@@ -145,7 +145,7 @@ Vendored dependencies. Keep upstream headers/licences; see `third_party/NOTICE`.
 | Path | Contents |
 |------|----------|
 | `stm32h7xx/` | STM32H7 HAL and CMSIS |
-| `stm32_usb_device/` | ST USB device stack (core, audio, MIDI, MSC) |
+| `tinyusb/` | TinyUSB device stack (vendored v0.21.0) |
 | `adafruit_sd/` | SD card SPI driver |
 | `fatfs/` | FatFs filesystem |
 | `ili9341/` | ILI9341 display driver |
