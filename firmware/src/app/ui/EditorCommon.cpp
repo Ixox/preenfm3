@@ -25,19 +25,19 @@
 static const EditorPageState arp1GenericState = {
     "Arpeggiator",
     {
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 0), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 1), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 2), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 3), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 1), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 2), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 0), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 1), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 2), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp1, 0, 3), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 1), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 2), CONTEXT_COMMON),
     } };
 
 static const EditorPageState arp2GenericState = {
     "Arpeggiator",
     {
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 0), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 3), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 0), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Arp2, 0, 3), CONTEXT_COMMON),
         { EditorSlotKind::Custom, 0, (uint8_t)EditorCustomContext::ArpPattern },
         { EditorSlotKind::Custom, 1, (uint8_t)EditorCustomContext::ArpPattern },
         { EditorSlotKind::Custom, 2, (uint8_t)EditorCustomContext::ArpPattern },
@@ -58,10 +58,10 @@ static const EditorPageState arp3GenericState = {
 static const EditorPageState fx1GenericState = {
     "Voice FX",
     {
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 0), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 1), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 2), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 3), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 0), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 1), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 2), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect1, 0, 3), CONTEXT_COMMON),
         BUTTON_EMPTY(),
         BUTTON_EMPTY(),
     } };
@@ -69,10 +69,10 @@ static const EditorPageState fx1GenericState = {
 static const EditorPageState fx2GenericState = {
     "Paraphonic FX",
     {
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 0), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 1), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 2), 1),
-        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 3), 1),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 0), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 1), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 2), CONTEXT_COMMON),
+        BUTTON_SIMPLE_PARAM((uint16_t)commonParam(CommonBlock::Effect2, 0, 3), CONTEXT_COMMON),
         BUTTON_EMPTY(),
         BUTTON_EMPTY(),
     } };

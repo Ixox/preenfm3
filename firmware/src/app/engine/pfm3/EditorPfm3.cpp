@@ -39,7 +39,7 @@ EditorPfm3::EditorPfm3() {
     for (int i = 0; i < 6; i++) {
         bufferParam_[i] = 0.0f;
     }
-    
+
     theme_.buttonSelectorFilled = false;
 }
 
@@ -615,7 +615,7 @@ void EditorPfm3::newEngineParamValue(int& refreshStatus, int timbre, int paramId
         displayParamValue(3, COLOR_WHITE);
         return;
     }
-    if (context == 1 && commonBlockOf((CommonParamId)paramId) == (uint8_t)CommonBlock::ArpPattern) {
+    if (context == CONTEXT_COMMON && commonBlockOf((CommonParamId)paramId) == (uint8_t)CommonBlock::ArpPattern) {
         displayParamValue(3, COLOR_WHITE);
         return;
     }
@@ -986,7 +986,7 @@ void EditorPfm3::encoderTurnedWhileButtonPressed(int encoder, int ticks, int but
         } else {
             CommonParamId cid = commonFlatToParam(flatIndex);
             if (cid != COMMON_PARAM_NONE) {
-                synthState_->propagateNewEngineParamValue(synthState_->getCurrentTimbre(), (int)cid, 1, oldValue, newValue);
+                synthState_->propagateNewEngineParamValue(synthState_->getCurrentTimbre(), (int)cid, CONTEXT_COMMON, oldValue, newValue);
             }
         }
         break;

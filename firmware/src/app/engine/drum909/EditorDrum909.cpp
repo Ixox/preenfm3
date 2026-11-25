@@ -64,8 +64,8 @@ static const struct EditorPageState bd0State = {
 };
 static const struct EditorPageState bd1State = {
     "Bass Drum 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_BD), BUTTON_SIMPLE_PARAM(7, DR_BD), BUTTON_SIMPLE_PARAM(8, DR_BD),
-      BUTTON_SIMPLE_PARAM(9, DR_BD), BUTTON_EMPTY(), BUTTON_EMPTY() }
+    { BUTTON_SIMPLE_PARAM(6, DR_BD), BUTTON_SIMPLE_PARAM(7, DR_BD), BUTTON_EMPTY(),
+      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState sd0State = {
@@ -75,102 +75,62 @@ static const struct EditorPageState sd0State = {
 };
 static const struct EditorPageState sd1State = {
     "Snare Drum 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_SD), BUTTON_SIMPLE_PARAM(7, DR_SD), BUTTON_SIMPLE_PARAM(8, DR_SD),
+    { BUTTON_SIMPLE_PARAM(6, DR_SD), BUTTON_EMPTY(), BUTTON_EMPTY(),
       BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState lt0State = {
-    "Low Tom 1/2",
+    "Low Tom",
     { BUTTON_SIMPLE_PARAM(0, DR_LT), BUTTON_SIMPLE_PARAM(1, DR_LT), BUTTON_SIMPLE_PARAM(2, DR_LT),
       BUTTON_SIMPLE_PARAM(3, DR_LT), BUTTON_SIMPLE_PARAM(4, DR_LT), BUTTON_SIMPLE_PARAM(5, DR_LT) }
 };
-static const struct EditorPageState lt1State = {
-    "Low Tom 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_LT), BUTTON_SIMPLE_PARAM(7, DR_LT), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
-};
 
 static const struct EditorPageState mt0State = {
-    "Mid Tom 1/2",
+    "Mid Tom",
     { BUTTON_SIMPLE_PARAM(0, DR_MT), BUTTON_SIMPLE_PARAM(1, DR_MT), BUTTON_SIMPLE_PARAM(2, DR_MT),
       BUTTON_SIMPLE_PARAM(3, DR_MT), BUTTON_SIMPLE_PARAM(4, DR_MT), BUTTON_SIMPLE_PARAM(5, DR_MT) }
 };
-static const struct EditorPageState mt1State = {
-    "Mid Tom 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_MT), BUTTON_SIMPLE_PARAM(7, DR_MT), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
-};
 
 static const struct EditorPageState ht0State = {
-    "High Tom 1/2",
+    "High Tom",
     { BUTTON_SIMPLE_PARAM(0, DR_HT), BUTTON_SIMPLE_PARAM(1, DR_HT), BUTTON_SIMPLE_PARAM(2, DR_HT),
       BUTTON_SIMPLE_PARAM(3, DR_HT), BUTTON_SIMPLE_PARAM(4, DR_HT), BUTTON_SIMPLE_PARAM(5, DR_HT) }
-};
-static const struct EditorPageState ht1State = {
-    "High Tom 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_HT), BUTTON_SIMPLE_PARAM(7, DR_HT), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState rs0State = {
     "Rimshot",
     { BUTTON_SIMPLE_PARAM(0, DR_RS), BUTTON_SIMPLE_PARAM(1, DR_RS), BUTTON_SIMPLE_PARAM(2, DR_RS),
-      BUTTON_SIMPLE_PARAM(3, DR_RS), BUTTON_SIMPLE_PARAM(4, DR_RS), BUTTON_SIMPLE_PARAM(5, DR_RS) }
+      BUTTON_SIMPLE_PARAM(3, DR_RS), BUTTON_EMPTY(), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState cp0State = {
-    "Clap 1/2",
+    "Clap",
     { BUTTON_SIMPLE_PARAM(0, DR_CP), BUTTON_SIMPLE_PARAM(1, DR_CP), BUTTON_SIMPLE_PARAM(2, DR_CP),
-      BUTTON_SIMPLE_PARAM(3, DR_CP), BUTTON_SIMPLE_PARAM(4, DR_CP), BUTTON_SIMPLE_PARAM(5, DR_CP) }
-};
-static const struct EditorPageState cp1State = {
-    "Clap 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_CP), BUTTON_EMPTY(), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
+      BUTTON_SIMPLE_PARAM(3, DR_CP), BUTTON_SIMPLE_PARAM(4, DR_CP), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState ch0State = {
-    "Closed Hat 1/2",
+    "Closed Hat",
     { BUTTON_SIMPLE_PARAM(0, DR_CH), BUTTON_SIMPLE_PARAM(1, DR_CH), BUTTON_SIMPLE_PARAM(2, DR_CH),
-      BUTTON_SIMPLE_PARAM(3, DR_CH), BUTTON_SIMPLE_PARAM(4, DR_CH), BUTTON_SIMPLE_PARAM(5, DR_CH) }
-};
-static const struct EditorPageState ch1State = {
-    "Closed Hat 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_CH), BUTTON_EMPTY(), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
+      BUTTON_SIMPLE_PARAM(3, DR_CH), BUTTON_SIMPLE_PARAM(4, DR_CH), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState oh0State = {
-    "Open Hat 1/2",
+    "Open Hat",
     { BUTTON_SIMPLE_PARAM(0, DR_OH), BUTTON_SIMPLE_PARAM(1, DR_OH), BUTTON_SIMPLE_PARAM(2, DR_OH),
-      BUTTON_SIMPLE_PARAM(3, DR_OH), BUTTON_SIMPLE_PARAM(4, DR_OH), BUTTON_SIMPLE_PARAM(5, DR_OH) }
-};
-static const struct EditorPageState oh1State = {
-    "Open Hat 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_OH), BUTTON_EMPTY(), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
+      BUTTON_SIMPLE_PARAM(3, DR_OH), BUTTON_SIMPLE_PARAM(4, DR_OH), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState cr0State = {
-    "Crash 1/2",
+    "Crash",
     { BUTTON_SIMPLE_PARAM(0, DR_CR), BUTTON_SIMPLE_PARAM(1, DR_CR), BUTTON_SIMPLE_PARAM(2, DR_CR),
-      BUTTON_SIMPLE_PARAM(3, DR_CR), BUTTON_SIMPLE_PARAM(4, DR_CR), BUTTON_SIMPLE_PARAM(5, DR_CR) }
-};
-static const struct EditorPageState cr1State = {
-    "Crash 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_CR), BUTTON_EMPTY(), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
+      BUTTON_SIMPLE_PARAM(3, DR_CR), BUTTON_SIMPLE_PARAM(4, DR_CR), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState rd0State = {
-    "Ride 1/2",
+    "Ride",
     { BUTTON_SIMPLE_PARAM(0, DR_RD), BUTTON_SIMPLE_PARAM(1, DR_RD), BUTTON_SIMPLE_PARAM(2, DR_RD),
-      BUTTON_SIMPLE_PARAM(3, DR_RD), BUTTON_SIMPLE_PARAM(4, DR_RD), BUTTON_SIMPLE_PARAM(5, DR_RD) }
-};
-static const struct EditorPageState rd1State = {
-    "Ride 2/2",
-    { BUTTON_SIMPLE_PARAM(6, DR_RD), BUTTON_EMPTY(), BUTTON_EMPTY(),
-      BUTTON_EMPTY(), BUTTON_EMPTY(), BUTTON_EMPTY() }
+      BUTTON_SIMPLE_PARAM(3, DR_RD), BUTTON_SIMPLE_PARAM(4, DR_RD), BUTTON_EMPTY() }
 };
 
 static const struct EditorPageState kitState = {
@@ -186,19 +146,19 @@ static const struct EditorPageButton sdButton = {
     "Snare", BUTTONID_ENGINE_PAGE_2, 2, { &sd0State, &sd1State }
 };
 static const struct EditorPageButton tomButton = {
-    "Tom", BUTTONID_ENGINE_PAGE_3, 6, { &lt0State, &lt1State, &mt0State, &mt1State, &ht0State, &ht1State }
+    "Tom", BUTTONID_ENGINE_PAGE_3, 3, { &lt0State, &mt0State, &ht0State }
 };
 static const struct EditorPageButton percButton = {
-    "Perc", BUTTONID_ENGINE_PAGE_4, 3, { &rs0State, &cp0State, &cp1State }
+    "Perc", BUTTONID_ENGINE_PAGE_4, 2, { &rs0State, &cp0State }
 };
 static const struct EditorPageButton hatButton = {
-    "Hat", BUTTONID_ENGINE_PAGE_5, 4, { &ch0State, &ch1State, &oh0State, &oh1State }
+    "Hat", BUTTONID_ENGINE_PAGE_5, 2, { &ch0State, &oh0State }
 };
 static const struct EditorPageButton kitButton = {
     "Kit", BUTTONID_ENGINE_PAGE_6, 1, { &kitState }
 };
 static const struct EditorPageButton rideButton = {
-    "Ride", BUTTONID_ENGINE_PAGE_7, 4, { &cr0State, &cr1State, &rd0State, &rd1State }
+    "Ride", BUTTONID_ENGINE_PAGE_7, 2, { &cr0State, &rd0State }
 };
 
 static const struct EditorMenu drum909Menu = {
@@ -248,7 +208,9 @@ const struct EditorMenu* EditorDrum909::getEngineMenu(int page) const {
 }
 
 int EditorDrum909::getCommonPage(int page) const {
-    (void)page;
+    if (page == 2) {
+        return COMMON_PAGE_ARP_FX;
+    }
     return COMMON_PAGE_NONE;
 }
 

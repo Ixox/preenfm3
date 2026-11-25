@@ -75,7 +75,7 @@ void Preenfm3Engine::setPfm3ValueFromMidi(int index, float newValue) {
         } else {
             CommonParamId cid = commonFlatToParam((uint16_t)index);
             if (cid != COMMON_PARAM_NONE) {
-                synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)cid, 1, oldValue, newValue);
+                synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)cid, CONTEXT_COMMON, oldValue, newValue);
             }
         }
     }
@@ -227,7 +227,7 @@ bool Preenfm3Engine::applyCommonParam(CommonParamId id, float value) {
     float newValue = commonGetParam(shared, id);
     if (oldValue != newValue) {
         syncSharedParams(shared);
-        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)id, 1, oldValue, newValue);
+        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)id, CONTEXT_COMMON, oldValue, newValue);
     }
     return true;
 }

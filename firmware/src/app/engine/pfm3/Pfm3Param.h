@@ -79,6 +79,10 @@ constexpr Pfm3Param pfm3ParamWithField(Pfm3Param id, uint8_t field) {
  */
 enum class CommonBlock : uint8_t { Arp1 = 0, Arp2, ArpPattern, Effect1, Effect2, PresetName, Count };
 
+// Context reserved for engine-neutral/shared (Arp/Fx) parameters. Engine
+// editors use small values (0..N) for their own grouping, so 0xFF is free.
+constexpr uint8_t CONTEXT_COMMON = 0xFF;
+
 enum class CommonParamId : uint16_t {};
 
 constexpr CommonParamId COMMON_PARAM_NONE = (CommonParamId)PFM3_PARAM_NONE;

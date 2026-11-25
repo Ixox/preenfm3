@@ -995,7 +995,7 @@ void Timbre::setSharedParamFromMidi(CommonParamId cid, float newValue) {
 
     if (oldValue != newValue) {
         SynthEngineFactory::getPfm3(timbreNumber_)->syncSharedParams(sharedParams());
-        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)cid, 1, oldValue, newValue);
+        synthState_->propagateNewEngineParamValueFromExternal(timbreNumber_, (int)cid, CONTEXT_COMMON, oldValue, newValue);
     }
 }
 
@@ -1082,6 +1082,17 @@ void Timbre::setParamValue(int index, float oldValue, float newValue) {
 }
 
 void Timbre::engineParamChanged(int paramId, int context, float oldValue, float newValue) {
+    // Arp/Fx are engine-neutral: they live in TimbreSharedParams and are
+    // applied by the arpeggiator / Voice::fxAfterBlock / Timbre::fxAfterBlock.
+    // Common params use CONTEXT_COMMON so they are never confused with an
+    // engine's own context values (909 drum groups, DX7 operators...).
+    if (context == CONTEXT_COMMON) {
+        uint16_t flat = commonFlatIndex((CommonParamId)paramId);
+        if (flat != 0xFFFF) {
+            setParamValue(flat, oldValue, newValue);
+        }
+        return;
+    }
     engineImpl_->engineParamChanged(paramId, context, oldValue, newValue);
 }
 

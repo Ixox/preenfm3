@@ -597,7 +597,7 @@ void EditorParamPage::newEngineParamValue(int& refreshStatus, int timbre, int pa
         displayParamValue(3, COLOR_WHITE);
         return;
     }
-    if (context == 1 && commonBlockOf((CommonParamId)paramId) == (uint8_t)CommonBlock::ArpPattern) {
+    if (context == CONTEXT_COMMON && commonBlockOf((CommonParamId)paramId) == (uint8_t)CommonBlock::ArpPattern) {
         const EditorSlot gridSlot = slotForEncoder(2);
         if (gridSlot.kind == EditorSlotKind::Custom && gridSlot.context == (uint8_t)EditorCustomContext::ArpPattern) {
             for (int e = 2; e < NUMBER_OF_ENCODERS; e++) {
@@ -842,7 +842,7 @@ void EditorParamPage::applyTicks(int flatIndex, int ticks) {
         if ((uint16_t)pid != PFM3_PARAM_NONE) {
             synthState_->propagateNewEngineParamValue(synthState_->getCurrentTimbre(), (int)pid, 0, oldValue, newValue);
         } else {
-            synthState_->propagateNewEngineParamValue(synthState_->getCurrentTimbre(), (int)cid, 1, oldValue, newValue);
+            synthState_->propagateNewEngineParamValue(synthState_->getCurrentTimbre(), (int)cid, CONTEXT_COMMON, oldValue, newValue);
         }
     }
 }
