@@ -51,6 +51,7 @@ private:
     bool restoreTimbre(int timbre);
     void displayBankSelect(int bankNumber, bool usable, const char* name);
     void displayPatchSelect(int presetNumber, const char* name);
+    void displayPatchEngine(uint32_t magic, bool valid);
     void printScalaFrequency(float value);
 
     TftDisplay* tft_;

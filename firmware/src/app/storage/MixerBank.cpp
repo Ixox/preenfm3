@@ -169,14 +169,12 @@ bool MixerBank::loadMixerData(FIL* file, uint8_t mixerNumber) {
                     }
                 }
             } else {
-                this->timbre_[t]->sharedParams().presetName[0] = '#';
-                this->timbre_[t]->sharedParams().presetName[1] = '#';
-                this->timbre_[t]->sharedParams().presetName[2] = 0;
+                mixerState_->instrumentState_[t].engine = SYNTH_ENGINE_PFM3;
+                strcpy(this->timbre_[t]->sharedParams().presetName, "# Unknown #");
             }
         } else {
-            this->timbre_[t]->sharedParams().presetName[0] = '#';
-            this->timbre_[t]->sharedParams().presetName[1] = '#';
-            this->timbre_[t]->sharedParams().presetName[2] = 0;
+            mixerState_->instrumentState_[t].engine = SYNTH_ENGINE_PFM3;
+            strcpy(this->timbre_[t]->sharedParams().presetName, "# Unknown #");
         }
     }
     return true;

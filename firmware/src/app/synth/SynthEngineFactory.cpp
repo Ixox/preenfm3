@@ -16,28 +16,9 @@ Dx7SynthEngine SynthEngineFactory::dx7Engines_[NUMBER_OF_TIMBRES];
 ByosEngine SynthEngineFactory::byosEngines_[NUMBER_OF_TIMBRES];
 Drum909Engine SynthEngineFactory::drum909Engines_[NUMBER_OF_TIMBRES];
 
-namespace {
-struct StorageMagicEntry {
-    uint32_t magic;
-    SynthEngineType type;
-};
-
-const StorageMagicEntry storageMagics[] = {
-    {PRESET_VERSION1, SYNTH_ENGINE_PFM3},
-    {PRESET_VERSION2, SYNTH_ENGINE_PFM3},
-    {PRESET_DX7, SYNTH_ENGINE_DX7},
-    {PRESET_BYOS, SYNTH_ENGINE_BYOS},
-    {PRESET_DRUM909, SYNTH_ENGINE_DRUM909},
-};
-} // namespace
-
 SynthEngineType SynthEngineFactory::engineTypeForStorageMagic(uint32_t magic) {
-    for (const StorageMagicEntry& entry : storageMagics) {
-        if (entry.magic == magic) {
-            return entry.type;
-        }
-    }
-    return SYNTH_ENGINE_COUNT;
+    const PresetMagicInfo* info = presetMagicInfo(magic);
+    return info != nullptr ? info->engine : SYNTH_ENGINE_COUNT;
 }
 
 SynthEngine* SynthEngineFactory::getForStorageMagic(uint32_t magic, int timbreNumber) {

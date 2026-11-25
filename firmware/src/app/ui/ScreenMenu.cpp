@@ -15,10 +15,11 @@
  */
 
 #include "ScreenMenu.h"
+#include "PersistenceMagic.h"
 #include "PreenFMFileType.h"
 #include "SynthState.h"
-#include "Timbre.h"
 #include "TftDisplay.h"
+#include "Timbre.h"
 #include "version.h"
 
 extern int getLength(const char* str);
@@ -1022,6 +1023,8 @@ void ScreenMenu::newMenuSelect(FullState* fullState) {
 
     int length;
 
+    displayPatchEngine(0, false);
+
     switch (fullState->currentMenuItem->menuState) {
     case MENU_PRESET_LOAD_SELECT_DX7_BANK:
         displayBankSelect(fullState->dx7BankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY), fullState->preenFMBank->name);
@@ -1031,14 +1034,22 @@ void ScreenMenu::newMenuSelect(FullState* fullState) {
             displayPatchSelect(0, 0);
         }
         break;
-    case MENU_PRESET_LOAD_SELECT:
+    case MENU_PRESET_LOAD_SELECT: {
         displayBankSelect(fullState->preenFMBankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY), fullState->preenFMBank->name);
+        uint32_t magic = 0;
+        bool magicValid = storage_->getPatchBank()->getLastPatchMagic(magic);
+        bool known = magicValid && presetMagicInfo(magic) != nullptr;
         if (fullState->preenFMBank->fileType != FILE_EMPTY) {
-            displayPatchSelect(fullState->preenFMPresetNumber, synthState_->getTimbre(synthState_->getCurrentTimbre())->getPresetName());
+            displayPatchSelect(fullState->preenFMPresetNumber, known ? storage_->getPatchBank()->loadPatchName(
+                                                                           fullState->preenFMBank, fullState->preenFMPresetNumber, magic)
+                                                                     : "Not supported");
+            displayPatchEngine(magic, magicValid);
         } else {
             displayPatchSelect(0, 0);
+            displayPatchEngine(0, false);
         }
         break;
+    }
     case MENU_MIXER_LOAD_SELECT:
     case MENU_MIXER_SAVE_SELECT:
         displayBankSelect(fullState->preenFMMixerNumber, (fullState->preenFMMixer->fileType != FILE_EMPTY), fullState->preenFMMixer->name);
@@ -1063,15 +1074,22 @@ void ScreenMenu::newMenuSelect(FullState* fullState) {
         tft_->setCursor(8, 12);
         tft_->print(fullState->currentMenuItem->name);
         break;
-    case MENU_PRESET_SAVE_SELECT:
+    case MENU_PRESET_SAVE_SELECT: {
         displayBankSelect(fullState->preenFMBankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY), fullState->preenFMBank->name);
         if (fullState->preenFMBank->fileType != FILE_EMPTY) {
-            displayPatchSelect(fullState->preenFMPresetNumber,
-                               storage_->getPatchBank()->loadPatchName(fullState->preenFMBank, fullState->preenFMPresetNumber));
+            uint32_t magic = 0;
+            bool magicValid = storage_->getPatchBank()->loadPatchMagic(fullState->preenFMBank, fullState->preenFMPresetNumber, magic);
+            bool known = magicValid && presetMagicInfo(magic) != nullptr;
+            displayPatchSelect(fullState->preenFMPresetNumber, known ? storage_->getPatchBank()->loadPatchName(
+                                                                           fullState->preenFMBank, fullState->preenFMPresetNumber, magic)
+                                                                     : "Not supported");
+            displayPatchEngine(magic, magicValid);
         } else {
             displayPatchSelect(0, 0);
+            displayPatchEngine(0, false);
         }
         break;
+    }
     case MENU_SEQUENCER_SAVE_SELECT:
         displayBankSelect(fullState->preenFMSeqBankNumber, (fullState->preenFMSequence->fileType == FILE_OK),
                           fullState->preenFMSequence->name);
@@ -1232,6 +1250,32 @@ void ScreenMenu::displayPatchSelect(int presetNumber, const char* name) {
         tft_->printSpaceTillEndOfLine();
     } else {
         tft_->fillArea(0, 180, 240, 20, COLOR_BLACK);
+    }
+}
+
+void ScreenMenu::displayPatchEngine(uint32_t magic, bool valid) {
+    tft_->fillArea(0, 10 * TFT_BIG_CHAR_HEIGHT, 240, TFT_BIG_CHAR_HEIGHT, COLOR_BLACK);
+
+    if (!valid) {
+        return;
+    }
+
+    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharColor(COLOR_DARK_RED);
+    tft_->setCursor(4, 10);
+    const PresetMagicInfo* info = presetMagicInfo(magic);
+    if (info != nullptr) {
+        tft_->print(info->engineName);
+    } else {
+        char code[7];
+        code[0] = '#';
+        for (int i = 0; i < 4; i++) {
+            const uint8_t c = (magic >> (24 - i * 8)) & 0xff;
+            code[1 + i] = (c >= 0x20 && c <= 0x7e) ? (char)c : '?';
+        }
+        code[5] = '#';
+        code[6] = 0;
+        tft_->print(code);
     }
 }
 

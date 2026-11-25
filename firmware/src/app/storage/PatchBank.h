@@ -20,8 +20,8 @@
 
 #include "Common.h"
 #include "PersistenceMagic.h"
-#include "engine/pfm3/Pfm3Preset.h"
 #include "PreenFMFileType.h"
+#include "engine/pfm3/Pfm3Preset.h"
 
 class Timbre;
 
@@ -39,7 +39,9 @@ public:
         timbre_ = timbre;
     }
     bool loadPatch(const struct PFM3File* bank, int patchNumber, Timbre* timbre);
-    const char* loadPatchName(const struct PFM3File* bank, int patchNumber);
+    bool loadPatchMagic(const struct PFM3File* bank, int patchNumber, uint32_t& magic);
+    bool getLastPatchMagic(uint32_t& magic) const;
+    const char* loadPatchName(const struct PFM3File* bank, int patchNumber, uint32_t magic);
 
     bool decodeBufferAndApplyPreset(uint8_t* buffer, struct Pfm3Preset* params);
 
@@ -51,6 +53,8 @@ private:
     uint8_t* arpeggiatorPartOfThePreset_;
     Timbre* timbre_;
     char presetName_[13];
+    uint32_t lastPatchMagic_;
+    bool lastPatchMagicValid_;
 };
 
 #endif /* PATCHBANK_H_ */

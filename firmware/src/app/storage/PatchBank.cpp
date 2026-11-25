@@ -25,6 +25,8 @@ PatchBank::PatchBank() {
     numberOfFilesMax_ = NUMBEROFPREENFMBANKS;
     myFiles_ = preenFMBankAlloc;
     timbre_ = nullptr;
+    lastPatchMagic_ = 0;
+    lastPatchMagicValid_ = false;
 }
 
 PatchBank::~PatchBank() {
@@ -92,19 +94,37 @@ bool PatchBank::loadPatch(const struct PFM3File* bank, int patchNumber, Timbre* 
     int result = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE, (void*)storageBuffer, ALIGNED_PATCH_SIZE);
 
     if (result == ALIGNED_PATCH_SIZE) {
-        uint32_t magic = *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
-        return timbre->loadStorageBlob((const uint8_t*)storageBuffer, ALIGNED_PATCH_SIZE - 5, magic);
+        lastPatchMagic_ = *(uint32_t*)(&storageBuffer[ALIGNED_PATCH_SIZE - 5]);
+        lastPatchMagicValid_ = true;
+        return timbre->loadStorageBlob((const uint8_t*)storageBuffer, ALIGNED_PATCH_SIZE - 5, lastPatchMagic_);
     }
+    lastPatchMagicValid_ = false;
     return false;
 }
 
-const char* PatchBank::loadPatchName(const struct PFM3File* bank, int patchNumber) {
-
+bool PatchBank::loadPatchMagic(const struct PFM3File* bank, int patchNumber, uint32_t& magic) {
     const char* fullBankName = getFullName(bank->name);
-    uint32_t version;
-    load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE + ALIGNED_PATCH_SIZE - 5, (void*)&version, 4);
+    magic = 0;
+    int result = load(fullBankName, patchNumber * ALIGNED_PATCH_SIZE + ALIGNED_PATCH_SIZE - 5, (void*)&magic, 4);
+    if (result != 4) {
+        magic = 0;
+        return false;
+    }
+    return true;
+}
 
-    int namePosition = timbre_ != nullptr ? timbre_->getStorageNameOffset(version) : -1;
+bool PatchBank::getLastPatchMagic(uint32_t& magic) const {
+    if (!lastPatchMagicValid_) {
+        return false;
+    }
+    magic = lastPatchMagic_;
+    return true;
+}
+
+const char* PatchBank::loadPatchName(const struct PFM3File* bank, int patchNumber, uint32_t magic) {
+    const char* fullBankName = getFullName(bank->name);
+
+    int namePosition = timbre_ != nullptr ? timbre_->getStorageNameOffset(magic) : -1;
     if (namePosition < 0) {
         presetName_[0] = 0;
         return presetName_;
@@ -113,7 +133,7 @@ const char* PatchBank::loadPatchName(const struct PFM3File* bank, int patchNumbe
     load(fullBankName, ALIGNED_PATCH_SIZE * patchNumber + namePosition, (void*)presetName_, 12);
     presetName_[12] = 0;
     if (presetName_[0] == 0) {
-        const char* fallback = timbre_->getStorageDefaultName(version);
+        const char* fallback = timbre_->getStorageDefaultName(magic);
         for (int n = 0; n < 12 && fallback[n] != 0; n++) {
             presetName_[n] = fallback[n];
         }
