@@ -42,6 +42,7 @@ public:
     void drawAlgorithm() override;
     void displayEditorTitle() override;
     void printPageHeader() override;
+    void preparePage() override;
     void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
     EditorSelectorKind selectorKind(int button) const override;
     void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
@@ -64,9 +65,7 @@ private:
     void applyProgramChange();
 
     uint8_t valueChangedCounter_[6];
-    uint8_t operatorChangedCounter_[6];
     uint8_t feedbackChangedCounter_;
-    uint8_t highlightedOperator_[6];
     uint8_t feedbackSource_;
     uint8_t feedbackDest_;
     uint8_t copyOperator_[21];

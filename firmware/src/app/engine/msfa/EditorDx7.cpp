@@ -247,8 +247,6 @@ EditorDx7::EditorDx7() {
     feedbackDest_ = 0;
     for (int i = 0; i < 6; i++) {
         valueChangedCounter_[i] = 0;
-        operatorChangedCounter_[i] = 0;
-        highlightedOperator_[i] = 0;
     }
 
     theme_.pageLabelColor = COLOR_WHITE;
@@ -300,6 +298,13 @@ void EditorDx7::printPageHeader() {
         tft_->print("Op ");
         tft_->print(operatorNumber_ + 1);
         tft_->print(" ");
+    }
+}
+
+void EditorDx7::preparePage() {
+    if (synthState_->fullState_.mainPage == 1) {
+        tft_->clearAlgoFG();
+        tft_->highlightOperator(operatorNumber_);
     }
 }
 
@@ -438,6 +443,7 @@ void EditorDx7::encoderTurned(int encoder, int ticks) {
 void EditorDx7::newEngineParamValue(int& refreshStatus, int timbre, int paramId, int context, float oldValue, float newValue) {
     (void)refreshStatus;
     (void)timbre;
+    (void)context;
     (void)oldValue;
 
     struct FullState* fullState = &synthState_->fullState_;
@@ -468,10 +474,6 @@ void EditorDx7::newEngineParamValue(int& refreshStatus, int timbre, int paramId,
             feedbackSource_ = source;
             feedbackDest_ = dest;
         }
-    } else if ((dx7Params[paramId].kind == DX7_KIND_OPERATOR || dx7Params[paramId].kind == DX7_KIND_OP_ENABLED) && slotPosition >= 0) {
-        tft_->highlightOperator(context);
-        operatorChangedCounter_[slotPosition] = 4;
-        highlightedOperator_[slotPosition] = context;
     }
 
     if (paramId >= DX7_EG_RATE_1 && paramId <= DX7_EG_LEVEL_4) {
@@ -587,12 +589,6 @@ void EditorDx7::slowTick() {
             if (valueChangedCounter_[e] == 0 && synthState_->fullState_.mainPage >= 0) {
                 tft_->setCharBackgroundColor(COLOR_BLACK);
                 displayParamValue(e, COLOR_WHITE);
-            }
-        }
-        if (operatorChangedCounter_[e] > 0) {
-            operatorChangedCounter_[e]--;
-            if (operatorChangedCounter_[e] == 0) {
-                tft_->eraseHighlightOperator(highlightedOperator_[e]);
             }
         }
     }
