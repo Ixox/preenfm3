@@ -26,8 +26,8 @@ public:
     const char* getEngineName() const override;
     const struct EditorMenu* getEngineMenu(int page) const override;
     int getCommonPage(int page) const override;
-    void drawAlgorithm() override;
     void displayEditorTitle() override;
+    void drawAlgorithm() override;
     void drawEditorButton(int button, const struct EditorMenu* editMenu, const struct EditorPageButton* page) override;
     void printParameterName(int button, const EditorSlot& slot, const struct EditorMenu* editMenu,
                             const struct EditorPageButton* page) override;
@@ -41,6 +41,8 @@ public:
 private:
     int currentTimbre() const;
     Timbre* timbre();
+
+    uint8_t algoColorPhase_ = 0;
 };
 
 #endif

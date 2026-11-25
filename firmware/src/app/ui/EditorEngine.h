@@ -30,17 +30,22 @@ class ScreenEditor;
 
 // Per-engine UI colours. Defaults reproduce the historic PFM3 look.
 struct EditorTheme {
-    TFT_COLOR pageLabelColor = COLOR_CYAN;
-    TFT_COLOR pageLabelBackground = COLOR_BLACK;
-    TFT_COLOR buttonBackground = COLOR_DARK_BLUE;
+    TFT_COLOR pageLabelColor = COLOR_CYAN_LIGHT;
+    TFT_COLOR pageLabelBackground = COLOR_NONE;
+    TFT_COLOR buttonBackground = COLOR_BLUE_DARK;
     TFT_COLOR buttonText = COLOR_WHITE;
     TFT_COLOR buttonTextInactive = COLOR_GRAY;
     TFT_COLOR buttonIndicatorActive = COLOR_WHITE;
     TFT_COLOR buttonIndicatorInactive = COLOR_GRAY;
     bool buttonSelectorFilled = true;
-    TFT_COLOR paramNameColor = COLOR_MEDIUM_GRAY;
+    TFT_COLOR paramNameColor = COLOR_GRAY_MEDIUM;
     TFT_COLOR paramValueColor = COLOR_WHITE;
     TFT_COLOR paramValueChangedColor = COLOR_YELLOW;
+    TFT_COLOR headerBackground = COLOR_BLUE_DARK;
+    TFT_COLOR headerInstrumentColor = COLOR_YELLOW;
+    TFT_COLOR headerPresetName = COLOR_WHITE;
+    TFT_COLOR headerBorderBottom = COLOR_NONE;
+    TFT_COLOR backgroundColor = COLOR_BLACK;
 };
 
 enum CommonPage { COMMON_PAGE_NONE = -1, COMMON_PAGE_ARP_FX = 0, COMMON_PAGE_COUNT };

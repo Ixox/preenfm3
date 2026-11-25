@@ -73,12 +73,12 @@ void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
     case 20:
         tft_->pauseRefresh();
         tft_->clear();
-        tft_->fillArea(0, 0, 240, 21, COLOR_DARK_RED);
+        tft_->fillArea(0, 0, 240, 21, COLOR_RED_DARK);
         tft_->setCursorInPixel(2, 2);
-        tft_->print("M E N U", COLOR_YELLOW, COLOR_DARK_RED);
+        tft_->print("M E N U", COLOR_YELLOW, COLOR_RED_DARK);
 
         tft_->setCharBackgroundColor(COLOR_BLACK);
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursorInPixel(240 - 7 * PFM3_FIRMWARE_VERSION_STRLEN, 25);
         tft_->printSmallChars(PFM3_FIRMWARE_VERSION);
 
@@ -101,29 +101,29 @@ void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
         case MENUTYPE_WITHSUBMENU:
             if (button < synthState_->fullState_.currentMenuItem->maxValue) {
                 const char* name = MenuItemUtil::getMenuItem(synthState_->fullState_.currentMenuItem->subMenu[button])->name;
-                tft_->drawButton(name, 270, 29, button, 0, 1, COLOR_DARK_RED);
+                tft_->drawButton(name, 270, 29, button, 0, 1, COLOR_RED_DARK);
                 return;
             }
             break;
         case MENUTYPE_ENTERNAME:
             switch (button) {
             case 0:
-                tft_->drawButton("Save", 270, 29, button, 0, 1, COLOR_DARK_RED);
+                tft_->drawButton("Save", 270, 29, button, 0, 1, COLOR_RED_DARK);
                 return;
             case 1:
-                tft_->drawSimpleButton("' '", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+                tft_->drawSimpleButton("' '", 270, 29, button, COLOR_RED, COLOR_RED_DARK);
                 return;
             case 2:
-                tft_->drawSimpleButton("'0'", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+                tft_->drawSimpleButton("'0'", 270, 29, button, COLOR_RED, COLOR_RED_DARK);
                 return;
             case 3:
-                tft_->drawSimpleButton("'A'", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+                tft_->drawSimpleButton("'A'", 270, 29, button, COLOR_RED, COLOR_RED_DARK);
                 return;
             case 4:
-                tft_->drawSimpleButton("'a'", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+                tft_->drawSimpleButton("'a'", 270, 29, button, COLOR_RED, COLOR_RED_DARK);
                 return;
             case 5:
-                tft_->drawSimpleButton(">", 270, 29, button, COLOR_GRAY, COLOR_DARK_RED);
+                tft_->drawSimpleButton(">", 270, 29, button, COLOR_GRAY, COLOR_RED_DARK);
                 return;
             }
             // Then draw Load button 0 => so no break
@@ -131,30 +131,30 @@ void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
         case MENUTYPE_FILESELECT_SAVE:
             if (button == 0) {
                 tft_->drawButton(synthState_->fullState_.currentMenuItem->menuType == MENUTYPE_FILESELECT_LOAD ? "Load" : "Select", 270, 29,
-                                 button, 0, 1, COLOR_DARK_RED);
+                                 button, 0, 1, COLOR_RED_DARK);
                 return;
             }
             break;
         case MENUTYPE_RANDOMIZER:
             switch (button) {
             case 0:
-                tft_->drawButton("Apply", 270, 29, button, 0, 1, COLOR_DARK_RED);
+                tft_->drawButton("Apply", 270, 29, button, 0, 1, COLOR_RED_DARK);
                 return;
             case 1:
-                tft_->drawSimpleButton("Rand", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+                tft_->drawSimpleButton("Rand", 270, 29, button, COLOR_RED, COLOR_RED_DARK);
                 return;
             }
             break;
         case MENUTYPE_SETTINGS:
             if (button == 0) {
-                tft_->drawButton("Save", 270, 29, button, 0, 1, COLOR_DARK_RED);
+                tft_->drawButton("Save", 270, 29, button, 0, 1, COLOR_RED_DARK);
                 return;
             }
             break;
         case MENUTYPE_CONFIRM:
             if (button == 0) {
                 // Default Empty button
-                tft_->drawSimpleButton("Yes", 270, 29, button, COLOR_YELLOW, COLOR_DARK_RED);
+                tft_->drawSimpleButton("Yes", 270, 29, button, COLOR_YELLOW, COLOR_RED_DARK);
                 return;
             }
             break;
@@ -173,17 +173,17 @@ void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
                 const char* name =
                     MenuItemUtil::getMenuItem(synthState_->fullState_.currentMenuItem->subMenu[synthState_->fullState_.previousChoice])
                         ->name;
-                tft_->drawSimpleBorderButton(name, 270, 29, button, COLOR_LIGHT_GRAY, COLOR_DARK_RED);
+                tft_->drawSimpleBorderButton(name, 270, 29, button, COLOR_GRAY_LIGHT, COLOR_RED_DARK);
                 break;
             }
             default:
                 // Default Empty button
-                tft_->drawSimpleButton("", 270, 29, button, COLOR_RED, COLOR_DARK_RED);
+                tft_->drawSimpleButton("", 270, 29, button, COLOR_RED, COLOR_RED_DARK);
                 break;
             }
         } else {
             // Default Empty button
-            tft_->drawButton("", 270, 29, button, 0, 1, COLOR_DARK_RED);
+            tft_->drawButton("", 270, 29, button, 0, 1, COLOR_RED_DARK);
         }
 
         break;
@@ -878,32 +878,32 @@ void ScreenMenu::newMenuState(FullState* fullState) {
         break;
 
     case MENU_DEFAULT_MIXER_LOAD:
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursor(0, 12);
         tft_->print("Load default Mixer");
         break;
     case MENU_DEFAULT_MIXER_SAVE:
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursor(0, 12);
         tft_->print("Save default Mixer");
         break;
     case MENU_DEFAULT_MIXER_DELETE:
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursor(0, 12);
         tft_->print("Clear default Mixer");
         break;
     case MENU_DEFAULT_SEQUENCER_LOAD:
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursor(0, 12);
         tft_->print("Load default Sequencer");
         break;
     case MENU_DEFAULT_SEQUENCER_SAVE:
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursor(0, 12);
         tft_->print("Save default Sequencer");
         break;
     case MENU_DEFAULT_SEQUENCER_DELETE:
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCursor(0, 12);
         tft_->print("Clear deflt Sequencer");
         break;
@@ -1261,7 +1261,7 @@ void ScreenMenu::displayPatchEngine(uint32_t magic, bool valid) {
     }
 
     tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_DARK_RED);
+    tft_->setCharColor(COLOR_RED_DARK);
     tft_->setCursor(4, 10);
     const PresetMagicInfo* info = presetMagicInfo(magic);
     if (info != nullptr) {

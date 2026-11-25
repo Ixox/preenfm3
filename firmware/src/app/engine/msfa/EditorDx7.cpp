@@ -249,15 +249,23 @@ EditorDx7::EditorDx7() {
         valueChangedCounter_[i] = 0;
     }
 
-    theme_.pageLabelColor = COLOR_WHITE;
-    theme_.buttonBackground = COLOR_LIGHT_GRAY;
+    theme_.headerBackground = COLOR_GRAY_DARK;
+    theme_.headerInstrumentColor = COLOR_WHITE;
+    theme_.headerPresetName = COLOR_WHITE;
+
+    theme_.pageLabelBackground = COLOR_GRAY_LIGHT;
+    theme_.pageLabelColor = COLOR_BLACK;
+
+    theme_.buttonBackground = COLOR_GRAY_LIGHT;
     theme_.buttonText = COLOR_BLACK;
-    theme_.buttonTextInactive = COLOR_DARK_GRAY;
+    theme_.buttonTextInactive = COLOR_GRAY_DARK;
     theme_.buttonIndicatorActive = COLOR_WHITE;
-    theme_.buttonIndicatorInactive = COLOR_BLACK;
-    theme_.paramNameColor = COLOR_LIGHT_GRAY;
-    theme_.paramValueColor = COLOR_RED;
+    theme_.buttonIndicatorInactive = COLOR_GRAY_MEDIUM;
+
+    theme_.paramNameColor = COLOR_GRAY_LIGHT;
+    theme_.paramValueColor = COLOR_WHITE;
     theme_.paramValueChangedColor = COLOR_RED;
+
     theme_.buttonSelectorFilled = false;
 }
 
@@ -351,7 +359,7 @@ void EditorDx7::displayParamValue(int encoder, TFT_COLOR color) {
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(color);
 
     if (slot.id != DX7_NONE) {
@@ -390,7 +398,7 @@ void EditorDx7::printParameterName(int button, const EditorSlot& slot, const str
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
     if (slot.id != DX7_NONE) {
@@ -485,7 +493,7 @@ void EditorDx7::newEngineParamValue(int& refreshStatus, int timbre, int paramId,
 
     if (slotPosition >= 0) {
         valueChangedCounter_[slotPosition] = 4;
-        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharBackgroundColor(getTheme().backgroundColor);
         tft_->setCharColor(COLOR_YELLOW);
         displayParamValue(slotPosition, COLOR_YELLOW);
     }
@@ -587,7 +595,7 @@ void EditorDx7::slowTick() {
         if (valueChangedCounter_[e] > 0) {
             valueChangedCounter_[e]--;
             if (valueChangedCounter_[e] == 0 && synthState_->fullState_.mainPage >= 0) {
-                tft_->setCharBackgroundColor(COLOR_BLACK);
+                tft_->setCharBackgroundColor(getTheme().backgroundColor);
                 displayParamValue(e, COLOR_WHITE);
             }
         }

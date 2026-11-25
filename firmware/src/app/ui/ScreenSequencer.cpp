@@ -60,16 +60,16 @@ void ScreenSequencer::refreshSequencerByStep(int instrument, int& refreshStatus,
     case 20:
         tft_->pauseRefresh();
         tft_->clear();
-        tft_->fillArea(0, 0, 240, 21, COLOR_DARK_YELLOW);
+        tft_->fillArea(0, 0, 240, 21, COLOR_YELLOW_DARK);
         tft_->setCursorInPixel(2, 2);
-        tft_->print("SEQ ", COLOR_YELLOW, COLOR_DARK_YELLOW);
-        tft_->print(sequencer_->getSequenceName(), COLOR_WHITE, COLOR_DARK_YELLOW);
+        tft_->print("SEQ ", COLOR_YELLOW, COLOR_YELLOW_DARK);
+        tft_->print(sequencer_->getSequenceName(), COLOR_WHITE, COLOR_YELLOW_DARK);
 
-        tft_->fillArea(0, Y_START_SEQ, 240, 2, COLOR_DARK_YELLOW);
-        tft_->fillArea(0, Y_START_SEQ + 168, 240, 2, COLOR_DARK_YELLOW);
+        tft_->fillArea(0, Y_START_SEQ, 240, 2, COLOR_YELLOW_DARK);
+        tft_->fillArea(0, Y_START_SEQ + 168, 240, 2, COLOR_YELLOW_DARK);
 
-        tft_->fillArea(0, Y_START_SEQ + 2, 2, 166, COLOR_DARK_YELLOW);
-        tft_->fillArea(238, Y_START_SEQ + 2, 2, 166, COLOR_DARK_YELLOW);
+        tft_->fillArea(0, Y_START_SEQ + 2, 2, 166, COLOR_YELLOW_DARK);
+        tft_->fillArea(238, Y_START_SEQ + 2, 2, 166, COLOR_YELLOW_DARK);
 
         break;
     case 19:
@@ -117,9 +117,9 @@ void ScreenSequencer::refreshSequencerByStep(int instrument, int& refreshStatus,
 
         for (int i = 0; i < NUMBER_OF_TIMBRES; i++) {
             tft_->setCursorInPixel(7, Y_START_SEQ + 9 + i * 27);
-            tft_->setCharColor(sequencer_->isSeqActivated(i) ? COLOR_RED : COLOR_DARK_GRAY);
+            tft_->setCharColor(sequencer_->isSeqActivated(i) ? COLOR_RED : COLOR_GRAY_DARK);
             tft_->printSmallChar((char)127);
-            tft_->setCharColor(sequencer_->isStepActivated(i) ? COLOR_RED : COLOR_DARK_GRAY);
+            tft_->setCharColor(sequencer_->isStepActivated(i) ? COLOR_RED : COLOR_GRAY_DARK);
             tft_->printSmallChar((char)127);
         }
         break;
@@ -135,7 +135,7 @@ void ScreenSequencer::refreshSequencerByStep(int instrument, int& refreshStatus,
         if (inst == instrument) {
             tft_->setCharColor(COLOR_YELLOW);
         } else {
-            tft_->setCharColor(COLOR_LIGHT_GRAY);
+            tft_->setCharColor(COLOR_GRAY_LIGHT);
         }
         tft_->setCursorInPixel(26, Y_START_SEQ + 7 + inst * 27);
         tft_->print(inst + 1);
@@ -177,44 +177,44 @@ void ScreenSequencer::refreshSequencerByStep(int instrument, int& refreshStatus,
         break;
     case 6:
         if (seqMode_ == SEQ_MODE_NORMAL) {
-            tft_->drawSimpleButton("\x90", 270, 29, 0, COLOR_GREEN, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("\x90", 270, 29, 0, COLOR_GREEN, COLOR_YELLOW_DARK);
         } else {
-            tft_->drawSimpleButton("1", 270, 29, 0, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("1", 270, 29, 0, COLOR_WHITE, COLOR_YELLOW_DARK);
         }
         break;
     case 5:
         if (seqMode_ == SEQ_MODE_NORMAL) {
-            tft_->drawSimpleButton("\x91", 270, 29, 1, COLOR_RED, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("\x91", 270, 29, 1, COLOR_RED, COLOR_YELLOW_DARK);
         } else {
-            tft_->drawSimpleButton("2", 270, 29, 1, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("2", 270, 29, 1, COLOR_WHITE, COLOR_YELLOW_DARK);
         }
         break;
     case 4:
         if (seqMode_ == SEQ_MODE_NORMAL) {
-            tft_->drawSimpleButton("Step>", 270, 29, 2, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("Step>", 270, 29, 2, COLOR_WHITE, COLOR_YELLOW_DARK);
         } else {
-            tft_->drawSimpleButton("3", 270, 29, 2, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("3", 270, 29, 2, COLOR_WHITE, COLOR_YELLOW_DARK);
         }
         break;
     case 3:
         if (seqMode_ == SEQ_MODE_NORMAL) {
-            tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_YELLOW_DARK);
         } else {
-            tft_->drawSimpleButton("4", 270, 29, 3, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("4", 270, 29, 3, COLOR_WHITE, COLOR_YELLOW_DARK);
         }
         break;
     case 2:
         if (seqMode_ == SEQ_MODE_NORMAL) {
-            tft_->drawSimpleButton(" ", 270, 29, 4, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton(" ", 270, 29, 4, COLOR_WHITE, COLOR_YELLOW_DARK);
         } else {
-            tft_->drawSimpleButton("5", 270, 29, 4, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("5", 270, 29, 4, COLOR_WHITE, COLOR_YELLOW_DARK);
         }
         break;
     case 1:
         if (seqMode_ == SEQ_MODE_NORMAL) {
             refreshPlayButton();
         } else {
-            tft_->drawSimpleButton("6", 270, 29, 5, COLOR_WHITE, COLOR_DARK_YELLOW);
+            tft_->drawSimpleButton("6", 270, 29, 5, COLOR_WHITE, COLOR_YELLOW_DARK);
         }
         break;
     }
@@ -258,19 +258,19 @@ void ScreenSequencer::refreshStepSequencerByStep(int instrument, int& refreshSta
 
         // Let's store current instrument here (when it's displayed)
         stepCurrentInstrument_ = instrument;
-        tft_->setCharColor(COLOR_CYAN);
+        tft_->setCharColor(COLOR_CYAN_LIGHT);
         int seqNumber = sequencer_->getInstrumentStepSeq(instrument) + 1;
         tft_->setCursorInPixel(200 + (seqNumber < 10 ? TFT_BIG_CHAR_WIDTH : 0), Y_START_SEQ + 10);
         tft_->print(seqNumber);
 
         stepRedrawSequenceIndex_ = 0;
 
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCursorInPixel(10, Y_START_SEQ + 174);
         tft_->print("Note:");
 
-        tft_->setCharColor(COLOR_LIGHT_GRAY);
+        tft_->setCharColor(COLOR_GRAY_LIGHT);
         tft_->setCharBackgroundColor(COLOR_BLACK);
         tft_->setCursorInPixel(132, Y_START_SEQ + 174);
         tft_->print("Velo:");
@@ -305,7 +305,7 @@ void ScreenSequencer::refreshStepSequencerByStep(int instrument, int& refreshSta
             int octave = (midiNote / 12) - 1;
             int noteIndex = midiNote % 12;
 
-            tft_->setCharColor(COLOR_LIGHT_GRAY);
+            tft_->setCharColor(COLOR_GRAY_LIGHT);
             tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCursorInPixel(10 + 66, Y_START_SEQ + 174);
             tft_->print(noteNames[noteIndex]);
@@ -318,7 +318,7 @@ void ScreenSequencer::refreshStepSequencerByStep(int instrument, int& refreshSta
         tft_->fillArea(132 + 66, Y_START_SEQ + 174, 33, 20, COLOR_BLACK);
         int velocity = (int)((char*)&stepCurrentData_)[2];
         if (velocity > 0) {
-            tft_->setCharColor(COLOR_LIGHT_GRAY);
+            tft_->setCharColor(COLOR_GRAY_LIGHT);
             tft_->setCharBackgroundColor(COLOR_BLACK);
             tft_->setCursorInPixel(132 + 66, Y_START_SEQ + 174);
             tft_->print(velocity);
@@ -326,19 +326,19 @@ void ScreenSequencer::refreshStepSequencerByStep(int instrument, int& refreshSta
         break;
     }
     case 6:
-        tft_->drawSimpleButton("_", 270, 29, 0, COLOR_WHITE, COLOR_DARK_YELLOW);
+        tft_->drawSimpleButton("_", 270, 29, 0, COLOR_WHITE, COLOR_YELLOW_DARK);
         break;
     case 5:
-        tft_->drawSimpleBorderButton("Note", 270, 29, 1, COLOR_WHITE, COLOR_DARK_YELLOW);
+        tft_->drawSimpleBorderButton("Note", 270, 29, 1, COLOR_WHITE, COLOR_YELLOW_DARK);
         break;
     case 4:
-        tft_->drawSimpleButton("<Seq", 270, 29, 2, COLOR_WHITE, COLOR_DARK_YELLOW);
+        tft_->drawSimpleButton("<Seq", 270, 29, 2, COLOR_WHITE, COLOR_YELLOW_DARK);
         break;
     case 3:
-        tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_DARK_YELLOW);
+        tft_->drawSimpleButton("Clear", 270, 29, 3, COLOR_ORANGE, COLOR_YELLOW_DARK);
         break;
     case 2:
-        tft_->drawSimpleBorderButton("Velo", 270, 29, 4, COLOR_WHITE, COLOR_DARK_YELLOW);
+        tft_->drawSimpleBorderButton("Velo", 270, 29, 4, COLOR_WHITE, COLOR_YELLOW_DARK);
         break;
     case 1:
         refreshPlayButton();
@@ -352,8 +352,8 @@ void ScreenSequencer::refreshStepSequencerByStep(int instrument, int& refreshSta
 }
 
 void ScreenSequencer::refreshPlayButton() {
-    tft_->drawSimpleButton("\x93", 270, 29, 5, sequencer_->isRunning() ? COLOR_BLACK : COLOR_LIGHT_GRAY,
-                           sequencer_->isRunning() ? COLOR_YELLOW : COLOR_DARK_YELLOW);
+    tft_->drawSimpleButton("\x93", 270, 29, 5, sequencer_->isRunning() ? COLOR_BLACK : COLOR_GRAY_LIGHT,
+                           sequencer_->isRunning() ? COLOR_YELLOW : COLOR_YELLOW_DARK);
 }
 
 // stepRedrawSequenceIndex must have been initialized before the first call
@@ -380,7 +380,7 @@ bool ScreenSequencer::refreshSequence(int instrument) {
 
             // Draw block
             if ((startBlock / 64) < numberOfBars) {
-                tft_->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN : COLOR_BLUE);
+                tft_->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN_LIGHT : COLOR_BLUE);
             } else {
                 tft_->fillArea(x, y - 10, size, 10, COLOR_GRAY);
             }
@@ -402,7 +402,7 @@ void ScreenSequencer::newNoteInSequence(int instrument, int start, int end, bool
     int numberOfBars = sequencer_->getNumberOfBars(instrument);
 
     if ((start / 64) < numberOfBars) {
-        tft_->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN : COLOR_BLUE);
+        tft_->fillArea(x, y - 10, size, 10, moreThanOneNote ? COLOR_CYAN_LIGHT : COLOR_BLUE);
     } else {
         tft_->fillArea(x, y - 10, size, 10, COLOR_GRAY);
     }
@@ -442,15 +442,15 @@ void ScreenSequencer::displayBeat() {
             tft_->setCharColor(COLOR_RED);
             measure = precount / 1024;
             beat = (precount - measure * 1024) / 256;
-            tft_->fillArea(0, 62, 240, 4, COLOR_DARK_GRAY);
+            tft_->fillArea(0, 62, 240, 4, COLOR_GRAY_DARK);
             tft_->fillArea(180 - beat * 60, 62, 60, 4, COLOR_RED);
         } else {
             measure = sequencer_->getMeasure();
             beat = sequencer_->getBeat();
 
-            tft_->fillArea(0, 62, 240, 4, COLOR_DARK_GRAY);
+            tft_->fillArea(0, 62, 240, 4, COLOR_GRAY_DARK);
             tft_->fillArea((beat - 1) * 60, 62, 60, 4, COLOR_BLUE);
-            tft_->fillArea(measure * 60, 62, 20, 4, COLOR_CYAN);
+            tft_->fillArea(measure * 60, 62, 20, 4, COLOR_CYAN_LIGHT);
 
             tft_->setCharBackgroundColor(COLOR_BLACK);
             if (sequencer_->isRunning()) {

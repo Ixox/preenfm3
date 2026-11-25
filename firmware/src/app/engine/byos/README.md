@@ -102,9 +102,11 @@ The engine page uses the shared `EditorPageButton`/`EditorMenu`/
 The engine parameters are read through `Timbre::getPatchMemory()` cast to
 `ByosParams*`.
 
-Where PFM3/DX7 draw their algorithm, BYOS leaves the 80×100 box empty.
-`EditorByos::drawAlgorithm()` uses it as a placeholder and prints
-`Your` / `Synth` / `Here` in three big-font lines.
+Where PFM3/DX7 draw their algorithm, `EditorByos::drawAlgorithm()` fills the
+80×100 box with a placeholder: `Your` / `Synth` / `Here` in three big-font
+lines, centred in the box. Each word cycles through `COLOR_YELLOW`,
+`COLOR_YELLOW_LIGHT` and `COLOR_YELLOW_DARK`, offset per word so the colours
+roll. `slowTick()` advances the phase (stored in `algoColorPhase_`) and repaints.
 
 Arp/Fx are not engine-specific: the arpeggiator lives in `Timbre`, FX1 is
 applied by `Voice::fxAfterBlock()` (called from `ByosEngine::voicesNextBlock`)

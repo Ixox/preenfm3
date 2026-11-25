@@ -175,7 +175,7 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
         switch (refreshStatus) {
         case 20:
             tft_->pauseRefresh();
-            tft_->clear();
+            tft_->clear(engineEditor->getTheme().backgroundColor);
             displayPreset();
             tft_->oscilloForceNextDisplay();
             break;
@@ -214,19 +214,24 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
         switch (refreshStatus) {
         case 21:
             tft_->pauseRefresh();
-            tft_->clear();
+            tft_->clear(engineEditor->getTheme().backgroundColor);
             displayPreset();
             tft_->oscilloForceNextDisplay();
             engineEditor->drawAlgorithm();
             break;
         case 20: {
             const EditorTheme& theme = editor->getTheme();
+            const EditorTheme& engineTheme = engineEditor->getTheme();
+            const TFT_COLOR background = engineTheme.backgroundColor;
+            const TFT_COLOR labelBackground = engineTheme.pageLabelBackground;
+            const int pageLabelY = LINE_ROW_NAME * TFT_BIG_CHAR_HEIGHT - 8;
+            const TFT_COLOR labelColor = labelBackground != COLOR_NONE ? labelBackground : background;
             tft_->pauseRefresh();
-            tft_->fillArea(0, 40, 240, 120, COLOR_BLACK);
-            tft_->fillArea(0, 270, 240, 30, COLOR_BLACK);
-            tft_->fillArea(0, LINE_ROW_NAME * TFT_BIG_CHAR_HEIGHT, 240, TFT_BIG_CHAR_HEIGHT, theme.pageLabelBackground);
-            tft_->setCursor(0, 2);
-            tft_->setCharBackgroundColor(theme.pageLabelBackground);
+            tft_->fillArea(0, 40, 240, 120, background);
+            tft_->fillArea(0, 270, 240, 30, background);
+            tft_->fillArea(0, pageLabelY - 1, 240, TFT_BIG_CHAR_HEIGHT, labelColor);
+            tft_->setCursorInPixel(0, pageLabelY);
+            tft_->setCharBackgroundColor(labelColor);
             tft_->setCharColor(theme.pageLabelColor);
             editor->printPageHeader();
             tft_->print(page->states[editor->getButtonState(page)]->stateLabel);
@@ -273,8 +278,14 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
 
 void ScreenEditor::slowTick() {
     EditorEngine* editor = activeEditor();
+    EditorEngine* engineEditor = editorForEngine();
     if (editor != nullptr) {
         editor->slowTick();
+    }
+    // Also tick the engine editor when a shared page (e.g. Arp/Fx) is active,
+    // or on the engine main page (mainPage == -1) where no page editor exists.
+    if (engineEditor != nullptr && engineEditor != editor) {
+        engineEditor->slowTick();
     }
     displayLevelMeter();
 }
@@ -305,11 +316,15 @@ struct Pfm3Preset* ScreenEditor::pfm3Preset() const {
 }
 
 void ScreenEditor::displayPreset() {
+    const EditorTheme& theme = editorForEngine()->getTheme();
+    TFT_COLOR background = theme.headerBackground;
+    TFT_COLOR instrumentColor = theme.headerInstrumentColor;
+    TFT_COLOR presetNameColor = theme.headerPresetName;
 
-    tft_->fillArea(0, 0, 240, 21, COLOR_DARK_BLUE);
+    tft_->fillArea(0, 0, 240, 21, background);
 
-    tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
-    tft_->setCharColor(COLOR_YELLOW);
+    tft_->setCharBackgroundColor(background);
+    tft_->setCharColor(instrumentColor);
     tft_->setCursorInPixel(2, 2);
     if (synthState_->getIsPlayingNote()) {
         tft_->print('~');
@@ -318,13 +333,16 @@ void ScreenEditor::displayPreset() {
     }
     tft_->print((char)('0' + currentTimbre_ + 1));
     tft_->print(' ');
-    tft_->setCharColor(COLOR_WHITE);
+    tft_->setCharColor(presetNameColor);
     tft_->print(pfm3Preset()->presetName);
-    tft_->setCharColor(COLOR_YELLOW);
+    tft_->setCharColor(instrumentColor);
     if (presetModifed_[currentTimbre_]) {
         tft_->print('*');
     }
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    if (theme.headerBorderBottom != COLOR_NONE) {
+        tft_->fillArea(0, 21, 240, 1, theme.headerBorderBottom);
+    }
+    tft_->setCharBackgroundColor(theme.backgroundColor);
 }
 
 void ScreenEditor::resetAllPresetModified() {

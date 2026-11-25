@@ -29,10 +29,9 @@
 
 const char* outDisplay[] = {"1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6"};
 const char* compDisplay[] = {"Off", "Glue", "Punch", "Tube", "Limit", "Drive", "Fuzz"};
-const char* engineDisplay[] = {SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3),
-                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DX7),
-                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS),
-                               SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DRUM909)};
+const char* engineDisplay[] = {
+    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_PFM3), SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DX7),
+    SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_BYOS), SynthEngineFactory::getEngineDisplayName(SYNTH_ENGINE_DRUM909)};
 const char* enableNames[] = {"Off", "On"};
 const char* levelMeterWhere[] = {"Off", "Mix", "All"};
 const char* scalaMapNames[] = {"Keybrd", "Continu"};
@@ -501,7 +500,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
         } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
             uint8_t numberOfVoice = *((int8_t*)valueP);
             if (numberOfVoice == 0) {
-                tft_->setCharColor(COLOR_DARK_GRAY);
+                tft_->setCharColor(COLOR_GRAY_DARK);
             }
         }
 
@@ -534,10 +533,10 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
     case 20:
         tft_->pauseRefresh();
         tft_->clear();
-        tft_->fillArea(0, 0, 240, 21, COLOR_DARK_GREEN);
+        tft_->fillArea(0, 0, 240, 21, COLOR_GREEN_DARK);
         tft_->setCursorInPixel(2, 2);
-        tft_->print("MIX ", COLOR_YELLOW, COLOR_DARK_GREEN);
-        tft_->print(synthState_->mixerState_.mixName_, COLOR_WHITE, COLOR_DARK_GREEN);
+        tft_->print("MIX ", COLOR_YELLOW, COLOR_GREEN_DARK);
+        tft_->print(synthState_->mixerState_.mixName_, COLOR_WHITE, COLOR_GREEN_DARK);
         break;
     case 19:
     case 18:
@@ -551,13 +550,13 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
         tft_->setCursorInPixel(2, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE);
         if (currentTimbre != (timbre)) {
             if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
-                tft_->setCharColor(COLOR_DARK_GRAY);
+                tft_->setCharColor(COLOR_GRAY_DARK);
             } else {
-                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                tft_->setCharColor(COLOR_GRAY_LIGHT);
             }
         } else {
             if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
-                tft_->setCharColor(COLOR_DARK_YELLOW);
+                tft_->setCharColor(COLOR_YELLOW_DARK);
             } else {
                 tft_->setCharColor(COLOR_YELLOW);
             }
@@ -570,7 +569,7 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
                 // If MPE instrument 1, limit chars to 10
                 tft_->print(synthState_->getTimbreName(timbre), 10);
                 tft_->setCursoraddXY(4, 4);
-                tft_->setCharColor(COLOR_LIGHT_GRAY);
+                tft_->setCharColor(COLOR_GRAY_LIGHT);
                 tft_->printSmallChars("MPE");
             } else {
                 tft_->print(synthState_->getTimbreName(timbre));
@@ -617,7 +616,7 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
                          synthState_->fullState_.mixerCurrentEdit == button
                              ? synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + button] + 1
                              : 0,
-                         COLOR_DARK_GREEN);
+                         COLOR_GREEN_DARK);
 
         break;
     }
@@ -630,7 +629,7 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
 }
 
 void ScreenMixer::refreshMixerRowGlobalOptions(int page, int row) {
-    tft_->setCharColor(COLOR_LIGHT_GRAY);
+    tft_->setCharColor(COLOR_GRAY_LIGHT);
 
     switch (page) {
     case 0:
@@ -740,6 +739,9 @@ void ScreenMixer::refreshMixerRowGlobalOptions(int page, int row) {
 }
 
 void ScreenMixer::newMixerValue(uint8_t mixerValue, uint8_t timbre, float oldValue, float newValue, int& refreshStatus) {
+    if (mixerValue == MIXER_VALUE_ENGINE && oldValue != newValue) {
+        synthState_->fullState_.mainPage = -1;
+    }
     tft_->setCharBackgroundColor(COLOR_BLACK);
     if (oldValue != newValue) {
         tft_->setCharColor(COLOR_YELLOW);

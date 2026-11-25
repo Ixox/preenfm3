@@ -174,6 +174,10 @@ static const struct EditorMenu drum909KitMenu = {
 // clang-format on
 
 EditorDrum909::EditorDrum909() {
+    theme_.headerBackground = COLOR_ORANGE;
+    theme_.headerInstrumentColor = COLOR_BLACK;
+    theme_.headerPresetName = COLOR_BLACK;
+
     theme_.pageLabelColor = COLOR_ORANGE;
     theme_.buttonBackground = COLOR_ORANGE;
     theme_.buttonText = COLOR_BLACK;
@@ -237,7 +241,7 @@ void EditorDrum909::printParameterName(int button, const EditorSlot& slot, const
     (void)page;
 
     uint8_t x = getEncoderX(button);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
@@ -263,7 +267,7 @@ void EditorDrum909::displayParamValue(int encoder, TFT_COLOR color) {
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(color);
 
     const x0x_param_t* desc = slot.kind == EditorSlotKind::Param ? drum909_param(slot.context, slot.id) : nullptr;

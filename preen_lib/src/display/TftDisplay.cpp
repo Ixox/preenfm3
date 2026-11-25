@@ -38,12 +38,13 @@
 // Round up to 32 bytes (uint8_t entries) so the next buffer is 32-byte aligned.
 #define TFT_FOREGROUND_SIZE (((TFT_FOREGROUND_ENTRIES + 31) / 32) * 32)
 
-#define TFT_BACKGROUND_ENTRIES (NUMBER_OF_TFT_COLORS * 20 * 11 + 160 * 100 + 80 * 100)
+#define TFT_BACKGROUND_ENTRIES (160 * 100 + 80 * 100)
 // Round up to 16 uint16_t entries so the next buffer starts on a 32-byte boundary.
 #define TFT_BACKGROUND_SIZE (((TFT_BACKGROUND_ENTRIES + 15) / 16) * 16)
 
 RAM_D1_SECTION uint8_t tftForeground[TFT_FOREGROUND_SIZE];
 RAM_D1_SECTION uint16_t tftBackground[TFT_BACKGROUND_SIZE];
+RAM_D1_SECTION uint8_t tftBgCharAlpha[20 * 11];
 RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 
 extern DMA2D_HandleTypeDef hdma2d;
@@ -97,23 +98,49 @@ TftDisplay::TftDisplay() {
 
     memset(tftMemory, 0, 240 * 320 * 2);
 
-    tftPalette[COLOR_BLACK] = reducedColor(0x0);
+    tftPalette[COLOR_BLACK] = reducedColor(0x000000);
     tftPalette[COLOR_WHITE] = reducedColor(0xffffff);
-    tftPalette[COLOR_BLUE] = reducedColor(0x6060ff);
-    tftPalette[COLOR_DARK_BLUE] = reducedColor(0x202060);
-    tftPalette[COLOR_YELLOW] = reducedColor(0xffff00);
-    tftPalette[COLOR_DARK_YELLOW] = reducedColor(0x504010);
-    tftPalette[COLOR_RED] = reducedColor(0xff4010);
-    tftPalette[COLOR_DARK_RED] = reducedColor(0x401000);
-    tftPalette[COLOR_GREEN] = reducedColor(0x40ff40);
-    tftPalette[COLOR_DARK_GREEN] = reducedColor(0x004000);
-    tftPalette[COLOR_LIGHT_GRAY] = reducedColor(0xb0b0b0);
-    tftPalette[COLOR_MEDIUM_GRAY] = reducedColor(0x909090);
+    tftPalette[COLOR_CREAM] = reducedColor(0xfff1c8);
+    tftPalette[COLOR_GRAY_DARK] = reducedColor(0x202020);
     tftPalette[COLOR_GRAY] = reducedColor(0x606060);
-    tftPalette[COLOR_DARK_GRAY] = reducedColor(0x303030);
-    tftPalette[COLOR_CYAN] = reducedColor(0x76dfef);
+    tftPalette[COLOR_GRAY_MEDIUM] = reducedColor(0x909090);
+    tftPalette[COLOR_GRAY_LIGHT] = reducedColor(0xb0b0b0);
+
+    tftPalette[COLOR_RED_DARK] = reducedColor(0x401000);
+    tftPalette[COLOR_RED] = reducedColor(0xff4010);
+    tftPalette[COLOR_RED_LIGHT] = reducedColor(0xff7070);
+    tftPalette[COLOR_BURNT_PEACH] = reducedColor(0xe07a5f);
+
+    tftPalette[COLOR_ORANGE_DARK] = reducedColor(0x804000);
     tftPalette[COLOR_ORANGE] = reducedColor(0xff7f00);
-    tftPalette[COLOR_LIGHT_GREEN] = reducedColor(0x70ff70);
+    tftPalette[COLOR_ORANGE_LIGHT] = reducedColor(0xffc080);
+    tftPalette[COLOR_APRICOT_CREAM] = reducedColor(0xf2cc8f);
+
+    tftPalette[COLOR_YELLOW_DARK] = reducedColor(0x504010);
+    tftPalette[COLOR_YELLOW] = reducedColor(0xffff00);
+    tftPalette[COLOR_YELLOW_LIGHT] = reducedColor(0xffffa0);
+
+    tftPalette[COLOR_GREEN_DARK] = reducedColor(0x004000);
+    tftPalette[COLOR_GREEN] = reducedColor(0x40ff40);
+    tftPalette[COLOR_GREEN_LIGHT] = reducedColor(0x70ff70);
+    tftPalette[COLOR_MUTED_TEAL] = reducedColor(0x81b29a);
+
+    tftPalette[COLOR_CYAN_DARK] = reducedColor(0x006060);
+    tftPalette[COLOR_CYAN] = reducedColor(0x00c0c0);
+    tftPalette[COLOR_CYAN_LIGHT] = reducedColor(0x76dfef);
+
+    tftPalette[COLOR_BLUE_VERY_DARK] = reducedColor(0x101040);
+    tftPalette[COLOR_BLUE_DARK] = reducedColor(0x202060);
+    tftPalette[COLOR_BLUE] = reducedColor(0x6060ff);
+    tftPalette[COLOR_BLUE_LIGHT] = reducedColor(0xa0c0ff);
+
+    tftPalette[COLOR_PURPLE_DARK] = reducedColor(0x400080);
+    tftPalette[COLOR_PURPLE] = reducedColor(0x9040ff);
+    tftPalette[COLOR_PURPLE_LIGHT] = reducedColor(0xc0a0ff);
+
+    tftPalette[COLOR_MAGENTA_DARK] = reducedColor(0x800060);
+    tftPalette[COLOR_MAGENTA] = reducedColor(0xff00c0);
+    tftPalette[COLOR_MAGENTA_LIGHT] = reducedColor(0xff80e0);
 
     for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
         tftPalette565[c] = convertTo565(tftPalette[c]);
@@ -221,13 +248,9 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
     // init Background
     int bgIndex = 0;
 
-    for (int c = 0; c < NUMBER_OF_TFT_COLORS; c++) {
-        bgColorChar_[c] = &tftBackground[bgIndex];
-        for (int i = 0; i < 20 * 11; i++) {
-            tftBackground[bgIndex + i] = tftPalette565[c];
-        }
-        bgIndex += 20 * 11;
-    }
+    // Shared A8 background tile for characters; the color comes from BGCOLR.
+    memset(tftBgCharAlpha, 0xFF, sizeof(tftBgCharAlpha));
+    bgCharAlpha_ = tftBgCharAlpha;
 
     // BG OScillo
     bgOscillo_ = &tftBackground[bgIndex];
@@ -435,13 +458,15 @@ void TftDisplay::processActionStep() {
 
             WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[currentAction_.param4]);
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
+            MODIFY_REG(hdma2d.Instance->BGPFCCR, DMA2D_BGPFCCR_CM, DMA2D_INPUT_A8);
+            WRITE_REG(hdma2d.Instance->BGCOLR, tftPalette[currentAction_.param5]);
 
             offset = currentAction_.param2 * 240 + currentAction_.param1;
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 11);
             MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (18 | (11 << DMA2D_POSITION_NLR_PL)));
             WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(fgBigChars_ + currentAction_.param3 * 18 * 11));
-            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgColorChar_[currentAction_.param5]));
+            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)bgCharAlpha_);
             WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
 
             setDirtyArea(currentAction_.param2, 18);
@@ -457,12 +482,14 @@ void TftDisplay::processActionStep() {
 
             WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[currentAction_.param4]);
             MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
+            MODIFY_REG(hdma2d.Instance->BGPFCCR, DMA2D_BGPFCCR_CM, DMA2D_INPUT_A8);
+            WRITE_REG(hdma2d.Instance->BGCOLR, tftPalette[currentAction_.param5]);
             offset = currentAction_.param2 * 240 + currentAction_.param1;
             MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 7);
             MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
             MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (10 | (7 << DMA2D_POSITION_NLR_PL)));
             WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(fgSmallChars_ + currentAction_.param3 * 10 * 7));
-            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgColorChar_[currentAction_.param5]));
+            WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)bgCharAlpha_);
             WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
 
             setDirtyArea(currentAction_.param2, 10);
@@ -505,7 +532,7 @@ void TftDisplay::processActionStep() {
                 if (unlikely(currentAction_.param1 == 1 || (currentTic < (lastOscilloSaturateTic_ + 10)))) {
                     WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_RED]);
                 } else {
-                    WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_CYAN]);
+                    WRITE_REG(hdma2d.Instance->FGCOLR, tftPalette[COLOR_CYAN_LIGHT]);
                 }
                 MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
 
@@ -514,6 +541,7 @@ void TftDisplay::processActionStep() {
                 MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (160 << DMA2D_POSITION_NLR_PL)));
                 WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(fgOscillo_));
+                MODIFY_REG(hdma2d.Instance->BGPFCCR, DMA2D_BGPFCCR_CM, DMA2D_INPUT_RGB565);
                 WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgOscillo_));
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + offset));
                 PFM_START_DMA2D();
@@ -591,6 +619,7 @@ void TftDisplay::processActionStep() {
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 80);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
                 WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)fgAlgo_);
+                MODIFY_REG(hdma2d.Instance->BGPFCCR, DMA2D_BGPFCCR_CM, DMA2D_INPUT_RGB565);
                 WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgAlgo_));
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
                 PFM_START_DMA2D();
@@ -896,10 +925,10 @@ void TftDisplay::clearMixerLabels() {
     tftActions_.insert(newAction);
 }
 
-void TftDisplay::clear() {
+void TftDisplay::clear(TFT_COLOR color) {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_FILL_TFT;
-    newAction.param5 = COLOR_BLACK;
+    newAction.param5 = color;
     tftActions_.insert(newAction);
     bHasJustBeenCleared_ = true;
 }
@@ -1583,7 +1612,7 @@ void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_
         maxX = 0;
     }
 
-    uint8_t visuColo = COLOR_LIGHT_GREEN;
+    uint8_t visuColo = COLOR_GREEN_LIGHT;
     uint8_t visuColorAfterThresh = COLOR_WHITE;
 
     if (isComp) {

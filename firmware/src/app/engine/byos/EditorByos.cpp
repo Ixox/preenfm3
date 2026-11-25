@@ -9,13 +9,12 @@
 
 #include "EditorByos.h"
 
-#include "ByosLogo.h"
 #include "ByosParams.h"
 #include "ScreenEditor.h"
 #include "SynthState.h"
 #include "Timbre.h"
 
-static const char* byosParamNames[] = {"Wave", "Wave", "Mult", "Mult", "Mix 12", "Attk", "Rel"};
+static const char* byosParamNames[] = {"Wave", "Wave", "Mult", "Mult", "Mix12", "Attk", "Rel"};
 
 static const char* byosShapeNames[] = {"sin ", "saw ", "squa", "s^2 ", "szer", "spos", "rand",
                                        "off ", "Usr1", "Usr2", "Usr3", "Usr4", "Usr5", "Usr6"};
@@ -98,6 +97,24 @@ static float getByosParamValue(const ByosParams* params, int paramId) {
 }
 
 EditorByos::EditorByos() {
+    theme_.backgroundColor = COLOR_PURPLE_DARK;
+
+    theme_.headerBackground = COLOR_PURPLE_DARK;
+    theme_.headerInstrumentColor = COLOR_WHITE;
+    theme_.headerPresetName = COLOR_WHITE;
+
+    theme_.pageLabelBackground = COLOR_MAGENTA;
+    theme_.pageLabelColor = COLOR_BLACK;
+
+    theme_.buttonBackground = COLOR_MAGENTA;
+    theme_.buttonText = COLOR_YELLOW;
+    theme_.buttonTextInactive = COLOR_MAGENTA_LIGHT;
+    theme_.buttonIndicatorActive = COLOR_YELLOW;
+    theme_.buttonIndicatorInactive = COLOR_MAGENTA;
+
+    theme_.paramNameColor = COLOR_PURPLE_LIGHT;
+    theme_.paramValueColor = COLOR_GREEN_LIGHT;
+    theme_.paramValueChangedColor = COLOR_GREEN;
 }
 
 void EditorByos::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
@@ -147,7 +164,7 @@ void EditorByos::printParameterName(int button, const EditorSlot& slot, const st
     (void)page;
 
     uint8_t x = getEncoderX(button);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
     if (slot.id != BYOS_PARAM_NONE) {
@@ -167,7 +184,7 @@ void EditorByos::displayParamValue(int encoder, TFT_COLOR color) {
 
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(color);
 
     if (slot.id == BYOS_PARAM_NONE) {
@@ -309,17 +326,30 @@ void EditorByos::buttonPressed(int button) {
 }
 
 void EditorByos::drawAlgorithm() {
-    tft_->drawLogo(&byosLogo);
+    static const char* lines[] = {"Your", "Synth", "Here"};
+    static const TFT_COLOR colors[] = {COLOR_YELLOW, COLOR_YELLOW_LIGHT, COLOR_YELLOW_DARK};
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
+    for (int i = 0; i < 3; i++) {
+        tft_->setCharColor(colors[(algoColorPhase_ + i) % 3]);
+        int length = -1;
+        while (lines[i][++length] != 0) {
+        }
+        const int x = 160 + (80 - length * TFT_BIG_CHAR_WIDTH) / 2;
+        tft_->setCursorInPixel(x, 180 + i * TFT_BIG_CHAR_HEIGHT);
+        tft_->print(lines[i]);
+    }
 }
 
 void EditorByos::displayEditorTitle() {
-    static const char* title = "code it !";
-    static const int length = 9;
+    static const char* title = "B.Y.O.S.";
+    static const int length = 8;
     tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
-    tft_->print(title, COLOR_RED, COLOR_BLACK);
+    tft_->print(title, COLOR_YELLOW, getTheme().backgroundColor);
 }
 
 void EditorByos::slowTick() {
+    algoColorPhase_ = (algoColorPhase_ + 1) % 3;
+    drawAlgorithm();
 }
 
 void EditorByos::refreshOscilloBG() {

@@ -39,7 +39,9 @@ EditorPfm3::EditorPfm3() {
     for (int i = 0; i < 6; i++) {
         bufferParam_[i] = 0.0f;
     }
-
+    theme_.headerBackground = COLOR_BLUE_DARK;
+    theme_.pageLabelBackground = COLOR_BLUE_VERY_DARK;
+    theme_.pageLabelColor = COLOR_BLUE_LIGHT;
     theme_.buttonSelectorFilled = false;
 }
 
@@ -711,7 +713,7 @@ void EditorPfm3::newEngineParamValue(int& refreshStatus, int timbre, int paramId
             }
         }
 
-        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharBackgroundColor(getTheme().backgroundColor);
         if (!multipleEdition_) {
             tft_->setCharColor(COLOR_YELLOW);
         } else {
@@ -728,7 +730,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
     if (slot.kind == EditorSlotKind::Action) {
-        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharBackgroundColor(getTheme().backgroundColor);
         tft_->setCharColor(color);
         if (slot.id == (uint16_t)EditorActionId::LfoSync) {
             int lfoState = synthState_->fullState_.buttonState[BUTTONID_EDIT_LFOS];
@@ -744,7 +746,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
     if (slot.kind == EditorSlotKind::Custom) {
         EditorParamInfo info = {};
         info.displayType = (slot.id == 0) ? DISPLAY_TYPE_STEP_SEQ1 : DISPLAY_TYPE_STEP_SEQ2;
-        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharBackgroundColor(getTheme().backgroundColor);
         tft_->setCharColor(color);
         updateEncoderValueWithoutCursor(2 + (int)slot.id, (int)slot.context, info, 0.0f, 0.0f);
         return;
@@ -766,7 +768,7 @@ void EditorPfm3::displayParamValue(int encoder, TFT_COLOR color) {
     }
     float value = ((float*)pfm3Preset())[flatIndex];
     EditorParamInfo info = paramInfoFor(encoder);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
     tft_->setCharColor(color);
     updateEncoderValueWithoutCursor((int)(flatIndex % PFM3_PARAMS_PER_ROW),
                                     (slot.context == 0) ? (int)pfm3ParamElementOf((Pfm3Param)slot.id) : 0, info, value, value);
@@ -866,8 +868,8 @@ void EditorPfm3::printParameterName(int button, const EditorSlot& slot, const st
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
-    tft_->setCharColor(COLOR_MEDIUM_GRAY);
+    tft_->setCharBackgroundColor(getTheme().backgroundColor);
+    tft_->setCharColor(COLOR_GRAY_MEDIUM);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
 
     if (slot.kind == EditorSlotKind::Action || slot.kind == EditorSlotKind::Custom) {
@@ -908,7 +910,7 @@ void EditorPfm3::printParameterName(int button, const EditorSlot& slot, const st
             tft_->printSmallChar(EditorPfm3Algo::table(currentAlgo)[element * 2 + 1]);
             tft_->printSmallChar(')');
         } else {
-            tft_->setCharColor(COLOR_DARK_GRAY);
+            tft_->setCharColor(COLOR_GRAY_DARK);
             tft_->print(info.name);
             tft_->print(element + 1);
             hideParam_[button] = true;
@@ -918,11 +920,11 @@ void EditorPfm3::printParameterName(int button, const EditorSlot& slot, const st
 
     if (id == pfm3Param(Pfm3Block::Engine2, 0, 0) && pfm3Preset()->engine1.playMode == PLAY_MODE_POLY) {
         hideParam_[button] = true;
-        tft_->setCharColor(COLOR_DARK_GRAY);
+        tft_->setCharColor(COLOR_GRAY_DARK);
     } else if ((id == pfm3Param(Pfm3Block::Engine2, 0, 1) || id == pfm3Param(Pfm3Block::Engine2, 0, 2)) &&
                pfm3Preset()->engine1.playMode != PLAY_MODE_UNISON) {
         hideParam_[button] = true;
-        tft_->setCharColor(COLOR_DARK_GRAY);
+        tft_->setCharColor(COLOR_GRAY_DARK);
     }
     tft_->print(info.name);
     return;

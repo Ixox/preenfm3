@@ -57,23 +57,60 @@ enum {
 #define DMA2D_POSITION_NLR_PL (uint32_t)POSITION_VAL(DMA2D_NLR_PL) /*!< Required left shift to set pixels per lines value */
 
 enum TFT_COLOR {
+    COLOR_NONE = -1,
+    // Neutral
     COLOR_BLACK = 0,
     COLOR_WHITE,
-    COLOR_BLUE,
-    COLOR_DARK_BLUE,
-    COLOR_CYAN,
-    COLOR_YELLOW,
-    COLOR_DARK_YELLOW,
-    COLOR_ORANGE,
-    COLOR_RED,
-    COLOR_DARK_RED,
-    COLOR_GREEN,
-    COLOR_DARK_GREEN,
-    COLOR_LIGHT_GREEN,
+    COLOR_CREAM,
+    COLOR_GRAY_DARK,
     COLOR_GRAY,
-    COLOR_DARK_GRAY,
-    COLOR_LIGHT_GRAY,
-    COLOR_MEDIUM_GRAY,
+    COLOR_GRAY_MEDIUM,
+    COLOR_GRAY_LIGHT,
+
+    // Red
+    COLOR_RED_DARK,
+    COLOR_RED,
+    COLOR_RED_LIGHT,
+    COLOR_BURNT_PEACH,
+
+    // Orange
+    COLOR_ORANGE_DARK,
+    COLOR_ORANGE,
+    COLOR_ORANGE_LIGHT,
+    COLOR_APRICOT_CREAM,
+
+    // Yellow
+    COLOR_YELLOW_DARK,
+    COLOR_YELLOW,
+    COLOR_YELLOW_LIGHT,
+
+    // Green
+    COLOR_GREEN_DARK,
+    COLOR_GREEN,
+    COLOR_GREEN_LIGHT,
+    COLOR_MUTED_TEAL,
+
+    // Cyan
+    COLOR_CYAN_DARK,
+    COLOR_CYAN,
+    COLOR_CYAN_LIGHT,
+
+    // Blue
+    COLOR_BLUE_VERY_DARK,
+    COLOR_BLUE_DARK,
+    COLOR_BLUE,
+    COLOR_BLUE_LIGHT,
+
+    // Purple
+    COLOR_PURPLE_DARK,
+    COLOR_PURPLE,
+    COLOR_PURPLE_LIGHT,
+
+    // Magenta
+    COLOR_MAGENTA_DARK,
+    COLOR_MAGENTA,
+    COLOR_MAGENTA_LIGHT,
+
     NUMBER_OF_TFT_COLORS
 };
 
@@ -159,17 +196,17 @@ public:
     void setDirtyArea(uint16_t y, uint16_t height);
 
     void drawButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t numberOfStates, uint8_t activeState,
-                    TFT_COLOR background = COLOR_DARK_BLUE, TFT_COLOR textColor = COLOR_WHITE, TFT_COLOR textColorInactive = COLOR_GRAY,
+                    TFT_COLOR background = COLOR_BLUE_DARK, TFT_COLOR textColor = COLOR_WHITE, TFT_COLOR textColorInactive = COLOR_GRAY,
                     TFT_COLOR indicatorActive = COLOR_WHITE, TFT_COLOR indicatorInactive = COLOR_GRAY);
     void drawSimpleButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color, TFT_COLOR background);
     void drawSimpleBorderButton(const char* label, uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, TFT_COLOR color,
                                 TFT_COLOR background);
     void drawButtonBiState(uint16_t y, uint8_t dyLine2, uint8_t buttonNumber, uint8_t currentSelection, uint8_t nulmberOfSelection,
-                           uint8_t buttonState, int8_t baseNumber, TFT_COLOR background = COLOR_DARK_BLUE,
+                           uint8_t buttonState, int8_t baseNumber, TFT_COLOR background = COLOR_BLUE_DARK,
                            TFT_COLOR textColor = COLOR_WHITE, TFT_COLOR textColorInactive = COLOR_GRAY,
                            TFT_COLOR indicatorActive = COLOR_WHITE, TFT_COLOR indicatorInactive = COLOR_GRAY, bool filled = true);
 
-    void clear();
+    void clear(TFT_COLOR color = COLOR_BLACK);
     void clearMixerValues();
     void clearMixerLabels();
     void fillArea(uint8_t x, uint16_t y, uint8_t width, uint16_t height, uint8_t color);
@@ -277,7 +314,7 @@ private:
 
     float oscilloFullPeriodSampl_[OSCILLO_BUFFER_SIZE];
     uint8_t charBackgroundColor_, charColor_;
-    uint16_t* bgColorChar_[NUMBER_OF_TFT_COLORS];
+    uint8_t* bgCharAlpha_;
     uint16_t* bgAlgo_;
 
     // TFT refresh

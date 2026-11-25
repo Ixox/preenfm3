@@ -28,7 +28,7 @@ void EditorEngine::displayEditorTitle() {
     const char* title = getEngineName();
     int length = (int)strlen(title);
     tft_->setCursorInPixel(120 - (length * TFT_BIG_CHAR_WIDTH) / 2, 60);
-    tft_->print(title, COLOR_CYAN, COLOR_BLACK);
+    tft_->print(title, COLOR_CYAN_LIGHT, getTheme().backgroundColor);
 }
 
 uint8_t EditorEngine::getButtonState(uint8_t buttonId) const {

@@ -219,7 +219,7 @@ static const char* arpStepModeName(int mode) {
 static TFT_COLOR arpStepColor(int mode, bool accentOn) {
     switch (mode) {
     case ARP_STEP_MODE_TIE:
-        return COLOR_CYAN;
+        return COLOR_CYAN_LIGHT;
     case ARP_STEP_MODE_OCT_UP:
         return COLOR_BLUE;
     case ARP_STEP_MODE_RATCHET2:
@@ -231,7 +231,7 @@ static TFT_COLOR arpStepColor(int mode, bool accentOn) {
     case ARP_STEP_MODE_DYAD:
         return COLOR_ORANGE;
     case ARP_STEP_MODE_OCT_DOWN:
-        return COLOR_LIGHT_GREEN;
+        return COLOR_GREEN_LIGHT;
     default:
         return accentOn ? COLOR_RED : COLOR_WHITE;
     }
@@ -327,7 +327,7 @@ void EditorParamPage::displayCustomValue(int encoder, const EditorSlot& slot, TF
         const bool on = ((mask >> sel) & 0x1u) != 0;
         const bool acc = ((accent >> sel) & 0x1u) != 0;
         if (factory) {
-            tft_->setCharColor(COLOR_DARK_GRAY);
+            tft_->setCharColor(COLOR_GRAY_DARK);
         }
         tft_->print(states[on ? (acc ? 2 : 1) : 0]);
         return;
@@ -335,7 +335,7 @@ void EditorParamPage::displayCustomValue(int encoder, const EditorSlot& slot, TF
 
     if (slot.id == 2) {
         if (factory) {
-            tft_->setCharColor(COLOR_DARK_GRAY);
+            tft_->setCharColor(COLOR_GRAY_DARK);
         }
         tft_->print(arpStepModeName(modes[sel]));
         return;
@@ -497,7 +497,7 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
     (void)editMenu;
     (void)page;
     uint8_t x = getEncoderX(button);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
     tft_->setCharColor(getTheme().paramNameColor);
     tft_->setCursor(x, button > 2 ? LINE_PARAM_NAME2 : LINE_PARAM_NAME1);
     if (slot.kind == EditorSlotKind::Custom) {
@@ -507,7 +507,7 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
         } else {
             const bool factory = (int)pfm3Preset()->engineArp2.pattern < ARPEGGIATOR_PRESET_PATTERN_COUNT;
             if (factory && (slot.id == 1 || slot.id == 2)) {
-                tft_->setCharColor(COLOR_DARK_GRAY);
+                tft_->setCharColor(COLOR_GRAY_DARK);
             }
             switch (slot.id) {
             case 0:
@@ -546,7 +546,7 @@ void EditorParamPage::printParameterName(int button, const EditorSlot& slot, con
             tft_->print(name);
         } else {
             hideParam_[button] = true;
-            tft_->setCharColor(COLOR_DARK_GRAY);
+            tft_->setCharColor(COLOR_GRAY_DARK);
             tft_->print("None");
         }
         return;
@@ -564,7 +564,7 @@ void EditorParamPage::displayParamValue(int encoder, TFT_COLOR color) {
     uint8_t x = getEncoderX(encoder);
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
     if (slot.kind == EditorSlotKind::Custom) {
-        tft_->setCharBackgroundColor(COLOR_BLACK);
+        tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
         tft_->setCharColor(color);
         displayCustomValue(encoder, slot, color);
         return;
@@ -581,7 +581,7 @@ void EditorParamPage::displayParamValue(int encoder, TFT_COLOR color) {
     }
     float value = ((float*)pfm3Preset())[flatIndex];
     EditorParamInfo info = paramInfoFor(encoder);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
     tft_->setCharColor(color);
     updateEncoderValueWithoutCursor((int)(flatIndex % PFM3_PARAMS_PER_ROW),
                                     (slot.context == 0) ? (int)pfm3ParamElementOf((Pfm3Param)slot.id) : 0, info, value, value);
@@ -650,7 +650,7 @@ void EditorParamPage::newEngineParamValue(int& refreshStatus, int timbre, int pa
     uint8_t x = getEncoderX(encoder);
 
     tft_->setCursor(x, encoder > 2 ? LINE_PARAM_VALUE2 : LINE_PARAM_VALUE1);
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
     tft_->setCharColor(COLOR_YELLOW);
     valueChangedCounter_[encoder] = 4;
     EditorParamInfo info = paramInfoFor(encoder);
@@ -664,7 +664,7 @@ void EditorParamPage::slowTick() {
             valueChangedCounter_[e]--;
             if (valueChangedCounter_[e] == 0) {
                 if (synthState_->fullState_.mainPage != -1) {
-                    tft_->setCharBackgroundColor(COLOR_BLACK);
+                    tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
                     displayParamValue(e, COLOR_WHITE);
                 }
             }
@@ -1066,7 +1066,7 @@ void EditorParamPage::updateEncoderValueWithoutCursor(int encoder, int element, 
             int whichStepSeq = element;
             StepSequencerSteps* seqSteps = &((StepSequencerSteps*)(&pfm3Preset()->lfoSteps1))[whichStepSeq];
 
-            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
             for (int k = 0; k < 16; k++) {
                 if (getStepSelection(whichStepSeq) == k) {
                     tft_->setCharColor(COLOR_YELLOW);
@@ -1094,7 +1094,7 @@ void EditorParamPage::updateEncoderValueWithoutCursor(int encoder, int element, 
                 user_pattern = lut_res_arpeggiator_patterns[index];
             }
 
-            tft_->setCharBackgroundColor(COLOR_BLACK);
+            tft_->setCharBackgroundColor(parent_->editorForEngine()->getTheme().backgroundColor);
             for (int k = 0; k < 16; k++) {
                 bool stepOn = ((user_pattern >> (k)) & 0x1) > 0;
                 if (patternSelect_ == k && editable) {

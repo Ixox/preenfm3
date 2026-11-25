@@ -228,16 +228,16 @@ void ScreenCoordinator::midiClock(bool show) {
     tft_->setCursorInPixel(x, y);
     switch (this->synthState_->fullState_.synthMode) {
     case SYNTH_MODE_MIXER:
-        tft_->setCharBackgroundColor(COLOR_DARK_GREEN);
+        tft_->setCharBackgroundColor(COLOR_GREEN_DARK);
         break;
     case SYNTH_MODE_MENU:
-        tft_->setCharBackgroundColor(COLOR_DARK_RED);
+        tft_->setCharBackgroundColor(COLOR_RED_DARK);
         break;
     case SYNTH_MODE_EDITOR:
-        tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
+        tft_->setCharBackgroundColor(COLOR_BLUE_DARK);
         break;
     case SYNTH_MODE_SEQUENCER:
-        tft_->setCharBackgroundColor(COLOR_DARK_YELLOW);
+        tft_->setCharBackgroundColor(COLOR_YELLOW_DARK);
         break;
     }
     tft_->setCharColor(COLOR_WHITE);
@@ -258,16 +258,16 @@ void ScreenCoordinator::noteOn(int timbre, bool show) {
     tft_->setCursorInPixel(x, y);
     switch (this->synthState_->fullState_.synthMode) {
     case SYNTH_MODE_MIXER:
-        tft_->setCharBackgroundColor(COLOR_DARK_GREEN);
+        tft_->setCharBackgroundColor(COLOR_GREEN_DARK);
         break;
     case SYNTH_MODE_MENU:
-        tft_->setCharBackgroundColor(COLOR_DARK_RED);
+        tft_->setCharBackgroundColor(COLOR_RED_DARK);
         break;
     case SYNTH_MODE_EDITOR:
-        tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
+        tft_->setCharBackgroundColor(COLOR_BLUE_DARK);
         break;
     case SYNTH_MODE_SEQUENCER:
-        tft_->setCharBackgroundColor(COLOR_DARK_YELLOW);
+        tft_->setCharBackgroundColor(COLOR_YELLOW_DARK);
         break;
     }
     tft_->setCharColor(COLOR_WHITE);
@@ -361,7 +361,7 @@ void ScreenCoordinator::checkPresetModified(int timbre) {
         if (this->synthState_->fullState_.synthMode == SYNTH_MODE_EDITOR && timbre == currentTimbre_) {
             int length = getLength(synthState_->getTimbre(currentTimbre_)->getPresetName());
             tft_->setCursor(3 + length, 0);
-            tft_->setCharBackgroundColor(COLOR_DARK_BLUE);
+            tft_->setCharBackgroundColor(editor_->editorForEngine()->getTheme().headerBackground);
             tft_->print('*');
         }
     }

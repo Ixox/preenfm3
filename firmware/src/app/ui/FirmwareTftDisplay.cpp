@@ -335,7 +335,7 @@ void FirmwareTftDisplay::drawArpEndLine(int length, bool draw) {
             bgOscillo_[kArpIndexLow + x - y * 160] = black;
         }
     } else {
-        const uint16_t separator = tftPalette565[COLOR_DARK_GRAY];
+        const uint16_t separator = tftPalette565[COLOR_GRAY_DARK];
         for (int y = kArpBandBottom - 1; y <= kArpBandTop; y++) {
             bgOscillo_[kArpIndexLow + x - y * 160] = separator;
         }
@@ -377,7 +377,7 @@ void FirmwareTftDisplay::drawArpArrow(int k) {
 }
 
 void FirmwareTftDisplay::drawArpBaselineSeparators() {
-    const uint16_t color = tftPalette565[COLOR_DARK_GRAY];
+    const uint16_t color = tftPalette565[COLOR_GRAY_DARK];
     for (int x = 0; x < 158; x++) {
         bgOscillo_[kArpIndexLow + x - (kArpBandBottom - 1) * 160] = color;
     }
@@ -605,7 +605,7 @@ void FirmwareTftDisplay::oscilloBgDrawEnvelope() {
 
     float scale = 158.0f / div;
     uint16_t color = tftPalette565[(int)oscilParams1_[4]];
-    uint16_t darkGrey = tftPalette565[COLOR_DARK_GRAY];
+    uint16_t darkGrey = tftPalette565[COLOR_GRAY_DARK];
 
     // Draw the enveloppe
     oscilloBgDrawVerticalLine((int)(oscilParams1_[0] * scale), 0, (int)(oscilParams2_[0] * 97.0f), darkGrey);
