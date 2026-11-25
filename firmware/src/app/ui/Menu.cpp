@@ -319,7 +319,7 @@ const struct MenuItem allMenus[]  = {
 
         {
                 MENU_CONFIG_SETTINGS,
-                "Config",
+                "Set",
 				MENUTYPE_SETTINGS,
                 MIDICONFIG_SIZE + 1,
                 {MENU_DONE}

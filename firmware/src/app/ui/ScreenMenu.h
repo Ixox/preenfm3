@@ -36,6 +36,9 @@ public:
     void newMenuSelect(FullState* fullState);
     void menuBack(const MenuItem* oldMenuItem, FullState* fullState);
     void setPreviousSynthMode(int synthModeBeforeMenu);
+    void setRefreshStatusPointer(int* refreshStatus) {
+        refreshStatusP_ = refreshStatus;
+    }
 
 private:
     bool changePresetSelect(uint32_t* valueToChange, int ticks, int max);
@@ -54,12 +57,40 @@ private:
     void displayPatchEngine(uint32_t magic, bool valid);
     void printScalaFrequency(float value);
 
+    void handleConfigButton(int currentTimbre, int button);
+    void resetConfigPage();
+    void requestConfigRefresh();
+    void requestConfigButtons();
+    int configDisplayValue(uint8_t index);
+    bool configIsEditable(uint8_t index);
+    bool configIsDirty();
+    void applyConfigSideEffects(uint8_t index);
+    void drawConfigRowTitle(uint8_t row);
+    void drawConfigRowValue(uint8_t row);
+    void drawConfigValueLine();
+
     TftDisplay* tft_;
     SynthState* synthState_;
     Storage* storage_;
 
-    uint8_t previousConfigSetting_;
     uint8_t menuStateRow_;
+
+    // Config page
+    uint8_t configScrollOffset_;
+    uint8_t configPrevSelect_;
+    uint8_t configPrevOffset_;
+    uint8_t configPrevValue_;
+    bool configPrevEditMode_;
+    bool configPrevDirty_;
+    bool configEditMode_;
+    uint8_t configEditOldValue_;
+    uint8_t configEditValue_;
+    uint8_t configSaved_[MIDICONFIG_SIZE];
+    bool configBaselineValid_;
+    bool configPendingClear_;
+    uint8_t configPendingRows_;
+    bool configPendingValue_;
+    int* refreshStatusP_;
 
     int previousSynthMode_;
 };

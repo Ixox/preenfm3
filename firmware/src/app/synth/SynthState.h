@@ -197,6 +197,7 @@ public:
     void init(ScreenMixer* displayMixer, ScreenEditor* dDisplayEditor, ScreenMenu* displayMenu, ScreenSequencer* displaySequencer);
 
     void encoderTurned(int encoder, int ticks);
+    void configValueChanged();
 
     void buttonPressed(int button);
     void buttonLongPressed(int button);

@@ -36,12 +36,34 @@ static TimbreBackup backupTimbre_ __attribute__((section(".ram_d3"), aligned(4))
 const char* enveloppeRandomizer[] = {" -- ", "perc", "pad ", "rand"};
 const char* otherRandomizer[] = {" -- ", "soft", "medi", "high"};
 
+#define CONFIG_VALUE_AREA_Y 64
+#define CONFIG_VALUE_AREA_H 52
+#define CONFIG_TITLE_Y      66
+#define CONFIG_VALUE_Y      80
+#define CONFIG_LIST_Y       120
+#define CONFIG_ROW_H        20
+#define CONFIG_VISIBLE_ROWS 7
+#define CONFIG_AREA_H       196
+
 void ScreenMenu::init(SynthState* synthState, TftDisplay* tft, Storage* storage) {
     synthState_ = synthState;
     tft_ = tft;
     storage_ = storage;
-    previousConfigSetting_ = 255;
     menuStateRow_ = 3;
+
+    configScrollOffset_ = 0;
+    configPrevSelect_ = 0xFF;
+    configPrevOffset_ = 0;
+    configPrevValue_ = 0;
+    configPrevEditMode_ = false;
+    configPrevDirty_ = false;
+    configEditMode_ = false;
+    configEditOldValue_ = 0;
+    configEditValue_ = 0;
+    configBaselineValid_ = false;
+    configPendingClear_ = false;
+    configPendingRows_ = 0;
+    configPendingValue_ = false;
 }
 
 void ScreenMenu::backupTimbre(int timbre) {
@@ -64,6 +86,40 @@ bool ScreenMenu::restoreTimbre(int timbre) {
 }
 
 void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
+
+    // Config list is drawn one small chunk per step so that the 128-entry
+    // TFT action queue never overflows.
+    if (synthState_->fullState_.currentMenuItem->menuState == MENU_CONFIG_SETTINGS && refreshStatus >= 1 && refreshStatus <= 6) {
+        if (configPendingClear_) {
+            tft_->fillArea(0, CONFIG_VALUE_AREA_Y, 240, CONFIG_AREA_H, COLOR_BLACK);
+            configPendingClear_ = false;
+            if (refreshStatusP_ != nullptr) {
+                *refreshStatusP_ = 7;
+            }
+            return;
+        }
+        if (configPendingRows_ != 0) {
+            uint8_t row = 0;
+            while ((configPendingRows_ & (1 << row)) == 0) {
+                row++;
+            }
+            configPendingRows_ &= (uint8_t)~(1 << row);
+            drawConfigRowTitle(row);
+            drawConfigRowValue(row);
+            if (refreshStatusP_ != nullptr) {
+                *refreshStatusP_ = 7;
+            }
+            return;
+        }
+        if (configPendingValue_) {
+            drawConfigValueLine();
+            configPendingValue_ = false;
+            if (refreshStatusP_ != nullptr) {
+                *refreshStatusP_ = 7;
+            }
+            return;
+        }
+    }
 
     // We just pressed the menu button, pre select the first menu
     // Because of "return" in this method we must have the test here
@@ -146,11 +202,38 @@ void ScreenMenu::refreshMenuByStep(int currentTimbre, int refreshStatus) {
             }
             break;
         case MENUTYPE_SETTINGS:
-            if (button == 0) {
-                tft_->drawButton("Save", 270, 29, button, 0, 1, COLOR_RED_DARK);
+            switch (button) {
+            case BUTTON_SWITCH_1:
+                tft_->drawButton("Edit", 270, 29, button, 0, 0, COLOR_RED_DARK,
+                                 (!configEditMode_ && configIsEditable((uint8_t)synthState_->fullState_.menuSelect)) ? COLOR_WHITE
+                                                                                                                     : COLOR_GRAY_DARK,
+                                 COLOR_RED);
+                return;
+            case BUTTON_SWITCH_2:
+                if (configEditMode_) {
+                    tft_->drawButton("OK", 270, 29, button, 0, 0, COLOR_RED_DARK, COLOR_WHITE, COLOR_GRAY);
+                } else {
+                    tft_->drawButton("", 270, 29, button, 0, 0, COLOR_RED_DARK);
+                }
+                return;
+            case BUTTON_SWITCH_3:
+                if (configEditMode_) {
+                    tft_->drawButton("Cancel", 270, 29, button, 0, 0, COLOR_RED_DARK, COLOR_WHITE, COLOR_GRAY);
+                } else {
+                    tft_->drawButton("", 270, 29, button, 0, 0, COLOR_RED_DARK);
+                }
+                return;
+            case BUTTON_SWITCH_4:
+                tft_->drawButton("", 270, 29, button, 0, 0, COLOR_RED_DARK);
+                return;
+            case BUTTON_SWITCH_5:
+                tft_->drawButton("Back", 270, 29, button, 0, 0, COLOR_RED_DARK, COLOR_WHITE, COLOR_RED);
+                return;
+            case BUTTON_SWITCH_6:
+                tft_->drawButton("Save", 270, 29, button, 0, 0, COLOR_RED_DARK, configIsDirty() ? COLOR_WHITE : COLOR_GRAY_DARK, COLOR_RED);
                 return;
             }
-            break;
+            return;
         case MENUTYPE_CONFIRM:
             if (button == 0) {
                 // Default Empty button
@@ -196,18 +279,31 @@ void ScreenMenu::encoderTurned(int currentTimbre, int encoder, int ticks) {
 
     switch (fullState->currentMenuItem->menuState) {
     case MENU_CONFIG_SETTINGS:
-        if (encoder == 3) {
-            changePresetSelect(&fullState->midiConfigValue[fullState->menuSelect], ticks, midiConfig[fullState->menuSelect].maxValue - 1);
-
-            if (fullState->menuSelect == MIDICONFIG_TFT_BACKLIGHT) {
-                uint8_t tft_bl = fullState->midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
-                TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+        if (encoder == 0) {
+            if (configEditMode_) {
+                int max = (int)midiConfig[fullState->menuSelect].maxValue - 1;
+                int newValue = (int)configEditValue_ + ticks;
+                if (newValue < 0) {
+                    newValue = 0;
+                } else if (newValue > max) {
+                    newValue = max;
+                }
+                if (newValue != (int)configEditValue_) {
+                    configEditValue_ = (uint8_t)newValue;
+                    // USB settings only apply after a reboot: keep them staged.
+                    if (fullState->menuSelect != MIDICONFIG_USB && fullState->menuSelect != MIDICONFIG_USB_AUDIO) {
+                        fullState->midiConfigValue[fullState->menuSelect] = (uint8_t)newValue;
+                        applyConfigSideEffects((uint8_t)fullState->menuSelect);
+                    }
+                    synthState_->propagateNewMenuSelect();
+                }
+            } else {
+                if (changePresetSelect(&fullState->menuSelect, ticks, MIDICONFIG_SIZE)) {
+                    synthState_->propagateNewMenuSelect();
+                }
             }
-
-        } else if (encoder == 0) {
-            changePresetSelect(&fullState->menuSelect, ticks, MIDICONFIG_SIZE);
         }
-        break;
+        return;
     case MENU_PRESET_LOAD_SELECT:
         if (encoder == 0) {
             // Did we really change bank?
@@ -381,6 +477,11 @@ void ScreenMenu::buttonPressed(int currentTimbre, int button) {
             updatePreviousChoice(fullState->currentMenuItem->menuState);
             synthState_->propagateMenuBack(oldMenuItem);
         }
+        return;
+    }
+
+    if (fullState->currentMenuItem->menuState == MENU_CONFIG_SETTINGS && button >= BUTTON_SWITCH_1 && button <= BUTTON_SWITCH_6) {
+        handleConfigButton(currentTimbre, button);
         return;
     }
 
@@ -782,6 +883,10 @@ const MenuItem* ScreenMenu::getMenuBack(int currentTimbre) {
 
     const MenuItem* rMenuItem = 0;
 
+    if (fullState->currentMenuItem->menuState == MENU_CONFIG_SETTINGS) {
+        resetConfigPage();
+    }
+
     // default menuSelect value
     fullState->menuSelect = 0; // MenuItemUtil::getParentMenuSelect(fullState->currentMenuItem->menuState);
 
@@ -851,6 +956,20 @@ int ScreenMenu::copyStringAt(char* dest, int offset, const char* source) {
 void ScreenMenu::newMenuState(FullState* fullState) {
     tft_->pauseRefresh();
 
+    if (fullState->currentMenuItem->menuState == MENU_CONFIG_SETTINGS) {
+        fullState->menuSelect = 0;
+        configScrollOffset_ = 0;
+        configPrevSelect_ = 0xFF;
+        configPrevOffset_ = 0;
+        configPrevValue_ = 0;
+        configPrevEditMode_ = false;
+        configPrevDirty_ = configBaselineValid_ ? configIsDirty() : false;
+        configEditMode_ = false;
+        configPendingClear_ = false;
+        configPendingRows_ = 0;
+        configPendingValue_ = false;
+    }
+
     if (MenuItemUtil::getParentMenuItem(synthState_->fullState_.currentMenuItem->menuState)->menuState == MAIN_MENU) {
         menuStateRow_ = 1;
     }
@@ -861,7 +980,11 @@ void ScreenMenu::newMenuState(FullState* fullState) {
     tft_->setCharColor(COLOR_RED);
 
     tft_->setCursor((menuStateRow_ - 1), menuStateRow_);
-    tft_->print(synthState_->fullState_.currentMenuItem->name);
+    if (synthState_->fullState_.currentMenuItem->menuState == MENU_CONFIG_SETTINGS) {
+        tft_->print("Settings");
+    } else {
+        tft_->print(synthState_->fullState_.currentMenuItem->name);
+    }
     switch (synthState_->fullState_.currentMenuItem->menuState) {
     case MENU_PRESET_LOAD_SELECT:
         tft_->setCharColor(COLOR_YELLOW);
@@ -987,9 +1110,6 @@ void ScreenMenu::displayMenuState(FullState* fullState) {
         tft_->setCursor(1, 9);
         tft_->print("Indices   Modulation");
         break;
-    case MENU_CONFIG_SETTINGS:
-        previousConfigSetting_ = 255;
-        break;
     case MENU_SD_CREATE_PRESET_FILE:
         tft_->setCursorInPixel(1 * TFT_BIG_CHAR_WIDTH, 7 * TFT_BIG_CHAR_HEIGHT + 6);
         tft_->printSmallChars("    Create preset bank");
@@ -1023,7 +1143,9 @@ void ScreenMenu::newMenuSelect(FullState* fullState) {
 
     int length;
 
-    displayPatchEngine(0, false);
+    if (fullState->currentMenuItem->menuState != MENU_CONFIG_SETTINGS) {
+        displayPatchEngine(0, false);
+    }
 
     switch (fullState->currentMenuItem->menuState) {
     case MENU_PRESET_LOAD_SELECT_DX7_BANK:
@@ -1154,37 +1276,82 @@ void ScreenMenu::newMenuSelect(FullState* fullState) {
         tft_->setCursor(13, 10);
         tft_->print(otherRandomizer[(int)fullState->randomizer.Modl]);
         break;
-    case MENU_CONFIG_SETTINGS:
-        if (previousConfigSetting_ != fullState->menuSelect) {
-            tft_->pauseRefresh();
-            tft_->fillArea(0, 160, 240, 40, COLOR_BLACK);
-
-            tft_->setCursor(1, 8);
-            tft_->setCharColor(COLOR_GRAY);
-            tft_->printSmallChar('1');
-
-            tft_->setCharColor(COLOR_WHITE);
-            tft_->setCursor(2, 8);
-            tft_->print(midiConfig[fullState->menuSelect].title);
-
-            tft_->setCursor(1, 9);
-            tft_->setCharColor(COLOR_GRAY);
-            tft_->printSmallChar('4');
-        } else {
-            tft_->fillArea(30, 180, 210, 20, COLOR_BLACK);
+    case MENU_CONFIG_SETTINGS: {
+        uint16_t sel = fullState->menuSelect;
+        if (sel > MIDICONFIG_SIZE) {
+            sel = MIDICONFIG_SIZE;
         }
-        tft_->setCursor(2, 9);
-        tft_->setCharColor(COLOR_YELLOW);
-        if (midiConfig[fullState->menuSelect].valueName != NULL) {
-            tft_->print(midiConfig[fullState->menuSelect].valueName[fullState->midiConfigValue[fullState->menuSelect]]);
-        } else {
-            tft_->print((int)fullState->midiConfigValue[fullState->menuSelect]);
+        fullState->menuSelect = sel;
+
+        if (!configBaselineValid_) {
+            for (int i = 0; i < MIDICONFIG_SIZE; i++) {
+                configSaved_[i] = fullState->midiConfigValue[i];
+            }
+            configBaselineValid_ = true;
         }
-        if (previousConfigSetting_ != fullState->menuSelect) {
-            tft_->restartRefreshTft();
-            previousConfigSetting_ = fullState->menuSelect;
+
+        const uint8_t maxOffset = (MIDICONFIG_SIZE + 1 > CONFIG_VISIBLE_ROWS) ? (uint8_t)(MIDICONFIG_SIZE + 1 - CONFIG_VISIBLE_ROWS) : 0;
+        if (sel < configScrollOffset_) {
+            configScrollOffset_ = (uint8_t)sel;
+        } else if (sel >= configScrollOffset_ + CONFIG_VISIBLE_ROWS) {
+            configScrollOffset_ = (uint8_t)(sel - CONFIG_VISIBLE_ROWS + 1);
+        }
+        if (configScrollOffset_ > maxOffset) {
+            configScrollOffset_ = maxOffset;
+        }
+
+        const bool entry = (configPrevSelect_ == 0xFF);
+        const bool offsetChanged = (configScrollOffset_ != configPrevOffset_);
+        const bool selChanged = (sel != configPrevSelect_);
+        const int value = configDisplayValue((uint8_t)sel);
+        const bool valueChanged = (value != (int)configPrevValue_);
+        const bool editChanged = (configEditMode_ != configPrevEditMode_);
+        const bool dirtyChanged = (configIsDirty() != configPrevDirty_);
+
+        if (entry || offsetChanged) {
+            configPendingClear_ = true;
+            configPendingRows_ = 0x7F;
+            configPendingValue_ = true;
+        } else {
+            if (selChanged) {
+                int oldRow = (int)configPrevSelect_ - (int)configScrollOffset_;
+                int newRow = (int)sel - (int)configScrollOffset_;
+                if (oldRow >= 0 && oldRow < CONFIG_VISIBLE_ROWS) {
+                    configPendingRows_ |= (uint8_t)(1 << oldRow);
+                }
+                if (newRow >= 0 && newRow < CONFIG_VISIBLE_ROWS) {
+                    configPendingRows_ |= (uint8_t)(1 << newRow);
+                }
+                configPendingValue_ = true;
+            }
+            if (valueChanged) {
+                int row = (int)sel - (int)configScrollOffset_;
+                if (row >= 0 && row < CONFIG_VISIBLE_ROWS) {
+                    configPendingRows_ |= (uint8_t)(1 << row);
+                }
+                configPendingValue_ = true;
+            }
+            if (editChanged) {
+                int row = (int)sel - (int)configScrollOffset_;
+                if (row >= 0 && row < CONFIG_VISIBLE_ROWS) {
+                    configPendingRows_ |= (uint8_t)(1 << row);
+                }
+                configPendingValue_ = true;
+            }
+        }
+
+        configPrevSelect_ = (uint8_t)sel;
+        configPrevOffset_ = configScrollOffset_;
+        configPrevValue_ = (uint8_t)configDisplayValue((uint8_t)sel);
+        configPrevEditMode_ = configEditMode_;
+        configPrevDirty_ = configIsDirty();
+
+        requestConfigRefresh();
+        if (dirtyChanged || editChanged) {
+            requestConfigButtons();
         }
         break;
+    }
 
     case MENU_SD_RENAME_PRESET_SELECT_FILE:
         displayBankSelect(fullState->preenFMBankNumber, (fullState->preenFMBank->fileType != FILE_EMPTY), fullState->preenFMBank->name);
@@ -1276,6 +1443,224 @@ void ScreenMenu::displayPatchEngine(uint32_t magic, bool valid) {
         code[5] = '#';
         code[6] = 0;
         tft_->print(code);
+    }
+}
+
+bool ScreenMenu::configIsEditable(uint8_t index) {
+    return index < MIDICONFIG_SIZE && midiConfig[index].maxValue > 1;
+}
+
+bool ScreenMenu::configIsDirty() {
+    // Save is disabled while a value is being edited: the value is only
+    // committed to the configuration when OK is pressed.
+    if (configEditMode_) {
+        return false;
+    }
+    if (!configBaselineValid_) {
+        return false;
+    }
+    for (int i = 0; i < MIDICONFIG_SIZE; i++) {
+        if (synthState_->fullState_.midiConfigValue[i] != configSaved_[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int ScreenMenu::configDisplayValue(uint8_t index) {
+    if (configEditMode_ && index == synthState_->fullState_.menuSelect) {
+        return configEditValue_;
+    }
+    return synthState_->fullState_.midiConfigValue[index];
+}
+
+void ScreenMenu::applyConfigSideEffects(uint8_t index) {
+    if (index == MIDICONFIG_TFT_BACKLIGHT) {
+        uint8_t tft_bl = synthState_->fullState_.midiConfigValue[MIDICONFIG_TFT_BACKLIGHT];
+        TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
+    } else if (index == MIDICONFIG_REVERB_PARAMS) {
+        synthState_->configValueChanged();
+    }
+}
+
+void ScreenMenu::handleConfigButton(int currentTimbre, int button) {
+    struct FullState* fullState = &synthState_->fullState_;
+    uint8_t sel = (uint8_t)fullState->menuSelect;
+
+    switch (button) {
+    case BUTTON_SWITCH_1:
+        if (!configEditMode_ && configIsEditable(sel)) {
+            configEditMode_ = true;
+            configEditOldValue_ = fullState->midiConfigValue[sel];
+            configEditValue_ = configEditOldValue_;
+            synthState_->propagateNewMenuSelect();
+        }
+        break;
+    case BUTTON_SWITCH_2:
+        if (configEditMode_) {
+            fullState->midiConfigValue[sel] = configEditValue_;
+            applyConfigSideEffects(sel);
+            configEditMode_ = false;
+            synthState_->propagateNewMenuSelect();
+        }
+        break;
+    case BUTTON_SWITCH_3:
+        if (configEditMode_) {
+            fullState->midiConfigValue[sel] = configEditOldValue_;
+            applyConfigSideEffects(sel);
+            configEditMode_ = false;
+            synthState_->propagateNewMenuSelect();
+        }
+        break;
+    case BUTTON_SWITCH_5: {
+        const MenuItem* oldMenuItem = fullState->currentMenuItem;
+        fullState->currentMenuItem = getMenuBack(currentTimbre);
+        updatePreviousChoice(fullState->currentMenuItem->menuState);
+        synthState_->propagateMenuBack(oldMenuItem);
+        break;
+    }
+    case BUTTON_SWITCH_6:
+        if (!configEditMode_) {
+            storage_->getConfigurationFile()->saveConfig(fullState->midiConfigValue);
+            for (int i = 0; i < MIDICONFIG_SIZE; i++) {
+                configSaved_[i] = fullState->midiConfigValue[i];
+            }
+            configBaselineValid_ = true;
+            synthState_->propagateNewMenuSelect();
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void ScreenMenu::resetConfigPage() {
+    if (configEditMode_) {
+        uint16_t sel = synthState_->fullState_.menuSelect;
+        if (sel <= MIDICONFIG_SIZE) {
+            synthState_->fullState_.midiConfigValue[sel] = configEditOldValue_;
+            applyConfigSideEffects((uint8_t)sel);
+        }
+        configEditMode_ = false;
+    }
+    configScrollOffset_ = 0;
+    configPrevSelect_ = 0xFF;
+    configPrevOffset_ = 0;
+    configPrevValue_ = 0;
+    configPrevEditMode_ = false;
+    configPrevDirty_ = false;
+    configPendingClear_ = false;
+    configPendingRows_ = 0;
+    configPendingValue_ = false;
+}
+
+void ScreenMenu::requestConfigRefresh() {
+    if (refreshStatusP_ != nullptr && *refreshStatusP_ == 0) {
+        *refreshStatusP_ = 6;
+    }
+}
+
+void ScreenMenu::requestConfigButtons() {
+    if (refreshStatusP_ != nullptr && *refreshStatusP_ <= 6) {
+        *refreshStatusP_ = 6;
+    }
+}
+
+void ScreenMenu::drawConfigRowTitle(uint8_t row) {
+    int y = CONFIG_LIST_Y + row * CONFIG_ROW_H;
+    tft_->fillArea(0, y, 240, CONFIG_ROW_H, COLOR_BLACK);
+
+    int item = configScrollOffset_ + row;
+    if (item > MIDICONFIG_SIZE) {
+        return;
+    }
+
+    bool selected = (item == synthState_->fullState_.menuSelect);
+    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharColor(selected ? COLOR_WHITE : COLOR_RED_DARK);
+    tft_->setCursorInPixel(2, y);
+    tft_->print(midiConfig[item].title);
+}
+
+void ScreenMenu::drawConfigRowValue(uint8_t row) {
+    int y = CONFIG_LIST_Y + row * CONFIG_ROW_H;
+    int item = configScrollOffset_ + row;
+    if (item > MIDICONFIG_SIZE) {
+        return;
+    }
+
+    int value = configDisplayValue((uint8_t)item);
+    const char* valueName = midiConfig[item].valueName != nullptr ? midiConfig[item].valueName[value] : nullptr;
+
+    int length;
+    if (valueName != nullptr) {
+        length = getLength(valueName);
+    } else {
+        length = 1;
+        int v = value;
+        while (v >= 10) {
+            v /= 10;
+            length++;
+        }
+    }
+
+    int x = 240 - 2 - length * TFT_SMALL_CHAR_WIDTH;
+    if (x < 0) {
+        x = 0;
+    }
+
+    bool selected = (item == synthState_->fullState_.menuSelect);
+    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharColor((selected && configEditMode_) ? COLOR_YELLOW : COLOR_RED_DARK);
+    tft_->setCursorInPixel(x, y + 5);
+    if (valueName != nullptr) {
+        tft_->printSmallChars(valueName);
+    } else {
+        tft_->printSmallChar(value);
+    }
+}
+
+void ScreenMenu::drawConfigValueLine() {
+    tft_->fillArea(0, CONFIG_VALUE_AREA_Y, 240, CONFIG_VALUE_AREA_H, COLOR_BLACK);
+
+    int item = synthState_->fullState_.menuSelect;
+    if (item > MIDICONFIG_SIZE) {
+        return;
+    }
+
+    tft_->setCharBackgroundColor(COLOR_BLACK);
+
+    tft_->setCharColor(configEditMode_ ? COLOR_WHITE : COLOR_RED);
+    int titleLength = getLength(midiConfig[item].title);
+    int titleX = (240 - titleLength * TFT_SMALL_CHAR_WIDTH) / 2;
+    if (titleX < 0) {
+        titleX = 0;
+    }
+    tft_->setCursorInPixel(titleX, CONFIG_TITLE_Y);
+    tft_->printSmallChars(midiConfig[item].title);
+
+    int value = configDisplayValue((uint8_t)item);
+    const char* valueName = midiConfig[item].valueName != nullptr ? midiConfig[item].valueName[value] : nullptr;
+    tft_->setCharColor(configEditMode_ ? COLOR_YELLOW : COLOR_RED);
+
+    if (valueName != nullptr) {
+        int length = getLength(valueName);
+        int x = (240 - length * TFT_BIG_CHAR_WIDTH) / 2;
+        if (x < 0) {
+            x = 0;
+        }
+        tft_->setCursorInPixel(x, CONFIG_VALUE_Y);
+        tft_->print(valueName);
+    } else {
+        int length = 1;
+        int v = value;
+        while (v >= 10) {
+            v /= 10;
+            length++;
+        }
+        int x = (240 - length * TFT_BIG_CHAR_WIDTH) / 2;
+        tft_->setCursorInPixel(x, CONFIG_VALUE_Y);
+        tft_->print(value);
     }
 }
 

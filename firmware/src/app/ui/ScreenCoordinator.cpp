@@ -65,6 +65,7 @@ void ScreenCoordinator::setDisplays(ScreenMixer* mixer, ScreenEditor* editor, Sc
     this->sequencer_ = sequencer;
     this->sequencer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
     this->mixer_->setRefreshStatusPointer(&refreshStatus_, &endRefreshStatus_);
+    this->menu_->setRefreshStatusPointer(&refreshStatus_);
 }
 
 void ScreenCoordinator::afterNewMixerLoad() {

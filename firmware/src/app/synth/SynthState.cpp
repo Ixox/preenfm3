@@ -233,11 +233,6 @@ void SynthState::encoderTurned(int encoder, int ticks) {
         break;
     case SYNTH_MODE_MENU:
         displayMenu_->encoderTurned(currentTimbre_, encoder, ticks);
-        // Did we modify reverb visibility ?
-        if (unlikely(fullState_.currentMenuItem->menuState == MENU_CONFIG_SETTINGS && encoder == 3 &&
-                     fullState_.menuSelect == MIDICONFIG_REVERB_PARAMS)) {
-            displayMixer_->setReverbParamVisible(fullState_.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
-        }
         break;
     case SYNTH_MODE_MIXER:
         displayMixer_->encoderTurned(encoder, ticks);
@@ -252,6 +247,10 @@ void SynthState::encoderTurned(int encoder, int ticks) {
     default:
         break;
     }
+}
+
+void SynthState::configValueChanged() {
+    displayMixer_->setReverbParamVisible(fullState_.midiConfigValue[MIDICONFIG_REVERB_PARAMS] > 0);
 }
 
 void SynthState::loadNewPreset(int timbre) {
