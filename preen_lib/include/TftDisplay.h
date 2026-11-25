@@ -85,6 +85,7 @@ enum TFT_COLOR {
     COLOR_YELLOW_LIGHT,
 
     // Green
+    COLOR_GREEN_VERY_DARK,
     COLOR_GREEN_DARK,
     COLOR_GREEN,
     COLOR_GREEN_LIGHT,
@@ -218,6 +219,8 @@ public:
     void oscilloRrefresh();
     void oscilloNewLowerFrequency(float lf);
     void oscilloRecord32Samples(float* samples);
+    void setOscilloPosition(uint8_t x, uint8_t y);
+    void setAlgoPosition(uint8_t x, uint8_t y);
 
     void drawAlgoTable(const uint8_t* algoTable);
     void drawLogo(const TftLogo* logo);
@@ -258,7 +261,8 @@ public:
         bHasJustBeenCleared_ = false;
     }
 
-    void drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr);
+    void drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp, float gr,
+                         float thresholdDb);
 
     bool mustBeReset() {
         return tftMustBeReset_;
@@ -293,12 +297,14 @@ private:
 
     uint32_t lastOscilloSaturateTic_;
     uint32_t tftGetStatusMillis_;
-    // adress of the segment digit;
-    uint8_t* fgSegmentDigit_;
     uint8_t* fgBigChars_;
     uint8_t* fgSmallChars_;
     uint8_t* fgOscillo_;
     uint8_t* fgAlgo_;
+    uint8_t oscilloX_ = 0;
+    uint8_t oscilloY_ = 160;
+    uint8_t algoX_ = 160;
+    uint8_t algoY_ = 160;
     uint8_t cursorX_;
     uint16_t cursorY_;
     bool fgAlgoDirty_;

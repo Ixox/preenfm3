@@ -27,6 +27,34 @@
 #define Y_MIXER           80
 #define HEIGHT_MIXER_LINE 28
 
+struct MixerTheme {
+    TFT_COLOR screenBackground = COLOR_BLACK;
+
+    TFT_COLOR headerBackground = COLOR_GREEN_DARK;
+    TFT_COLOR headerMixTitle = COLOR_YELLOW;
+    TFT_COLOR headerMixPreset = COLOR_WHITE;
+
+    TFT_COLOR timbreNumber = COLOR_GRAY_LIGHT;
+    TFT_COLOR timbreNumberSelected = COLOR_YELLOW;
+    TFT_COLOR timbreMuted = COLOR_GRAY_DARK;
+    TFT_COLOR mpeLabel = COLOR_GRAY_LIGHT;
+
+    TFT_COLOR valueText = COLOR_WHITE;
+    TFT_COLOR valueWarning = COLOR_RED;
+    TFT_COLOR valueTitle = COLOR_GREEN;
+
+    TFT_COLOR buttonBackground = COLOR_GREEN_VERY_DARK;
+    TFT_COLOR buttonBackgroundInactive = COLOR_GREEN_DARK;
+    TFT_COLOR buttonText = COLOR_YELLOW;
+    TFT_COLOR buttonTextInactive = COLOR_GRAY_LIGHT;
+    TFT_COLOR buttonIndicatorActive = COLOR_WHITE;
+    TFT_COLOR buttonIndicatorInactive = COLOR_GRAY;
+
+    TFT_COLOR globalOptionText = COLOR_GRAY_LIGHT;
+};
+
+static const MixerTheme mixerTheme;
+
 const char* outDisplay[] = {"1", "1-2", "  2", "3", "3-4", "  4", "5", "5-6", "  6"};
 const char* compDisplay[] = {"Off", "Glue", "Punch", "Tube", "Limit", "Drive", "Fuzz"};
 const char* engineDisplay[] = {
@@ -163,7 +191,7 @@ const struct Pfm3MixerButton scalaButton = {
 // ==
 
 
-uint8_t numberOfGlobalSettings[5] = { 6, 4, 3, 0, 0 };
+uint8_t numberOfGlobalSettings[5] = { 5, 4, 3, 0, 0 };
 const struct Pfm3MixerButtonStateParam globalSettings[5][6] = {
     {
         { 0, 5, 6, DISPLAY_TYPE_STRINGS, mpeOptions },
@@ -410,7 +438,7 @@ void* ScreenMixer::getValuePointer(int valueType, int encoder) {
 }
 
 void ScreenMixer::displayMixerValueInteger(int timbre, int x, int value) {
-    tft_->setCursorInPixel(18 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+    tft_->setCursorInPixel(18 * TFT_BIG_CHAR_WIDTH + 4, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
     if (value >= 0 && value < 100 && timbre < 18) {
         tft_->print(' ');
     }
@@ -421,10 +449,14 @@ void ScreenMixer::displayMixerValueInteger(int timbre, int x, int value) {
 }
 
 void ScreenMixer::displayMixerValue(int timbre) {
-    tft_->setCharBackgroundColor(COLOR_BLACK);
+    tft_->setCharBackgroundColor(mixerTheme.screenBackground);
 
     const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
     bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
+
+    // Clear the value area only. The meter ends at x=169.
+    const int valueX = isGlobalSettings ? 166 : 170;
+    tft_->fillArea(valueX, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 239 - valueX, 20, mixerTheme.screenBackground);
 
     const Pfm3MixerButtonStateParam* buttonStateParam;
     void* valueP;
@@ -442,9 +474,9 @@ void ScreenMixer::displayMixerValue(int timbre) {
 
             // RED if not poly play mode
             if (synthState_->getTimbre(timbre)->getPlayMode() == 1) {
-                tft_->setCharColor(COLOR_GRAY);
+                tft_->setCharColor(mixerTheme.timbreMuted);
             } else {
-                tft_->setCharColor(COLOR_RED);
+                tft_->setCharColor(mixerTheme.valueWarning);
             }
             tft_->print("1-");
             const int maxVoices = synthState_->getTimbre(timbre)->getEngineMaxVoices();
@@ -464,7 +496,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
     // Scale particular case
     if (!synthState_->mixerState_.instrumentState_[timbre].scalaEnable &&
         (mixerValueType == MIXER_VALUE_SCALA_MAPPING || mixerValueType == MIXER_VALUE_SCALA_SCALE)) {
-        tft_->setCharColor(COLOR_GRAY);
+        tft_->setCharColor(mixerTheme.timbreMuted);
         tft_->setCursorInPixel(18 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
         tft_->print("N/A");
         return;
@@ -479,7 +511,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
         int dotIndex = 0;
         for (dotIndex = 0; dotIndex < 7 && scalaName[dotIndex] != '.'; dotIndex++)
             ;
-        tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235 - 160, 20, COLOR_BLACK);
+
         tft_->setCursorInPixel(238 - dotIndex * TFT_SMALL_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 4);
         tft_->printSmallChars(scalaName, dotIndex);
         break;
@@ -492,7 +524,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
             out--;
             if ((out % 3) != 0) {
                 // Mono, no panning
-                tft_->setCharColor(COLOR_GRAY);
+                tft_->setCharColor(mixerTheme.timbreMuted);
                 tft_->setCursorInPixel(20 * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
                 tft_->print('-');
                 return;
@@ -500,7 +532,7 @@ void ScreenMixer::displayMixerValue(int timbre) {
         } else if (unlikely(mixerValueType == MIXER_VALUE_NUMBER_OF_VOICES)) {
             uint8_t numberOfVoice = *((int8_t*)valueP);
             if (numberOfVoice == 0) {
-                tft_->setCharColor(COLOR_GRAY_DARK);
+                tft_->setCharColor(mixerTheme.timbreMuted);
             }
         }
 
@@ -509,14 +541,14 @@ void ScreenMixer::displayMixerValue(int timbre) {
     case DISPLAY_TYPE_STRINGS: {
         const char* label = buttonStateParam->valueName[(int)(*((uint8_t*)valueP))];
         int len = getLength(label);
-        tft_->fillArea(160, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 235 - 160, 20, COLOR_BLACK);
+
         tft_->setCursorInPixel(238 - len * 11, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
         tft_->print(label, 7);
         break;
     }
     case DISPLAY_TYPE_FLOAT: {
         float toDisplay = *((float*)valueP);
-        tft_->setCursorInPixel((toDisplay >= 100.0f ? 15 : 16) * TFT_BIG_CHAR_WIDTH, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
+        tft_->setCursorInPixel((toDisplay >= 100.0f ? 15 : 16) * TFT_BIG_CHAR_WIDTH + 4, Y_MIXER + timbre * HEIGHT_MIXER_LINE);
         tft_->print(toDisplay);
         break;
     }
@@ -532,11 +564,11 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
     switch (refreshStatus) {
     case 20:
         tft_->pauseRefresh();
-        tft_->clear();
-        tft_->fillArea(0, 0, 240, 21, COLOR_GREEN_DARK);
+        tft_->clear(mixerTheme.screenBackground);
+        tft_->fillArea(0, 0, 240, 21, mixerTheme.headerBackground);
         tft_->setCursorInPixel(2, 2);
-        tft_->print("MIX ", COLOR_YELLOW, COLOR_GREEN_DARK);
-        tft_->print(synthState_->mixerState_.mixName_, COLOR_WHITE, COLOR_GREEN_DARK);
+        tft_->print("MIX ", mixerTheme.headerMixTitle, mixerTheme.headerBackground);
+        tft_->print(synthState_->mixerState_.mixName_, mixerTheme.headerMixPreset, mixerTheme.headerBackground);
         break;
     case 19:
     case 18:
@@ -545,41 +577,44 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
     case 15:
     case 14: {
         int timbre = 19 - refreshStatus;
-        // Display row : timbre number + preset name
-        tft_->setCharBackgroundColor(COLOR_BLACK);
+        int globalSettingPage = synthState_->fullState_.buttonState[BUTTONID_MIXER_GLOBAL];
+
+        // The level-meter setting is gone; hide its old row on the global page.
+        if (isGlobalSettings && timbre >= numberOfGlobalSettings[globalSettingPage]) {
+            tft_->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 240, HEIGHT_MIXER_LINE, mixerTheme.screenBackground);
+            break;
+        }
+
+        // Number/name/meter-left only; the value area starts at x=160.
+        tft_->fillArea(0, Y_MIXER + timbre * HEIGHT_MIXER_LINE, 160, HEIGHT_MIXER_LINE, mixerTheme.screenBackground);
+        tft_->setCharBackgroundColor(mixerTheme.screenBackground);
+
+        // Big timbre number, top left.
         tft_->setCursorInPixel(2, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE);
-        if (currentTimbre != (timbre)) {
-            if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
-                tft_->setCharColor(COLOR_GRAY_DARK);
-            } else {
-                tft_->setCharColor(COLOR_GRAY_LIGHT);
-            }
+        if (currentTimbre == timbre) {
+            tft_->setCharColor(mixerTheme.timbreNumberSelected);
+        } else if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
+            tft_->setCharColor(mixerTheme.timbreMuted);
         } else {
-            if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
-                tft_->setCharColor(COLOR_YELLOW_DARK);
-            } else {
-                tft_->setCharColor(COLOR_YELLOW);
-            }
+            tft_->setCharColor(mixerTheme.timbreNumber);
         }
         tft_->print(20 - refreshStatus);
 
-        tft_->setCursorInPixel(22, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE);
         if (!isGlobalSettings) {
+            // Small preset name at x=20, meter below it at x=20.
+            tft_->setCursorInPixel(20, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE + 2);
             if (unlikely(timbre == 0 && synthState_->mixerState_.MPE_inst1_ > 0)) {
-                // If MPE instrument 1, limit chars to 10
-                tft_->print(synthState_->getTimbreName(timbre), 10);
+                tft_->printSmallChars(synthState_->getTimbreName(timbre));
                 tft_->setCursoraddXY(4, 4);
-                tft_->setCharColor(COLOR_GRAY_LIGHT);
+                tft_->setCharColor(mixerTheme.mpeLabel);
                 tft_->printSmallChars("MPE");
             } else {
-                tft_->print(synthState_->getTimbreName(timbre));
+                tft_->printSmallChars(synthState_->getTimbreName(timbre));
             }
+            drawMixerMeter(timbre);
         } else {
-            int globalSettingPage = synthState_->fullState_.buttonState[BUTTONID_MIXER_GLOBAL];
-
-            if (timbre < numberOfGlobalSettings[globalSettingPage]) {
-                refreshMixerRowGlobalOptions(globalSettingPage, timbre);
-            }
+            tft_->setCursorInPixel(22, Y_MIXER + (timbre)*HEIGHT_MIXER_LINE);
+            refreshMixerRowGlobalOptions(globalSettingPage, timbre);
         }
         break;
     }
@@ -589,7 +624,7 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
     case 9:
     case 8:
     case 7: {
-        tft_->setCharColor(COLOR_WHITE);
+        tft_->setCharColor(mixerTheme.valueText);
         displayMixerValue(12 - refreshStatus);
         break;
     }
@@ -598,8 +633,8 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
         const char* valueTitle = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit]->state[buttonState]->stateLabel;
         int len = getLength(valueTitle);
         tft_->setCursorInPixel(240 - len * TFT_BIG_CHAR_WIDTH, 50);
-        tft_->setCharBackgroundColor(COLOR_BLACK);
-        tft_->setCharColor(COLOR_GREEN);
+        tft_->setCharBackgroundColor(mixerTheme.screenBackground);
+        tft_->setCharColor(mixerTheme.valueTitle);
         tft_->print(valueTitle);
         // NO BREAK ....
     }
@@ -612,11 +647,13 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
 
         const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[button];
 
-        tft_->drawButton(currentButton->buttonLabel, 270, 29, button, currentButton->numberOfStates,
-                         synthState_->fullState_.mixerCurrentEdit == button
-                             ? synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + button] + 1
-                             : 0,
-                         COLOR_GREEN_DARK);
+        bool isActive = synthState_->fullState_.mixerCurrentEdit == button;
+        uint8_t activeState = isActive ? synthState_->fullState_.buttonState[BUTTONID_MIXER_FIRST_BUTTON + button] + 1 : 0;
+        TFT_COLOR buttonBackground = isActive ? mixerTheme.buttonBackground : mixerTheme.buttonBackgroundInactive;
+
+        tft_->drawButton(currentButton->buttonLabel, 270, 29, button, currentButton->numberOfStates, activeState, buttonBackground,
+                         mixerTheme.buttonText, mixerTheme.buttonTextInactive, mixerTheme.buttonIndicatorActive,
+                         mixerTheme.buttonIndicatorInactive);
 
         break;
     }
@@ -629,7 +666,7 @@ void ScreenMixer::refreshMixerByStep(int currentTimbre, int& refreshStatus, int&
 }
 
 void ScreenMixer::refreshMixerRowGlobalOptions(int page, int row) {
-    tft_->setCharColor(COLOR_GRAY_LIGHT);
+    tft_->setCharColor(mixerTheme.globalOptionText);
 
     switch (page) {
     case 0:
@@ -771,9 +808,28 @@ void ScreenMixer::newMixerValueFromExternal(uint8_t valueType, uint8_t timbre, f
     }
 }
 
+void ScreenMixer::drawMixerMeter(int timbre) {
+    if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices == 0) {
+        return;
+    }
+
+    float volume = getCompInstrumentVolume(timbre);
+    float gr = getCompInstrumentGainReduction(timbre);
+    float threshold = getCompInstrumentThreshold(timbre);
+    bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
+    if (gr > -.1f) {
+        gr = 0;
+    }
+
+    // Preset name at x=20, meter at x=20..169.
+    tft_->drawLevelMetter(20, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 14, 150, 8, 4, volume, isCompressed, gr, threshold);
+}
+
 void ScreenMixer::slowTick() {
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];
+    static float lastThreshold[NUMBER_OF_TIMBRES];
+    static bool lastCompressed[NUMBER_OF_TIMBRES];
 
     for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
         if (valueChangedCounter_[timbre] > 0) {
@@ -786,23 +842,32 @@ void ScreenMixer::slowTick() {
         }
     }
 
-    if (synthState_->mixerState_.levelMeterWhere_ >= 1) {
+    const Pfm3MixerButton* currentButton = mixerMenu.mixerButton[synthState_->fullState_.mixerCurrentEdit];
+    bool isGlobalSettings = currentButton->state[0]->mixerValueType == MIXER_VALUE_GLOBAL_SETTINGS_1;
+
+    if (!isGlobalSettings) {
         for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
             if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices > 0) {
                 float volume = getCompInstrumentVolume(timbre);
                 float gr = getCompInstrumentGainReduction(timbre);
+                float threshold = getCompInstrumentThreshold(timbre);
+                bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
                 // gr tend to slower reach 0
                 // Let'as accelerate when we don't want to draw the metter anymore
                 if (gr > -.1f) {
                     gr = 0;
                 }
-                if ((volume != lastVolume[timbre] || gr != lastGainReduction[timbre])) {
+                if (volume != lastVolume[timbre] || gr != lastGainReduction[timbre] || threshold != lastThreshold[timbre] ||
+                    isCompressed != lastCompressed[timbre]) {
 
                     lastVolume[timbre] = volume;
                     lastGainReduction[timbre] = gr;
+                    lastThreshold[timbre] = threshold;
+                    lastCompressed[timbre] = isCompressed;
 
-                    bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
-                    tft_->drawLevelMetter(22, Y_MIXER + timbre * HEIGHT_MIXER_LINE + 21, 218, 3, 5, volume, isCompressed, gr);
+                    drawMixerMeter(timbre);
+                    // One meter per slow tick keeps the TFT action queue safe.
+                    break;
                 }
             }
         }

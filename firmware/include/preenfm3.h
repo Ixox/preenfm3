@@ -29,6 +29,7 @@ void preenfm3StartSai();
 
 float getCompInstrumentVolume(int t);
 float getCompInstrumentGainReduction(int t);
+float getCompInstrumentThreshold(int t);
 
 #ifdef __cplusplus
 }

@@ -33,6 +33,7 @@ struct EditorTheme {
     TFT_COLOR pageLabelColor = COLOR_CYAN_LIGHT;
     TFT_COLOR pageLabelBackground = COLOR_NONE;
     TFT_COLOR buttonBackground = COLOR_BLUE_DARK;
+    TFT_COLOR buttonBackgroundInactive = COLOR_BLUE_DARK;
     TFT_COLOR buttonText = COLOR_WHITE;
     TFT_COLOR buttonTextInactive = COLOR_GRAY;
     TFT_COLOR buttonIndicatorActive = COLOR_WHITE;
@@ -46,6 +47,10 @@ struct EditorTheme {
     TFT_COLOR headerPresetName = COLOR_WHITE;
     TFT_COLOR headerBorderBottom = COLOR_NONE;
     TFT_COLOR backgroundColor = COLOR_BLACK;
+    uint8_t oscilloX = 0;
+    uint8_t oscilloY = 160;
+    uint8_t algoX = 160;
+    uint8_t algoY = 160;
 };
 
 enum CommonPage { COMMON_PAGE_NONE = -1, COMMON_PAGE_ARP_FX = 0, COMMON_PAGE_COUNT };

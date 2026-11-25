@@ -141,6 +141,7 @@ void ScreenCoordinator::newMixerEdit(int oldButton, int newButton) {
         refreshStatus_ = 12;
     }
 
+    endRefreshStatus_ = 0;
     tft_->clearMixerValues();
 }
 

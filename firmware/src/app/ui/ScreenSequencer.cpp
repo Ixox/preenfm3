@@ -140,8 +140,8 @@ void ScreenSequencer::refreshSequencerByStep(int instrument, int& refreshStatus,
         tft_->setCursorInPixel(26, Y_START_SEQ + 7 + inst * 27);
         tft_->print(inst + 1);
 
-        tft_->setCursorInPixel(50, Y_START_SEQ + 7 + inst * 27);
-        tft_->print(synthState_->getTimbreName(inst), 8);
+        tft_->setCursorInPixel(50, Y_START_SEQ + 9 + inst * 27);
+        tft_->printSmallChars(synthState_->getTimbreName(inst), 15);
 
         tft_->setCursorInPixel(160, Y_START_SEQ + 7 + inst * 27);
         tft_->setCharColor(sequencer_->isRecording(inst) ? COLOR_RED : COLOR_GRAY);
@@ -718,25 +718,33 @@ void ScreenSequencer::slowTick() {
 
     static float lastVolume[NUMBER_OF_TIMBRES];
     static float lastGainReduction[NUMBER_OF_TIMBRES];
+    static float lastThreshold[NUMBER_OF_TIMBRES];
+    static bool lastCompressed[NUMBER_OF_TIMBRES];
 
-    if (seqMode_ != SEQ_MODE_STEP && synthState_->mixerState_.levelMeterWhere_ == 2) {
+    if (seqMode_ != SEQ_MODE_STEP) {
         for (int timbre = 0; timbre < NUMBER_OF_TIMBRES; timbre++) {
 
             if (synthState_->mixerState_.instrumentState_[timbre].numberOfVoices > 0) {
                 float volume = getCompInstrumentVolume(timbre);
                 float gr = getCompInstrumentGainReduction(timbre);
+                float threshold = getCompInstrumentThreshold(timbre);
+                bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
                 // gr tend to slower reach 0
                 // Let'as accelerate when we don't want to draw the metter anymore
                 if (gr > -.1f) {
                     gr = 0;
                 }
-                if ((volume != lastVolume[timbre] || gr != lastGainReduction[timbre])) {
+                if (volume != lastVolume[timbre] || gr != lastGainReduction[timbre] || threshold != lastThreshold[timbre] ||
+                    isCompressed != lastCompressed[timbre]) {
 
                     lastVolume[timbre] = volume;
                     lastGainReduction[timbre] = gr;
+                    lastThreshold[timbre] = threshold;
+                    lastCompressed[timbre] = isCompressed;
 
-                    bool isCompressed = synthState_->mixerState_.instrumentState_[timbre].compressorType > 0;
-                    tft_->drawLevelMetter(26, Y_START_SEQ + 7 + timbre * 27 + 20, 212, 3, 5, volume, isCompressed, gr);
+                    tft_->drawLevelMetter(26, Y_START_SEQ + 7 + timbre * 27 + 20, 150, 6, 5, volume, isCompressed, gr, threshold);
+                    // One meter per slow tick keeps the TFT action queue safe.
+                    break;
                 }
             }
         }

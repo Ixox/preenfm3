@@ -180,10 +180,14 @@ EditorDrum909::EditorDrum909() {
 
     theme_.pageLabelColor = COLOR_ORANGE;
     theme_.buttonBackground = COLOR_ORANGE;
+    theme_.buttonBackgroundInactive = COLOR_ORANGE;
     theme_.buttonText = COLOR_BLACK;
-    theme_.buttonTextInactive = COLOR_BLACK;
+    theme_.buttonTextInactive = COLOR_GRAY_DARK;
     theme_.buttonIndicatorActive = COLOR_WHITE;
     theme_.buttonIndicatorInactive = COLOR_BLACK;
+
+    theme_.oscilloX = 40;
+    theme_.oscilloY = 160;
 }
 
 void EditorDrum909::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
@@ -223,7 +227,9 @@ Timbre* EditorDrum909::timbre() {
 }
 
 void EditorDrum909::drawAlgorithm() {
-    tft_->drawLogo(&drum909Logo);
+    const EditorTheme& theme = getTheme();
+    tft_->drawLogoAt(&drum909LogoLeft, 0, theme.oscilloY);
+    tft_->drawLogoAt(&drum909LogoRight, 200, theme.oscilloY);
 }
 
 void EditorDrum909::displayEditorTitle() {

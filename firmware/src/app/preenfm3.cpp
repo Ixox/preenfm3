@@ -609,6 +609,10 @@ float getCompInstrumentGainReduction(int t) {
     return synth.getCompInstrument(t).getCurrentGainReduction();
 }
 
+float getCompInstrumentThreshold(int t) {
+    return synth.getCompInstrument(t).getThresh();
+}
+
 #ifdef __cplusplus
 }
 #endif

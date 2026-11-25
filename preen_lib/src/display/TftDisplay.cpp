@@ -28,13 +28,11 @@
 #define likely(x)   __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
 
-#define TFT_FOREGROUND_BIG_CHARS      (NUMBER_OF_CHARS * 11 * 18)
-#define TFT_FOREGROUND_SMALL_CHARS    (96 * 7 * 10)
-#define TFT_FOREGROUND_SEGMENT_DIGITS (12 * 9 * 5 * 4)
-#define TFT_FOREGROUND_OSCILLO        (160 * 101)
-#define TFT_FOREGROUND_ALGO           (80 * 100)
-#define TFT_FOREGROUND_ENTRIES                                                                                                             \
-    (TFT_FOREGROUND_BIG_CHARS + TFT_FOREGROUND_SMALL_CHARS + TFT_FOREGROUND_SEGMENT_DIGITS + TFT_FOREGROUND_OSCILLO + TFT_FOREGROUND_ALGO)
+#define TFT_FOREGROUND_BIG_CHARS   (NUMBER_OF_CHARS * 11 * 18)
+#define TFT_FOREGROUND_SMALL_CHARS (96 * 7 * 10)
+#define TFT_FOREGROUND_OSCILLO     (160 * 101)
+#define TFT_FOREGROUND_ALGO        (80 * 100)
+#define TFT_FOREGROUND_ENTRIES     (TFT_FOREGROUND_BIG_CHARS + TFT_FOREGROUND_SMALL_CHARS + TFT_FOREGROUND_OSCILLO + TFT_FOREGROUND_ALGO)
 // Round up to 32 bytes (uint8_t entries) so the next buffer is 32-byte aligned.
 #define TFT_FOREGROUND_SIZE (((TFT_FOREGROUND_ENTRIES + 31) / 32) * 32)
 
@@ -49,11 +47,6 @@ RAM_D1_SECTION uint16_t tftMemory[240 * 320];
 
 extern DMA2D_HandleTypeDef hdma2d;
 extern RNG_HandleTypeDef hrng;
-
-#define TFT_OSCILLO_Y 160
-#define TFT_OSCILLO_X 0
-#define TFT_ALGO_Y    160
-#define TFT_ALGO_X    160
 
 uint32_t tftPalette[NUMBER_OF_TFT_COLORS];
 uint16_t tftPalette565[NUMBER_OF_TFT_COLORS];
@@ -101,14 +94,15 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_BLACK] = reducedColor(0x000000);
     tftPalette[COLOR_WHITE] = reducedColor(0xffffff);
     tftPalette[COLOR_CREAM] = reducedColor(0xfff1c8);
+
     tftPalette[COLOR_GRAY_DARK] = reducedColor(0x202020);
     tftPalette[COLOR_GRAY] = reducedColor(0x606060);
     tftPalette[COLOR_GRAY_MEDIUM] = reducedColor(0x909090);
     tftPalette[COLOR_GRAY_LIGHT] = reducedColor(0xb0b0b0);
 
-    tftPalette[COLOR_RED_DARK] = reducedColor(0x401000);
-    tftPalette[COLOR_RED] = reducedColor(0xff4010);
-    tftPalette[COLOR_RED_LIGHT] = reducedColor(0xff7070);
+    tftPalette[COLOR_RED_DARK] = reducedColor(0x60150c);
+    tftPalette[COLOR_RED] = reducedColor(0xbb2817);
+    tftPalette[COLOR_RED_LIGHT] = reducedColor(0xf8513e);
     tftPalette[COLOR_BURNT_PEACH] = reducedColor(0xe07a5f);
 
     tftPalette[COLOR_ORANGE_DARK] = reducedColor(0x804000);
@@ -120,19 +114,20 @@ TftDisplay::TftDisplay() {
     tftPalette[COLOR_YELLOW] = reducedColor(0xffff00);
     tftPalette[COLOR_YELLOW_LIGHT] = reducedColor(0xffffa0);
 
-    tftPalette[COLOR_GREEN_DARK] = reducedColor(0x004000);
-    tftPalette[COLOR_GREEN] = reducedColor(0x40ff40);
-    tftPalette[COLOR_GREEN_LIGHT] = reducedColor(0x70ff70);
-    tftPalette[COLOR_MUTED_TEAL] = reducedColor(0x81b29a);
+    tftPalette[COLOR_GREEN_VERY_DARK] = reducedColor(0x145226);
+    tftPalette[COLOR_GREEN_DARK] = reducedColor(0x246a36);
+    tftPalette[COLOR_GREEN] = reducedColor(0x40ca64);
+    tftPalette[COLOR_GREEN_LIGHT] = reducedColor(0x70f994);
+    tftPalette[COLOR_MUTED_TEAL] = reducedColor(0x81b2ac);
 
     tftPalette[COLOR_CYAN_DARK] = reducedColor(0x006060);
     tftPalette[COLOR_CYAN] = reducedColor(0x00c0c0);
     tftPalette[COLOR_CYAN_LIGHT] = reducedColor(0x76dfef);
 
-    tftPalette[COLOR_BLUE_VERY_DARK] = reducedColor(0x101040);
-    tftPalette[COLOR_BLUE_DARK] = reducedColor(0x202060);
-    tftPalette[COLOR_BLUE] = reducedColor(0x6060ff);
-    tftPalette[COLOR_BLUE_LIGHT] = reducedColor(0xa0c0ff);
+    tftPalette[COLOR_BLUE_VERY_DARK] = reducedColor(0x051f28);
+    tftPalette[COLOR_BLUE_DARK] = reducedColor(0x0a3d4e);
+    tftPalette[COLOR_BLUE] = reducedColor(0x147392);
+    tftPalette[COLOR_BLUE_LIGHT] = reducedColor(0x259bc2);
 
     tftPalette[COLOR_PURPLE_DARK] = reducedColor(0x400080);
     tftPalette[COLOR_PURPLE] = reducedColor(0x9040ff);
@@ -199,33 +194,6 @@ void TftDisplay::init(TftAlgo* tftAlgo) {
                     tftForeground[tftTmpIndex++] = 0x0;
                 }
             }
-        }
-    }
-
-    tftTmpIndex /= 4;
-    tftTmpIndex++;
-    tftTmpIndex *= 4;
-
-    fgSegmentDigit_ = &tftForeground[tftTmpIndex];
-
-    for (int c = 0; c < 12; c++) {
-        for (int i = 0; i < 9; i++) {
-            uint8_t byte = segmentFont[c * 9 + i];
-            for (int j = 0; j < 5; j++) {
-                if (((byte >> (7 - j)) & 0x1) == 0x1) {
-                    tftForeground[tftTmpIndex + j * 2] = 0xff;
-                    tftForeground[tftTmpIndex + j * 2 + 1] = 0xff;
-                    tftForeground[tftTmpIndex + 5 * 2 + j * 2] = 0xff;
-                    tftForeground[tftTmpIndex + 5 * 2 + j * 2 + 1] = 0xff;
-
-                } else {
-                    tftForeground[tftTmpIndex + j * 2] = 0x0;
-                    tftForeground[tftTmpIndex + j * 2 + 1] = 0x0;
-                    tftForeground[tftTmpIndex + 5 * 2 + j * 2] = 0x0;
-                    tftForeground[tftTmpIndex + 5 * 2 + j * 2 + 1] = 0x0;
-                }
-            }
-            tftTmpIndex += 5 * 4;
         }
     }
 
@@ -536,7 +504,7 @@ void TftDisplay::processActionStep() {
                 }
                 MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);
 
-                offset = TFT_OSCILLO_Y * 240 + TFT_OSCILLO_X;
+                offset = oscilloY_ * 240 + oscilloX_;
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 160);
                 MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (160 << DMA2D_POSITION_NLR_PL)));
@@ -560,7 +528,7 @@ void TftDisplay::processActionStep() {
                 WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(fgOscillo_));
                 PFM_START_DMA2D();
                 currentAction_.actionType = 0;
-                setDirtyArea(TFT_OSCILLO_Y, 100);
+                setDirtyArea(oscilloY_, 100);
             }
             break;
         }
@@ -621,10 +589,10 @@ void TftDisplay::processActionStep() {
                 WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)fgAlgo_);
                 MODIFY_REG(hdma2d.Instance->BGPFCCR, DMA2D_BGPFCCR_CM, DMA2D_INPUT_RGB565);
                 WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(bgAlgo_));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + algoY_ * 240 + algoX_));
                 PFM_START_DMA2D();
 
-                setDirtyArea(TFT_OSCILLO_Y, 100);
+                setDirtyArea(algoY_, 100);
                 currentAction_.actionType = 0;
             }
             break;
@@ -746,7 +714,7 @@ void TftDisplay::processActionStep() {
 
                 MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 80);
                 MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (100 | (80 << DMA2D_POSITION_NLR_PL)));
-                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + TFT_ALGO_Y * 240 + TFT_ALGO_X));
+                WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(tftMemory + algoY_ * 240 + algoX_));
                 PFM_START_DMA2D();
 
                 currentAction_.param3 = 1;
@@ -773,8 +741,8 @@ void TftDisplay::processActionStep() {
                     y = currentAction_.param2;
                 } else {
                     // Algorithm logos stick to the right border of the 80x100 box.
-                    x = TFT_ALGO_X + 80 - logo->width;
-                    y = TFT_ALGO_Y + (100 - logo->height) / 2;
+                    x = algoX_ + 80 - logo->width;
+                    y = algoY_ + (100 - logo->height) / 2;
                 }
 
                 MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_PFC);
@@ -796,7 +764,7 @@ void TftDisplay::processActionStep() {
                 if (atPosition) {
                     setDirtyArea(currentAction_.param2, logo->height);
                 } else {
-                    setDirtyArea(TFT_ALGO_Y, 100);
+                    setDirtyArea(algoY_, 100);
                 }
                 currentAction_.actionType = 0;
             }
@@ -900,9 +868,9 @@ void TftDisplay::setCursorInPixel(uint8_t x, uint16_t y) {
 void TftDisplay::clearMixerValues() {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_FILL_AREA;
-    newAction.param1 = 160;
+    newAction.param1 = 170;
     newAction.param2 = 75;
-    newAction.param3 = 80;
+    newAction.param3 = 69;
     newAction.param4 = 190;
     newAction.param5 = COLOR_BLACK;
     tftActions_.insert(newAction);
@@ -919,7 +887,7 @@ void TftDisplay::clearMixerLabels() {
     newAction.actionType = TFT_DRAW_FILL_AREA;
     newAction.param1 = 0;
     newAction.param2 = 75;
-    newAction.param3 = 160;
+    newAction.param3 = 166;
     newAction.param4 = 190;
     newAction.param5 = COLOR_BLACK;
     tftActions_.insert(newAction);
@@ -1283,6 +1251,16 @@ void TftDisplay::oscilloRecord32Samples(float* samples) {
     }
 }
 
+void TftDisplay::setOscilloPosition(uint8_t x, uint8_t y) {
+    oscilloX_ = x;
+    oscilloY_ = y;
+}
+
+void TftDisplay::setAlgoPosition(uint8_t x, uint8_t y) {
+    algoX_ = x;
+    algoY_ = y;
+}
+
 void TftDisplay::drawAlgoTable(const uint8_t* algoTable) {
     TFTAction newAction;
     newAction.actionType = TFT_DRAW_ALGO;
@@ -1605,48 +1583,62 @@ void TftDisplay::printFloatWithSpace(float value) {
 }
 
 void TftDisplay::drawLevelMetter(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t pixelPerDb, float volume, bool isComp,
-                                 float gr) {
-    float maxX = width + (volume + gr) * pixelPerDb;
+                                 float gr, float thresholdDb) {
+    const uint8_t x0 = (uint8_t)x;
+
+    // Empty rectangle: gray outline, black inside.
+    fillArea(x0, y, (uint8_t)width, 1, COLOR_GRAY_DARK);
+    fillArea(x0, y + height - 1, (uint8_t)width, 1, COLOR_GRAY_DARK);
+    fillArea(x0, y, 1, height, COLOR_GRAY_DARK);
+    fillArea(x0 + width - 1, y, 1, height, COLOR_GRAY_DARK);
+    fillArea(x0 + 1, y + 1, (uint8_t)(width - 2), height - 2, COLOR_BLACK);
+
+    const int innerX = x0 + 1;
+    const int innerY = y + 1;
+    const int innerWidth = width - 2;
+    const int innerHeight = height - 2;
+
+    int maxX = (int)(innerWidth + (volume + gr) * pixelPerDb);
     if (maxX < 0) {
         maxX = 0;
+    } else if (maxX > innerWidth) {
+        maxX = innerWidth;
     }
 
-    uint8_t visuColo = COLOR_GREEN_LIGHT;
-    uint8_t visuColorAfterThresh = COLOR_WHITE;
+    const int greenEnd = innerWidth * 70 / 100;
+    const int yellowEnd = innerWidth * 90 / 100;
 
+    if (maxX > 0) {
+        int greenWidth = maxX < greenEnd ? maxX : greenEnd;
+        fillArea((uint8_t)innerX, innerY, (uint8_t)greenWidth, innerHeight, COLOR_GREEN);
+    }
+    if (maxX > greenEnd) {
+        int yellowWidth = (maxX < yellowEnd ? maxX : yellowEnd) - greenEnd;
+        fillArea((uint8_t)(innerX + greenEnd), innerY, (uint8_t)yellowWidth, innerHeight, COLOR_YELLOW);
+    }
+    if (maxX > yellowEnd) {
+        fillArea((uint8_t)(innerX + yellowEnd), innerY, (uint8_t)(maxX - yellowEnd), innerHeight, COLOR_RED);
+    }
+
+    // Gain reduction shown at the start of the bar.
+    if (gr < -.5f) {
+        int grWidth = (int)(-gr * pixelPerDb);
+        if (grWidth > innerWidth) {
+            grWidth = innerWidth;
+        }
+        if (grWidth > 0) {
+            fillArea((uint8_t)innerX, innerY, (uint8_t)grWidth, innerHeight, COLOR_ORANGE);
+        }
+    }
+
+    // Compressor threshold marker: always visible while the compressor is on.
     if (isComp) {
-        // Saturation ?
-        if (maxX > width) {
-            maxX = width;
-            visuColo = COLOR_RED;
-            visuColorAfterThresh = COLOR_RED;
+        int threshX = (int)(innerWidth + thresholdDb * pixelPerDb);
+        if (threshX < 0) {
+            threshX = 0;
+        } else if (threshX > innerWidth - 2) {
+            threshX = innerWidth - 2;
         }
-
-        // With compressor
-        int afterThresh = 0;
-        int threashold = 12;
-        int threshInPixel = width - threashold * pixelPerDb;
-        if (maxX > threshInPixel) {
-            afterThresh = (maxX - threshInPixel);
-            maxX = threshInPixel;
-        }
-        fillArea(x, y, maxX, height, visuColo);
-        fillArea(x + maxX, y, width - maxX, height, COLOR_BLACK);
-        if (afterThresh > 0) {
-            fillArea(x + threshInPixel, y, afterThresh, height, visuColorAfterThresh);
-            fillArea(x + threshInPixel, y, 1, height, COLOR_ORANGE);
-        }
-
-        if (gr < -.5) {
-            fillArea(x, y, -gr * pixelPerDb, height, COLOR_ORANGE);
-        }
-    } else {
-        // Without compressor
-        if (maxX > width) {
-            maxX = width;
-            visuColo = COLOR_RED;
-        }
-        fillArea(x, y, maxX, height, visuColo);
-        fillArea(x + maxX, y, width - maxX, height, COLOR_BLACK);
+        fillArea((uint8_t)(innerX + threshX), innerY, 2, innerHeight, COLOR_WHITE);
     }
 }

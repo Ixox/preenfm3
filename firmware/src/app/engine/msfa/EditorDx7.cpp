@@ -257,6 +257,7 @@ EditorDx7::EditorDx7() {
     theme_.pageLabelColor = COLOR_BLACK;
 
     theme_.buttonBackground = COLOR_GRAY_LIGHT;
+    theme_.buttonBackgroundInactive = COLOR_GRAY_MEDIUM;
     theme_.buttonText = COLOR_BLACK;
     theme_.buttonTextInactive = COLOR_GRAY_DARK;
     theme_.buttonIndicatorActive = COLOR_WHITE;
@@ -267,6 +268,11 @@ EditorDx7::EditorDx7() {
     theme_.paramValueChangedColor = COLOR_RED;
 
     theme_.buttonSelectorFilled = false;
+
+    theme_.algoX = 0;
+    theme_.algoY = 160;
+    theme_.oscilloX = 80;
+    theme_.oscilloY = 160;
 }
 
 void EditorDx7::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {

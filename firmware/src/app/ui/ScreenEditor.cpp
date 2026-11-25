@@ -145,6 +145,9 @@ void ScreenEditor::newTimbre(int timbre) {
     currentTimbre_ = timbre;
     EditorEngine* editor = editorForEngine();
     if (editor != nullptr) {
+        const EditorTheme& theme = editor->getTheme();
+        tft_->setOscilloPosition(theme.oscilloX, theme.oscilloY);
+        tft_->setAlgoPosition(theme.algoX, theme.algoY);
         editor->newTimbre();
     }
 }
@@ -161,6 +164,9 @@ void ScreenEditor::refreshEditorByStep(int& refreshStatus, int& endRefreshStatus
     if (engineEditor == nullptr) {
         return;
     }
+
+    tft_->setOscilloPosition(engineEditor->getTheme().oscilloX, engineEditor->getTheme().oscilloY);
+    tft_->setAlgoPosition(engineEditor->getTheme().algoX, engineEditor->getTheme().algoY);
 
     // The selected page may not exist for the current engine (e.g. after an
     // engine switch): fall back to the main menu instead of drawing nothing.
@@ -286,28 +292,6 @@ void ScreenEditor::slowTick() {
     // or on the engine main page (mainPage == -1) where no page editor exists.
     if (engineEditor != nullptr && engineEditor != editor) {
         engineEditor->slowTick();
-    }
-    displayLevelMeter();
-}
-
-void ScreenEditor::displayLevelMeter() {
-    static float lastVolume, lastGainReduction;
-
-    if (synthState_->mixerState_.levelMeterWhere_ == 2) {
-        float volume = getCompInstrumentVolume(currentTimbre_);
-        float gr = getCompInstrumentGainReduction(currentTimbre_);
-        // gr tend to slower reach 0
-        // Let'as accelerate when we don't want to draw the metter anymore
-        if (gr > -.1f) {
-            gr = 0;
-        }
-        if (volume != lastVolume || gr != lastGainReduction) {
-            lastVolume = volume;
-            lastGainReduction = gr;
-
-            bool isCompressed = synthState_->mixerState_.instrumentState_[currentTimbre_].compressorType > 0;
-            tft_->drawLevelMetter(5, 150, 230, 3, 5, volume, isCompressed, gr);
-        }
     }
 }
 

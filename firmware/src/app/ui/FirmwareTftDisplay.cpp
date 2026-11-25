@@ -626,19 +626,7 @@ void FirmwareTftDisplay::oscilloBgDrawEnvelope() {
             if ((d == 1) || (digits[d] != 0)) {
                 int x = 136 + d * 11;
                 int y = 2;
-                const uint8_t* digitBits = tftAlgo_->getDigitBits(digits[d]);
-
-                for (int j = 0; j < 5; j++) {
-                    const uint8_t line = digitBits[j] >> 3;
-                    for (int i = 0; i < 5; i++) {
-                        if (((line >> (4 - i)) & 1) == 1) {
-                            bgOscillo_[(x + i * 2) + (y + j * 2) * 160] = color;
-                            bgOscillo_[(x + i * 2 + 1) + (y + j * 2) * 160] = color;
-                            bgOscillo_[(x + i * 2) + (y + j * 2 + 1) * 160] = color;
-                            bgOscillo_[(x + i * 2 + 1) + (y + j * 2 + 1) * 160] = color;
-                        }
-                    }
-                }
+                TftAlgo::drawSegmentGlyph(bgOscillo_, OSCILLO_WIDTH, 97, x, y, digits[d], color);
             }
         }
     }

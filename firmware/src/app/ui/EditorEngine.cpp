@@ -120,11 +120,12 @@ void EditorEngine::drawEditorButtonDefault(int button, const struct EditorMenu* 
     const EditorTheme& theme = getTheme();
     if (button < editMenu->buttonCount) {
         const struct EditorPageButton* buttonPage = editMenu->buttons[button];
-        tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->stateCount,
-                         editPage_ == button ? getButtonState(page->buttonId) + 1 : 0, theme.buttonBackground, theme.buttonText,
-                         theme.buttonTextInactive, theme.buttonIndicatorActive, theme.buttonIndicatorInactive);
+        bool active = editPage_ == button;
+        tft_->drawButton(buttonPage->buttonLabel, 270, 29, button, buttonPage->stateCount, active ? getButtonState(page->buttonId) + 1 : 0,
+                         active ? theme.buttonBackground : theme.buttonBackgroundInactive, theme.buttonText, theme.buttonTextInactive,
+                         theme.buttonIndicatorActive, theme.buttonIndicatorInactive);
     } else {
-        tft_->drawButton("", 270, 29, button, 0, 0, theme.buttonBackground, theme.buttonText, theme.buttonTextInactive,
+        tft_->drawButton("", 270, 29, button, 0, 0, theme.buttonBackgroundInactive, theme.buttonText, theme.buttonTextInactive,
                          theme.buttonIndicatorActive, theme.buttonIndicatorInactive);
     }
 }

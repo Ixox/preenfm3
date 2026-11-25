@@ -107,6 +107,7 @@ EditorByos::EditorByos() {
     theme_.pageLabelColor = COLOR_BLACK;
 
     theme_.buttonBackground = COLOR_MAGENTA;
+    theme_.buttonBackgroundInactive = COLOR_MAGENTA_DARK;
     theme_.buttonText = COLOR_YELLOW;
     theme_.buttonTextInactive = COLOR_MAGENTA_LIGHT;
     theme_.buttonIndicatorActive = COLOR_YELLOW;
@@ -115,6 +116,8 @@ EditorByos::EditorByos() {
     theme_.paramNameColor = COLOR_PURPLE_LIGHT;
     theme_.paramValueColor = COLOR_GREEN_LIGHT;
     theme_.paramValueChangedColor = COLOR_GREEN;
+
+    theme_.oscilloX = 8;
 }
 
 void EditorByos::init(ScreenEditor* parent, SynthState* synthState, FirmwareTftDisplay* tft) {
@@ -333,7 +336,7 @@ void EditorByos::drawAlgorithm() {
         int length = -1;
         while (lines[i][++length] != 0) {
         }
-        const int x = 160 + (80 - length * TFT_BIG_CHAR_WIDTH) / 2;
+        const int x = 168 + (72 - length * TFT_BIG_CHAR_WIDTH) / 2;
         tft_->setCursorInPixel(x, 180 + i * TFT_BIG_CHAR_HEIGHT);
         tft_->print(lines[i]);
     }

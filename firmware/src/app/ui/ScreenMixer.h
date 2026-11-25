@@ -62,6 +62,7 @@ public:
     void setReverbParamVisible(bool visible);
 
     void displayMixerValue(int timbre);
+    void drawMixerMeter(int timbre);
     void refreshMixerByStep(int currentTimbre, int& refreshStatus, int& endRefreshStatus);
     void slowTick();
     void newMixerValue(uint8_t valueType, uint8_t timbre, float oldValue, float newValue, int& refreshStatus);
@@ -96,7 +97,7 @@ private:
     void displayMixerValueInteger(int timbre, int x, int value);
     TftDisplay* tft_;
     SynthState* synthState_;
-    uint8_t valueChangedCounter_[NUMBER_OF_ENCODERS];
+    uint8_t valueChangedCounter_[NUMBER_OF_TIMBRES];
     int* refreshStatusP_;
     int* endRefreshStatusP_;
     bool reverbParamVisible_;

@@ -40,8 +40,10 @@ EditorPfm3::EditorPfm3() {
         bufferParam_[i] = 0.0f;
     }
     theme_.headerBackground = COLOR_BLUE_DARK;
-    theme_.pageLabelBackground = COLOR_BLUE_VERY_DARK;
     theme_.pageLabelColor = COLOR_BLUE_LIGHT;
+    theme_.buttonTextInactive = COLOR_GRAY_LIGHT;
+    theme_.buttonBackground = COLOR_BLUE_DARK;
+    theme_.buttonBackgroundInactive = COLOR_BLUE_VERY_DARK;
     theme_.buttonSelectorFilled = false;
 }
 
